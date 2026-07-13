@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildClassifyPrompt, buildSystemPrompt, parseClassification, MAX_MESSAGES_PER_DAY } from './prompts'
+import { buildClassifyPrompt, buildSystemPrompt, parseClassification, MAX_MESSAGES_PER_DAY, KEY_ERROR_LINE, OFFLINE_LINE, QUOTA_LINE } from './prompts'
+import { ChatError, errorToLine, statusToKind } from './providers'
 import { messagesLeftToday } from './index'
 import type { ChatContext } from './adapter'
 import type { Household } from '../domain/types'
@@ -43,6 +44,24 @@ describe('ämnesfiltret', () => {
   it('trunkerar långa meddelanden i klassificeringen', () => {
     const long = 'x'.repeat(2000)
     expect(buildClassifyPrompt(long).length).toBeLessThan(1200)
+  })
+})
+
+describe('felhantering', () => {
+  it('mappar HTTP-status till rätt felkategori', () => {
+    expect(statusToKind(400)).toBe('nyckel')
+    expect(statusToKind(401)).toBe('nyckel')
+    expect(statusToKind(403)).toBe('nyckel')
+    expect(statusToKind(429)).toBe('kvot')
+    expect(statusToKind(500)).toBe('natverk')
+    expect(statusToKind(503)).toBe('natverk')
+  })
+
+  it('ger olika barnvänliga svar per felorsak', () => {
+    expect(errorToLine(new ChatError('nyckel', 'x'))).toBe(KEY_ERROR_LINE)
+    expect(errorToLine(new ChatError('kvot', 'x'))).toBe(QUOTA_LINE)
+    expect(errorToLine(new ChatError('natverk', 'x'))).toBe(OFFLINE_LINE)
+    expect(errorToLine(new Error('okänt'))).toBe(OFFLINE_LINE)
   })
 })
 
