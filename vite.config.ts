@@ -43,7 +43,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         // Appen är helt lokal — inga runtime-anrop att cacha förutom appskalet.
         navigateFallback: `${base}index.html`,
       },

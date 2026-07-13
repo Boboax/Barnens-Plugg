@@ -161,7 +161,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
     <div className="screen-fade" style={{ height: '100%', display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 330px)', gap: 0 }}>
       {/* Kartan */}
       <div style={{
-        padding: '14px 18px', background: inRealm ? '#BCE0EE' : theme.sky, display: 'flex', flexDirection: 'column',
+        padding: '14px 18px', background: inRealm ? '#1B1F30' : theme.sky, display: 'flex', flexDirection: 'column',
         minWidth: 0, minHeight: 0, position: 'relative', overflow: 'hidden',
         // Grottan är mörk — ljus text där (nodtexterna använder variablerna).
         ...(!inRealm && theme.horizon === 'grotta' ? ({ '--ink': '#F3EFFF', '--muted': '#BDB4DC', '--sun-ink': '#FFD98A' } as React.CSSProperties) : {}),
@@ -172,7 +172,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
             <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
             <SoundToggle />
           </span>
-          <span style={{ fontWeight: 900, fontSize: 17, color: !inRealm && theme.horizon === 'grotta' ? '#FFF3D6' : 'var(--ink)' }}>
+          <span style={{ fontWeight: 900, fontSize: 17, color: inRealm || theme.horizon === 'grotta' ? '#FFF3D6' : 'var(--ink)' }}>
             {inRealm ? '🗺 Matteriket' : `${world.emoji} ${world.name}`}
           </span>
           <span className="chip">🔥 {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
