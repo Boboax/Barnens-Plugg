@@ -1,4 +1,4 @@
-import type { ChatContext, ChatMessage, ChatProvider, ChatReply } from './adapter'
+import type { ChatContext, ChatMessage, ChatProvider, ChatReply, ChatSendOptions } from './adapter'
 import {
   KEY_ERROR_LINE, OFFLINE_LINE, QUOTA_LINE, REFUSAL_LINE,
   buildClassifyPrompt, buildSystemPrompt, parseClassification,
@@ -57,6 +57,14 @@ export async function listGeminiModels(apiKey: string): Promise<GeminiModelInfo[
     .filter((m) => m.version > 0)
   modelListCache = { key: apiKey, models }
   return models
+}
+
+/** Klassificeringsmodell: snabbaste lite-varianten om nyckeln har en. */
+export function pickClassifyModel(models: GeminiModelInfo[]): string | null {
+  const lites = models
+    .filter((m) => !m.tts && /flash/.test(m.id) && /lite/.test(m.id) && !/image|live|audio|embed/.test(m.id))
+    .sort((a, b) => b.version - a.version || a.id.length - b.id.length)
+  return lites[0]?.id ?? null
 }
 
 /** Bästa chattkandidaterna: flash, ej specialvarianter; nyast och stabil först. */
@@ -155,7 +163,14 @@ async function geminiAttempt(
   return text
 }
 
-async function geminiGenerate(apiKey: string, system: string | null, turns: { role: 'user' | 'model'; text: string; imagePng?: string }[]): Promise<string> {
+interface GenerateOpts {
+  /** Litet svarstak (t.ex. ämnesfiltrets JA/NEJ) — snabbare och billigare. */
+  maxTokens?: number
+  /** Föredra en lite-modell (snabbast) — används av ämnesfiltret. */
+  preferLite?: boolean
+}
+
+async function geminiGenerate(apiKey: string, system: string | null, turns: { role: 'user' | 'model'; text: string; imagePng?: string }[], opts: GenerateOpts = {}): Promise<string> {
   const contents = turns.map((t) => ({
     role: t.role,
     parts: [
@@ -166,8 +181,11 @@ async function geminiGenerate(apiKey: string, system: string | null, turns: { ro
 
   // Kandidater från nyckelns egen modellista; kända namn som sista utväg.
   let candidates: string[]
+  let liteModel: string | null = null
   try {
-    candidates = pickChatModels(await listGeminiModels(apiKey))
+    const models = await listGeminiModels(apiKey)
+    candidates = pickChatModels(models)
+    liteModel = pickClassifyModel(models)
   } catch (err) {
     if (err instanceof ChatError && err.kind === 'nyckel') throw err
     candidates = [...GEMINI_FALLBACK_IDS]
@@ -175,13 +193,17 @@ async function geminiGenerate(apiKey: string, system: string | null, turns: { ro
   if (workingGeminiModel && candidates.includes(workingGeminiModel)) {
     candidates = [workingGeminiModel, ...candidates.filter((c) => c !== workingGeminiModel)]
   }
+  if (opts.preferLite && liteModel) {
+    candidates = [liteModel, ...candidates.filter((c) => c !== liteModel)]
+  }
 
   const attempts: string[] = []
   let worstKind: ChatError['kind'] = 'natverk'
   for (const modelId of candidates) {
+    const config = { ...geminiConfigFor(modelId), ...(opts.maxTokens ? { maxOutputTokens: opts.maxTokens } : {}) }
     try {
-      const text = await geminiAttempt(apiKey, modelId, geminiConfigFor(modelId), system, contents)
-      workingGeminiModel = modelId
+      const text = await geminiAttempt(apiKey, modelId, config, system, contents)
+      if (!opts.preferLite) workingGeminiModel = modelId
       return text
     } catch (err) {
       const chatErr = err instanceof ChatError ? err : new ChatError('natverk', String(err))
@@ -210,10 +232,10 @@ async function geminiGenerate(apiKey: string, system: string | null, turns: { ro
 
 /* ---------- Claude ---------- */
 
-async function claudeGenerate(apiKey: string, system: string | null, turns: { role: 'user' | 'model'; text: string; imagePng?: string }[]): Promise<string> {
+async function claudeGenerate(apiKey: string, system: string | null, turns: { role: 'user' | 'model'; text: string; imagePng?: string }[], opts: GenerateOpts = {}): Promise<string> {
   const body = {
     model: CLAUDE_MODEL,
-    max_tokens: 250,
+    max_tokens: opts.maxTokens ?? 250,
     temperature: 0.6,
     ...(system ? { system } : {}),
     messages: turns.map((t) => ({
@@ -253,27 +275,37 @@ function makeProvider(name: string, generate: Generate, apiKey: string): ChatPro
   return {
     name,
     ready: () => apiKey.length > 0,
-    async send(context: ChatContext, history: ChatMessage[]): Promise<ChatReply> {
+    async send(context: ChatContext, history: ChatMessage[], sendOpts?: ChatSendOptions): Promise<ChatReply> {
       const latest = history[history.length - 1]
       if (!latest || latest.role !== 'child') {
         return { text: OFFLINE_LINE, refusedOffTopic: false }
       }
+      const turns = history.slice(-MAX_HISTORY).map((m) => ({
+        role: m.role === 'child' ? ('user' as const) : ('model' as const),
+        text: m.text,
+        imagePng: m.imagePngDataUrl,
+      }))
       try {
-        // Lager 2: ämnesfiltret — eget litet anrop utan historik.
-        const verdict = await generate(apiKey, null, [
-          { role: 'user', text: buildClassifyPrompt(latest.text) },
+        // Huvudanropet startar DIREKT — appens egna snabbknappar är
+        // förhandsgodkända, och för fritext körs ämnesfiltret PARALLELLT
+        // (latens = det långsammaste anropet, inte summan av två).
+        const answerPromise = generate(apiKey, buildSystemPrompt(context), turns)
+        if (sendOpts?.skipFilter) {
+          return { text: await answerPromise, refusedOffTopic: false }
+        }
+        const [verdict, answer] = await Promise.allSettled([
+          generate(apiKey, null, [{ role: 'user', text: buildClassifyPrompt(latest.text) }], { maxTokens: 10, preferLite: true }),
+          answerPromise,
         ])
-        if (parseClassification(verdict) === 'off-topic') {
+        // Filtret avgör om svaret får visas; om filtret felar: släpp igenom
+        // (huvudprompten är själv sträng, se prompts.ts).
+        if (verdict.status === 'fulfilled' && parseClassification(verdict.value) === 'off-topic') {
           return { text: REFUSAL_LINE, refusedOffTopic: true }
         }
-        // Lager 3: huvudanropet med den låsta systemprompten.
-        const turns = history.slice(-MAX_HISTORY).map((m) => ({
-          role: m.role === 'child' ? ('user' as const) : ('model' as const),
-          text: m.text,
-          imagePng: m.imagePngDataUrl,
-        }))
-        const text = await generate(apiKey, buildSystemPrompt(context), turns)
-        return { text, refusedOffTopic: false }
+        if (answer.status === 'fulfilled') {
+          return { text: answer.value, refusedOffTopic: false }
+        }
+        throw answer.reason
       } catch (err) {
         console.warn('Chattfel:', err) // felsökningsspår för föräldern (Safari-konsolen)
         return { text: errorToLine(err), refusedOffTopic: false }

@@ -43,7 +43,7 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
   if (!child) return null
   const left = messagesLeftToday(child, store.household, todayISO())
 
-  const send = async (text: string, withScratch = false): Promise<void> => {
+  const send = async (text: string, withScratch = false, preApproved = false): Promise<void> => {
     let trimmed = text.trim()
     if (!trimmed || waiting || left <= 0) return
     sfx.klick()
@@ -58,7 +58,8 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
     setWaiting(true)
     store.appendChatLog({ at: nowISO(), childId: child.id, role: 'child', text: trimmed, scratchPng })
 
-    const reply = await getChatProvider().send(context, history)
+    // Snabbknapparnas texter är appens egna — de behöver inget ämnesfilter.
+    const reply = await getChatProvider().send(context, history, { skipFilter: preApproved })
     setMessages((m) => [...m, { role: 'ai', text: reply.text }])
     setWaiting(false)
     sfx.ratt()
@@ -105,7 +106,7 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
             className="chip"
             style={{ borderColor: 'var(--primary)', color: 'var(--primary)', fontSize: 12 }}
             disabled={waiting || left <= 0}
-            onClick={() => void send(chip.text, 'withScratch' in chip && chip.withScratch)}
+            onClick={() => void send(chip.text, 'withScratch' in chip && chip.withScratch, true)}
           >{chip.label}</button>
         ))}
       </div>

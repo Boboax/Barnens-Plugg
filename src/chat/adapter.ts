@@ -31,11 +31,16 @@ export interface ChatReply {
   refusedOffTopic: boolean
 }
 
+export interface ChatSendOptions {
+  /** Appens egna snabbknappar är förhandsgodkända — hoppa över ämnesfiltret. */
+  skipFilter?: boolean
+}
+
 export interface ChatProvider {
   readonly name: string
   /** Är leverantören konfigurerad och nåbar? (Pi "sover" annars.) */
   ready(): boolean
-  send(context: ChatContext, history: ChatMessage[]): Promise<ChatReply>
+  send(context: ChatContext, history: ChatMessage[], opts?: ChatSendOptions): Promise<ChatReply>
 }
 
 /**
