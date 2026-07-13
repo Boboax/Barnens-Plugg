@@ -338,7 +338,7 @@ function ChatConfig() {
 
   return (
     <div style={{ ...pcard, marginTop: 12 }}>
-      <h4 style={h4}>🐧 AI-chatten "Mattekompisen Pi"</h4>
+      <h4 style={h4}>🦉 AI-chatten "Mattekompisen Pi"</h4>
       <p style={{ margin: '0 0 8px', fontSize: 13, color: '#8B8FA0', fontWeight: 600, lineHeight: 1.5 }}>
         Pi svarar sokratiskt (ledtrådar, aldrig facit), pratar bara matte och loggar allt under Säkerhet.
         Nyckeln sparas <strong>enbart på den här enheten</strong> — den hamnar aldrig i någon kod, på någon

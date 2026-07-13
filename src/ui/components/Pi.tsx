@@ -1,8 +1,57 @@
-/* Maskoten Pingvinen Pi. Ritas i SVG så den kan skalas och få humör. */
+import { useState } from 'react'
+
+/* ============================================================
+   Maskoten Pi — en liten uggleande med lykta, målad i Ghibli-
+   anda (public/art/pi/*.webp, genererad av föräldern via Gemini
+   och frilagd i bygget). En pose per humör. Om bilderna inte
+   kan laddas ritas den gamla SVG-pingvinen som reserv — Pi
+   försvinner aldrig.
+   ============================================================ */
 
 export type PiMood = 'glad' | 'hejar' | 'sover' | 'funderar'
 
+/** Posebildernas proportioner (bredd/höjd) — så layouten inte hoppar när de laddas. */
+const RATIO: Record<PiMood, number> = { glad: 1.25, hejar: 1.55, funderar: 1.05, sover: 1.6 }
+
 export function Pi({ mood = 'glad', size = 90 }: { mood?: PiMood; size?: number }) {
+  const [broken, setBroken] = useState(false)
+  if (broken) return <PenguinFallback mood={mood} size={size} />
+  return (
+    <img
+      src={`${import.meta.env.BASE_URL}art/pi/${mood}.webp`}
+      alt=""
+      aria-hidden="true"
+      onError={() => setBroken(true)}
+      style={{
+        display: 'block', height: size, width: size * RATIO[mood], objectFit: 'contain',
+        filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.25))', // binder figuren till marken
+        pointerEvents: 'none',
+      }}
+    />
+  )
+}
+
+/** Stor hjältebild till startsidan/splash. */
+export function PiHero({ size = 200 }: { size?: number }) {
+  const [broken, setBroken] = useState(false)
+  if (broken) return <PenguinFallback mood="glad" size={size} />
+  return (
+    <img
+      src={`${import.meta.env.BASE_URL}art/pi/hjalte.webp`}
+      alt=""
+      aria-hidden="true"
+      onError={() => setBroken(true)}
+      style={{
+        display: 'block', height: size, width: 'auto',
+        filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.3))',
+        pointerEvents: 'none',
+      }}
+    />
+  )
+}
+
+/* Ursprungliga SVG-pingvinen — behålls som reserv (och som appens rötter). */
+function PenguinFallback({ mood, size }: { mood: PiMood; size: number }) {
   const sleeping = mood === 'sover'
   return (
     <svg width={size} height={size * 1.07} viewBox="0 0 86 92" aria-hidden="true">

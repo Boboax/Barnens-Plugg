@@ -1,5 +1,5 @@
 import { sfx } from '../../sound'
-import { Pi } from '../components/Pi'
+import { PiHero } from '../components/Pi'
 import { SoundToggle } from '../components/SoundToggle'
 import { CloudSvg } from '../components/WorldSprites'
 import { useStore } from '../store'
@@ -25,7 +25,7 @@ export function ProfileSelect() {
           <CloudSvg width={c.width} />
         </span>
       ))}
-      <div className="float-soft"><Pi mood="glad" size={96} /></div>
+      <div className="float-soft"><PiHero size={150} /></div>
       <h1 style={{ fontSize: 30, fontWeight: 900, margin: 0 }}>
         Barnens <span style={{ color: 'var(--primary)' }}>Plugg</span>
       </h1>
@@ -33,7 +33,7 @@ export function ProfileSelect() {
       {children.length === 0 ? (
         <>
           <p style={{ color: 'var(--muted)', fontWeight: 700, maxWidth: 420, textAlign: 'center' }}>
-            Hej! Jag är Pi. 🐧 En vuxen behöver sätta upp appen först — det tar bara en minut.
+            Hej! Jag är Pi. 🦉 En vuxen behöver sätta upp appen först — det tar bara en minut.
           </p>
           <button className="btn btn-primary" onClick={() => store.go('parent')}>
             Kom igång (förälder) →

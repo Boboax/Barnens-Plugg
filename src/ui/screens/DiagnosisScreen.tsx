@@ -75,7 +75,7 @@ export function DiagnosisScreen() {
     return (
       <Card>
         <Pi mood="glad" size={110} />
-        <h2 style={h2}>Hej {child.name}! Jag är Pi. 🐧</h2>
+        <h2 style={h2}>Hej {child.name}! Jag är Pi. 🦉</h2>
         <p style={p}>
           Ska vi lära känna varandra? Jag visar några kluringar — vissa är lätta, vissa är svåra,
           och det är precis som det ska. Man kan inte svara fel på att lära känna någon!
