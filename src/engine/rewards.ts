@@ -24,41 +24,58 @@ export interface RewardProgress {
   ratio: number
   earned: boolean
   label: string
+  /** Barnspråk: exakt vad som krävs för att få belöningen. */
+  requirement: string
+  /** Nästa konkreta steg (momenttitlar), när målet pekar på specifika moment. */
+  nextSteps: string[]
 }
 
 export function rewardProgress(reward: Reward, profile: ChildProfile): RewardProgress {
   if (reward.target.type === 'moments') {
-    const done = Math.min(reward.target.count, masteredCount(profile) - reward.baseline.momentsMastered)
+    const done = Math.max(0, Math.min(reward.target.count, masteredCount(profile) - reward.baseline.momentsMastered))
+    const left = reward.target.count - done
     return {
-      done: Math.max(0, done),
+      done,
       total: reward.target.count,
       ratio: Math.max(0, Math.min(1, done / reward.target.count)),
       earned: done >= reward.target.count,
-      label: `${Math.max(0, done)} av ${reward.target.count} moment`,
+      label: `${done} av ${reward.target.count} moment`,
+      requirement:
+        left <= 0 ? 'Klart!' : `Besegra ${left} ${left === 1 ? 'boss' : 'bossar'} till — valfria moment räknas`,
+      nextSteps: [],
     }
   }
   if (reward.target.type === 'sessions') {
-    const done = Math.min(reward.target.count, activeDayCount(profile) - reward.baseline.activeDays)
+    const done = Math.max(0, Math.min(reward.target.count, activeDayCount(profile) - reward.baseline.activeDays))
+    const left = reward.target.count - done
     return {
-      done: Math.max(0, done),
+      done,
       total: reward.target.count,
       ratio: Math.max(0, Math.min(1, done / reward.target.count)),
       earned: done >= reward.target.count,
-      label: `${Math.max(0, done)} av ${reward.target.count} pass`,
+      label: `${done} av ${reward.target.count} träningsdagar`,
+      requirement: left <= 0 ? 'Klart!' : `Träna ${left} ${left === 1 ? 'dag' : 'dagar'} till`,
+      nextSteps: [],
     }
   }
   // Terminsmål: momenten i terminshalvan enligt läroplanen.
   const moments = momentsInTermHalf(reward.target.year, reward.target.term, reward.target.half)
-  const done = moments.filter((m) => {
-    const s = profile.skills[m.id]
+  const isDone = (id: string): boolean => {
+    const s = profile.skills[id]
     return s?.mastery === 'mastered' || s?.mastery === 'star'
-  }).length
+  }
+  const done = moments.filter((m) => isDone(m.id)).length
   const total = Math.max(1, moments.length)
+  const remaining = moments.filter((m) => !isDone(m.id))
+  const left = remaining.length
   return {
     done,
     total,
     ratio: done / total,
     earned: done >= total,
     label: `${done} av ${total} moment · ${reward.target.term} åk ${reward.target.year}`,
+    requirement:
+      left <= 0 ? 'Klart!' : `Klara ${left} moment till i terminens mål (${reward.target.term} åk ${reward.target.year})`,
+    nextSteps: remaining.map((m) => m.title),
   }
 }
