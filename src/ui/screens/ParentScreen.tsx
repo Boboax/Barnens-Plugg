@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChildProfile, SchoolYear } from '../../domain/types'
 import { areaName, weeklyReport } from '../../engine/report'
 import { rewardProgress } from '../../engine/rewards'
 import { BLIXT_TESTS, blixtTarget } from '../../engine/blixt'
 import { pingProvider } from '../../chat/providers'
+import { preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
 import { daysSinceBackup, exportHousehold, importHousehold } from '../../storage/backup'
 import { KID_COLORS, nowISO, useStore } from '../store'
 
@@ -230,7 +231,69 @@ function ChildrenTab() {
       )}
 
       {store.household.children.length > 0 && <BlixtTargets />}
+      {store.household.children.length > 0 && <VoicePicker />}
       {store.household.children.length > 0 && <ChatConfig />}
+    </div>
+  )
+}
+
+/* ---------- Uppläsningsrösten (per enhet) ---------- */
+
+function VoicePicker() {
+  const [voices, setVoices] = useState(swedishVoices())
+  const [selected, setSelected] = useState(preferredVoiceURI() ?? '')
+
+  // Röstlistan kan ladda asynkront — uppdatera när den dyker upp.
+  useEffect(() => {
+    if (voices.length > 0 || !ttsAvailable()) return
+    const timer = window.setInterval(() => {
+      const found = swedishVoices()
+      if (found.length > 0) {
+        setVoices(found)
+        window.clearInterval(timer)
+      }
+    }, 500)
+    return () => window.clearInterval(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return (
+    <div style={{ ...pcard, marginTop: 12 }}>
+      <h4 style={h4}>🔊 Uppläsningsröst</h4>
+      <p style={{ margin: '0 0 8px', fontSize: 13, color: '#8B8FA0', fontWeight: 600, lineHeight: 1.5 }}>
+        <strong>Tips för mycket bättre röst:</strong> ladda ner den förbättrade svenska rösten på iPaden —
+        Inställningar → Tillgänglighet → Talat innehåll → Röster → Svenska → hämta
+        "Alva (förbättrad)" (gratis, ~200 MB). Starta sedan om appen så dyker den upp här.
+        Röstvalet sparas per enhet.
+      </p>
+      {!ttsAvailable() || voices.length === 0 ? (
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#B4552E' }}>
+          Inga svenska röster hittades på den här enheten ännu.
+        </p>
+      ) : (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <select
+            value={selected}
+            onChange={(e) => {
+              const uri = e.target.value
+              setSelected(uri)
+              setPreferredVoice(uri || null)
+              speakSample(uri || undefined)
+            }}
+            style={{ flex: 1, minWidth: 220, fontSize: 14, fontWeight: 700, padding: '8px 12px', borderRadius: 10, border: '2px solid #EDEAE2' }}
+          >
+            <option value="">Automatiskt (bästa tillgängliga)</option>
+            {voices.map((v) => (
+              <option key={v.voiceURI} value={v.voiceURI}>
+                {v.name}{v.localService ? '' : ' (kräver internet)'}
+              </option>
+            ))}
+          </select>
+          <button className="btn btn-ghost" onClick={() => speakSample(selected || undefined)}>
+            ▶ Lyssna
+          </button>
+        </div>
+      )}
     </div>
   )
 }
