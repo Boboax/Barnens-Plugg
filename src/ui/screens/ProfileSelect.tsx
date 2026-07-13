@@ -65,6 +65,10 @@ export function ProfileSelect() {
       )}
 
       <span style={{ position: 'fixed', left: 18, bottom: 16 }}><SoundToggle /></span>
+      <span style={{
+        position: 'fixed', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+        fontSize: 11, fontWeight: 700, color: 'var(--muted)', opacity: 0.8,
+      }}>v{__APP_VERSION__}</span>
       <button
         className="chip"
         onClick={() => store.go('parent')}

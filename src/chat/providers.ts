@@ -67,12 +67,20 @@ export function pickClassifyModel(models: GeminiModelInfo[]): string | null {
   return lites[0]?.id ?? null
 }
 
-/** Bästa chattkandidaterna: flash, ej specialvarianter; nyast och stabil först. */
+/**
+ * Bästa chattkandidaterna för Pi: SNABBAST FÖRST. Pis svar är korta
+ * (≤60 ord) och hårt styrda av systemprompten — flash-lite räcker gott
+ * och svarar mycket snabbare än fullstora flash (som från 3.5 är en
+ * stor "frontier"-modell). Inom samma generation: lite före standard.
+ */
 export function pickChatModels(models: GeminiModelInfo[]): string[] {
   const score = (m: GeminiModelInfo): number =>
-    m.version * 100 - (/preview|exp/.test(m.id) ? 10 : 0) - m.id.length * 0.01
+    m.version * 100 +
+    (/lite/.test(m.id) ? 25 : 0) - // lite = byggd för låg latens
+    (/preview|exp/.test(m.id) ? 10 : 0) -
+    m.id.length * 0.01
   const ids = models
-    .filter((m) => !m.tts && /flash/.test(m.id) && !/lite|image|live|audio|embed/.test(m.id))
+    .filter((m) => !m.tts && /flash/.test(m.id) && !/image|live|audio|embed/.test(m.id))
     .sort((a, b) => score(b) - score(a))
     .map((m) => m.id)
   for (const known of GEMINI_FALLBACK_IDS) if (!ids.includes(known)) ids.push(known)
@@ -146,15 +154,57 @@ async function geminiAttempt(
   config: Record<string, unknown>,
   system: string | null,
   contents: unknown[],
+  onDelta?: (chunk: string) => void,
 ): Promise<string> {
   const body = {
     ...(system ? { system_instruction: { parts: [{ text: system }] } } : {}),
     contents,
     generationConfig: config,
   }
+  const payload = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+
+  if (onDelta) {
+    // Streaming: barnet ser orden medan de skrivs — upplevd latens < 1 s.
+    const res = await fetchWithTimeout(
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`,
+      payload,
+    )
+    if (!res.ok) throw new ChatError(statusToKind(res.status), `${modelId} ${res.status}: ${await errorDetail(res)}`)
+    if (!res.body) throw new ChatError('natverk', `${modelId}: ingen ström`)
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buf = ''
+    let full = ''
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += decoder.decode(value, { stream: true })
+      let sep: number
+      while ((sep = buf.indexOf('\n\n')) !== -1) {
+        const event = buf.slice(0, sep)
+        buf = buf.slice(sep + 2)
+        for (const line of event.split('\n')) {
+          if (!line.startsWith('data:')) continue
+          const json = line.slice(5).trim()
+          if (!json || json === '[DONE]') continue
+          try {
+            const data = JSON.parse(json) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
+            const chunk = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? ''
+            if (chunk) {
+              full += chunk
+              onDelta(chunk)
+            }
+          } catch { /* halv rad — vänta på mer */ }
+        }
+      }
+    }
+    if (!full.trim()) throw new ChatError('natverk', `${modelId}: tomt streamsvar`)
+    return full.trim()
+  }
+
   const res = await fetchWithTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(apiKey)}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+    payload,
   )
   if (!res.ok) throw new ChatError(statusToKind(res.status), `${modelId} ${res.status}: ${await errorDetail(res)}`)
   const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
@@ -168,6 +218,8 @@ interface GenerateOpts {
   maxTokens?: number
   /** Föredra en lite-modell (snabbast) — används av ämnesfiltret. */
   preferLite?: boolean
+  /** Strömma svaret bit för bit (Gemini) — första orden inom en sekund. */
+  onDelta?: (chunk: string) => void
 }
 
 async function geminiGenerate(apiKey: string, system: string | null, turns: { role: 'user' | 'model'; text: string; imagePng?: string }[], opts: GenerateOpts = {}): Promise<string> {
@@ -202,7 +254,7 @@ async function geminiGenerate(apiKey: string, system: string | null, turns: { ro
   for (const modelId of candidates) {
     const config = { ...geminiConfigFor(modelId), ...(opts.maxTokens ? { maxOutputTokens: opts.maxTokens } : {}) }
     try {
-      const text = await geminiAttempt(apiKey, modelId, config, system, contents)
+      const text = await geminiAttempt(apiKey, modelId, config, system, contents, opts.onDelta)
       if (!opts.preferLite) workingGeminiModel = modelId
       return text
     } catch (err) {
@@ -213,7 +265,7 @@ async function geminiGenerate(apiKey: string, system: string | null, turns: { ro
       // modellgenerationen — prova en gång till med neutral config.
       if (chatErr.kind === 'nyckel') {
         try {
-          const text = await geminiAttempt(apiKey, modelId, { maxOutputTokens: 2048 }, system, contents)
+          const text = await geminiAttempt(apiKey, modelId, { maxOutputTokens: 2048 }, system, contents, opts.onDelta)
           workingGeminiModel = modelId
           return text
         } catch (retryErr) {
@@ -286,26 +338,45 @@ function makeProvider(name: string, generate: Generate, apiKey: string): ChatPro
         imagePng: m.imagePngDataUrl,
       }))
       try {
-        // Huvudanropet startar DIREKT — appens egna snabbknappar är
-        // förhandsgodkända, och för fritext körs ämnesfiltret PARALLELLT
-        // (latens = det långsammaste anropet, inte summan av två).
-        const answerPromise = generate(apiKey, buildSystemPrompt(context), turns)
-        if (sendOpts?.skipFilter) {
-          return { text: await answerPromise, refusedOffTopic: false }
-        }
-        const [verdict, answer] = await Promise.allSettled([
-          generate(apiKey, null, [{ role: 'user', text: buildClassifyPrompt(latest.text) }], { maxTokens: 10, preferLite: true }),
-          answerPromise,
+        // Huvudanropet startar DIREKT och strömmas. Ämnesfiltret körs
+        // PARALLELLT och fungerar som GRIND för strömmen: inga ord når
+        // skärmen förrän filtret sagt on-topic (latens = max, inte summa).
+        const verdictPromise: Promise<'on-topic' | 'off-topic'> = sendOpts?.skipFilter
+          ? Promise.resolve('on-topic')
+          : generate(apiKey, null, [{ role: 'user', text: buildClassifyPrompt(latest.text) }], { maxTokens: 10, preferLite: true })
+              .then(parseClassification)
+              .catch(() => 'on-topic' as const) // filterfel: släpp igenom — huvudprompten är själv sträng
+
+        let released = sendOpts?.skipFilter ?? false
+        let held = ''
+        const gatedDelta = sendOpts?.onDelta
+          ? (chunk: string): void => {
+              if (released) sendOpts.onDelta!(chunk)
+              else held += chunk
+            }
+          : undefined
+        void verdictPromise.then((v) => {
+          if (v === 'on-topic' && gatedDelta && sendOpts?.onDelta) {
+            released = true
+            if (held) {
+              sendOpts.onDelta(held)
+              held = ''
+            }
+          }
+        })
+
+        const answerPromise = generate(apiKey, buildSystemPrompt(context), turns, { onDelta: gatedDelta })
+        const [verdict, answer] = await Promise.all([
+          verdictPromise,
+          answerPromise.then((v) => ({ ok: true as const, v })).catch((e: unknown) => ({ ok: false as const, e })),
         ])
-        // Filtret avgör om svaret får visas; om filtret felar: släpp igenom
-        // (huvudprompten är själv sträng, se prompts.ts).
-        if (verdict.status === 'fulfilled' && parseClassification(verdict.value) === 'off-topic') {
+        if (verdict === 'off-topic') {
           return { text: REFUSAL_LINE, refusedOffTopic: true }
         }
-        if (answer.status === 'fulfilled') {
-          return { text: answer.value, refusedOffTopic: false }
+        if (answer.ok) {
+          return { text: answer.v, refusedOffTopic: false }
         }
-        throw answer.reason
+        throw answer.e
       } catch (err) {
         console.warn('Chattfel:', err) // felsökningsspår för föräldern (Safari-konsolen)
         return { text: errorToLine(err), refusedOffTopic: false }

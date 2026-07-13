@@ -34,6 +34,8 @@ export interface ChatReply {
 export interface ChatSendOptions {
   /** Appens egna snabbknappar är förhandsgodkända — hoppa över ämnesfiltret. */
   skipFilter?: boolean
+  /** Strömma svaret bit för bit när leverantören kan (Gemini). */
+  onDelta?: (chunk: string) => void
 }
 
 export interface ChatProvider {
