@@ -99,12 +99,41 @@ export function uniqueDistractors(
 export const sv = (n: number): string =>
   n.toLocaleString('sv-SE', { maximumFractionDigits: 3 })
 
-/** Namn till textuppgifter — kort, könsblandat, lätt att läsa. */
-const NAMES = ['Elsa', 'Hugo', 'Lo', 'Ali', 'Maja', 'Nils', 'Siri', 'Omar', 'Vera', 'Otto', 'Alma', 'Juno'] as const
-export const pickName = (rng: Rng): string => rng.pick(NAMES)
+/** Generiska namn till textuppgifter — kort, könsblandat, lätt att läsa. */
+const DEFAULT_NAMES = ['Elsa', 'Hugo', 'Lo', 'Ali', 'Maja', 'Nils', 'Siri', 'Omar', 'Vera', 'Otto', 'Alma', 'Juno']
+
+/*
+ * Namnpool för textuppgifter. UI-lagret kan väva in barnets EGET namn
+ * (och syskonens) via setNamePool — hämtat från de lokala profilerna vid
+ * körning. Namnen finns aldrig i koden eller i repot, bara på enheten.
+ * Poolen är modulnivå så generatorernas signatur förblir (level, seed);
+ * seedet avgör fortfarande vilket index som väljs, så uppgifterna är
+ * reproducerbara för en given pool (default-poolen i tester).
+ */
+let weightedPool: string[] = [...DEFAULT_NAMES]
+let uniquePool: string[] = [...DEFAULT_NAMES]
+
+/** Väv in barnets namn (väger tyngst) och syskonens i textuppgifterna. */
+export function setNamePool(childName: string, siblingNames: string[] = []): void {
+  const firstName = (n: string): string => n.trim().split(/\s+/)[0] ?? ''
+  const child = firstName(childName)
+  if (!child) { resetNamePool(); return }
+  const siblings = siblingNames.map(firstName).filter((n) => n && n !== child)
+  // Barnets eget namn ~4x, syskon 1x, sedan generiska namn för variation.
+  weightedPool = [child, child, child, child, ...siblings, ...DEFAULT_NAMES]
+  uniquePool = [...new Set([child, ...siblings, ...DEFAULT_NAMES])]
+}
+
+/** Återgå till enbart generiska namn (t.ex. när inget barn är aktivt). */
+export function resetNamePool(): void {
+  weightedPool = [...DEFAULT_NAMES]
+  uniquePool = [...DEFAULT_NAMES]
+}
+
+export const pickName = (rng: Rng): string => rng.pick(weightedPool)
 export const pickTwoNames = (rng: Rng): [string, string] => {
-  const [a, b] = rng.shuffle(NAMES)
-  return [a, b]
+  const shuffled = rng.shuffle(uniquePool)
+  return [shuffled[0], shuffled[1]]
 }
 
 /** Saker att räkna i textuppgifter: [singular, plural, emoji]. */

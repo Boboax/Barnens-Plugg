@@ -8,6 +8,7 @@ import {
 } from '../engine/progress'
 import { applyDiagnosisResult, diagnosisPassesForAge } from '../engine/diagnosis'
 import { activeDayCount, masteredCount } from '../engine/rewards'
+import { resetNamePool, setNamePool } from '../generators/helpers'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { hashPin, verifyPin } from '../storage/pin'
 
@@ -129,11 +130,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     selectChild: (id) => {
       const child = household.children.find((c) => c.id === id)
       if (!child) return
+      // Personalisera textuppgifterna med barnets eget namn (+ syskonens),
+      // hämtat från de lokala profilerna — lämnar aldrig enheten.
+      const siblings = household.children.filter((c) => c.id !== id).map((c) => c.name)
+      setNamePool(child.name, siblings)
       setActiveChildId(id)
       setScreen(child.diagnosis.done ? 'home' : 'diagnosis')
     },
 
     leaveChild: () => {
+      resetNamePool()
       setActiveChildId(undefined)
       setScreen('profiles')
     },

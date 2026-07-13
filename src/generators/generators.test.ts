@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import type { DifficultyLevel } from '../domain/types'
 import { allGeneratorIds, generateTask } from './index'
+import { pickName, pickTwoNames, resetNamePool, setNamePool } from './helpers'
+import { createRng } from './rng'
 
 /**
  * Fuzz-test av samtliga generatorer: alla nivåer, många frön.
@@ -50,5 +52,46 @@ describe('uppgiftsgeneratorerna', () => {
         }
       }
     }
+  })
+})
+
+describe('personaliserad namnpool', () => {
+  // Återställ efter varje test så fuzz-/reproducerbarhetstesten inte påverkas.
+  afterEach(resetNamePool)
+
+  it('väver in barnets eget namn oftare än enskilda generiska namn', () => {
+    setNamePool('Edward', ['Nikolai', 'Albert'])
+    const counts = new Map<string, number>()
+    // Deterministiska frön → stabilt utfall.
+    for (let seed = 1; seed <= 400; seed++) {
+      const name = pickName(createRng(seed))
+      counts.set(name, (counts.get(name) ?? 0) + 1)
+    }
+    expect(counts.get('Edward') ?? 0).toBeGreaterThan(0)
+    // Eget namn ska dominera över ett enskilt generiskt namn.
+    expect(counts.get('Edward') ?? 0).toBeGreaterThan(counts.get('Elsa') ?? 0)
+  })
+
+  it('pickTwoNames ger alltid två olika namn (aldrig "Edward och Edward")', () => {
+    setNamePool('Edward', ['Nikolai'])
+    for (let seed = 1; seed <= 200; seed++) {
+      const [a, b] = pickTwoNames(createRng(seed))
+      expect(a).not.toBe(b)
+    }
+  })
+
+  it('resetNamePool tar bort barnens namn helt', () => {
+    setNamePool('Edward', ['Nikolai', 'Albert'])
+    resetNamePool()
+    const seen = new Set<string>()
+    for (let seed = 1; seed <= 400; seed++) seen.add(pickName(createRng(seed)))
+    expect(seen.has('Edward')).toBe(false)
+    expect(seen.has('Nikolai')).toBe(false)
+  })
+
+  it('hanterar tomt namn utan att krascha', () => {
+    setNamePool('   ')
+    expect(() => pickName(createRng(1))).not.toThrow()
+    expect(pickName(createRng(1))).not.toBe('')
   })
 })

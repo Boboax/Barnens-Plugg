@@ -78,6 +78,12 @@ publikt för Pages på gratisplanen.
 - **Generatorer får inte använda `Date.now()`/`Math.random()` för innehåll**
   — allt slumpat går via seedad `createRng(seed)` så uppgifter är
   reproducerbara. `freshSeed()` används bara för att välja NYTT frö.
+- **Namnpoolen i textuppgifter** är modulnivå-state i `generators/helpers.ts`.
+  UI:t kallar `setNamePool(barnetsNamn, syskon)` vid `selectChild` och
+  `resetNamePool()` vid `leaveChild` — så barnet ser sitt eget namn i
+  problemen. Namnen kommer från LOKALA profiler, hårdkodas ALDRIG och får
+  aldrig committas. Tester som rör namn måste `resetNamePool()` i afterEach
+  så seedad reproducerbarhet består för övriga tester.
 - **iOS-ljud:** AudioContext kräver användargest — `unlockAudio()` kopplas
   till första pekningen i `App.tsx`. Testa ljudändringar på riktig iPad.
 - **Blixtpass kräver rena sifferuppgifter** (numeriskt svar, prompt ≤ 24
