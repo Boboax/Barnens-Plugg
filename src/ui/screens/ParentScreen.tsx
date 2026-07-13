@@ -243,9 +243,15 @@ function VoicePicker() {
   const [voices, setVoices] = useState(swedishVoices())
   const [selected, setSelected] = useState(preferredVoiceURI() ?? '')
 
-  // Röstlistan kan ladda asynkront — uppdatera när den dyker upp.
+  // Röstlistan kan ladda asynkront — och Safari lämnar den TOM tills
+  // något försökt tala. En tyst tom yttring väcker listan.
   useEffect(() => {
     if (voices.length > 0 || !ttsAvailable()) return
+    try {
+      const kick = new SpeechSynthesisUtterance('')
+      kick.volume = 0
+      window.speechSynthesis.speak(kick)
+    } catch { /* ofarligt */ }
     const timer = window.setInterval(() => {
       const found = swedishVoices()
       if (found.length > 0) {
@@ -253,7 +259,8 @@ function VoicePicker() {
         window.clearInterval(timer)
       }
     }, 500)
-    return () => window.clearInterval(timer)
+    const stop = window.setTimeout(() => window.clearInterval(timer), 10_000)
+    return () => { window.clearInterval(timer); window.clearTimeout(stop) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

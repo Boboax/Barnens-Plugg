@@ -126,7 +126,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
               minWidth: 120, border: '3px dashed var(--primary)', borderRadius: 14, padding: '6px 18px',
               fontSize: 28, fontWeight: 900, textAlign: 'center', color: 'var(--primary)', background: 'var(--card)',
             }}>
-              {value || ' '}
+              {value || '\u00A0'}
               {task.answer.unit && <span style={{ fontSize: 16, color: 'var(--muted)', marginLeft: 6 }}>{task.answer.unit}</span>}
             </div>
             {!inFeedback && (

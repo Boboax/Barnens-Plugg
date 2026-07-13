@@ -102,6 +102,7 @@ export type TaskVisual =
   | { kind: 'grupper'; groupCount: number; itemsPerGroup: number; emoji: string }
   | { kind: 'brak'; parts: number; filled: number; secondary?: { parts: number; filled: number } }
   | { kind: 'klocka'; hours: number; minutes: number }
+  | { kind: 'form'; shape: 'cirkel' | 'triangel' | 'kvadrat' | 'rektangel' | 'femhorning' | 'sexhorning' }
   | { kind: 'rektangel'; w: number; h: number; unit: string }
   | { kind: 'ingen' }
 
