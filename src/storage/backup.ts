@@ -10,7 +10,11 @@ import { migrate } from './db'
    ============================================================ */
 
 export function exportHousehold(household: Household): void {
-  const stamped: Household = { ...household, lastBackupAt: new Date().toISOString() }
+  // API-nyckeln följer ALDRIG med i exporten — den bor bara på enheten
+  // och matas in på nytt i föräldraläget om profilen flyttas.
+  const { chat, ...rest } = household
+  void chat
+  const stamped: Household = { ...rest, lastBackupAt: new Date().toISOString() }
   const blob = new Blob([JSON.stringify(stamped, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

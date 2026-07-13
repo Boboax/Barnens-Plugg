@@ -101,11 +101,14 @@ publikt för Pages på gratisplanen.
 
 1. **Testperiod med barnen** — innan mer byggs. Föräldrarapporten visar var
    det hakar; barnens beteende styr nästa steg.
-2. **Fas 5: AI-chatten "Mattekompisen Pi".** Kräver Fable-klass modell för
-   guardrails (adversariellt tänkande). Följ `docs/GUARDRAILS.md` exakt:
-   serverless-proxy äger nyckel+systemprompt, ämnesfilter före svar,
-   chattlogg till föräldern, av/på per barn, låst under prov. Gränssnittet
-   finns i `src/chat/adapter.ts`. Leverantörsoberoende (Gemini/Claude).
+2. ~~Fas 5: AI-chatten~~ **BYGGD** (direktläge): nyckeln matas in i
+   föräldraläget och bor ENBART i enhetens IndexedDB — aldrig i kod, repo
+   eller backupfiler (strippas i `storage/backup.ts`). Ämnesfilter körs som
+   separat klassificeringsanrop före varje svar; allt loggas (inkl. avböjda)
+   till föräldraläget; dagstak 30 medd/barn; chatten finns bara i övningspass.
+   Framtida uppgradering: serverless-proxy som ny `ChatProvider`
+   (se `docs/GUARDRAILS.md`, lager 1). Rör ALDRIG lager 0: chatten får
+   aldrig ges förmågor som påverkar tid/framsteg/belöningar/rättning.
 3. **Geometri-/diagramvisualer:** de nio "kommer snart"-momenten (3D-kroppar,
    symmetri, vinklar, skala, stapeldiagram, koordinatsystem, grafer,
    tvåstegsekvationer). Kräver nya `TaskVisual`-typer + omsorg om matematisk
