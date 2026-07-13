@@ -10,6 +10,8 @@ import { blixtTarget, unlockedBlixtTests } from '../../engine/blixt'
 import { sfx } from '../../sound'
 import { Pi } from '../components/Pi'
 import { SoundToggle } from '../components/SoundToggle'
+import { WorldScenery } from '../components/WorldScenery'
+import { worldTheme } from '../worldThemes'
 import { todayISO, useStore } from '../store'
 
 /* ============================================================
@@ -57,6 +59,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
   const currentMoment = currentId ? momentById(currentId) : undefined
   const [worldId, setWorldId] = useState(currentMoment?.worldId ?? WORLDS[0].id)
   const world = worldById(worldId)
+  const theme = worldTheme(worldId)
   const moments = momentsInWorld(worldId)
 
   const masteredInWorld = moments.filter((m) => {
@@ -89,26 +92,37 @@ function HomeInner({ child }: { child: ChildProfile }) {
   return (
     <div className="screen-fade" style={{ minHeight: '100%', display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 330px)', gap: 0 }}>
       {/* Kartan */}
-      <div style={{ padding: '14px 18px', background: 'linear-gradient(180deg, #EAF6EE 0%, var(--bg) 85%)', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
-        <span className="cloud" style={{ top: '6%', animationDuration: '75s', animationDelay: '-20s', fontSize: 28 }}>☁️</span>
-        <span className="cloud" style={{ top: '14%', animationDuration: '95s', animationDelay: '-55s', fontSize: 22 }}>☁️</span>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', position: 'relative', zIndex: 2 }}>
+      <div style={{
+        padding: '14px 18px', background: theme.sky, display: 'flex', flexDirection: 'column',
+        minWidth: 0, position: 'relative', overflow: 'hidden',
+        // Grottan är mörk — ljus text där (nodtexterna använder variablerna).
+        ...(theme.horizon === 'grotta' ? ({ '--ink': '#F3EFFF', '--muted': '#BDB4DC', '--sun-ink': '#FFD98A' } as React.CSSProperties) : {}),
+      }}>
+        {theme.clouds && (
+          <>
+            <span className="cloud" style={{ top: '6%', animationDuration: '75s', animationDelay: '-20s', fontSize: 28, zIndex: 1 }}>☁️</span>
+            <span className="cloud" style={{ top: '14%', animationDuration: '95s', animationDelay: '-55s', fontSize: 22, zIndex: 1 }}>☁️</span>
+          </>
+        )}
+        <WorldScenery theme={theme} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
           <span style={{ display: 'flex', gap: 8 }}>
             <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
             <SoundToggle />
           </span>
-          <span style={{ fontWeight: 900, fontSize: 17 }}>{world.emoji} {world.name}</span>
+          <span style={{ fontWeight: 900, fontSize: 17, color: theme.horizon === 'grotta' ? '#FFF3D6' : 'var(--ink)' }}>{world.emoji} {world.name}</span>
           <span className="chip">🔥 {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
         </div>
 
         <div style={{
-          margin: '10px 0 4px', background: '#FFF8E6', border: '2px solid #F2E3B8', borderRadius: 12,
-          padding: '8px 13px', fontSize: 13.5, fontWeight: 700, color: 'var(--sun-ink)', lineHeight: 1.45,
+          margin: '10px 0 4px', background: theme.banner.bg, border: `2px solid ${theme.banner.border}`, borderRadius: 12,
+          padding: '8px 13px', fontSize: 13.5, fontWeight: 700, color: theme.banner.ink, lineHeight: 1.45,
+          position: 'relative', zIndex: 3,
         }}>📜 {chapter}</div>
 
         {/* Vägen */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 6px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column-reverse', gap: 18, maxWidth: 460, margin: '0 auto' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 6px', position: 'relative', zIndex: 2 }}>
+          <div style={{ display: 'flex', flexDirection: 'column-reverse', gap: 22, maxWidth: 460, margin: '0 auto' }}>
             {moments.map((moment, i) => {
               const skill = child.skills[moment.id]
               const state = nodeState(moment, skill, moment.id === currentId)
@@ -181,7 +195,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
         </div>
 
         {/* Världsväxlare */}
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', paddingTop: 6 }}>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', paddingTop: 6, position: 'relative', zIndex: 3 }}>
           {WORLDS.map((w) => (
             <button
               key={w.id}

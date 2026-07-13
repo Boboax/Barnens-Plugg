@@ -12,6 +12,10 @@ export function configureChatFromHousehold(household: Household): void {
     return
   }
   setChatProvider(cfg.provider === 'claude' ? createClaudeProvider(cfg.apiKey) : createGeminiProvider(cfg.apiKey))
+  // Värm modellistan direkt så första chattmeddelandet slipper vänta på den.
+  if (cfg.provider === 'gemini') {
+    void import('./providers').then(({ listGeminiModels }) => listGeminiModels(cfg.apiKey).catch(() => {}))
+  }
 }
 
 /** Är chatten redo för det här barnet? (nyckel finns + påslagen för barnet) */

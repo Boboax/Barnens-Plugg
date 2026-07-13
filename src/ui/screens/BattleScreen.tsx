@@ -8,6 +8,8 @@ import {
 } from '../../engine/session'
 import { sfx } from '../../sound'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
+import { WorldScenery } from '../components/WorldScenery'
+import { worldTheme } from '../worldThemes'
 import { EndCard } from './SessionScreen'
 import { useStore } from '../store'
 
@@ -84,13 +86,16 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
   }
 
   const shieldsLeft = Math.max(0, needed - correct)
+  const theme = worldTheme(moment.worldId)
 
   return (
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column', padding: '10px 16px 16px',
-      background: 'linear-gradient(180deg, #E9F1FA 0%, var(--bg) 70%)',
+      background: theme.sky, position: 'relative', overflow: 'hidden',
+      ...(theme.horizon === 'grotta' ? ({ '--ink': '#F3EFFF', '--muted': '#BDB4DC', '--sun-ink': '#FFD98A' } as React.CSSProperties) : {}),
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+      <WorldScenery theme={theme} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
         <button className="chip" onClick={() => store.go('home')}>🏃 Fly (försök igen senare)</button>
         <span style={{ fontWeight: 900, fontSize: 16 }}>
           {kind === 'boss' ? `⚔️ ${boss.name}` : `💎 Stjärnnivå: ${moment.title}`}
@@ -98,7 +103,7 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
         <span className="chip" style={{ color: 'var(--muted)' }}>😴 Pi vilar under striden</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(180px, 230px)', gap: 12, flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(180px, 230px)', gap: 12, flex: 1, minHeight: 0, position: 'relative', zIndex: 2 }}>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginBottom: 4 }}>
             {Array.from({ length: total }).map((_, i) => (
