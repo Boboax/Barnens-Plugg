@@ -215,18 +215,52 @@ function HomeInner({ child }: { child: ChildProfile }) {
 
         {rewards.map((reward) => {
           const progress = rewardProgress(reward, child)
+          const left = progress.total - progress.done
           return (
-            <div className="card" key={reward.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <span style={{ fontSize: 24 }}>{reward.emoji}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 13.5 }}>{reward.title}</div>
-                <div style={{ fontSize: 11.5, color: 'var(--muted)', fontWeight: 700 }}>
-                  {progress.earned ? '🎉 Klar! Visa för en vuxen!' : progress.label}
+            <div className="card" key={reward.id} style={{ borderTop: '4px solid var(--sun)' }}>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <span style={{ fontSize: 30 }}>{reward.emoji}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Belöning</div>
+                  <div style={{ fontWeight: 900, fontSize: 15 }}>{reward.title}</div>
                 </div>
-                <div className="pbar" style={{ marginTop: 5 }}>
-                  <i style={{ width: `${progress.ratio * 100}%`, background: 'var(--sun)' }} />
-                </div>
+                {!progress.earned && (
+                  <span style={{
+                    background: '#FFF1D6', color: 'var(--sun-ink)', borderRadius: 12, padding: '4px 10px',
+                    fontWeight: 900, fontSize: 13, textAlign: 'center', lineHeight: 1.2, flexShrink: 0,
+                  }}>
+                    {left}<br /><span style={{ fontSize: 9.5, fontWeight: 800 }}>kvar</span>
+                  </span>
+                )}
               </div>
+              {progress.earned ? (
+                <div className="pop" style={{ marginTop: 8, fontWeight: 900, fontSize: 13.5, color: 'var(--mint)' }}>
+                  🎉 Du klarade det! Visa för en vuxen så får du din belöning!
+                </div>
+              ) : (
+                <>
+                  <div style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>
+                    {progress.requirement}
+                  </div>
+                  {progress.nextSteps.length > 0 && (
+                    <div style={{ marginTop: 2, fontSize: 11.5, fontWeight: 700, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      Nästa: {progress.nextSteps[0]}{progress.nextSteps.length > 1 ? ` · sen ${progress.nextSteps.length - 1} till` : ' — sista!'}
+                    </div>
+                  )}
+                  {/* Nedräkning: stjärnor när målet är litet, mätare annars. */}
+                  {progress.total <= 10 ? (
+                    <div style={{ display: 'flex', gap: 4, marginTop: 7, fontSize: 17 }}>
+                      {Array.from({ length: progress.total }).map((_, i) => (
+                        <span key={i} style={{ opacity: i < progress.done ? 1 : 0.25, filter: i < progress.done ? undefined : 'grayscale(1)' }}>⭐</span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pbar" style={{ marginTop: 7, height: 12 }}>
+                      <i style={{ width: `${Math.max(4, progress.ratio * 100)}%`, background: 'var(--sun)' }} />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )
         })}

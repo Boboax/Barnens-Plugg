@@ -187,5 +187,18 @@ describe('belöningar', () => {
     }, profile)
     expect(progress.done).toBe(1)
     expect(progress.earned).toBe(false)
+    expect(progress.requirement).toContain('1 boss till')
+  })
+
+  it('terminsmål listar de återstående momenten vid namn', () => {
+    const profile = makeProfile()
+    const progress = rewardProgress({
+      id: 'r2', childId: 'test', title: 'Glass', emoji: '🍦',
+      target: { type: 'term-goal', year: '2', term: 'HT', half: 1 }, createdAt: '2026-01-01T00:00:00Z',
+      baseline: { momentsMastered: 0, activeDays: 0 },
+    }, profile)
+    expect(progress.total).toBeGreaterThan(0)
+    expect(progress.nextSteps.length).toBe(progress.total - progress.done)
+    expect(progress.requirement).toContain('moment till')
   })
 })

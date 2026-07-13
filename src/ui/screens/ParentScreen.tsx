@@ -551,7 +551,9 @@ function RewardsTab() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <strong style={{ fontSize: 14 }}>{reward.title}</strong>
               <span style={{ color: '#8B8FA0', fontSize: 13, fontWeight: 700 }}> · {child.name}</span>
-              <div style={{ fontSize: 12.5, color: '#8B8FA0', fontWeight: 700 }}>{progress.label}</div>
+              <div style={{ fontSize: 12.5, color: '#8B8FA0', fontWeight: 700 }}>
+                {progress.label}{!progress.earned ? ` — ${progress.requirement.toLowerCase()}` : ''}
+              </div>
               <div style={{ height: 7, borderRadius: 99, background: '#EDEAE2', overflow: 'hidden', marginTop: 4 }}>
                 <i style={{ display: 'block', height: '100%', width: `${progress.ratio * 100}%`, background: progress.earned ? '#3FBF87' : '#FFC94D', borderRadius: 99 }} />
               </div>
