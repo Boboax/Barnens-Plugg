@@ -19,17 +19,67 @@ import {
    ============================================================ */
 
 /**
- * Gemini-modeller i prioritetsordning. 3.5-flash (maj 2026) har brytande
- * API-ändringar mot 2.5: thinkingLevel (sträng) ersätter thinkingBudget
- * (tal) och temperatur är utfasad — därför egen config per modell.
- * Faller tillbaka till 2.5-flash om 3.5 inte är tillgänglig på nyckeln
- * (t.ex. gratisnivå); nyckelfel avbryter direkt utan fallback.
+ * Gemini-modeller: hårdkodade namn ruttnar (Google stänger äldre modeller
+ * för nya nycklar — "no longer available to new users"). Därför frågar vi
+ * ListModels-API:et vilka modeller NYCKELN faktiskt har och väljer bästa
+ * flash-modellen dynamiskt. Kända namn ligger kvar som sista utväg.
  */
-const GEMINI_MODELS: { id: string; config: Record<string, unknown> }[] = [
-  { id: 'gemini-3.5-flash', config: { maxOutputTokens: 400, thinkingConfig: { thinkingLevel: 'MINIMAL' } } },
-  { id: 'gemini-2.5-flash', config: { maxOutputTokens: 400, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } } },
-]
+const GEMINI_FALLBACK_IDS = ['gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash']
 let workingGeminiModel: string | null = null
+
+export interface GeminiModelInfo {
+  id: string
+  version: number
+  tts: boolean
+}
+
+let modelListCache: { key: string; models: GeminiModelInfo[] } | null = null
+
+/** Modeller som nyckeln har tillgång till (cachas per nyckel). */
+export async function listGeminiModels(apiKey: string): Promise<GeminiModelInfo[]> {
+  if (modelListCache?.key === apiKey) return modelListCache.models
+  const res = await fetchWithTimeout(
+    `https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=${encodeURIComponent(apiKey)}`,
+    { method: 'GET' },
+  )
+  if (!res.ok) throw new ChatError(statusToKind(res.status), `Gemini ListModels ${res.status}: ${await errorDetail(res)}`)
+  const data = (await res.json()) as { models?: { name?: string; supportedGenerationMethods?: string[] }[] }
+  const models = (data.models ?? [])
+    .filter((m) => m.supportedGenerationMethods?.includes('generateContent'))
+    .map((m) => {
+      const id = (m.name ?? '').replace(/^models\//, '')
+      return {
+        id,
+        version: Number(/gemini-(\d+(?:\.\d+)?)/.exec(id)?.[1] ?? 0),
+        tts: /tts/.test(id),
+      }
+    })
+    .filter((m) => m.version > 0)
+  modelListCache = { key: apiKey, models }
+  return models
+}
+
+/** Bästa chattkandidaterna: flash, ej specialvarianter; nyast och stabil först. */
+export function pickChatModels(models: GeminiModelInfo[]): string[] {
+  const score = (m: GeminiModelInfo): number =>
+    m.version * 100 - (/preview|exp/.test(m.id) ? 10 : 0) - m.id.length * 0.01
+  const ids = models
+    .filter((m) => !m.tts && /flash/.test(m.id) && !/lite|image|live|audio|embed/.test(m.id))
+    .sort((a, b) => score(b) - score(a))
+    .map((m) => m.id)
+  for (const known of GEMINI_FALLBACK_IDS) if (!ids.includes(known)) ids.push(known)
+  return ids.slice(0, 4)
+}
+
+/** Rätt generationConfig per modellgeneration (API:t bröts mellan 2.5 → 3 → 3.5). */
+function geminiConfigFor(id: string): Record<string, unknown> {
+  const v = Number(/gemini-(\d+(?:\.\d+)?)/.exec(id)?.[1] ?? 0)
+  if (v >= 3.5) return { maxOutputTokens: 400, thinkingConfig: { thinkingLevel: 'MINIMAL' } }
+  if (v >= 3) return { maxOutputTokens: 800, thinkingConfig: { thinkingLevel: 'LOW' } }
+  return { maxOutputTokens: 400, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } }
+}
+
+export const lastGeminiModelUsed = (): string | null => workingGeminiModel
 
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001'
 const MAX_HISTORY = 12 // meddelanden som skickas med (kostnad + fokus)
@@ -82,6 +132,29 @@ async function fetchWithTimeout(url: string, init: RequestInit): Promise<Respons
 
 /* ---------- Gemini ---------- */
 
+async function geminiAttempt(
+  apiKey: string,
+  modelId: string,
+  config: Record<string, unknown>,
+  system: string | null,
+  contents: unknown[],
+): Promise<string> {
+  const body = {
+    ...(system ? { system_instruction: { parts: [{ text: system }] } } : {}),
+    contents,
+    generationConfig: config,
+  }
+  const res = await fetchWithTimeout(
+    `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(apiKey)}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+  )
+  if (!res.ok) throw new ChatError(statusToKind(res.status), `${modelId} ${res.status}: ${await errorDetail(res)}`)
+  const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
+  const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim()
+  if (!text) throw new ChatError('natverk', `${modelId}: tomt svar`)
+  return text
+}
+
 async function geminiGenerate(apiKey: string, system: string | null, turns: { role: 'user' | 'model'; text: string; imagePng?: string }[]): Promise<string> {
   const contents = turns.map((t) => ({
     role: t.role,
@@ -90,37 +163,49 @@ async function geminiGenerate(apiKey: string, system: string | null, turns: { ro
       ...(t.imagePng ? [{ inline_data: { mime_type: 'image/png', data: dataUrlToBase64(t.imagePng) } }] : []),
     ],
   }))
-  // Prova bästa modellen först; minns vilken som fungerar på nyckeln.
-  const models = workingGeminiModel
-    ? [...GEMINI_MODELS].sort((a, b) => (a.id === workingGeminiModel ? -1 : b.id === workingGeminiModel ? 1 : 0))
-    : GEMINI_MODELS
-  let lastError: ChatError = new ChatError('natverk', 'okänt Gemini-fel')
-  for (const model of models) {
+
+  // Kandidater från nyckelns egen modellista; kända namn som sista utväg.
+  let candidates: string[]
+  try {
+    candidates = pickChatModels(await listGeminiModels(apiKey))
+  } catch (err) {
+    if (err instanceof ChatError && err.kind === 'nyckel') throw err
+    candidates = [...GEMINI_FALLBACK_IDS]
+  }
+  if (workingGeminiModel && candidates.includes(workingGeminiModel)) {
+    candidates = [workingGeminiModel, ...candidates.filter((c) => c !== workingGeminiModel)]
+  }
+
+  const attempts: string[] = []
+  let worstKind: ChatError['kind'] = 'natverk'
+  for (const modelId of candidates) {
     try {
-      const body = {
-        ...(system ? { system_instruction: { parts: [{ text: system }] } } : {}),
-        contents,
-        generationConfig: model.config,
-      }
-      const res = await fetchWithTimeout(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:generateContent?key=${encodeURIComponent(apiKey)}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
-      )
-      if (!res.ok) throw new ChatError(statusToKind(res.status), `Gemini ${model.id} ${res.status}: ${await errorDetail(res)}`)
-      const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
-      const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim()
-      if (!text) throw new ChatError('natverk', `Tomt svar från ${model.id}`)
-      workingGeminiModel = model.id
+      const text = await geminiAttempt(apiKey, modelId, geminiConfigFor(modelId), system, contents)
+      workingGeminiModel = modelId
       return text
     } catch (err) {
-      lastError = err instanceof ChatError ? err : new ChatError('natverk', String(err))
-      // Ogiltig nyckel drabbar alla modeller lika — ingen mening att falla vidare.
-      // OBS: 400 kan också betyda avvisad parameter på just den modellen,
-      // så vi provar nästa modell även vid 'nyckel' om fler finns kvar.
-      if (lastError.kind === 'nyckel' && /API key not valid/i.test(lastError.message)) throw lastError
+      const chatErr = err instanceof ChatError ? err : new ChatError('natverk', String(err))
+      // Ogiltig nyckel drabbar alla modeller lika — avbryt direkt.
+      if (/API key not valid/i.test(chatErr.message)) throw chatErr
+      // 400 kan vara en avvisad thinking-parameter på just den här
+      // modellgenerationen — prova en gång till med neutral config.
+      if (chatErr.kind === 'nyckel') {
+        try {
+          const text = await geminiAttempt(apiKey, modelId, { maxOutputTokens: 2048 }, system, contents)
+          workingGeminiModel = modelId
+          return text
+        } catch (retryErr) {
+          const retryChatErr = retryErr instanceof ChatError ? retryErr : new ChatError('natverk', String(retryErr))
+          attempts.push(retryChatErr.message)
+          worstKind = retryChatErr.kind
+          continue
+        }
+      }
+      attempts.push(chatErr.message)
+      worstKind = chatErr.kind
     }
   }
-  throw lastError
+  throw new ChatError(worstKind, attempts.join(' | '))
 }
 
 /* ---------- Claude ---------- */
@@ -211,7 +296,8 @@ export async function pingProvider(provider: 'gemini' | 'claude', apiKey: string
   const generate = provider === 'claude' ? claudeGenerate : geminiGenerate
   try {
     const reply = await generate(apiKey, null, [{ role: 'user', text: 'Svara med exakt ett ord: OK' }])
-    return { ok: true, detail: `Svar från ${provider === 'claude' ? 'Claude' : 'Gemini'}: "${reply.slice(0, 60)}"` }
+    const model = provider === 'claude' ? CLAUDE_MODEL : lastGeminiModelUsed() ?? 'gemini'
+    return { ok: true, detail: `Svar via ${model}: "${reply.slice(0, 60)}"` }
   } catch (err) {
     return { ok: false, detail: err instanceof Error ? err.message : String(err) }
   }

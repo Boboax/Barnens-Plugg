@@ -22,7 +22,15 @@ const NEW_TASK_COUNT = 8
 const MIXED_TASK_COUNT = 4
 const MAX_REVIEW_MOMENTS = 2
 
-export function composeSession(profile: ChildProfile, today: string): SessionPlan {
+/** Kan momentet tränas som "nytt" just nu? (upplåst + byggd generator) */
+export function isTrainable(profile: ChildProfile, momentId: string): boolean {
+  const skill = profile.skills[momentId]
+  if (!skill) return false
+  const openStates = new Set(['available', 'in-progress', 'boss-ready', 'needs-review'])
+  return openStates.has(skill.mastery) && hasGenerator(momentById(momentId).generatorId)
+}
+
+export function composeSession(profile: ChildProfile, today: string, preferredMomentId?: string): SessionPlan {
   const parts: SessionPlan['parts'] = []
 
   const due = dueForReview(profile.skills, today)
@@ -32,7 +40,11 @@ export function composeSession(profile: ChildProfile, today: string): SessionPla
     parts.push({ kind: 'uppvarmning', momentId: skill.momentId, taskCount: REVIEW_TASK_COUNT })
   }
 
-  const current = currentMomentId(profile)
+  // Barnet kan välja ett upplåst moment på kartan; annars väljer motorn.
+  const current =
+    preferredMomentId && isTrainable(profile, preferredMomentId)
+      ? preferredMomentId
+      : currentMomentId(profile)
   if (current) {
     parts.push({ kind: 'nytt', momentId: current, taskCount: NEW_TASK_COUNT })
   }

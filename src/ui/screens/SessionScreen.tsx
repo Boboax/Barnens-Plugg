@@ -44,7 +44,7 @@ export function SessionScreen() {
   // Passet planeras EN gång vid start (medvetet: profilen uppdateras under passet).
   const slots = useMemo<Slot[]>(() => {
     if (!child) return []
-    const plan = composeSession(child, todayISO())
+    const plan = composeSession(child, todayISO(), store.sessionMomentId)
     const out: Slot[] = []
     for (const part of plan.parts) {
       for (let i = 0; i < part.taskCount; i++) {
