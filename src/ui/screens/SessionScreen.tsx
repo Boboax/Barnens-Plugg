@@ -93,7 +93,8 @@ export function SessionScreen() {
   const done = index >= slots.length
 
   const handleComplete = (result: TaskResult): void => {
-    store.recordAnswer(task, result.correct, result.elapsedMs, CONTEXT[slot.kind], result.given, result.scratchPng)
+    const streak = result.correct ? combo + 1 : 0
+    store.recordAnswer(task, result.correct, result.elapsedMs, CONTEXT[slot.kind], result.given, result.scratchPng, streak)
     if (result.correct) {
       setCorrectCount((n) => n + 1)
       const next = combo + 1

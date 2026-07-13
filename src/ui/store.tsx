@@ -59,7 +59,7 @@ interface StoreValue {
   updateChild(id: string, patch: Partial<Pick<ChildProfile, 'name' | 'color' | 'dailyLimitMinutes' | 'chatEnabled' | 'schoolYear'>>): void
 
   // Träning
-  recordAnswer(task: Task, correct: boolean, elapsedMs: number, context: AnswerRecord['context'], givenAnswer?: number | string, scratchPng?: string): void
+  recordAnswer(task: Task, correct: boolean, elapsedMs: number, context: AnswerRecord['context'], givenAnswer?: number | string, scratchPng?: string, hotStreak?: number): void
   finishBoss(momentId: string, won: boolean): void
   finishStar(momentId: string, won: boolean): void
   finishReview(momentId: string, passed: boolean): void
@@ -202,14 +202,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     updateChild: (id, patch) => patchChild(id, (c) => ({ ...c, ...patch })),
 
-    recordAnswer: (task, correct, elapsedMs, context, givenAnswer, scratchPng) => {
+    recordAnswer: (task, correct, elapsedMs, context, givenAnswer, scratchPng, hotStreak) => {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => {
         const momentId = MOMENTS.find((m) => m.generatorId === task.ref.generatorId)?.id
         if (!momentId) return c
         const skill = c.skills[momentId] ?? newSkillState(momentId)
         const { skill: nextSkill, record } = applyAnswer(
-          skill, task, correct, elapsedMs, context, nowISO(), givenAnswer, scratchPng,
+          skill, task, correct, elapsedMs, context, nowISO(), givenAnswer, scratchPng, hotStreak,
         )
         // Kladdbilder är stora — behåll bara de senaste.
         let answers = [...c.answers, record]

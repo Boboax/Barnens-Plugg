@@ -91,7 +91,10 @@ export function applyDiagnosisResult(profile: ChildProfile, now: string): Record
         review: scheduleFirstReview(now),
       }
     } else if (i === frontier) {
-      skills[momentId] = { ...base, mastery: 'in-progress', rating: 420 }
+      // Nivå ~5 direkt: diagnosen har redan visat att allt före sitter,
+      // så frontmomentet ska kännas som en utmaning — inte som mjukstart
+      // med klossbilder (rating 550 ⇒ practiceLevel 5).
+      skills[momentId] = { ...base, mastery: 'in-progress', rating: 550 }
     }
   })
 

@@ -81,7 +81,19 @@ export interface AnswerOutcome {
   record: AnswerRecord
 }
 
-/** Registrera ett svar under övning/repetition: rating, räknare, feltyp. */
+/**
+ * "Het hand"-acceleration: extra ratingskjuts vid längre rättsviter,
+ * så starka elever når sin riktiga nivå inom ett pass i stället för
+ * inom en vecka. Kämpar man gäller den försiktiga grundtakten.
+ */
+export const hotStreakBonus = (streak: number): number =>
+  streak >= 3 ? Math.min(24, 6 * (streak - 2)) : 0
+
+/**
+ * Registrera ett svar under övning/repetition: rating, räknare, feltyp.
+ * hotStreak = antal rätt i rad inklusive detta svar (bara övningspass —
+ * boss/diagnos/blixt skickar inget och får ingen acceleration).
+ */
 export function applyAnswer(
   skill: SkillState,
   task: Task,
@@ -91,6 +103,7 @@ export function applyAnswer(
   now: string,
   givenAnswer?: number | string,
   scratchPng?: string,
+  hotStreak = 0,
 ): AnswerOutcome {
   const misconception = correct || givenAnswer === undefined ? undefined : matchMisconception(task, givenAnswer)
   const errorKind = correct ? undefined : classifyError(skill, task.ref.level, elapsedMs, misconception)
@@ -100,6 +113,9 @@ export function applyAnswer(
   let rating = skill.rating
   if (!(errorKind === 'slarv' && !correct)) {
     rating = updateRating(skill.rating, skill.attempts, task.ref.level, ratingCorrect)
+  }
+  if (correct) {
+    rating = Math.min(1000, rating + hotStreakBonus(hotStreak))
   }
 
   const recentMisconceptions = misconception && misconception !== 'okand'
