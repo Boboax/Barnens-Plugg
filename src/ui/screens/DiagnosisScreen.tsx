@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { nextDiagnosisTask, PROBES_PER_PASS, diagnosisBackbone, searchState } from '../../engine/diagnosis'
 import { Pi } from '../components/Pi'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
@@ -18,7 +18,15 @@ export function DiagnosisScreen() {
   const [probesThisPass, setProbesThisPass] = useState(0)
   const [passDone, setPassDone] = useState(false)
 
-  const next = child && !child.diagnosis.done ? nextDiagnosisTask(child) : null
+  // Uppgiften genereras EN gång per prob och ligger sedan stilla.
+  // (Utan memo skulle varje omritning — t.ex. tidräknarens tick var 5:e
+  // sekund — dra ett nytt frö och byta siffror mitt framför barnet.)
+  const probeCount = child?.diagnosis.probes.length ?? 0
+  const next = useMemo(
+    () => (child && !child.diagnosis.done ? nextDiagnosisTask(child) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [child?.id, probeCount, child?.diagnosis.done],
+  )
 
   // Kantfall: sökningen konvergerade i ett tidigare (avbrutet) pass.
   const strandedConverged = Boolean(child && !child.diagnosis.done && next === null && !passDone)
