@@ -1,0 +1,326 @@
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import type {
+  AnswerRecord, ChildProfile, Household, Reward, RewardTarget, SchoolYear, SkillState, Task,
+} from '../domain/types'
+import { MOMENTS } from '../domain/curriculum'
+import {
+  applyAnswer, applyBossResult, applyReviewResult, applyStarResult, newSkillState, recomputeAvailability,
+} from '../engine/progress'
+import { applyDiagnosisResult, diagnosisPassesForAge } from '../engine/diagnosis'
+import { activeDayCount, masteredCount } from '../engine/rewards'
+import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
+import { hashPin, verifyPin } from '../storage/pin'
+
+/* ============================================================
+   Appens tillstånd: hushållet + navigering + tidsbokföring.
+
+   All domänlogik bor i motorn (rena funktioner) — här kopplas
+   den till React och lagringen. Varje ändring autosparas.
+   ============================================================ */
+
+export type Screen =
+  | 'profiles' | 'home' | 'session' | 'boss' | 'star'
+  | 'diagnosis' | 'parent' | 'time-up'
+
+export const KID_COLORS = ['#FF7A6E', '#3FBF87', '#4A56C6', '#E8A13C', '#8C6BC8', '#2FA8C7'] as const
+
+export const todayISO = (): string => new Date().toISOString().slice(0, 10)
+export const nowISO = (): string => new Date().toISOString()
+
+/** Max antal svar som sparas per barn (ringbuffert — rapporten behöver ~4 veckor). */
+const ANSWER_HISTORY_LIMIT = 1500
+/** Max antal sparade kladdbilder per barn (de är störst i lagringen). */
+const SCRATCH_LIMIT = 20
+
+interface StoreValue {
+  household: Household
+  loaded: boolean
+  screen: Screen
+  activeChild: ChildProfile | undefined
+  parentUnlocked: boolean
+
+  // Navigering
+  go(screen: Screen): void
+  selectChild(id: string): void
+  leaveChild(): void
+  /** Momentet vars boss/stjärnnivå utmanas just nu. */
+  battleMomentId: string | undefined
+  startBattle(momentId: string, kind: 'boss' | 'star'): void
+
+  // Barnhantering
+  addChild(input: { name: string; color: string; birthYear: number; schoolYear: SchoolYear; dailyLimitMinutes: number }): void
+  updateChild(id: string, patch: Partial<Pick<ChildProfile, 'name' | 'color' | 'dailyLimitMinutes' | 'chatEnabled' | 'schoolYear'>>): void
+
+  // Träning
+  recordAnswer(task: Task, correct: boolean, elapsedMs: number, context: AnswerRecord['context'], givenAnswer?: number | string, scratchPng?: string): void
+  finishBoss(momentId: string, won: boolean): void
+  finishStar(momentId: string, won: boolean): void
+  finishReview(momentId: string, passed: boolean): void
+  recordDiagnosisProbe(momentId: string, level: number, correct: boolean): void
+  finishDiagnosisPass(converged: boolean): void
+
+  // Tid
+  secondsLeftToday(child: ChildProfile): number
+  addUsage(seconds: number): void
+
+  // Föräldraläge
+  tryUnlockParent(pin: string): Promise<boolean>
+  setPin(pin: string): Promise<void>
+  hasPin: boolean
+  lockParent(): void
+  addReward(childId: string, title: string, emoji: string, target: RewardTarget): void
+  markRewardEarned(id: string): void
+  redeemReward(id: string): void
+  deleteReward(id: string): void
+  replaceHousehold(next: Household): void
+  noteBackup(): void
+}
+
+const Ctx = createContext<StoreValue | null>(null)
+
+export function useStore(): StoreValue {
+  const v = useContext(Ctx)
+  if (!v) throw new Error('useStore utanför StoreProvider')
+  return v
+}
+
+export function StoreProvider({ children }: { children: ReactNode }) {
+  const [household, setHousehold] = useState<Household>(emptyHousehold)
+  const [loaded, setLoaded] = useState(false)
+  const [screen, setScreen] = useState<Screen>('profiles')
+  const [activeChildId, setActiveChildId] = useState<string>()
+  const [parentUnlocked, setParentUnlocked] = useState(false)
+  const [battleMomentId, setBattleMomentId] = useState<string>()
+
+  useEffect(() => {
+    void loadHousehold().then((data) => {
+      if (data) setHousehold(data)
+      setLoaded(true)
+      void requestPersistentStorage()
+    })
+  }, [])
+
+  // Autospar: varje förändring efter inladdning skrivs ner.
+  useEffect(() => {
+    if (loaded) void saveHousehold(household)
+  }, [household, loaded])
+
+  const activeChild = household.children.find((c) => c.id === activeChildId)
+
+  const patchChild = (id: string, fn: (c: ChildProfile) => ChildProfile): void => {
+    setHousehold((h) => ({
+      ...h,
+      children: h.children.map((c) => (c.id === id ? fn(c) : c)),
+    }))
+  }
+
+  const value: StoreValue = useMemo(() => ({
+    household, loaded, screen, activeChild, parentUnlocked,
+    hasPin: Boolean(household.parentPinHash),
+
+    go: setScreen,
+
+    selectChild: (id) => {
+      const child = household.children.find((c) => c.id === id)
+      if (!child) return
+      setActiveChildId(id)
+      setScreen(child.diagnosis.done ? 'home' : 'diagnosis')
+    },
+
+    leaveChild: () => {
+      setActiveChildId(undefined)
+      setScreen('profiles')
+    },
+
+    battleMomentId,
+    startBattle: (momentId, kind) => {
+      setBattleMomentId(momentId)
+      setScreen(kind)
+    },
+
+    addChild: ({ name, color, birthYear, schoolYear, dailyLimitMinutes }) => {
+      const skills: Record<string, SkillState> = {}
+      for (const m of MOMENTS) skills[m.id] = newSkillState(m.id)
+      const child: ChildProfile = {
+        id: `barn-${Date.now().toString(36)}`,
+        name, color, birthYear, schoolYear,
+        createdAt: nowISO(),
+        skills: recomputeAvailability(skills),
+        answers: [],
+        diagnosis: {
+          passesDone: 0,
+          passesTotal: diagnosisPassesForAge(birthYear, new Date().getFullYear()),
+          done: false,
+          probes: [],
+        },
+        dailyLimitMinutes,
+        usageSeconds: {},
+        chatEnabled: false,
+        streak: { days: 0, lastActiveDate: '' },
+      }
+      setHousehold((h) => ({ ...h, children: [...h.children, child] }))
+    },
+
+    updateChild: (id, patch) => patchChild(id, (c) => ({ ...c, ...patch })),
+
+    recordAnswer: (task, correct, elapsedMs, context, givenAnswer, scratchPng) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => {
+        const momentId = MOMENTS.find((m) => m.generatorId === task.ref.generatorId)?.id
+        if (!momentId) return c
+        const skill = c.skills[momentId] ?? newSkillState(momentId)
+        const { skill: nextSkill, record } = applyAnswer(
+          skill, task, correct, elapsedMs, context, nowISO(), givenAnswer, scratchPng,
+        )
+        // Kladdbilder är stora — behåll bara de senaste.
+        let answers = [...c.answers, record]
+        const withScratch = answers.filter((a) => a.scratchPng)
+        if (withScratch.length > SCRATCH_LIMIT) {
+          const drop = new Set(withScratch.slice(0, withScratch.length - SCRATCH_LIMIT))
+          answers = answers.map((a) => (drop.has(a) ? { ...a, scratchPng: undefined } : a))
+        }
+        if (answers.length > ANSWER_HISTORY_LIMIT) answers = answers.slice(-ANSWER_HISTORY_LIMIT)
+
+        // Streak: första svaret en ny dag förlänger (eller nollställer) kedjan.
+        const today = todayISO()
+        let streak = c.streak
+        if (streak.lastActiveDate !== today) {
+          const yesterday = new Date()
+          yesterday.setDate(yesterday.getDate() - 1)
+          const wasYesterday = streak.lastActiveDate === yesterday.toISOString().slice(0, 10)
+          streak = { days: wasYesterday ? streak.days + 1 : 1, lastActiveDate: today }
+        }
+
+        return {
+          ...c,
+          skills: recomputeAvailability({ ...c.skills, [momentId]: nextSkill }),
+          answers,
+          streak,
+        }
+      })
+    },
+
+    finishBoss: (momentId, won) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => ({
+        ...c,
+        skills: recomputeAvailability({
+          ...c.skills,
+          [momentId]: applyBossResult(c.skills[momentId] ?? newSkillState(momentId), won, todayISO()),
+        }),
+      }))
+    },
+
+    finishStar: (momentId, won) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => ({
+        ...c,
+        skills: { ...c.skills, [momentId]: applyStarResult(c.skills[momentId] ?? newSkillState(momentId), won) },
+      }))
+    },
+
+    finishReview: (momentId, passed) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => ({
+        ...c,
+        skills: recomputeAvailability({
+          ...c.skills,
+          [momentId]: applyReviewResult(c.skills[momentId] ?? newSkillState(momentId), passed, todayISO()),
+        }),
+      }))
+    },
+
+    recordDiagnosisProbe: (momentId, level, correct) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => ({
+        ...c,
+        diagnosis: {
+          ...c.diagnosis,
+          probes: [...c.diagnosis.probes, { momentId, correct, level: level as 1 }],
+        },
+      }))
+    },
+
+    finishDiagnosisPass: (converged) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => {
+        const passesDone = c.diagnosis.passesDone + 1
+        const done = converged || passesDone >= c.diagnosis.passesTotal
+        return {
+          ...c,
+          diagnosis: { ...c.diagnosis, passesDone, done },
+          skills: done ? applyDiagnosisResult(c, todayISO()) : c.skills,
+        }
+      })
+    },
+
+    secondsLeftToday: (child) => {
+      const used = child.usageSeconds[todayISO()] ?? 0
+      return Math.max(0, child.dailyLimitMinutes * 60 - used)
+    },
+
+    addUsage: (seconds) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => ({
+        ...c,
+        usageSeconds: { ...c.usageSeconds, [todayISO()]: (c.usageSeconds[todayISO()] ?? 0) + seconds },
+      }))
+    },
+
+    tryUnlockParent: async (pin) => {
+      if (!household.parentPinHash) return false
+      const ok = await verifyPin(pin, household.parentPinHash)
+      if (ok) setParentUnlocked(true)
+      return ok
+    },
+
+    setPin: async (pin) => {
+      const hash = await hashPin(pin)
+      setHousehold((h) => ({ ...h, parentPinHash: hash }))
+      setParentUnlocked(true)
+    },
+
+    lockParent: () => setParentUnlocked(false),
+
+    addReward: (childId, title, emoji, target) => {
+      const child = household.children.find((c) => c.id === childId)
+      if (!child) return
+      const reward: Reward = {
+        id: `rew-${Date.now().toString(36)}`,
+        childId, title, emoji, target,
+        createdAt: nowISO(),
+        baseline: { momentsMastered: masteredCount(child), activeDays: activeDayCount(child) },
+      }
+      setHousehold((h) => ({ ...h, rewards: [...h.rewards, reward] }))
+    },
+
+    markRewardEarned: (id) => {
+      setHousehold((h) => ({
+        ...h,
+        rewards: h.rewards.map((r) => (r.id === id && !r.earnedAt ? { ...r, earnedAt: nowISO() } : r)),
+      }))
+    },
+
+    redeemReward: (id) => {
+      setHousehold((h) => ({
+        ...h,
+        rewards: h.rewards.map((r) => (r.id === id ? { ...r, redeemedAt: nowISO() } : r)),
+      }))
+    },
+
+    deleteReward: (id) => {
+      setHousehold((h) => ({ ...h, rewards: h.rewards.filter((r) => r.id !== id) }))
+    },
+
+    replaceHousehold: (next) => {
+      setHousehold(next)
+      setActiveChildId(undefined)
+      setScreen('profiles')
+    },
+
+    noteBackup: () => setHousehold((h) => ({ ...h, lastBackupAt: nowISO() })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId])
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
+}

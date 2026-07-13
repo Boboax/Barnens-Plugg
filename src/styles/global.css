@@ -1,0 +1,144 @@
+/* ============================================================
+   Barnens Plugg — designsystem
+   Varm gräddvit botten, runda former, stora tryckytor.
+   En profilfärg per barn sätts som --kid på :root av appen.
+   ============================================================ */
+
+:root {
+  /* Grund */
+  --bg: #FFF9EF;
+  --card: #FFFFFF;
+  --ink: #2E3350;
+  --muted: #8A8FA8;
+  --line: #EFE6D4;
+
+  /* Identitet */
+  --primary: #4A56C6;
+  --primary-shadow: #37409A;
+  --sun: #FFC94D;
+  --sun-ink: #7A5A00;
+  --coral: #FF7A6E;
+  --mint: #3FBF87;
+  --mint-shadow: #2E9367;
+  --boss: #8C6BC8;
+
+  /* Semantik */
+  --ok: #3FBF87;
+  --warn: #E8A13C;
+  --err: #E2574C;
+
+  /* Barnets profilfärg (sätts dynamiskt) */
+  --kid: var(--primary);
+
+  /* Typografi */
+  --font: ui-rounded, -apple-system, "SF Pro Rounded", "Segoe UI", Roboto, sans-serif;
+
+  /* Rytm */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --shadow-card: 0 3px 10px rgba(60, 50, 20, 0.07);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+button:focus-visible, [tabindex]:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+input, textarea { font-family: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Återkommande primitiver ---------- */
+
+.card {
+  background: var(--card);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-card);
+  padding: 14px 16px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 12px 26px;
+  font-weight: 800;
+  font-size: 16px;
+  transition: transform 0.08s ease;
+}
+.btn:active { transform: translateY(2px); }
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 0 var(--primary-shadow); }
+.btn-primary:active { box-shadow: 0 2px 0 var(--primary-shadow); }
+.btn-ok { background: var(--mint); color: #fff; box-shadow: 0 4px 0 var(--mint-shadow); }
+.btn-ghost { background: var(--card); color: var(--primary); border: 2px solid var(--primary); }
+.btn-quiet { background: var(--card); color: var(--muted); border: 2px solid var(--line); font-size: 14px; padding: 8px 16px; }
+.btn:disabled { opacity: 0.45; pointer-events: none; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 13px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pbar {
+  height: 10px;
+  border-radius: 99px;
+  background: #EFEAF9;
+  overflow: hidden;
+}
+.pbar > i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--mint);
+  transition: width 0.4s ease;
+}
+
+.screen-fade { animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@keyframes pop { 0% { transform: scale(0.6); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.pop { animation: pop 0.35s ease; }
+
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.shake { animation: shake 0.3s ease; }
