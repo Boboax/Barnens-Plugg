@@ -15,6 +15,9 @@
 
 const VOICE_LS_KEY = 'barnens-plugg-rost'
 
+/** Specialvärde i röstvalet: Geminis moln-TTS (mänsklig kvalitet). */
+export const CLOUD_VOICE = 'moln'
+
 let cachedVoices: SpeechSynthesisVoice[] | undefined
 
 // Röstlistan laddas asynkront i vissa webbläsare.
@@ -87,16 +90,145 @@ const toSpoken = (text: string): string =>
     .replaceAll('__', ' vad ')
     .replaceAll('%', ' procent')
 
-/** Läs upp en text på svenska. */
-export function speak(text: string, voiceURI?: string): void {
+/* ============================================================
+   Moln-TTS via Gemini — mänsklig röstkvalitet.
+
+   Använder samma API-nyckel som chatten (bor enbart på enheten).
+   Genererat ljud cachas i minnet så återkommande fraser inte
+   kostar nya anrop. Vid fel/offline: automatiskt tillbaka till
+   enhetens lokala röst — uppläsningsknappen fungerar alltid.
+   ============================================================ */
+
+// Prova GA-namnet först, preview-namnet som reserv; minns vad som funkar.
+const TTS_MODELS = ['gemini-2.5-flash-tts', 'gemini-2.5-flash-preview-tts']
+let workingTtsModel: string | null = null
+const TTS_VOICE = 'Leda' // varm, ungdomlig — passar Pi
+const TTS_TIMEOUT_MS = 10_000
+
+let cloudApiKey: string | null = null
+let audioCtx: AudioContext | null = null
+let currentSource: AudioBufferSourceNode | null = null
+let speakToken = 0
+const audioCache = new Map<string, AudioBuffer>()
+const AUDIO_CACHE_MAX = 60
+
+/** Kopplas till hushållets Gemini-nyckel (null = moln-TTS av). */
+export function configureCloudTts(geminiApiKey: string | null): void {
+  cloudApiKey = geminiApiKey
+}
+
+export const cloudTtsAvailable = (): boolean => cloudApiKey !== null
+
+function ensureAudioCtx(): AudioContext | null {
+  const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+  if (!AC) return null
+  if (!audioCtx) audioCtx = new AC()
+  if (audioCtx.state === 'suspended') void audioCtx.resume()
+  return audioCtx
+}
+
+/** Gemini-TTS svarar med rå PCM (16-bit, 24 kHz mono) i base64. */
+function pcmToAudioBuffer(ctx: AudioContext, base64: string, sampleRate: number): AudioBuffer {
+  const raw = atob(base64)
+  const bytes = new Uint8Array(raw.length)
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
+  const samples = new Int16Array(bytes.buffer)
+  const buffer = ctx.createBuffer(1, samples.length, sampleRate)
+  const channel = buffer.getChannelData(0)
+  for (let i = 0; i < samples.length; i++) channel[i] = samples[i] / 32768
+  return buffer
+}
+
+async function fetchCloudAudio(text: string): Promise<AudioBuffer> {
+  const ctx = ensureAudioCtx()
+  if (!ctx || !cloudApiKey) throw new Error('moln-TTS ej konfigurerad')
+  const cached = audioCache.get(text)
+  if (cached) return cached
+
+  const models = workingTtsModel ? [workingTtsModel] : TTS_MODELS
+  let lastError: Error = new Error('okänt TTS-fel')
+  for (const model of models) {
+    try {
+      const controller = new AbortController()
+      const timer = window.setTimeout(() => controller.abort(), TTS_TIMEOUT_MS)
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cloudApiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text }] }],
+            generationConfig: {
+              responseModalities: ['AUDIO'],
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_VOICE } } },
+            },
+          }),
+        },
+      )
+      window.clearTimeout(timer)
+      if (!res.ok) throw new Error(`TTS ${model}: ${res.status}`)
+      const data = (await res.json()) as {
+        candidates?: { content?: { parts?: { inlineData?: { mimeType?: string; data?: string } }[] } }[]
+      }
+      const inline = data.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)?.inlineData
+      if (!inline?.data) throw new Error(`TTS ${model}: tomt ljudsvar`)
+      const rate = Number(/rate=(\d+)/.exec(inline.mimeType ?? '')?.[1] ?? 24000)
+      const buffer = pcmToAudioBuffer(ctx, inline.data, rate)
+      workingTtsModel = model
+      if (audioCache.size >= AUDIO_CACHE_MAX) {
+        const oldest = audioCache.keys().next().value
+        if (oldest !== undefined) audioCache.delete(oldest)
+      }
+      audioCache.set(text, buffer)
+      return buffer
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err))
+    }
+  }
+  throw lastError
+}
+
+function speakLocal(text: string, voiceURI?: string): void {
   if (!ttsAvailable()) return
-  window.speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(toSpoken(text))
+  const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = 'sv-SE'
-  const voice = voiceURI ? swedishVoices().find((v) => v.voiceURI === voiceURI) ?? pickVoice() : pickVoice()
+  const voice =
+    voiceURI && voiceURI !== CLOUD_VOICE
+      ? swedishVoices().find((v) => v.voiceURI === voiceURI) ?? pickVoice()
+      : pickVoice()
   if (voice) utterance.voice = voice
   utterance.rate = 0.92 // något lugnare för barn
   window.speechSynthesis.speak(utterance)
+}
+
+/** Läs upp en text på svenska — moln-röst om vald, annars lokal. */
+export function speak(text: string, voiceURI?: string): void {
+  stopSpeaking()
+  const spoken = toSpoken(text)
+  const wanted = voiceURI ?? preferredVoiceURI() ?? undefined
+  const useCloud = wanted === CLOUD_VOICE && cloudTtsAvailable()
+
+  if (!useCloud) {
+    speakLocal(spoken, wanted)
+    return
+  }
+  const token = ++speakToken
+  void fetchCloudAudio(spoken)
+    .then((buffer) => {
+      if (token !== speakToken) return // barnet gick vidare — släng
+      const ctx = ensureAudioCtx()
+      if (!ctx) return
+      const source = ctx.createBufferSource()
+      source.buffer = buffer
+      source.connect(ctx.destination)
+      source.start()
+      currentSource = source
+    })
+    .catch((err) => {
+      console.warn('Moln-TTS föll tillbaka till lokal röst:', err)
+      if (token === speakToken) speakLocal(spoken)
+    })
 }
 
 /** Provlyssning i föräldraläget. */
@@ -105,5 +237,10 @@ export function speakSample(voiceURI?: string): void {
 }
 
 export function stopSpeaking(): void {
+  speakToken++
   if (ttsAvailable()) window.speechSynthesis.cancel()
+  if (currentSource) {
+    try { currentSource.stop() } catch { /* redan stoppad */ }
+    currentSource = null
+  }
 }
