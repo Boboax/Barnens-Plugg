@@ -3,7 +3,8 @@ import type { ChildProfile, SkillState } from '../domain/types'
 import { MOMENTS } from '../domain/curriculum'
 import { expectedSuccess, practiceLevel, updateRating } from './rating'
 import { REVIEW_INTERVALS_DAYS, scheduleFirstReview, scheduleNextReview } from './spaced-repetition'
-import { applyAnswer, classifyError, newSkillState, recomputeAvailability } from './progress'
+import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability } from './progress'
+import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
 import { composeBossTasks, composeStarTasks } from './session'
 import { rewardProgress } from './rewards'
@@ -52,6 +53,33 @@ describe('förkunskapslåset', () => {
     const profile = makeProfile()
     expect(profile.skills['antal-0-10'].mastery).toBe('available')
     expect(profile.skills['vaxling-0-100'].mastery).toBe('locked')
+  })
+})
+
+describe('kalibrering för starka elever', () => {
+  it('frontmomentet efter diagnos startar på nivå 5 (inte mjukstartsnivå)', () => {
+    // Rating 550 sätts av applyDiagnosisResult — verifiera nivåmappningen.
+    expect(practiceLevelFor(550)).toBe(5)
+  })
+
+  it('het hand ger accelererande bonus, inget vid korta sviter', () => {
+    expect(hotStreakBonus(1)).toBe(0)
+    expect(hotStreakBonus(2)).toBe(0)
+    expect(hotStreakBonus(3)).toBe(6)
+    expect(hotStreakBonus(5)).toBe(18)
+    expect(hotStreakBonus(8)).toBe(24) // tak
+  })
+
+  it('rättsvit klättrar snabbare än utan streak', () => {
+    const base = newSkillState('x')
+    const task = { ref: { generatorId: 'gen.x', level: 5 as const, seed: 1 }, prompt: '', visual: { kind: 'ingen' as const }, answer: { kind: 'numeric' as const, value: 1 }, explanation: '' }
+    let withStreak = { ...base }
+    let without = { ...base }
+    for (let i = 1; i <= 6; i++) {
+      withStreak = applyAnswer(withStreak, task, true, 5000, 'ovning', '2026-01-01T10:00:00Z', undefined, undefined, i).skill
+      without = applyAnswer(without, task, true, 5000, 'ovning', '2026-01-01T10:00:00Z').skill
+    }
+    expect(withStreak.rating).toBeGreaterThan(without.rating + 30)
   })
 })
 
