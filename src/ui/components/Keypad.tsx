@@ -4,6 +4,8 @@
    Stöder minustecken och decimalkomma när uppgiften kräver det.
    ============================================================ */
 
+import { sfx } from '../../sound'
+
 interface KeypadProps {
   value: string
   onChange(next: string): void
@@ -16,6 +18,7 @@ interface KeypadProps {
 export function Keypad({ value, onChange, onSubmit, allowNegative, allowDecimal, disabled }: KeypadProps) {
   const press = (key: string): void => {
     if (disabled) return
+    sfx.klick()
     if (key === '⌫') return onChange(value.slice(0, -1))
     if (key === '−') return onChange(value.startsWith('−') ? value.slice(1) : `−${value}`)
     if (key === ',') {

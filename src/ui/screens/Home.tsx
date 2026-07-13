@@ -7,7 +7,9 @@ import { currentMomentId } from '../../engine/progress'
 import { dueForReview } from '../../engine/spaced-repetition'
 import { rewardProgress } from '../../engine/rewards'
 import { blixtTarget, unlockedBlixtTests } from '../../engine/blixt'
+import { sfx } from '../../sound'
 import { Pi } from '../components/Pi'
+import { SoundToggle } from '../components/SoundToggle'
 import { todayISO, useStore } from '../store'
 
 /* ============================================================
@@ -78,15 +80,21 @@ function HomeInner({ child }: { child: ChildProfile }) {
 
   const startTraining = (): void => {
     if (secondsLeft <= 0) return store.go('time-up')
+    sfx.whoosh()
     store.go('session')
   }
 
   return (
     <div className="screen-fade" style={{ minHeight: '100%', display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 330px)', gap: 0 }}>
       {/* Kartan */}
-      <div style={{ padding: '14px 18px', background: 'linear-gradient(180deg, #EAF6EE 0%, var(--bg) 85%)', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
+      <div style={{ padding: '14px 18px', background: 'linear-gradient(180deg, #EAF6EE 0%, var(--bg) 85%)', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+        <span className="cloud" style={{ top: '6%', animationDuration: '75s', animationDelay: '-20s', fontSize: 28 }}>☁️</span>
+        <span className="cloud" style={{ top: '14%', animationDuration: '95s', animationDelay: '-55s', fontSize: 22 }}>☁️</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', position: 'relative', zIndex: 2 }}>
+          <span style={{ display: 'flex', gap: 8 }}>
+            <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
+            <SoundToggle />
+          </span>
           <span style={{ fontWeight: 900, fontSize: 17 }}>{world.emoji} {world.name}</span>
           <span className="chip">🔥 {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
         </div>
@@ -123,19 +131,27 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     opacity: state === 'locked' || state === 'coming' ? 0.65 : 1,
                   }}
                 >
-                  <span style={{
-                    position: 'relative', width: state === 'now' ? 62 : 52, height: state === 'now' ? 62 : 52,
-                    borderRadius: '50%', background: style.bg, color: '#fff', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: state === 'now' ? 24 : 20, fontWeight: 900,
-                    boxShadow: state === 'now'
-                      ? '0 0 0 4px #fff, 0 0 0 9px rgba(255,201,77,.35), 0 4px 0 rgba(0,0,0,.15)'
-                      : state === 'boss'
-                        ? '0 0 0 5px rgba(140,107,200,.28), 0 4px 0 rgba(0,0,0,.15)'
-                        : '0 4px 0 rgba(0,0,0,.12)',
-                  }}>
+                  <span
+                    className={state === 'now' ? 'pulse-ring' : state === 'boss' ? 'float-soft' : undefined}
+                    style={{
+                      position: 'relative', width: state === 'now' ? 62 : 52, height: state === 'now' ? 62 : 52,
+                      borderRadius: '50%', background: style.bg, color: '#fff', flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: state === 'now' ? 24 : 20, fontWeight: 900,
+                      boxShadow: state === 'now'
+                        ? '0 0 0 4px #fff, 0 0 0 9px rgba(255,201,77,.35), 0 4px 0 rgba(0,0,0,.15)'
+                        : state === 'boss'
+                          ? '0 0 0 5px rgba(140,107,200,.28), 0 4px 0 rgba(0,0,0,.15)'
+                          : '0 4px 0 rgba(0,0,0,.12)',
+                    }}
+                  >
                     {style.label}
                     {isStar && <span style={{ position: 'absolute', top: -8, right: -8, fontSize: 17 }}>💎</span>}
+                    {state === 'now' && (
+                      <span style={{ position: 'absolute', top: -30, left: '50%', transform: 'translateX(-50%)' }}>
+                        <Pi mood="glad" size={30} />
+                      </span>
+                    )}
                   </span>
                   <span style={{ minWidth: 0 }}>
                     <span style={{ display: 'block', fontWeight: 800, fontSize: 14, color: state === 'now' ? 'var(--sun-ink)' : 'var(--ink)' }}>

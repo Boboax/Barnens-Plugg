@@ -1,5 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { startMusic, stopMusic, unlockAudio } from '../sound'
 import { Pi } from './components/Pi'
+import { Splash } from './components/Splash'
 import { BattleScreen } from './screens/BattleScreen'
 import { BlixtScreen } from './screens/BlixtScreen'
 import { DiagnosisScreen } from './screens/DiagnosisScreen'
@@ -17,11 +19,28 @@ const TICK_SECONDS = 5
 export function App() {
   const store = useStore()
   const { screen, activeChild, loaded } = store
+  const [showSplash, setShowSplash] = useState(true)
 
   // Profilfärgen följer barnet genom hela appen.
   useEffect(() => {
     document.documentElement.style.setProperty('--kid', activeChild?.color ?? 'var(--primary)')
   }, [activeChild?.color])
+
+  // iOS släpper ljudet först efter en användargest.
+  useEffect(() => {
+    const unlock = (): void => unlockAudio()
+    window.addEventListener('pointerdown', unlock, { once: true })
+    return () => window.removeEventListener('pointerdown', unlock)
+  }, [])
+
+  // Musiken följer skärmen: äventyr på kartan/passet, bossmusik i strid,
+  // snabb puls i blixtpasset — tystnad i föräldraläget och när tiden är slut.
+  useEffect(() => {
+    if (screen === 'home' || screen === 'session' || screen === 'diagnosis') startMusic('varld')
+    else if (screen === 'boss' || screen === 'star') startMusic('boss')
+    else if (screen === 'blixt') startMusic('blixt')
+    else stopMusic()
+  }, [screen])
 
   // Tidsbokföring: tickar bara på träningsskärmar, låser vänligt när tiden är slut.
   useEffect(() => {
@@ -47,6 +66,8 @@ export function App() {
       </div>
     )
   }
+
+  if (showSplash) return <Splash onDone={() => setShowSplash(false)} />
 
   switch (screen) {
     case 'profiles': return <ProfileSelect />

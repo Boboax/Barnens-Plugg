@@ -6,6 +6,7 @@ import {
   BOSS_SHIELDS_TO_WIN, BOSS_TASK_COUNT, STAR_CORRECT_TO_WIN, STAR_TASK_COUNT,
   composeBossTasks, composeStarTasks,
 } from '../../engine/session'
+import { sfx } from '../../sound'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
 import { EndCard } from './SessionScreen'
 import { useStore } from '../store'
@@ -47,6 +48,8 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
     const nextCorrect = correct + (result.correct ? 1 : 0)
     setCorrect(nextCorrect)
     setFlash(result.correct ? 'hit' : 'miss')
+    if (result.correct) sfx.skold()
+    else sfx.bossFniss()
     window.setTimeout(() => {
       setFlash(null)
       const next = index + 1
@@ -68,6 +71,7 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
         title={kind === 'boss' ? `${boss.name} är besegrad! ⚔️🎉` : 'Stjärnnivån klarad! 💎'}
         text={kind === 'boss' ? `"${boss.defeatLine}" — Momentet ${moment.title} är ditt. Vägen fortsätter!` : `Du klarade de allra svåraste uppgifterna i ${moment.title}. Diamanten är din!`}
         onDone={() => store.go('home')}
+        celebrate
       />
     ) : (
       <EndCard
@@ -122,7 +126,10 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
           <div className="card" style={{ fontSize: 12.5, fontWeight: 800, textAlign: 'center', padding: '8px 12px' }}>
             {flash === 'hit' ? '💥 En sköld knäcktes!' : flash === 'miss' ? `${boss.emoji} "Hihi! Inte den här gången!"` : `"${boss.taunt}"`}
           </div>
-          <span className={flash === 'hit' ? 'shake' : ''} style={{ fontSize: 84, lineHeight: 1 }}>
+          <span
+            className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'}
+            style={{ fontSize: 84, lineHeight: 1, display: 'inline-block' }}
+          >
             {kind === 'boss' ? boss.emoji : '💎'}
           </span>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 190 }}>

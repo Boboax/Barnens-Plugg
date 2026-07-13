@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Task } from '../../domain/types'
 import { matchMisconception } from '../../engine/progress'
 import { misconceptionInfo } from '../../engine/misconceptions'
+import { sfx } from '../../sound'
 import { speak, stopSpeaking, ttsAvailable } from '../../tts'
 import { Keypad } from './Keypad'
 import { ScratchPad, type ScratchPadHandle } from './ScratchPad'
@@ -68,7 +69,13 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext 
       scratchPng: scratchRef.current?.snapshot(),
     }
     setLastResult(result)
-    if (mode === 'ovning') setPhase('feedback')
+    if (mode === 'ovning') {
+      setPhase('feedback')
+      if (correct) sfx.ratt()
+      else sfx.fel()
+    } else if (mode === 'diagnos') {
+      sfx.klick() // neutral bekräftelse — diagnosen avslöjar aldrig rätt/fel
+    }
     onComplete(result)
   }
 
