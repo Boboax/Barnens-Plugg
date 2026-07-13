@@ -89,7 +89,10 @@ publikt för Pages på gratisplanen.
 - **Blixtpass kräver rena sifferuppgifter** (numeriskt svar, prompt ≤ 24
   tecken) — nivåspannen i `engine/blixt.ts` är valda för det; testet vaktar.
 - **`TIMED_SCREENS` i `App.tsx`** styr vilka skärmar som drar av barnets
-  dagliga tid — ny träningsskärm måste läggas till där.
+  dagliga tid — ny träningsskärm måste läggas till där. Tiden är
+  AKTIVITETSBASERAD (pekning inom 90 s + synlig flik krävs för att ticka;
+  Pi somnar efter 2,5 min) — försvaga aldrig det till ren klocktid, då
+  öppnas "låt timern rinna ut"-kryphålet igen.
 - **Kladdbilder är stora**: ringbuffert på 20 per barn (`store.tsx`). Öka inte
   utan att tänka på iPadens lagringskvot.
 - **Animationer**: respektera `prefers-reduced-motion` (konfetti och CSS gör
