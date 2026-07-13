@@ -1,7 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AnswerRecord, SessionPlan, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
 import { composeSession, taskForPart } from '../../engine/session'
+import { sfx } from '../../sound'
+import { fireConfetti } from '../fx/confetti'
 import { Pi } from '../components/Pi'
 import { PiVisar } from '../components/PiVisar'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
@@ -55,6 +57,7 @@ export function SessionScreen() {
     child && slots.length > 0 ? taskForPart(child, slots[0].momentId, slots[0].kind) : null,
   )
   const [correctCount, setCorrectCount] = useState(0)
+  const [combo, setCombo] = useState(0)
   // "Pi visar först": lösta exempel innan ett helt nytt moment övas.
   const [introDone, setIntroDone] = useState(false)
   const introMomentId = useMemo(() => {
@@ -86,7 +89,18 @@ export function SessionScreen() {
 
   const handleComplete = (result: TaskResult): void => {
     store.recordAnswer(task, result.correct, result.elapsedMs, CONTEXT[slot.kind], result.given, result.scratchPng)
-    if (result.correct) setCorrectCount((n) => n + 1)
+    if (result.correct) {
+      setCorrectCount((n) => n + 1)
+      const next = combo + 1
+      setCombo(next)
+      // Combofirande vid 3, 5, 8, 12 … — belönar uthållig noggrannhet.
+      if (next === 3 || next === 5 || next === 8 || (next >= 12 && next % 4 === 0)) {
+        sfx.combo(next)
+        fireConfetti({ count: 30 + next * 6 })
+      }
+    } else {
+      setCombo(0)
+    }
     if (slot.kind === 'uppvarmning') {
       const tally = reviewTally.current.get(slot.momentId) ?? [0, 0]
       reviewTally.current.set(slot.momentId, [tally[0] + (result.correct ? 1 : 0), tally[1] + 1])
@@ -119,6 +133,7 @@ export function SessionScreen() {
         title={ratio >= 0.8 ? 'Superjobbat! 🌟' : 'Bra kämpat! 💪'}
         text={`${correctCount} av ${slots.length} rätt. ${ratio >= 0.8 ? 'Du är på väg att bemästra det här!' : 'Varje försök gör dig starkare — imorgon tar vi det igen!'}`}
         onDone={() => store.go('home')}
+        celebrate={ratio >= 0.8}
       />
     )
   }
@@ -133,6 +148,11 @@ export function SessionScreen() {
         <div className="pbar" style={{ flex: 1 }}>
           <i style={{ width: `${(index / slots.length) * 100}%` }} />
         </div>
+        {combo >= 3 && !showIntro && (
+          <span key={combo} className="chip pop-big" style={{ borderColor: 'var(--sun)', color: 'var(--sun-ink)', background: '#FFF1D6' }}>
+            🔥 {combo} i rad!
+          </span>
+        )}
         <span className="chip" style={{ color: 'var(--muted)' }}>
           {showIntro ? '🐧 Pi visar först' : `${PART_LABEL[slot.kind]} · ${moment.title}`}
         </span>
@@ -152,16 +172,24 @@ export function SessionScreen() {
   )
 }
 
-export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶' }: {
-  title: string; text: string; onDone(): void; buttonText?: string
+export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', celebrate = false }: {
+  title: string; text: string; onDone(): void; buttonText?: string; celebrate?: boolean
 }) {
+  // Firandet (fanfar + konfetti) avfyras exakt en gång när kortet visas.
+  useEffect(() => {
+    if (celebrate) {
+      sfx.fanfar()
+      fireConfetti({ count: 130 })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   return (
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: 12, padding: 30, textAlign: 'center',
     }}>
-      <Pi mood="hejar" size={110} />
-      <h2 style={{ fontSize: 26, fontWeight: 900, margin: 0 }}>{title}</h2>
+      <div className="bounce-in"><Pi mood="hejar" size={110} /></div>
+      <h2 className="pop-big" style={{ fontSize: 26, fontWeight: 900, margin: 0, animationDelay: '0.15s' }}>{title}</h2>
       <p style={{ color: 'var(--muted)', fontWeight: 700, maxWidth: 420, margin: 0 }}>{text}</p>
       <button className="btn btn-primary" onClick={onDone}>{buttonText}</button>
     </div>

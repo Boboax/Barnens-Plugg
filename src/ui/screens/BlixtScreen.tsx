@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Task } from '../../domain/types'
 import { BLIXT_SECONDS, blixtConfig, blixtTarget, blixtTask } from '../../engine/blixt'
+import { sfx } from '../../sound'
+import { fireConfetti } from '../fx/confetti'
 import { Keypad } from '../components/Keypad'
 import { Pi } from '../components/Pi'
 import { useStore } from '../store'
@@ -42,17 +44,25 @@ export function BlixtScreen() {
           setPhase('done')
           return 0
         }
+        if (s <= 6) sfx.tick() // sista sekunderna tickar
         return s - 1
       })
     }, 1000)
     return () => window.clearInterval(interval)
   }, [phase])
 
-  // Spara resultatet exakt en gång när tiden är slut.
+  // Spara resultatet exakt en gång när tiden är slut — och fira!
   useEffect(() => {
     if (phase === 'done' && kind && !resultSaved.current) {
       resultSaved.current = true
       store.recordBlixtResult(kind, correct)
+      const target = blixtTarget(kind, store.household.blixtTargets)
+      if (correct > bestBefore.current || correct >= target) {
+        sfx.rekord()
+        fireConfetti({ count: 110 })
+      } else {
+        sfx.ratt()
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
@@ -65,6 +75,7 @@ export function BlixtScreen() {
   const start = (): void => {
     bestBefore.current = child.blixt?.[kind]?.best ?? 0
     resultSaved.current = false
+    sfx.whoosh()
     setPhase('running')
     setCorrect(0)
     setAttempted(0)
