@@ -20,7 +20,8 @@ import { todayISO, useStore } from '../store'
    Den gula knappen är alltid nästa steg.
    ============================================================ */
 
-type NodeState = 'done' | 'star' | 'now' | 'boss' | 'locked' | 'coming'
+/** 'now' = motorns aktiva moment (Pi står här); 'oppen' = upplåst och valbart. */
+type NodeState = 'done' | 'star' | 'now' | 'oppen' | 'boss' | 'locked' | 'coming'
 
 function nodeState(moment: Moment, skill: SkillState | undefined, isCurrent: boolean): NodeState {
   if (!hasGenerator(moment.generatorId)) return 'coming'
@@ -28,8 +29,8 @@ function nodeState(moment: Moment, skill: SkillState | undefined, isCurrent: boo
   if (skill.mastery === 'star') return 'star'
   if (skill.mastery === 'mastered') return 'done'
   if (skill.mastery === 'boss-ready') return 'boss'
-  if (isCurrent || skill.mastery === 'in-progress' || skill.mastery === 'needs-review') return 'now'
-  if (skill.mastery === 'available') return 'now'
+  if (isCurrent) return 'now'
+  if (skill.mastery === 'in-progress' || skill.mastery === 'needs-review' || skill.mastery === 'available') return 'oppen'
   return 'locked'
 }
 
@@ -37,6 +38,7 @@ const NODE_STYLE: Record<NodeState, { bg: string; label: string }> = {
   done: { bg: 'var(--mint)', label: '★' },
   star: { bg: 'var(--mint)', label: '★' },
   now: { bg: 'var(--sun)', label: '🚩' },
+  oppen: { bg: '#FFDF94', label: '▶' },
   boss: { bg: 'var(--boss)', label: '⚔️' },
   locked: { bg: '#D8D4C8', label: '🔒' },
   coming: { bg: '#D8D4C8', label: '🌱' },
@@ -81,7 +83,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
   const startTraining = (): void => {
     if (secondsLeft <= 0) return store.go('time-up')
     sfx.whoosh()
-    store.go('session')
+    store.startSession() // motorn väljer momentet
   }
 
   return (
@@ -112,12 +114,12 @@ function HomeInner({ child }: { child: ChildProfile }) {
               const state = nodeState(moment, skill, moment.id === currentId)
               const style = NODE_STYLE[state]
               const isStar = state === 'star'
-              const clickable = state === 'now' || state === 'boss' || state === 'done' || isStar
+              const clickable = state === 'now' || state === 'oppen' || state === 'boss' || state === 'done' || isStar
               const onClick = (): void => {
                 if (secondsLeft <= 0) return store.go('time-up')
                 if (state === 'boss') store.startBattle(moment.id, 'boss')
                 else if (state === 'done') store.startBattle(moment.id, 'star')
-                else if (state === 'now' && moment.id === currentId) store.go('session')
+                else if (state === 'now' || state === 'oppen') store.startSession(moment.id)
               }
               return (
                 <button
@@ -127,7 +129,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   disabled={!clickable}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'inherit', textAlign: 'left',
-                    alignSelf: i % 2 === 0 ? 'flex-start' : 'flex-end',
+                    // Två raka kolumner (cirklarna linjerar oavsett textlängd).
+                    width: '55%',
+                    marginLeft: i % 2 === 0 ? 0 : '45%',
                     opacity: state === 'locked' || state === 'coming' ? 0.65 : 1,
                   }}
                 >
@@ -135,14 +139,17 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     className={state === 'now' ? 'pulse-ring' : state === 'boss' ? 'float-soft' : undefined}
                     style={{
                       position: 'relative', width: state === 'now' ? 62 : 52, height: state === 'now' ? 62 : 52,
-                      borderRadius: '50%', background: style.bg, color: '#fff', flexShrink: 0,
+                      borderRadius: '50%', background: style.bg, flexShrink: 0,
+                      color: state === 'oppen' ? 'var(--sun-ink)' : '#fff',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: state === 'now' ? 24 : 20, fontWeight: 900,
                       boxShadow: state === 'now'
                         ? '0 0 0 4px #fff, 0 0 0 9px rgba(255,201,77,.35), 0 4px 0 rgba(0,0,0,.15)'
                         : state === 'boss'
                           ? '0 0 0 5px rgba(140,107,200,.28), 0 4px 0 rgba(0,0,0,.15)'
-                          : '0 4px 0 rgba(0,0,0,.12)',
+                          : state === 'oppen'
+                            ? '0 0 0 2.5px var(--sun), 0 4px 0 rgba(0,0,0,.12)'
+                            : '0 4px 0 rgba(0,0,0,.12)',
                     }}
                   >
                     {style.label}
@@ -154,7 +161,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     )}
                   </span>
                   <span style={{ minWidth: 0 }}>
-                    <span style={{ display: 'block', fontWeight: 800, fontSize: 14, color: state === 'now' ? 'var(--sun-ink)' : 'var(--ink)' }}>
+                    <span style={{ display: 'block', fontWeight: 800, fontSize: 14, color: state === 'now' || state === 'oppen' ? 'var(--sun-ink)' : 'var(--ink)' }}>
                       {moment.title}
                     </span>
                     <span style={{ display: 'block', fontWeight: 600, fontSize: 12, color: 'var(--muted)' }}>
@@ -163,6 +170,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
                         : state === 'done' ? 'klar! (tryck för stjärnnivån 💎)'
                         : isStar ? 'stjärnnivå klarad!'
                         : state === 'locked' ? 'kräver tidigare moment'
+                        : state === 'oppen' ? 'upplåst — tryck för att träna!'
                         : moment.description}
                     </span>
                   </span>

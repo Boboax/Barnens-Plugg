@@ -99,9 +99,26 @@ const toSpoken = (text: string): string =>
    enhetens lokala röst — uppläsningsknappen fungerar alltid.
    ============================================================ */
 
-// Prova GA-namnet först, preview-namnet som reserv; minns vad som funkar.
-const TTS_MODELS = ['gemini-2.5-flash-tts', 'gemini-2.5-flash-preview-tts']
+// Kandidater hämtas i första hand från nyckelns egen modellista
+// (samma skäl som chatten: Google stänger äldre modeller för nya nycklar).
+const TTS_FALLBACK_MODELS = ['gemini-2.5-flash-tts', 'gemini-2.5-flash-preview-tts']
 let workingTtsModel: string | null = null
+
+async function ttsCandidates(): Promise<string[]> {
+  if (workingTtsModel) return [workingTtsModel]
+  try {
+    const { listGeminiModels } = await import('./chat/providers')
+    const models = await listGeminiModels(cloudApiKey!)
+    const ids = models
+      .filter((m) => m.tts)
+      .sort((a, b) => b.version - a.version || a.id.length - b.id.length)
+      .map((m) => m.id)
+    for (const known of TTS_FALLBACK_MODELS) if (!ids.includes(known)) ids.push(known)
+    return ids.slice(0, 3)
+  } catch {
+    return [...TTS_FALLBACK_MODELS]
+  }
+}
 const TTS_VOICE = 'Leda' // varm, ungdomlig — passar Pi
 const TTS_TIMEOUT_MS = 10_000
 
@@ -145,7 +162,7 @@ async function fetchCloudAudio(text: string): Promise<AudioBuffer> {
   const cached = audioCache.get(text)
   if (cached) return cached
 
-  const models = workingTtsModel ? [workingTtsModel] : TTS_MODELS
+  const models = await ttsCandidates()
   let lastError: Error = new Error('okänt TTS-fel')
   for (const model of models) {
     try {

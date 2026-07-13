@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildClassifyPrompt, buildSystemPrompt, parseClassification, MAX_MESSAGES_PER_DAY, KEY_ERROR_LINE, OFFLINE_LINE, QUOTA_LINE } from './prompts'
-import { ChatError, errorToLine, statusToKind } from './providers'
+import { ChatError, errorToLine, pickChatModels, statusToKind, type GeminiModelInfo } from './providers'
 import { messagesLeftToday } from './index'
 import type { ChatContext } from './adapter'
 import type { Household } from '../domain/types'
@@ -62,6 +62,32 @@ describe('felhantering', () => {
     expect(errorToLine(new ChatError('kvot', 'x'))).toBe(QUOTA_LINE)
     expect(errorToLine(new ChatError('natverk', 'x'))).toBe(OFFLINE_LINE)
     expect(errorToLine(new Error('okänt'))).toBe(OFFLINE_LINE)
+  })
+})
+
+describe('dynamiskt modellval', () => {
+  const m = (id: string): GeminiModelInfo => ({
+    id,
+    version: Number(/gemini-(\d+(?:\.\d+)?)/.exec(id)?.[1] ?? 0),
+    tts: /tts/.test(id),
+  })
+
+  it('väljer nyaste stabila flash-modellen först, hoppar över specialvarianter', () => {
+    const picked = pickChatModels([
+      m('gemini-2.5-flash'), m('gemini-2.5-flash-lite'), m('gemini-3-flash'),
+      m('gemini-3.5-flash'), m('gemini-3.5-flash-preview'), m('gemini-3.5-pro'),
+      m('gemini-2.5-flash-tts'), m('gemini-3-flash-image'),
+    ])
+    expect(picked[0]).toBe('gemini-3.5-flash')
+    expect(picked).not.toContain('gemini-2.5-flash-lite')
+    expect(picked).not.toContain('gemini-2.5-flash-tts')
+    expect(picked).not.toContain('gemini-3-flash-image')
+  })
+
+  it('lägger till kända reservnamn om nyckelns lista är tom/konstig', () => {
+    const picked = pickChatModels([])
+    expect(picked).toContain('gemini-3.5-flash')
+    expect(picked).toContain('gemini-2.5-flash')
   })
 })
 

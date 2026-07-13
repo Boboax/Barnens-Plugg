@@ -49,6 +49,9 @@ interface StoreValue {
   /** Momentet vars boss/stjärnnivå utmanas just nu. */
   battleMomentId: string | undefined
   startBattle(momentId: string, kind: 'boss' | 'star'): void
+  /** Momentet barnet valde på kartan för nästa pass (undefined = motorn väljer). */
+  sessionMomentId: string | undefined
+  startSession(momentId?: string): void
   /** Pågående blixttest. */
   blixtKind: BlixtKind | undefined
   startBlixt(kind: BlixtKind): void
@@ -104,6 +107,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [parentUnlocked, setParentUnlocked] = useState(false)
   const [battleMomentId, setBattleMomentId] = useState<string>()
   const [blixtKind, setBlixtKind] = useState<BlixtKind>()
+  const [sessionMomentId, setSessionMomentId] = useState<string>()
 
   useEffect(() => {
     void loadHousehold().then((data) => {
@@ -161,6 +165,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     startBattle: (momentId, kind) => {
       setBattleMomentId(momentId)
       setScreen(kind)
+    },
+
+    sessionMomentId,
+    startSession: (momentId) => {
+      setSessionMomentId(momentId)
+      setScreen('session')
     },
 
     blixtKind,
@@ -376,7 +386,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setHousehold((h) => ({ ...h, chat: config ?? undefined }))
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, blixtKind])
+  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, blixtKind, sessionMomentId])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
