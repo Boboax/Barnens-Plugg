@@ -4,7 +4,7 @@ import { areaName, weeklyReport } from '../../engine/report'
 import { rewardProgress } from '../../engine/rewards'
 import { BLIXT_TESTS, blixtTarget } from '../../engine/blixt'
 import { pingProvider } from '../../chat/providers'
-import { CLOUD_VOICE, cloudTtsAvailable, preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
+import { CLOUD_VOICE, cloudTtsAvailable, kickVoiceList, preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
 import { daysSinceBackup, exportHousehold, importHousehold } from '../../storage/backup'
 import { KID_COLORS, nowISO, useStore } from '../store'
 
@@ -244,25 +244,26 @@ function VoicePicker() {
   const [selected, setSelected] = useState(preferredVoiceURI() ?? '')
 
   // Röstlistan kan ladda asynkront — och Safari lämnar den TOM tills
-  // något försökt tala. En tyst tom yttring väcker listan.
+  // något faktiskt talat. Väck den och håll utkik så länge fliken visas.
   useEffect(() => {
     if (voices.length > 0 || !ttsAvailable()) return
-    try {
-      const kick = new SpeechSynthesisUtterance('')
-      kick.volume = 0
-      window.speechSynthesis.speak(kick)
-    } catch { /* ofarligt */ }
+    kickVoiceList()
     const timer = window.setInterval(() => {
       const found = swedishVoices()
       if (found.length > 0) {
         setVoices(found)
         window.clearInterval(timer)
       }
-    }, 500)
-    const stop = window.setTimeout(() => window.clearInterval(timer), 10_000)
-    return () => { window.clearInterval(timer); window.clearTimeout(stop) }
+    }, 700)
+    return () => window.clearInterval(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // I en tryckgest (iOS-krav): väck listan och läs om den.
+  const searchAgain = (): void => {
+    kickVoiceList()
+    window.setTimeout(() => setVoices(swedishVoices()), 600)
+  }
 
   return (
     <div style={{ ...pcard, marginTop: 12 }}>
@@ -274,11 +275,9 @@ function VoicePicker() {
         Inställningar → Tillgänglighet → Talat innehåll → Röster → Svenska, och starta om appen.
         Röstvalet sparas per enhet.
       </p>
-      {!ttsAvailable() || voices.length === 0 ? (
-        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#B4552E' }}>
-          Inga svenska röster hittades på den här enheten ännu.
-        </p>
-      ) : (
+      {/* Väljaren visas alltid när något finns att välja — molnrösten får
+          aldrig gömmas bara för att de lokala rösterna inte laddat än. */}
+      {(voices.length > 0 || cloudTtsAvailable()) && (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <select
             value={selected}
@@ -304,6 +303,15 @@ function VoicePicker() {
             ▶ Lyssna
           </button>
         </div>
+      )}
+      {ttsAvailable() && voices.length === 0 && (
+        <p style={{ margin: '8px 0 0', fontSize: 13, fontWeight: 700, color: '#B4552E' }}>
+          Inga lokala svenska röster hittade ännu.{' '}
+          <button onClick={searchAgain} style={{ fontWeight: 800, color: '#4A56C6', textDecoration: 'underline' }}>
+            Sök igen
+          </button>
+          {cloudTtsAvailable() ? ' — Pi:s molnröst ovan fungerar ändå!' : ''}
+        </p>
       )}
     </div>
   )
