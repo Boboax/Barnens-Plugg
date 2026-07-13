@@ -1,12 +1,13 @@
 import { sfx } from '../../sound'
 import { Pi } from '../components/Pi'
 import { SoundToggle } from '../components/SoundToggle'
+import { CloudSvg } from '../components/WorldSprites'
 import { useStore } from '../store'
 
 const CLOUDS = [
-  { top: '8%', duration: 60, delay: -12, emoji: '☁️' },
-  { top: '18%', duration: 85, delay: -40, emoji: '☁️' },
-  { top: '30%', duration: 70, delay: -60, emoji: '🎈' },
+  { top: '8%', duration: 60, delay: -12, width: 84 },
+  { top: '18%', duration: 85, delay: -40, width: 58 },
+  { top: '30%', duration: 100, delay: -60, width: 44 },
 ]
 
 export function ProfileSelect() {
@@ -20,8 +21,8 @@ export function ProfileSelect() {
       background: 'linear-gradient(180deg, #FFEFC9 0%, var(--bg) 65%)',
     }}>
       {CLOUDS.map((c, i) => (
-        <span key={i} className="cloud" style={{ top: c.top, animationDuration: `${c.duration}s`, animationDelay: `${c.delay}s` }}>
-          {c.emoji}
+        <span key={i} className="cloud" aria-hidden="true" style={{ top: c.top, animationDuration: `${c.duration}s`, animationDelay: `${c.delay}s` }}>
+          <CloudSvg width={c.width} />
         </span>
       ))}
       <div className="float-soft"><Pi mood="glad" size={96} /></div>

@@ -3,7 +3,7 @@ import type { Task } from '../../domain/types'
 import { matchMisconception } from '../../engine/progress'
 import { misconceptionInfo } from '../../engine/misconceptions'
 import { sfx } from '../../sound'
-import { speak, stopSpeaking, ttsAvailable } from '../../tts'
+import { prewarmSpeak, speak, stopSpeaking, ttsAvailable } from '../../tts'
 import { Keypad } from './Keypad'
 import { ScratchPad, type ScratchPadHandle } from './ScratchPad'
 import { TaskVisualView } from './TaskVisualView'
@@ -56,6 +56,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
     startedAt.current = Date.now()
     scratchRef.current?.clear()
     stopSpeaking()
+    prewarmSpeak(task.spokenPrompt ?? task.prompt) // molnrösten: ljudet klart innan knapptrycket
   }, [task])
 
   const needsNegative = task.answer.kind === 'numeric' && task.answer.value < 0

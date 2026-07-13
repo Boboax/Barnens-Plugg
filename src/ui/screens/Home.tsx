@@ -11,6 +11,7 @@ import { sfx } from '../../sound'
 import { Pi } from '../components/Pi'
 import { SoundToggle } from '../components/SoundToggle'
 import { WorldScenery } from '../components/WorldScenery'
+import { Sprite } from '../components/WorldSprites'
 import { worldTheme } from '../worldThemes'
 import { todayISO, useStore } from '../store'
 
@@ -36,14 +37,68 @@ function nodeState(moment: Moment, skill: SkillState | undefined, isCurrent: boo
   return 'locked'
 }
 
-const NODE_STYLE: Record<NodeState, { bg: string; label: string }> = {
-  done: { bg: 'var(--mint)', label: '★' },
-  star: { bg: 'var(--mint)', label: '★' },
-  now: { bg: 'var(--sun)', label: '🚩' },
-  oppen: { bg: '#FFDF94', label: '▶' },
-  boss: { bg: 'var(--boss)', label: '⚔️' },
-  locked: { bg: '#D8D4C8', label: '🔒' },
-  coming: { bg: '#D8D4C8', label: '🌱' },
+/** Nodernas märkesfärg. Glyferna ritas som SVG (spelkänsla, inga emojis). */
+const NODE_BG: Record<NodeState, string> = {
+  done: 'var(--mint)',
+  star: 'var(--mint)',
+  now: 'var(--sun)',
+  oppen: '#FFDF94',
+  boss: 'var(--boss)',
+  locked: '#D8D4C8',
+  coming: '#D8D4C8',
+}
+
+function NodeGlyph({ state, size = 24 }: { state: NodeState; size?: number }) {
+  const ink = state === 'oppen' ? 'var(--sun-ink)' : '#FFFFFF'
+  const paths: Record<NodeState, React.ReactNode> = {
+    done: <path d="M12,2 L14.9,8.6 L22,9.3 L16.7,14 L18.3,21 L12,17.3 L5.7,21 L7.3,14 L2,9.3 L9.1,8.6 Z" fill={ink} />,
+    star: <path d="M12,2 L14.9,8.6 L22,9.3 L16.7,14 L18.3,21 L12,17.3 L5.7,21 L7.3,14 L2,9.3 L9.1,8.6 Z" fill={ink} />,
+    now: ( // flagga: Pi står här
+      <>
+        <path d="M7,3 L7,21" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M8,4 L19,7.5 L8,11 Z" fill={ink} />
+      </>
+    ),
+    oppen: <path d="M8,5 L19,12 L8,19 Z" fill={ink} />,
+    boss: ( // korsade svärd
+      <>
+        <path d="M5,4 L16,15 M19,18 L16,15" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M19,4 L8,15 M5,18 L8,15" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M13.5,17.5 L18.5,12.5 M10.5,17.5 L5.5,12.5" stroke={ink} strokeWidth="2" strokeLinecap="round" />
+      </>
+    ),
+    locked: (
+      <>
+        <rect x="6" y="10" width="12" height="9" rx="2.4" fill={ink} />
+        <path d="M8.5,10 L8.5,7.5 A3.5,3.5 0 0,1 15.5,7.5 L15.5,10" stroke={ink} strokeWidth="2.4" fill="none" />
+      </>
+    ),
+    coming: ( // grodd: kommer snart
+      <>
+        <path d="M12,21 L12,12" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M12,13 Q6,13 5,7 Q11,7 12,13 Z" fill={ink} />
+        <path d="M12,11 Q18,11 19,5 Q13,5 12,11 Z" fill={ink} opacity="0.85" />
+      </>
+    ),
+  }
+  return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ display: 'block' }}>{paths[state]}</svg>
+}
+
+/* Kartans fasta geometri: varje moment får en rad, noderna växlar
+   vänster/höger och en ritad väg slingrar mellan cirkelcentrumen. */
+const ROW_H = 96
+const MAP_W = 460 // designbredd — vägens SVG skalas med behållaren
+const nodeCx = (i: number): number => (i % 2 === 0 ? 30 : 0.45 * MAP_W + 30)
+const nodeCy = (i: number, n: number): number => (n - 1 - i) * ROW_H + ROW_H / 2
+
+function windingPath(n: number): string {
+  let d = `M${nodeCx(0)},${nodeCy(0, n)}`
+  for (let i = 1; i < n; i++) {
+    const [x0, y0] = [nodeCx(i - 1), nodeCy(i - 1, n)]
+    const [x1, y1] = [nodeCx(i), nodeCy(i, n)]
+    d += ` C${x0},${y0 - 42} ${x1},${y1 + 42} ${x1},${y1}`
+  }
+  return d
 }
 
 export function Home() {
@@ -90,20 +145,16 @@ function HomeInner({ child }: { child: ChildProfile }) {
   }
 
   return (
-    <div className="screen-fade" style={{ minHeight: '100%', display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 330px)', gap: 0 }}>
+    // height (inte minHeight): kartan scrollar i sin egen yta så att
+    // sidopanel och världsväxlare alltid syns — som i ett riktigt spel.
+    <div className="screen-fade" style={{ height: '100%', display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 330px)', gap: 0 }}>
       {/* Kartan */}
       <div style={{
         padding: '14px 18px', background: theme.sky, display: 'flex', flexDirection: 'column',
-        minWidth: 0, position: 'relative', overflow: 'hidden',
+        minWidth: 0, minHeight: 0, position: 'relative', overflow: 'hidden',
         // Grottan är mörk — ljus text där (nodtexterna använder variablerna).
         ...(theme.horizon === 'grotta' ? ({ '--ink': '#F3EFFF', '--muted': '#BDB4DC', '--sun-ink': '#FFD98A' } as React.CSSProperties) : {}),
       }}>
-        {theme.clouds && (
-          <>
-            <span className="cloud" style={{ top: '6%', animationDuration: '75s', animationDelay: '-20s', fontSize: 28, zIndex: 1 }}>☁️</span>
-            <span className="cloud" style={{ top: '14%', animationDuration: '95s', animationDelay: '-55s', fontSize: 22, zIndex: 1 }}>☁️</span>
-          </>
-        )}
         <WorldScenery theme={theme} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
           <span style={{ display: 'flex', gap: 8 }}>
@@ -120,13 +171,45 @@ function HomeInner({ child }: { child: ChildProfile }) {
           position: 'relative', zIndex: 3,
         }}>📜 {chapter}</div>
 
-        {/* Vägen */}
+        {/* Vägen — fast rutnät med slingrande stig och sprites längs kanten. */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '14px 6px', position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'flex', flexDirection: 'column-reverse', gap: 22, maxWidth: 460, margin: '0 auto' }}>
+          <div style={{ position: 'relative', maxWidth: MAP_W, margin: '0 auto', height: moments.length * ROW_H }}>
+            {/* Stigen: sliten väg + trampstenar mellan nodernas centrum. */}
+            <svg
+              viewBox={`0 0 ${MAP_W} ${moments.length * ROW_H}`}
+              preserveAspectRatio="none"
+              aria-hidden="true"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
+            >
+              <path d={windingPath(moments.length)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
+                strokeLinecap="round" opacity={0.55} />
+              <path d={windingPath(moments.length)} stroke={theme.pathColor} strokeWidth={8.5} fill="none"
+                strokeLinecap="round" strokeDasharray="0.1 16" />
+            </svg>
+
+            {/* Natur längs vägen — deterministiskt utplacerad, aldrig över noderna. */}
+            {moments.map((moment, i) => (
+              <span
+                key={`sprite-${moment.id}`}
+                aria-hidden="true"
+                style={{
+                  position: 'absolute', zIndex: 1, pointerEvents: 'none',
+                  top: (moments.length - 1 - i) * ROW_H + 14 + ((i * 53) % 38),
+                  ...(i % 2 === 0 ? { left: `${68 + ((i * 37) % 16)}%` } : { left: `${1 + ((i * 29) % 9)}%` }),
+                }}
+              >
+                <Sprite
+                  name={theme.sprites[(i * 3 + 1) % theme.sprites.length]}
+                  size={30 + ((i * 17) % 22)}
+                  flip={i % 3 === 0}
+                  tone={(i % 2) as 0 | 1}
+                />
+              </span>
+            ))}
+
             {moments.map((moment, i) => {
               const skill = child.skills[moment.id]
               const state = nodeState(moment, skill, moment.id === currentId)
-              const style = NODE_STYLE[state]
               const isStar = state === 'star'
               const clickable = state === 'now' || state === 'oppen' || state === 'boss' || state === 'done' || isStar
               const onClick = (): void => {
@@ -142,39 +225,53 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   onClick={onClick}
                   disabled={!clickable}
                   style={{
+                    position: 'absolute', zIndex: 2,
+                    top: (moments.length - 1 - i) * ROW_H, height: ROW_H,
+                    left: i % 2 === 0 ? 0 : '45%', width: '55%',
                     display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'inherit', textAlign: 'left',
-                    // Två raka kolumner (cirklarna linjerar oavsett textlängd).
-                    width: '55%',
-                    marginLeft: i % 2 === 0 ? 0 : '45%',
-                    opacity: state === 'locked' || state === 'coming' ? 0.65 : 1,
+                    opacity: state === 'locked' || state === 'coming' ? 0.72 : 1,
                   }}
                 >
                   <span
                     className={state === 'now' ? 'pulse-ring' : state === 'boss' ? 'float-soft' : undefined}
                     style={{
                       position: 'relative', width: state === 'now' ? 62 : 52, height: state === 'now' ? 62 : 52,
-                      borderRadius: '50%', background: style.bg, flexShrink: 0,
-                      color: state === 'oppen' ? 'var(--sun-ink)' : '#fff',
+                      borderRadius: '50%', flexShrink: 0,
+                      // Glansig spelknapp: ljus reflex uppe till vänster + grundfärgen.
+                      background: `radial-gradient(circle at 33% 28%, rgba(255,255,255,.5), rgba(255,255,255,0) 55%), ${NODE_BG[state]}`,
+                      border: '3px solid rgba(255,255,255,.85)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: state === 'now' ? 24 : 20, fontWeight: 900,
                       boxShadow: state === 'now'
-                        ? '0 0 0 4px #fff, 0 0 0 9px rgba(255,201,77,.35), 0 4px 0 rgba(0,0,0,.15)'
+                        ? '0 0 0 6px rgba(255,201,77,.35), 0 4px 0 rgba(0,0,0,.18)'
                         : state === 'boss'
-                          ? '0 0 0 5px rgba(140,107,200,.28), 0 4px 0 rgba(0,0,0,.15)'
+                          ? '0 0 0 5px rgba(140,107,200,.3), 0 4px 0 rgba(0,0,0,.18)'
                           : state === 'oppen'
-                            ? '0 0 0 2.5px var(--sun), 0 4px 0 rgba(0,0,0,.12)'
-                            : '0 4px 0 rgba(0,0,0,.12)',
+                            ? '0 0 0 3px var(--sun), 0 4px 0 rgba(0,0,0,.14)'
+                            : '0 4px 0 rgba(0,0,0,.14)',
                     }}
                   >
-                    {style.label}
-                    {isStar && <span style={{ position: 'absolute', top: -8, right: -8, fontSize: 17 }}>💎</span>}
+                    <NodeGlyph state={state} size={state === 'now' ? 28 : 24} />
+                    {isStar && (
+                      <svg viewBox="0 0 24 24" width={18} height={18} aria-hidden="true"
+                        style={{ position: 'absolute', top: -9, right: -9, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.25))' }}>
+                        <path d="M12,3 L18,9 L12,21 L6,9 Z" fill="#8FD4F0" />
+                        <path d="M12,3 L18,9 L12,9 Z" fill="#C8ECFA" />
+                        <path d="M12,3 L6,9 L12,9 Z" fill="#5FB8E8" />
+                      </svg>
+                    )}
                     {state === 'now' && (
                       <span style={{ position: 'absolute', top: -30, left: '50%', transform: 'translateX(-50%)' }}>
                         <Pi mood="glad" size={30} />
                       </span>
                     )}
                   </span>
-                  <span style={{ minWidth: 0 }}>
+                  <span style={{
+                    minWidth: 0,
+                    // Mjuk halo bakom texten — läsbart även över mörk skog/bergssiluett.
+                    textShadow: theme.horizon === 'grotta'
+                      ? '0 1px 3px rgba(20,18,40,.9), 0 0 8px rgba(20,18,40,.7)'
+                      : '0 1px 2px rgba(255,255,255,.9), 0 0 8px rgba(255,255,255,.75)',
+                  }}>
                     <span style={{ display: 'block', fontWeight: 800, fontSize: 14, color: state === 'now' || state === 'oppen' ? 'var(--sun-ink)' : 'var(--ink)' }}>
                       {moment.title}
                     </span>
@@ -208,7 +305,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
       </div>
 
       {/* Sidopanelen */}
-      <aside style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
+      <aside style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', minHeight: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
             width: 38, height: 38, borderRadius: '50%', background: child.color, color: '#fff',

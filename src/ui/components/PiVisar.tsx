@@ -3,7 +3,7 @@ import type { DifficultyLevel, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
 import { generateTask } from '../../generators'
 import { freshSeed } from '../../generators/rng'
-import { speak, ttsAvailable } from '../../tts'
+import { prewarmSpeak, speak, ttsAvailable } from '../../tts'
 import { Pi } from './Pi'
 import { TaskVisualView } from './TaskVisualView'
 
@@ -43,6 +43,13 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
     if (examples.length === 0) onDone()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examples.length])
+
+  // Molnrösten: förvärm exemplets uppläsning så knappen svarar direkt.
+  useEffect(() => {
+    const t = examples[step]
+    if (t) prewarmSpeak(`${t.spokenPrompt ?? t.prompt}. ${t.explanation}`)
+  }, [examples, step])
+
   if (examples.length === 0) return null
 
   const task = examples[step]

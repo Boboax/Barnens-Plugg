@@ -237,6 +237,20 @@ function speakLocal(text: string, voiceURI?: string): void {
   window.speechSynthesis.speak(utterance)
 }
 
+/**
+ * Förvärm molnrösten: hämta ljudet till cachen i bakgrunden redan när
+ * uppgiften VISAS, så att uppläsningsknappen spelar direkt vid tryck.
+ * (Molnljudet genereras i ett svep — utan förvärmning väntar barnet
+ * hela genereringstiden efter knapptrycket.) Gör inget vid lokal röst.
+ */
+export function prewarmSpeak(text: string): void {
+  const wanted = preferredVoiceURI()
+  if (wanted !== CLOUD_VOICE || !cloudTtsAvailable()) return
+  const spoken = toSpoken(text)
+  if (audioCache.has(spoken)) return
+  void fetchCloudAudio(spoken).catch(() => { /* tyst — knappen faller ändå tillbaka till lokal röst */ })
+}
+
 /** Läs upp en text på svenska — moln-röst om vald, annars lokal. */
 export function speak(text: string, voiceURI?: string): void {
   stopSpeaking()

@@ -73,6 +73,10 @@ interface StoreValue {
   // Tid
   secondsLeftToday(child: ChildProfile): number
   addUsage(seconds: number): void
+  /** Förälder beviljar extra minuter idag (PIN-kollad i UI:t, se TimeUp). */
+  grantExtraTime(childId: string, minutes: number): void
+  /** Kollar PIN utan att låsa upp föräldraläget (extratid från barnets skärm). */
+  verifyParentPin(pin: string): Promise<boolean>
 
   // Föräldraläge
   tryUnlockParent(pin: string): Promise<boolean>
@@ -308,7 +312,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     secondsLeftToday: (child) => {
       const used = child.usageSeconds[todayISO()] ?? 0
-      return Math.max(0, child.dailyLimitMinutes * 60 - used)
+      const extra = child.extraSeconds?.[todayISO()] ?? 0
+      return Math.max(0, child.dailyLimitMinutes * 60 + extra - used)
     },
 
     addUsage: (seconds) => {
@@ -317,6 +322,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ...c,
         usageSeconds: { ...c.usageSeconds, [todayISO()]: (c.usageSeconds[todayISO()] ?? 0) + seconds },
       }))
+    },
+
+    grantExtraTime: (childId, minutes) => {
+      patchChild(childId, (c) => ({
+        ...c,
+        extraSeconds: { ...c.extraSeconds, [todayISO()]: (c.extraSeconds?.[todayISO()] ?? 0) + minutes * 60 },
+      }))
+    },
+
+    verifyParentPin: async (pin) => {
+      if (!household.parentPinHash) return false
+      return verifyPin(pin, household.parentPinHash)
     },
 
     tryUnlockParent: async (pin) => {
