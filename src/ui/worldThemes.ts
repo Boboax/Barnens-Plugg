@@ -1,21 +1,14 @@
 /* ============================================================
    Matterikets miljöer — varje värld får sin egen himmel,
-   horisontsiluett och levande dekor, så att dalen känns som en
-   dal, skogen som en skog och grottan som en grotta.
+   horisontsiluett, vandringsväg och ritade sprites längs vägen,
+   så att dalen känns som en dal, skogen som en skog och grottan
+   som en grotta. All grafik är handritad SVG (se WorldSprites) —
+   inga emojis, inga bildfiler.
    ============================================================ */
 
-export type HorizonKind = 'kullar' | 'skog' | 'berg' | 'slingor' | 'kristaller' | 'vagor' | 'grotta'
+import type { SpriteName } from './components/WorldSprites'
 
-export interface WorldDecor {
-  emoji: string
-  top?: string
-  bottom?: string
-  left?: string
-  right?: string
-  size: number
-  /** Sekunder mellan sväv-cyklerna förskjuts per dekor. */
-  delay?: number
-}
+export type HorizonKind = 'kullar' | 'skog' | 'berg' | 'slingor' | 'kristaller' | 'vagor' | 'grotta'
 
 export interface WorldTheme {
   /** Kartans himmel + mark som CSS-gradient. */
@@ -25,100 +18,91 @@ export interface WorldTheme {
   horizon: HorizonKind
   /** [bakre siluett, främre siluett] */
   horizonColors: [string, string]
-  decor: WorldDecor[]
+  /** Sprites som strös längs vägen (väljs deterministiskt per nod). */
+  sprites: SpriteName[]
+  /** Vandringsvägens prickar + den slitna stigen under. */
+  pathColor: string
+  pathUnder: string
+  celestial: 'sol' | 'mane' | 'ingen'
   clouds: boolean
 }
 
 export const WORLD_THEMES: Record<string, WorldTheme> = {
   'talens-dal': {
-    sky: 'linear-gradient(180deg, #BFE3F7 0%, #E4F3E4 38%, #F2F6E4 100%)',
+    sky: 'linear-gradient(180deg, #A8D8F0 0%, #C8E8F0 30%, #E4F3DC 62%, #D6EDC2 100%)',
     banner: { bg: '#FFF8E6', border: '#F2E3B8', ink: '#7A5A00' },
     horizon: 'kullar',
     horizonColors: ['#A8D8A0', '#7FC47F'],
-    decor: [
-      { emoji: '🌻', bottom: '8%', left: '3%', size: 30, delay: 0 },
-      { emoji: '🦋', top: '30%', right: '5%', size: 24, delay: 1.2 },
-      { emoji: '🌷', bottom: '20%', right: '3%', size: 26, delay: 0.6 },
-      { emoji: '🐞', bottom: '40%', left: '4%', size: 20, delay: 1.8 },
-    ],
+    sprites: ['lovtrad', 'blomma', 'buske', 'tuva', 'lovtrad', 'sten', 'blomma'],
+    pathColor: '#E8B44C',
+    pathUnder: '#F6E7C0',
+    celestial: 'sol',
     clouds: true,
   },
   multiplikationsskogen: {
-    sky: 'linear-gradient(180deg, #D7EEC8 0%, #C2E3B0 40%, #EAF3DC 100%)',
+    sky: 'linear-gradient(180deg, #BFE0D8 0%, #C8E4B8 35%, #A8D094 70%, #96C284 100%)',
     banner: { bg: '#EDF7E4', border: '#C8E3B2', ink: '#3E6B2A' },
     horizon: 'skog',
-    horizonColors: ['#8FBF7A', '#5E9C4F'],
-    decor: [
-      { emoji: '🐿️', bottom: '12%', left: '3%', size: 28, delay: 0 },
-      { emoji: '🍄', bottom: '6%', right: '4%', size: 26, delay: 0.8 },
-      { emoji: '🦉', top: '26%', right: '4%', size: 26, delay: 1.5 },
-      { emoji: '🌰', bottom: '35%', left: '5%', size: 20, delay: 2.1 },
-    ],
+    horizonColors: ['#6FA860', '#4A8442'],
+    sprites: ['gran', 'svamp', 'gran', 'buske', 'sten', 'gran', 'tuva'],
+    pathColor: '#B08A5A',
+    pathUnder: '#D8C8A4',
+    celestial: 'sol',
     clouds: true,
   },
   brakberget: {
-    sky: 'linear-gradient(180deg, #C9DFF5 0%, #E3ECF7 45%, #F3F1EA 100%)',
+    sky: 'linear-gradient(180deg, #98BCE4 0%, #C2D8EE 40%, #E4E9E4 75%, #D8DED2 100%)',
     banner: { bg: '#EAF1FB', border: '#C6D8F0', ink: '#3A5B8C' },
     horizon: 'berg',
-    horizonColors: ['#9FB4CE', '#6E88AB'],
-    decor: [
-      { emoji: '🦅', top: '22%', left: '4%', size: 26, delay: 0 },
-      { emoji: '⛺', bottom: '10%', right: '4%', size: 28, delay: 1 },
-      { emoji: '🍕', bottom: '30%', left: '3%', size: 24, delay: 1.7 },
-      { emoji: '❄️', top: '35%', right: '5%', size: 18, delay: 0.5 },
-    ],
+    horizonColors: ['#8FA6C4', '#5F7CA3'],
+    sprites: ['snogran', 'sten', 'gran', 'snogran', 'sten', 'tuva', 'snogran'],
+    pathColor: '#8898AC',
+    pathUnder: '#D2DAE4',
+    celestial: 'sol',
     clouds: true,
   },
   monsterskogen: {
-    sky: 'linear-gradient(180deg, #E4D9F5 0%, #EFE4F7 40%, #F6EFF2 100%)',
+    sky: 'linear-gradient(180deg, #8E7BC8 0%, #B49AE0 35%, #E0CCF0 70%, #D4C2E8 100%)',
     banner: { bg: '#F3EAFB', border: '#DCC8F0', ink: '#6A4DA8' },
     horizon: 'slingor',
-    horizonColors: ['#C2A8E0', '#9C7BC8'],
-    decor: [
-      { emoji: '🔮', bottom: '10%', left: '3%', size: 26, delay: 0 },
-      { emoji: '🌀', top: '28%', right: '4%', size: 24, delay: 0.9 },
-      { emoji: '🪄', bottom: '28%', right: '3%', size: 24, delay: 1.6 },
-      { emoji: '✨', top: '42%', left: '4%', size: 20, delay: 0.4 },
-    ],
+    horizonColors: ['#A488D4', '#8365B8'],
+    sprites: ['snurrtrad', 'orb', 'svamp', 'snurrtrad', 'orb', 'buske', 'kristall'],
+    pathColor: '#E8C8F8',
+    pathUnder: '#B49AE0',
+    celestial: 'mane',
     clouds: false,
   },
   'formernas-berg': {
-    sky: 'linear-gradient(180deg, #C8E8EC 0%, #E0F0F0 40%, #F0F2EA 100%)',
+    sky: 'linear-gradient(180deg, #8FC6D8 0%, #B8E0E4 38%, #D8ECE8 72%, #C8E0DA 100%)',
     banner: { bg: '#E4F4F4', border: '#B8DFE0', ink: '#20707A' },
     horizon: 'kristaller',
-    horizonColors: ['#8FC6CA', '#5BA3AA'],
-    decor: [
-      { emoji: '🔷', bottom: '12%', left: '3%', size: 26, delay: 0 },
-      { emoji: '📐', top: '30%', right: '4%', size: 26, delay: 1.1 },
-      { emoji: '🔺', bottom: '32%', right: '3%', size: 22, delay: 0.5 },
-      { emoji: '⬡', top: '45%', left: '4%', size: 22, delay: 1.8 },
-    ],
+    horizonColors: ['#7FB8BE', '#4E969E'],
+    sprites: ['kristall', 'sten', 'kristall', 'tuva', 'kristall', 'sten', 'buske'],
+    pathColor: '#5BA3AA',
+    pathUnder: '#C2E4E6',
+    celestial: 'sol',
     clouds: true,
   },
   diagramoarna: {
-    sky: 'linear-gradient(180deg, #B8E4F5 0%, #D2EFF7 42%, #FBF0D8 100%)',
+    sky: 'linear-gradient(180deg, #78C4E8 0%, #A8DCF0 35%, #D8F0F4 65%, #F2E4C2 100%)',
     banner: { bg: '#E4F5FB', border: '#B8E0F0', ink: '#1F6A8C' },
     horizon: 'vagor',
-    horizonColors: ['#7FC8E8', '#4FA8D8'],
-    decor: [
-      { emoji: '🦜', top: '24%', left: '4%', size: 26, delay: 0 },
-      { emoji: '🐚', bottom: '8%', right: '4%', size: 24, delay: 0.7 },
-      { emoji: '⛵', top: '38%', right: '5%', size: 26, delay: 1.4 },
-      { emoji: '🐠', bottom: '25%', left: '3%', size: 22, delay: 2 },
-    ],
+    horizonColors: ['#6FC0E4', '#3E98CC'],
+    sprites: ['palm', 'segelbat', 'tuva', 'palm', 'sten', 'segelbat', 'buske'],
+    pathColor: '#E8C87C',
+    pathUnder: '#F6EBC8',
+    celestial: 'sol',
     clouds: true,
   },
   sambandsgrottan: {
-    sky: 'linear-gradient(180deg, #3A3A55 0%, #4A4468 45%, #5C5478 100%)',
+    sky: 'linear-gradient(180deg, #2A2842 0%, #3A3655 40%, #4A4468 75%, #57517A 100%)',
     banner: { bg: '#4A4468', border: '#6C6490', ink: '#FFD98A' },
     horizon: 'grotta',
-    horizonColors: ['#2E2C45', '#242238'],
-    decor: [
-      { emoji: '💎', bottom: '12%', left: '3%', size: 24, delay: 0 },
-      { emoji: '🦇', top: '20%', right: '5%', size: 22, delay: 0.8 },
-      { emoji: '🕯️', bottom: '30%', right: '3%', size: 24, delay: 1.5 },
-      { emoji: '✨', top: '38%', left: '4%', size: 18, delay: 0.4 },
-    ],
+    horizonColors: ['#221F38', '#191730'],
+    sprites: ['stalagmit', 'kristall', 'orb', 'stalagmit', 'kristall', 'stalagmit', 'orb'],
+    pathColor: '#8FE4EE',
+    pathUnder: '#3A3655',
+    celestial: 'ingen', // grottan har inget himlavalv — kristallerna lyser i stället
     clouds: false,
   },
 }

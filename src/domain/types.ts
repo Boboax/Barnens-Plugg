@@ -258,6 +258,9 @@ export interface ChildProfile {
   dailyLimitMinutes: number
   /** Använd tid per dag: ISO-datum → sekunder. */
   usageSeconds: Record<string, number>
+  /** Extratid som förälder beviljat (PIN-skyddat): ISO-datum → sekunder.
+      Optionellt fält = bakåtkompatibelt med äldre profiler/exportfiler. */
+  extraSeconds?: Record<string, number>
 
   /** AI-chatt på/av för detta barn (fas 5). */
   chatEnabled: boolean
