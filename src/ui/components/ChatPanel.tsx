@@ -34,11 +34,12 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [waiting, setWaiting] = useState(false)
+  const [streamText, setStreamText] = useState('')
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, waiting])
+  }, [messages, waiting, streamText])
 
   if (!child) return null
   const left = messagesLeftToday(child, store.household, todayISO())
@@ -59,7 +60,12 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
     store.appendChatLog({ at: nowISO(), childId: child.id, role: 'child', text: trimmed, scratchPng })
 
     // Snabbknapparnas texter är appens egna — de behöver inget ämnesfilter.
-    const reply = await getChatProvider().send(context, history, { skipFilter: preApproved })
+    // Svaret strömmas ord för ord så Pi känns kvick.
+    const reply = await getChatProvider().send(context, history, {
+      skipFilter: preApproved,
+      onDelta: (chunk) => setStreamText((s) => s + chunk),
+    })
+    setStreamText('')
     setMessages((m) => [...m, { role: 'ai', text: reply.text }])
     setWaiting(false)
     sfx.ratt()
@@ -96,7 +102,11 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
             {m.text}
           </div>
         ))}
-        {waiting && <div style={{ ...bubbleAi, color: 'var(--muted)' }}>Pi funderar …</div>}
+        {waiting && (
+          <div style={streamText ? bubbleAi : { ...bubbleAi, color: 'var(--muted)' }}>
+            {streamText || 'Pi funderar …'}
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 6, padding: '8px 14px 4px', flexWrap: 'wrap' }}>

@@ -733,6 +733,11 @@ function SafetyTab() {
           (aldrig AI), svårigheten anpassas efter varje barn, och repetition schemaläggs med växande intervall.
           Ingen data lämnar enheten.
         </p>
+        <p style={{ margin: '10px 0 0', fontSize: 12.5, fontWeight: 700, color: '#8B8FA0' }}>
+          Version {__APP_VERSION__} · byggd {__BUILD_TIME__} UTC
+          <br />
+          Ny version på plattan? Stäng appen helt och öppna igen — två gånger (PWA:er aktiverar uppdateringen vid andra starten).
+        </p>
       </div>
     </div>
   )
