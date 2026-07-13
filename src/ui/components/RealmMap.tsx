@@ -1,0 +1,226 @@
+import { useRef, useState } from 'react'
+import type { ChildProfile } from '../../domain/types'
+import { momentsInWorld } from '../../domain/curriculum'
+import { WORLDS } from '../../domain/worlds'
+import { hasGenerator } from '../../generators'
+import { sfx } from '../../sound'
+import { Pi } from './Pi'
+import { CloudSvg, Sprite, type SpriteName } from './WorldSprites'
+import { worldTheme } from '../worldThemes'
+
+/* ============================================================
+   Riket — den stora startkartan över hela Matteriket.
+
+   Alla sju världar syns som regioner i ETT landskap (dal, skog,
+   berg, skymningsskog, kristallberg, öar och grotta). Barnet
+   trycker på en region och kartan zoomar in till världens väg.
+   Ritad SVG i botten; regionknappar och sprites som HTML-lager
+   ovanpå (samma mönster som världskartan).
+   ============================================================ */
+
+interface Region {
+  worldId: string
+  /** Centrum i procent av kartytan. */
+  x: number
+  y: number
+  /** Regionens signatursprites [vänster, höger]. */
+  sprites: [SpriteName, SpriteName]
+}
+
+const REGIONS: Region[] = [
+  { worldId: 'talens-dal', x: 17, y: 76, sprites: ['lovtrad', 'blomma'] },
+  { worldId: 'multiplikationsskogen', x: 42, y: 84, sprites: ['gran', 'svamp'] },
+  { worldId: 'brakberget', x: 20, y: 42, sprites: ['snogran', 'sten'] },
+  { worldId: 'monsterskogen', x: 50, y: 55, sprites: ['snurrtrad', 'orb'] },
+  { worldId: 'formernas-berg', x: 74, y: 30, sprites: ['kristall', 'sten'] },
+  { worldId: 'diagramoarna', x: 84, y: 74, sprites: ['palm', 'segelbat'] },
+  { worldId: 'sambandsgrottan', x: 50, y: 16, sprites: ['stalagmit', 'kristall'] },
+]
+
+/** Resvägen genom riket, i läroplansordning (procentkoordinater → 1000×640). */
+function realmTrail(): string {
+  const pts = WORLDS.map((w) => {
+    const r = REGIONS.find((r) => r.worldId === w.id)!
+    return [r.x * 10, r.y * 6.4] as const
+  })
+  let d = `M${pts[0][0]},${pts[0][1]}`
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1]
+    const [x1, y1] = pts[i]
+    // Mjuk båge med liten utböjning vinkelrätt mot sträckan.
+    const mx = (x0 + x1) / 2 + (y1 - y0) * 0.18
+    const my = (y0 + y1) / 2 - (x1 - x0) * 0.18
+    d += ` Q${mx},${my} ${x1},${y1}`
+  }
+  return d
+}
+
+function worldProgress(child: ChildProfile, worldId: string): { done: number; total: number } {
+  const moments = momentsInWorld(worldId).filter((m) => hasGenerator(m.generatorId))
+  const done = moments.filter((m) => {
+    const s = child.skills[m.id]
+    return s?.mastery === 'mastered' || s?.mastery === 'star'
+  }).length
+  return { done, total: moments.length }
+}
+
+interface RealmMapProps {
+  child: ChildProfile
+  currentWorldId: string
+  onPick(worldId: string): void
+}
+
+export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
+  const [zoomTo, setZoomTo] = useState<Region | null>(null)
+  const zooming = useRef(false)
+
+  const pick = (region: Region): void => {
+    if (zooming.current) return
+    zooming.current = true
+    sfx.whoosh()
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduced) return onPick(region.worldId)
+    setZoomTo(region)
+    window.setTimeout(() => onPick(region.worldId), 430)
+  }
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+      <div
+        style={{
+          position: 'absolute', inset: 0,
+          transformOrigin: zoomTo ? `${zoomTo.x}% ${zoomTo.y}%` : '50% 50%',
+          transform: zoomTo ? 'scale(2.6)' : 'scale(1)',
+          opacity: zoomTo ? 0 : 1,
+          transition: 'transform 0.45s ease-in, opacity 0.45s ease-in',
+        }}
+      >
+        {/* Landskapet: himmel, hav, bergskedja, mörka och magiska trakter. */}
+        <svg viewBox="0 0 1000 640" preserveAspectRatio="none" aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+          <defs>
+            <linearGradient id="rike-mark" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#BCE0EE" />
+              <stop offset="0.35" stopColor="#C8E6B4" />
+              <stop offset="1" stopColor="#B2DA9A" />
+            </linearGradient>
+            <radialGradient id="rike-grotta" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#3A3655" />
+              <stop offset="0.75" stopColor="#4A4468" />
+              <stop offset="1" stopColor="#4A446800" />
+            </radialGradient>
+            <radialGradient id="rike-monster" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#C2A8E4" />
+              <stop offset="1" stopColor="#C2A8E400" />
+            </radialGradient>
+            <radialGradient id="rike-kristall" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#A8DCE0" />
+              <stop offset="1" stopColor="#A8DCE000" />
+            </radialGradient>
+          </defs>
+
+          <rect width="1000" height="640" fill="url(#rike-mark)" />
+
+          {/* Havet kring Diagramöarna. */}
+          <path d="M1000,340 Q820,360 780,440 Q740,530 800,640 L1000,640 Z" fill="#7FC8E8" />
+          <path d="M1000,360 Q840,380 800,450 Q765,525 815,640 L860,640 Q810,520 850,455 Q890,395 1000,385 Z"
+            fill="#A8DCF4" opacity="0.7" />
+
+          {/* Bergskedjan kring Bråkberget. */}
+          <path d="M60,330 L140,190 L215,320 Z" fill="#8FA6C4" />
+          <path d="M140,190 L115,235 Q140,248 165,235 Z" fill="#F4F9FF" />
+          <path d="M170,345 L260,215 L340,340 Z" fill="#7C94B4" />
+          <path d="M260,215 L237,255 Q260,266 283,255 Z" fill="#F4F9FF" />
+          <path d="M40,360 Q190,290 360,365 Q200,395 40,360 Z" fill="#9FB4CE" opacity="0.5" />
+
+          {/* Grottans mörka trakt, Mönsterskogens skymning, kristallglansen. */}
+          <ellipse cx="500" cy="105" rx="240" ry="115" fill="url(#rike-grotta)" />
+          <ellipse cx="500" cy="355" rx="190" ry="105" fill="url(#rike-monster)" opacity="0.8" />
+          <ellipse cx="740" cy="195" rx="180" ry="110" fill="url(#rike-kristall)" opacity="0.9" />
+
+          {/* Skogens och dalens grönska. */}
+          <ellipse cx="420" cy="545" rx="220" ry="95" fill="#8FBF7A" opacity="0.65" />
+          <ellipse cx="170" cy="500" rx="180" ry="90" fill="#B8DCA0" opacity="0.8" />
+
+          {/* Resvägen genom riket. */}
+          <path d={realmTrail()} stroke="#FFF7E0" strokeWidth="15" fill="none" strokeLinecap="round" opacity="0.5" />
+          <path d={realmTrail()} stroke="#E8B44C" strokeWidth="7" fill="none" strokeLinecap="round" strokeDasharray="0.1 14" />
+        </svg>
+
+        {/* Drivande moln över riket. */}
+        <span className="cloud" aria-hidden="true" style={{ top: '8%', animationDuration: '90s', animationDelay: '-30s', zIndex: 1 }}>
+          <CloudSvg width={70} />
+        </span>
+        <span className="cloud" aria-hidden="true" style={{ top: '58%', animationDuration: '120s', animationDelay: '-70s', zIndex: 1 }}>
+          <CloudSvg width={48} opacity={0.7} />
+        </span>
+
+        {/* Regionernas sprites + världsknappar. */}
+        {REGIONS.map((region) => {
+          const world = WORLDS.find((w) => w.id === region.worldId)!
+          const theme = worldTheme(region.worldId)
+          const progress = worldProgress(child, region.worldId)
+          const complete = progress.total > 0 && progress.done === progress.total
+          const isHere = region.worldId === currentWorldId
+          const dark = region.worldId === 'sambandsgrottan'
+          return (
+            <span key={region.worldId}>
+              <span aria-hidden="true" style={{ position: 'absolute', left: `${region.x - 9}%`, top: `${region.y - 4}%`, zIndex: 1, pointerEvents: 'none' }}>
+                <Sprite name={region.sprites[0]} size={40} />
+              </span>
+              <span aria-hidden="true" style={{ position: 'absolute', left: `${region.x + 6}%`, top: `${region.y - 1}%`, zIndex: 1, pointerEvents: 'none' }}>
+                <Sprite name={region.sprites[1]} size={32} flip />
+              </span>
+              <button
+                onClick={() => pick(region)}
+                aria-label={`${world.name} — ${progress.done} av ${progress.total} klara`}
+                style={{
+                  position: 'absolute', left: `${region.x}%`, top: `${region.y}%`, transform: 'translate(-50%, -50%)',
+                  zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                  fontFamily: 'inherit',
+                }}
+              >
+                <span
+                  className={isHere ? 'pulse-ring' : undefined}
+                  style={{
+                    position: 'relative', width: 64, height: 64, borderRadius: '50%',
+                    background: `radial-gradient(circle at 33% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 60%), ${theme.horizonColors[1]}`,
+                    border: '3px solid rgba(255,255,255,.9)',
+                    boxShadow: isHere
+                      ? '0 0 0 5px rgba(255,201,77,.4), 0 4px 0 rgba(0,0,0,.16)'
+                      : '0 4px 0 rgba(0,0,0,.16)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <Sprite name={region.sprites[0]} size={38} />
+                  {complete && (
+                    <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true"
+                      style={{ position: 'absolute', top: -7, right: -7 }}>
+                      <circle cx="12" cy="12" r="11" fill="var(--mint)" stroke="#fff" strokeWidth="2" />
+                      <path d="M7,12.5 L10.5,16 L17,8.5" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                  {isHere && (
+                    <span style={{ position: 'absolute', top: -32, left: '50%', transform: 'translateX(-50%)' }}>
+                      <Pi mood="glad" size={32} />
+                    </span>
+                  )}
+                </span>
+                <span style={{
+                  fontWeight: 900, fontSize: 12.5, lineHeight: 1.15, textAlign: 'center', maxWidth: 110,
+                  color: dark ? '#F3EFFF' : 'var(--ink)',
+                  textShadow: dark ? '0 1px 3px rgba(20,18,40,.9)' : '0 1px 2px rgba(255,255,255,.9), 0 0 7px rgba(255,255,255,.8)',
+                }}>
+                  {world.name}
+                  <span style={{ display: 'block', fontWeight: 700, fontSize: 10.5, color: dark ? '#BDB4DC' : 'var(--muted)' }}>
+                    {progress.total === 0 ? 'kommer snart' : complete ? 'allt klart! ✓' : `${progress.done} av ${progress.total} klara`}
+                  </span>
+                </span>
+              </button>
+            </span>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
