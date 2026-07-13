@@ -3,6 +3,7 @@ import type {
   AnswerRecord, BlixtKind, ChatLogEntry, ChildProfile, Household, Reward, RewardTarget, SchoolYear, SkillState, Task,
 } from '../domain/types'
 import { configureChatFromHousehold } from '../chat'
+import { configureCloudTts } from '../tts'
 import { MOMENTS } from '../domain/curriculum'
 import {
   applyAnswer, applyBossResult, applyReviewResult, applyStarResult, newSkillState, recomputeAvailability,
@@ -113,8 +114,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Chattleverantören följer hushållets konfiguration (nyckeln bor lokalt).
+  // Gemini-nyckeln driver även moln-TTS:en (mänsklig uppläsningsröst).
   useEffect(() => {
     configureChatFromHousehold(household)
+    configureCloudTts(household.chat?.provider === 'gemini' ? household.chat.apiKey : null)
   }, [household.chat?.provider, household.chat?.apiKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Autospar: varje förändring efter inladdning skrivs ner.

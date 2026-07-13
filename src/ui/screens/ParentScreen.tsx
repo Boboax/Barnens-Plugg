@@ -4,7 +4,7 @@ import { areaName, weeklyReport } from '../../engine/report'
 import { rewardProgress } from '../../engine/rewards'
 import { BLIXT_TESTS, blixtTarget } from '../../engine/blixt'
 import { pingProvider } from '../../chat/providers'
-import { preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
+import { CLOUD_VOICE, cloudTtsAvailable, preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
 import { daysSinceBackup, exportHousehold, importHousehold } from '../../storage/backup'
 import { KID_COLORS, nowISO, useStore } from '../store'
 
@@ -261,9 +261,10 @@ function VoicePicker() {
     <div style={{ ...pcard, marginTop: 12 }}>
       <h4 style={h4}>🔊 Uppläsningsröst</h4>
       <p style={{ margin: '0 0 8px', fontSize: 13, color: '#8B8FA0', fontWeight: 600, lineHeight: 1.5 }}>
-        <strong>Tips för mycket bättre röst:</strong> ladda ner den förbättrade svenska rösten på iPaden —
-        Inställningar → Tillgänglighet → Talat innehåll → Röster → Svenska → hämta
-        "Alva (förbättrad)" (gratis, ~200 MB). Starta sedan om appen så dyker den upp här.
+        <strong>Bäst kvalitet:</strong> lägg in en Gemini-nyckel (under AI-chatten nedan) och välj
+        "Pi:s molnröst" — mänsklig röst, kräver internet (lokal röst tar över offline).
+        <br /><strong>Bra offline-röst:</strong> hämta "Alva (förbättrad)" på iPaden gratis via
+        Inställningar → Tillgänglighet → Talat innehåll → Röster → Svenska, och starta om appen.
         Röstvalet sparas per enhet.
       </p>
       {!ttsAvailable() || voices.length === 0 ? (
@@ -283,6 +284,9 @@ function VoicePicker() {
             style={{ flex: 1, minWidth: 220, fontSize: 14, fontWeight: 700, padding: '8px 12px', borderRadius: 10, border: '2px solid #EDEAE2' }}
           >
             <option value="">Automatiskt (bästa tillgängliga)</option>
+            {cloudTtsAvailable() && (
+              <option value={CLOUD_VOICE}>🌟 Pi:s molnröst — bäst kvalitet (Gemini, kräver internet)</option>
+            )}
             {voices.map((v) => (
               <option key={v.voiceURI} value={v.voiceURI}>
                 {v.name}{v.localService ? '' : ' (kräver internet)'}
