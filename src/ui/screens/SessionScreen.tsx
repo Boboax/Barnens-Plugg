@@ -161,7 +161,7 @@ export function SessionScreen() {
           </span>
         )}
         <span className="chip" style={{ color: 'var(--muted)' }}>
-          {showIntro ? '🐧 Pi visar först' : `${PART_LABEL[slot.kind]} · ${moment.title}`}
+          {showIntro ? '🦉 Pi visar först' : `${PART_LABEL[slot.kind]} · ${moment.title}`}
         </span>
       </div>
       {showIntro ? (

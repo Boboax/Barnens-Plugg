@@ -69,7 +69,7 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
           background: 'var(--card)', border: '2px solid var(--line)', borderRadius: 16,
           borderBottomLeftRadius: 4, padding: '10px 16px', maxWidth: 420, fontWeight: 700, fontSize: 15,
         }}>
-          Nytt äventyr: <strong>{moment.title}</strong>! Jag visar {EXAMPLE_COUNT === 2 && step === 0 ? 'två exempel' : 'ett till'} först — titta hur jag tänker. 🐧
+          Nytt äventyr: <strong>{moment.title}</strong>! Jag visar {EXAMPLE_COUNT === 2 && step === 0 ? 'två exempel' : 'ett till'} först — titta hur jag tänker. 🦉
         </div>
       </div>
 
