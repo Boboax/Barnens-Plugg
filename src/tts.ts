@@ -45,12 +45,30 @@ function voiceScore(v: SpeechSynthesisVoice): number {
 /** Alla svenska röster på enheten, bäst först. */
 export function swedishVoices(): SpeechSynthesisVoice[] {
   if (!ttsAvailable()) return []
-  if (!cachedVoices) {
+  // Cacha ALDRIG en tom lista — iOS fyller på röstlistan sent (ibland
+  // först efter att något talat), och en cachad tomma skulle aldrig läka.
+  if (!cachedVoices || cachedVoices.length === 0) {
     cachedVoices = (window.speechSynthesis.getVoices() ?? [])
       .filter((v) => v.lang.toLowerCase().startsWith('sv'))
       .sort((a, b) => voiceScore(b) - voiceScore(a))
   }
   return cachedVoices
+}
+
+/**
+ * Väck iOS röstlista: Safari rapporterar tomt tills något talat.
+ * Anropas i en tryckgest (iOS kräver gest för första talet) — en
+ * ljudlös mikroyttring som avbryts direkt räcker för att fylla listan.
+ */
+export function kickVoiceList(): void {
+  if (!ttsAvailable()) return
+  try {
+    const kick = new SpeechSynthesisUtterance('hej')
+    kick.volume = 0
+    kick.rate = 2
+    window.speechSynthesis.speak(kick)
+    window.setTimeout(() => window.speechSynthesis.cancel(), 150)
+  } catch { /* ofarligt */ }
 }
 
 /** Förälderns röstval för den här enheten (voiceURI), eller null = auto. */
