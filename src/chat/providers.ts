@@ -18,7 +18,19 @@ import {
    3. On-topic → huvudanrop med den låsta systemprompten.
    ============================================================ */
 
-const GEMINI_MODEL = 'gemini-2.5-flash'
+/**
+ * Gemini-modeller i prioritetsordning. 3.5-flash (maj 2026) har brytande
+ * API-ändringar mot 2.5: thinkingLevel (sträng) ersätter thinkingBudget
+ * (tal) och temperatur är utfasad — därför egen config per modell.
+ * Faller tillbaka till 2.5-flash om 3.5 inte är tillgänglig på nyckeln
+ * (t.ex. gratisnivå); nyckelfel avbryter direkt utan fallback.
+ */
+const GEMINI_MODELS: { id: string; config: Record<string, unknown> }[] = [
+  { id: 'gemini-3.5-flash', config: { maxOutputTokens: 400, thinkingConfig: { thinkingLevel: 'MINIMAL' } } },
+  { id: 'gemini-2.5-flash', config: { maxOutputTokens: 400, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } } },
+]
+let workingGeminiModel: string | null = null
+
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001'
 const MAX_HISTORY = 12 // meddelanden som skickas med (kostnad + fokus)
 const REQUEST_TIMEOUT_MS = 15_000 // barn ska aldrig stirra på "Pi funderar …" i evighet
@@ -71,33 +83,44 @@ async function fetchWithTimeout(url: string, init: RequestInit): Promise<Respons
 /* ---------- Gemini ---------- */
 
 async function geminiGenerate(apiKey: string, system: string | null, turns: { role: 'user' | 'model'; text: string; imagePng?: string }[]): Promise<string> {
-  const body = {
-    ...(system ? { system_instruction: { parts: [{ text: system }] } } : {}),
-    contents: turns.map((t) => ({
-      role: t.role,
-      parts: [
-        { text: t.text },
-        ...(t.imagePng ? [{ inline_data: { mime_type: 'image/png', data: dataUrlToBase64(t.imagePng) } }] : []),
-      ],
-    })),
-    generationConfig: {
-      maxOutputTokens: 400,
-      temperature: 0.6,
-      // Gemini 2.5 "tänker" internt som standard och tankearbetet räknas
-      // mot tokentaket — utan detta blir svaret ofta HELT TOMT (ser ut
-      // som nätfel). Pi behöver inte tänka djupt: stäng av.
-      thinkingConfig: { thinkingBudget: 0 },
-    },
+  const contents = turns.map((t) => ({
+    role: t.role,
+    parts: [
+      { text: t.text },
+      ...(t.imagePng ? [{ inline_data: { mime_type: 'image/png', data: dataUrlToBase64(t.imagePng) } }] : []),
+    ],
+  }))
+  // Prova bästa modellen först; minns vilken som fungerar på nyckeln.
+  const models = workingGeminiModel
+    ? [...GEMINI_MODELS].sort((a, b) => (a.id === workingGeminiModel ? -1 : b.id === workingGeminiModel ? 1 : 0))
+    : GEMINI_MODELS
+  let lastError: ChatError = new ChatError('natverk', 'okänt Gemini-fel')
+  for (const model of models) {
+    try {
+      const body = {
+        ...(system ? { system_instruction: { parts: [{ text: system }] } } : {}),
+        contents,
+        generationConfig: model.config,
+      }
+      const res = await fetchWithTimeout(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+      )
+      if (!res.ok) throw new ChatError(statusToKind(res.status), `Gemini ${model.id} ${res.status}: ${await errorDetail(res)}`)
+      const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
+      const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim()
+      if (!text) throw new ChatError('natverk', `Tomt svar från ${model.id}`)
+      workingGeminiModel = model.id
+      return text
+    } catch (err) {
+      lastError = err instanceof ChatError ? err : new ChatError('natverk', String(err))
+      // Ogiltig nyckel drabbar alla modeller lika — ingen mening att falla vidare.
+      // OBS: 400 kan också betyda avvisad parameter på just den modellen,
+      // så vi provar nästa modell även vid 'nyckel' om fler finns kvar.
+      if (lastError.kind === 'nyckel' && /API key not valid/i.test(lastError.message)) throw lastError
+    }
   }
-  const res = await fetchWithTimeout(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
-  )
-  if (!res.ok) throw new ChatError(statusToKind(res.status), `Gemini ${res.status}: ${await errorDetail(res)}`)
-  const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
-  const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim()
-  if (!text) throw new ChatError('natverk', 'Tomt svar från Gemini')
-  return text
+  throw lastError
 }
 
 /* ---------- Claude ---------- */
