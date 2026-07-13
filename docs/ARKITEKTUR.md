@@ -47,8 +47,12 @@ Svarshistoriken är en ringbuffert (1500 svar/barn, 20 kladdbilder/barn).
 ## Tidsgränser
 
 Tickas av `App.tsx` (5 s-intervall) enbart på träningsskärmar och bokförs per
-dag i profilen. Kontrollen ligger i appkod — utom räckhåll för både barnet och
-(i fas 5) AI:n. Gränsen sätts per barn i föräldraläget.
+dag i profilen. Tiden är **aktivitetsbaserad**: räkningen kräver en pekning/
+tangenttryckning inom senaste 90 s och att appen är synlig — att lägga ifrån
+sig plattan förbrukar noll tid ("låta timern rinna ut" fungerar inte). Efter
+2,5 min inaktivitet somnar Pi med en paus-skärm. Kontrollen ligger i appkod —
+utom räckhåll för både barnet och AI:n. Gränsen sätts per barn i föräldraläget,
+och veckorapportens minuter är därmed genuint aktiv träningstid.
 
 ## Att bygga vidare (nästa faser)
 

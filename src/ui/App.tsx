@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { startMusic, stopMusic, unlockAudio } from '../sound'
 import { Pi } from './components/Pi'
 import { Splash } from './components/Splash'
@@ -15,11 +15,22 @@ import { useStore } from './store'
 /** Skärmar där aktiv träningstid tickar mot dagens gräns. */
 const TIMED_SCREENS = new Set(['session', 'boss', 'star', 'blixt', 'diagnosis'])
 const TICK_SECONDS = 5
+/**
+ * Aktivitetsbaserad tid: klockan räknar bara när barnet faktiskt gör något.
+ * Ingen pekning på 90 s → räkningen pausar tyst (att tänka länge på en
+ * uppgift är okej — 90 s utan EN tryckning betyder paus, inte funderande).
+ * Efter 2,5 min somnar Pi med en "är du kvar?"-skärm. Att låta plattan
+ * ligga förbrukar alltså noll tid — "låta timern rinna ut" fungerar inte.
+ */
+const IDLE_GRACE_MS = 90_000
+const IDLE_SLEEP_MS = 150_000
 
 export function App() {
   const store = useStore()
   const { screen, activeChild, loaded } = store
   const [showSplash, setShowSplash] = useState(true)
+  const [piSover, setPiSover] = useState(false)
+  const lastActivity = useRef(Date.now())
 
   // Profilfärgen följer barnet genom hela appen.
   useEffect(() => {
@@ -33,20 +44,38 @@ export function App() {
     return () => window.removeEventListener('pointerdown', unlock)
   }, [])
 
-  // Musiken följer skärmen: äventyr på kartan/passet, bossmusik i strid,
-  // snabb puls i blixtpasset — tystnad i föräldraläget och när tiden är slut.
+  // All interaktion räknas som aktivitet (peka, rita, skriva).
   useEffect(() => {
+    const poke = (): void => {
+      lastActivity.current = Date.now()
+    }
+    window.addEventListener('pointerdown', poke)
+    window.addEventListener('keydown', poke)
+    return () => {
+      window.removeEventListener('pointerdown', poke)
+      window.removeEventListener('keydown', poke)
+    }
+  }, [])
+
+  // Musiken följer skärmen — och tystnar när Pi sover.
+  useEffect(() => {
+    if (piSover) { stopMusic(); return }
     if (screen === 'home' || screen === 'session' || screen === 'diagnosis') startMusic('varld')
     else if (screen === 'boss' || screen === 'star') startMusic('boss')
     else if (screen === 'blixt') startMusic('blixt')
     else stopMusic()
-  }, [screen])
+  }, [screen, piSover])
 
-  // Tidsbokföring: tickar bara på träningsskärmar, låser vänligt när tiden är slut.
+  // Tidsbokföring: tickar bara på träningsskärmar, bara vid aktivitet,
+  // bara när appen är synlig. Låser vänligt när tiden är slut.
   useEffect(() => {
     if (!activeChild || !TIMED_SCREENS.has(screen)) return
     const interval = window.setInterval(() => {
-      store.addUsage(TICK_SECONDS)
+      const idleFor = Date.now() - lastActivity.current
+      if (document.visibilityState === 'visible' && idleFor < IDLE_GRACE_MS) {
+        store.addUsage(TICK_SECONDS)
+      }
+      setPiSover(idleFor >= IDLE_SLEEP_MS)
     }, TICK_SECONDS * 1000)
     return () => window.clearInterval(interval)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,15 +98,45 @@ export function App() {
 
   if (showSplash) return <Splash onDone={() => setShowSplash(false)} />
 
-  switch (screen) {
-    case 'profiles': return <ProfileSelect />
-    case 'home': return <Home />
-    case 'session': return <SessionScreen key={activeChild?.id} />
-    case 'boss': return <BattleScreen kind="boss" />
-    case 'star': return <BattleScreen kind="star" />
-    case 'blixt': return <BlixtScreen key={store.blixtKind} />
-    case 'diagnosis': return <DiagnosisScreen />
-    case 'parent': return <ParentScreen />
-    case 'time-up': return <TimeUp />
-  }
+  const content = (() => {
+    switch (screen) {
+      case 'profiles': return <ProfileSelect />
+      case 'home': return <Home />
+      case 'session': return <SessionScreen key={activeChild?.id} />
+      case 'boss': return <BattleScreen kind="boss" />
+      case 'star': return <BattleScreen kind="star" />
+      case 'blixt': return <BlixtScreen key={store.blixtKind} />
+      case 'diagnosis': return <DiagnosisScreen />
+      case 'parent': return <ParentScreen />
+      case 'time-up': return <TimeUp />
+    }
+  })()
+
+  return (
+    <>
+      {content}
+      {piSover && TIMED_SCREENS.has(screen) && (
+        <div
+          onPointerDown={() => {
+            lastActivity.current = Date.now()
+            setPiSover(false)
+          }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 500,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14,
+            background: 'rgba(46, 51, 80, 0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+          }}
+        >
+          <div className="card bounce-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '26px 36px', textAlign: 'center' }}>
+            <Pi mood="sover" size={100} />
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Pi tog en tupplur … 😴</h2>
+            <p style={{ margin: 0, color: 'var(--muted)', fontWeight: 700, maxWidth: 300 }}>
+              Klockan är pausad — ingen tid har gått medan du var borta. Tryck så fortsätter vi!
+            </p>
+            <span className="btn btn-primary">Väck Pi ▶</span>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
