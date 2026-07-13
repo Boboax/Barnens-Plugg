@@ -16,14 +16,21 @@ AI:n kan aldrig, oavsett vad den luras att säga:
 En 10-åring som övertalar Pi att "säga att jag klarade provet" vinner ingenting —
 Pi har ingen hand på några spakar. Under bosstrider är chatten helt avstängd.
 
-## Lager 1: serverproxy — nyckeln lämnar aldrig enheten
+## Lager 1: nyckelhantering — aldrig i kod eller repo
 
-All chattrafik går via en serverless-proxy (Cloudflare Workers/motsvarande):
+**Implementerat läge (direktläge):** föräldern klistrar in sin egen API-nyckel
+(Gemini eller Claude) i föräldraläget bakom PIN. Nyckeln lagras enbart i
+enhetens lokala IndexedDB, hårdkodas aldrig, committas aldrig, och **strippas
+ur backup-exporten** (`storage/backup.ts`). Anropen går direkt från enheten
+till leverantörens API (båda stöder CORS). Dagstak: 30 meddelanden/barn.
 
-- API-nyckeln (Gemini eller Claude) ligger som server-secret, aldrig i appen
-- Proxyn äger systemprompten — klienten kan inte skriva över den
-- Rate limiting per barn och dag (skydd mot både kostnad och tjat)
-- Leverantörsoberoende: `ChatProvider`-gränssnittet i `src/chat/adapter.ts`
+Medveten avvägning: i direktläget ligger systemprompt och ämnesfilter i
+klientkoden. Det är acceptabelt för familjebruk på iPad (ingen devtools-
+åtkomst i praktiken), eftersom lager 0 gör ett kringgående ofarligt och
+lager 4 gör det synligt. **Uppgraderingsväg:** en serverless-proxy
+(Cloudflare Workers) som äger nyckel + systemprompt + rate limiting —
+`ChatProvider`-gränssnittet i `src/chat/adapter.ts` är byggt så att proxyn
+bara är en ny provider; ingen UI-ändring krävs.
 
 ## Lager 2: ämnesfilter före svar
 

@@ -2,8 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AnswerRecord, SessionPlan, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
 import { composeSession, taskForPart } from '../../engine/session'
+import { chatReadyFor } from '../../chat'
+import type { ScratchPadHandle } from '../components/ScratchPad'
 import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
+import { ChatPanel } from '../components/ChatPanel'
 import { Pi } from '../components/Pi'
 import { PiVisar } from '../components/PiVisar'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
@@ -58,6 +61,8 @@ export function SessionScreen() {
   )
   const [correctCount, setCorrectCount] = useState(0)
   const [combo, setCombo] = useState(0)
+  const [chatOpen, setChatOpen] = useState(false)
+  const scratchHandle = useRef<ScratchPadHandle>()
   // "Pi visar först": lösta exempel innan ett helt nytt moment övas.
   const [introDone, setIntroDone] = useState(false)
   const introMomentId = useMemo(() => {
@@ -140,9 +145,10 @@ export function SessionScreen() {
 
   const moment = momentById(slot.momentId)
   const showIntro = slot.kind === 'nytt' && slot.momentId === introMomentId && !introDone
+  const chatAvailable = chatReadyFor(child)
 
   return (
-    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', padding: '10px 16px 16px' }}>
+    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', padding: '10px 16px 16px', position: 'relative', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
         <button className="chip" onClick={() => store.go('home')}>✕ Avsluta</button>
         <div className="pbar" style={{ flex: 1 }}>
@@ -166,7 +172,35 @@ export function SessionScreen() {
         mode="ovning"
         onComplete={handleComplete}
         onNext={advance}
+        onScratchHandle={(h) => { scratchHandle.current = h }}
       />
+      )}
+
+      {/* Mattekompisen Pi — bara i övningspass, aldrig i strider. */}
+      {chatAvailable && !showIntro && !chatOpen && (
+        <button
+          onClick={() => { sfx.whoosh(); setChatOpen(true) }}
+          aria-label="Prata med Mattekompisen Pi"
+          className="float-soft"
+          style={{
+            position: 'absolute', right: 16, bottom: 14, zIndex: 15,
+            width: 62, height: 62, borderRadius: '50%', background: 'var(--card)',
+            border: '3px solid var(--primary)', boxShadow: '0 4px 12px rgba(40,30,80,.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        ><Pi mood="glad" size={40} /></button>
+      )}
+      {chatAvailable && chatOpen && (
+        <ChatPanel
+          context={{
+            childName: child.name,
+            childAge: new Date().getFullYear() - child.birthYear,
+            momentTitle: moment.title,
+            currentTaskPrompt: task.prompt,
+          }}
+          getScratch={() => scratchHandle.current?.snapshot()}
+          onClose={() => setChatOpen(false)}
+        />
       )}
     </div>
   )

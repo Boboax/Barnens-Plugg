@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type {
-  AnswerRecord, BlixtKind, ChildProfile, Household, Reward, RewardTarget, SchoolYear, SkillState, Task,
+  AnswerRecord, BlixtKind, ChatLogEntry, ChildProfile, Household, Reward, RewardTarget, SchoolYear, SkillState, Task,
 } from '../domain/types'
+import { configureChatFromHousehold } from '../chat'
 import { MOMENTS } from '../domain/curriculum'
 import {
   applyAnswer, applyBossResult, applyReviewResult, applyStarResult, newSkillState, recomputeAvailability,
@@ -80,6 +81,10 @@ interface StoreValue {
   deleteReward(id: string): void
   replaceHousehold(next: Household): void
   noteBackup(): void
+
+  // Chatten (fas 5)
+  appendChatLog(entry: ChatLogEntry): void
+  setChatConfig(config: { provider: 'gemini' | 'claude'; apiKey: string } | null): void
 }
 
 const Ctx = createContext<StoreValue | null>(null)
@@ -106,6 +111,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       void requestPersistentStorage()
     })
   }, [])
+
+  // Chattleverantören följer hushållets konfiguration (nyckeln bor lokalt).
+  useEffect(() => {
+    configureChatFromHousehold(household)
+  }, [household.chat?.provider, household.chat?.apiKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Autospar: varje förändring efter inladdning skrivs ner.
   useEffect(() => {
@@ -348,6 +358,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
 
     noteBackup: () => setHousehold((h) => ({ ...h, lastBackupAt: nowISO() })),
+
+    appendChatLog: (entry) => {
+      setHousehold((h) => {
+        // Ringbuffert: loggen är föräldrainsyn, inte arkiv — 400 rader räcker
+        // och kladd-bilder i loggen får inte svälla lagringen.
+        let log = [...h.chatLog, entry]
+        if (log.length > 400) log = log.slice(-400)
+        return { ...h, chatLog: log }
+      })
+    },
+
+    setChatConfig: (config) => {
+      setHousehold((h) => ({ ...h, chat: config ?? undefined }))
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, blixtKind])
 

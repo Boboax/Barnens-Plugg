@@ -33,11 +33,13 @@ interface TaskRunnerProps {
   onComplete(result: TaskResult): void
   /** Övningsläget: anropas när barnet trycker "Nästa" efter feedbacken. */
   onNext?(): void
+  /** Ger föräldern till komponenten åtkomst till kladdytan (chatten: "visa min uträkning"). */
+  onScratchHandle?(handle: ScratchPadHandle): void
 }
 
 const parseNumeric = (raw: string): number => Number(raw.replace('−', '-').replace(',', '.'))
 
-export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext }: TaskRunnerProps) {
+export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle }: TaskRunnerProps) {
   const [value, setValue] = useState('')
   const [phase, setPhase] = useState<'svara' | 'feedback'>('svara')
   const [answered, setAnswered] = useState(false)
@@ -191,7 +193,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext 
 
       {withScratch && (
         <div style={{ minHeight: 220 }}>
-          <ScratchPad onReady={(h) => { scratchRef.current = h }} />
+          <ScratchPad onReady={(h) => { scratchRef.current = h; onScratchHandle?.(h) }} />
         </div>
       )}
     </div>

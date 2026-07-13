@@ -229,6 +229,58 @@ function ChildrenTab() {
       )}
 
       {store.household.children.length > 0 && <BlixtTargets />}
+      {store.household.children.length > 0 && <ChatConfig />}
+    </div>
+  )
+}
+
+/* ---------- AI-chatten: leverantör + nyckel (bor bara på enheten) ---------- */
+
+function ChatConfig() {
+  const store = useStore()
+  const current = store.household.chat
+  const [provider, setProvider] = useState<'gemini' | 'claude'>(current?.provider ?? 'gemini')
+  const [key, setKey] = useState('')
+  const [saved, setSaved] = useState(false)
+
+  return (
+    <div style={{ ...pcard, marginTop: 12 }}>
+      <h4 style={h4}>🐧 AI-chatten "Mattekompisen Pi"</h4>
+      <p style={{ margin: '0 0 8px', fontSize: 13, color: '#8B8FA0', fontWeight: 600, lineHeight: 1.5 }}>
+        Pi svarar sokratiskt (ledtrådar, aldrig facit), pratar bara matte och loggar allt under Säkerhet.
+        Nyckeln sparas <strong>enbart på den här enheten</strong> — den hamnar aldrig i någon kod, på någon
+        server eller i backupfiler. Gemini har en gratis nivå (skaffa nyckel på aistudio.google.com);
+        Claude-nyckel skapas på console.anthropic.com.
+      </p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <button className="chip" onClick={() => setProvider('gemini')} style={provider === 'gemini' ? activeChip : {}}>Gemini (gratis nivå)</button>
+        <button className="chip" onClick={() => setProvider('claude')} style={provider === 'claude' ? activeChip : {}}>Claude</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <input
+          type="password"
+          value={key}
+          onChange={(e) => { setKey(e.target.value); setSaved(false) }}
+          placeholder={current?.apiKey ? 'Nyckel inlagd — klistra in ny för att byta' : 'Klistra in API-nyckeln här'}
+          style={{ flex: 1, minWidth: 220, fontSize: 14, fontWeight: 600, padding: '9px 14px', borderRadius: 10, border: '2px solid #EDEAE2' }}
+        />
+        <button
+          className="btn btn-primary"
+          disabled={key.trim().length < 10}
+          onClick={() => { store.setChatConfig({ provider, apiKey: key.trim() }); setKey(''); setSaved(true) }}
+        >Spara ✔</button>
+        {current?.apiKey && (
+          <button className="btn btn-quiet" onClick={() => { store.setChatConfig(null); setSaved(false) }}>
+            Ta bort nyckeln
+          </button>
+        )}
+      </div>
+      <p style={{ margin: '8px 0 0', fontSize: 12.5, fontWeight: 700, color: current?.apiKey ? '#1F7A50' : '#8B8FA0' }}>
+        {saved ? 'Sparat! Slå nu på chatten per barn ovan.' : current?.apiKey ? `✓ ${current.provider === 'gemini' ? 'Gemini' : 'Claude'}-nyckel finns på enheten. Chatten slås på per barn ovan.` : 'Ingen nyckel inlagd — Pi sover tills vidare.'}
+      </p>
+      <p style={{ margin: '6px 0 0', fontSize: 12, color: '#8B8FA0', fontWeight: 600 }}>
+        Max 30 meddelanden per barn och dag. Chatten är alltid avstängd under bosstrider och prov.
+      </p>
     </div>
   )
 }
@@ -278,8 +330,25 @@ function ChildSettings({ child }: { child: ChildProfile }) {
       </label>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, padding: '6px 0' }}>
         <span>💬 Mattekompisen Pi (AI-chatt)</span>
-        <span style={{ color: '#8B8FA0', fontSize: 13 }}>kommer i fas 5</span>
+        <button
+          onClick={() => store.updateChild(child.id, { chatEnabled: !child.chatEnabled })}
+          aria-label={child.chatEnabled ? 'Stäng av chatten' : 'Sätt på chatten'}
+          style={{
+            width: 40, height: 22, borderRadius: 99, position: 'relative', transition: 'background 0.2s',
+            background: child.chatEnabled ? '#3FBF87' : '#C9C5B8',
+          }}
+        >
+          <span style={{
+            position: 'absolute', top: 2, left: child.chatEnabled ? 20 : 2, width: 18, height: 18,
+            borderRadius: '50%', background: '#fff', transition: 'left 0.2s',
+          }} />
+        </button>
       </div>
+      {child.chatEnabled && !store.household.chat?.apiKey && (
+        <p style={{ margin: '0 0 6px', fontSize: 12.5, color: '#B4552E', fontWeight: 700 }}>
+          Chatten är på för {child.name}, men ingen AI-nyckel är inlagd ännu — se "AI-chatten" nedan.
+        </p>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, padding: '6px 0' }}>
         <span>🎓 Skolår (styr terminsmålen)</span>
         <select
@@ -459,6 +528,54 @@ const currentHalf = (): 1 | 2 => {
   return m <= 2 ? 1 : 2 // VT: jan–mars / april–juni
 }
 
+/* ---------- Chattloggen: full föräldrainsyn, inkl. avböjda försök ---------- */
+
+function ChatLogCard() {
+  const store = useStore()
+  const { chatLog, children } = store.household
+  const [showAll, setShowAll] = useState(false)
+  const entries = [...chatLog].reverse()
+  const shown = showAll ? entries.slice(0, 200) : entries.slice(0, 12)
+  const nameOf = (id: string): string => children.find((c) => c.id === id)?.name ?? '?'
+
+  return (
+    <div style={pcard}>
+      <h4 style={h4}>💬 Chattlogg ({chatLog.length})</h4>
+      {chatLog.length === 0 ? (
+        <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
+          Alla samtal med Pi hamnar här — inklusive avböjda försök att byta ämne. Varje meddelande
+          passerar ett ämnesfilter innan det besvaras, och chatten slås på per barn under "Barn & tid".
+        </p>
+      ) : (
+        <>
+          {shown.map((e, i) => (
+            <div key={i} style={{
+              padding: '6px 0', borderBottom: '1px dashed #EDEAE2', fontSize: 13, lineHeight: 1.5,
+              color: e.refusedOffTopic ? '#B4552E' : '#5B6070',
+            }}>
+              <strong style={{ color: '#2A2F3A' }}>
+                {e.role === 'child' ? nameOf(e.childId) : 'Pi'}
+              </strong>
+              <span style={{ color: '#B0B4C2', fontSize: 11.5 }}> · {e.at.slice(5, 16).replace('T', ' ')}</span>
+              {e.refusedOffTopic && <strong> · avböjt av ämnesfiltret</strong>}
+              <br />
+              {e.text}
+              {e.scratchPng && (
+                <img src={e.scratchPng} alt="Kladdyta" style={{ display: 'block', width: 120, borderRadius: 6, marginTop: 4, border: '1px solid #EDEAE2' }} />
+              )}
+            </div>
+          ))}
+          {entries.length > 12 && (
+            <button onClick={() => setShowAll(!showAll)} style={{ marginTop: 8, fontSize: 13, fontWeight: 800, color: '#4A56C6' }}>
+              {showAll ? 'Visa färre ▲' : `Visa alla (${entries.length}) ▼`}
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 /* ---------- Säkerhet ---------- */
 
 function SafetyTab() {
@@ -498,13 +615,7 @@ function SafetyTab() {
         {message && <p style={{ margin: '10px 0 0', fontWeight: 700, fontSize: 13.5 }}>{message}</p>}
       </div>
 
-      <div style={pcard}>
-        <h4 style={h4}>💬 Chattlogg</h4>
-        <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
-          När Mattekompisen Pi aktiveras (fas 5) loggas alla samtal här — inklusive avböjda försök att byta ämne.
-          Chatten slås på per barn och all trafik går genom ett ämnesfilter innan den besvaras.
-        </p>
-      </div>
+      <ChatLogCard />
 
       <div style={pcard}>
         <h4 style={h4}>ℹ️ Om appen</h4>
