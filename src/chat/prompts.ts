@@ -16,6 +16,12 @@ export const REFUSAL_LINE =
 /** Vad Pi säger när nätet strular. */
 export const OFFLINE_LINE = 'Zzz … Pi somnade till (internet försvann). Prova igen om en stund!'
 
+/** Nyckeln är fel/ogiltig — barnet kan inget göra, vuxen behövs. */
+export const KEY_ERROR_LINE = 'Pi kommer inte in! 🐧 Be en vuxen titta på AI-nyckeln i föräldraläget.'
+
+/** Kvoten/taket hos leverantören är slut för stunden. */
+export const QUOTA_LINE = 'Pi har pratat så mycket att rösten behöver vila! Prova igen om en liten stund.'
+
 /** Max meddelanden per barn och dag — tak mot både kostnad och tjat. */
 export const MAX_MESSAGES_PER_DAY = 30
 

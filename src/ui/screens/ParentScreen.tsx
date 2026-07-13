@@ -3,6 +3,7 @@ import type { ChildProfile, SchoolYear } from '../../domain/types'
 import { areaName, weeklyReport } from '../../engine/report'
 import { rewardProgress } from '../../engine/rewards'
 import { BLIXT_TESTS, blixtTarget } from '../../engine/blixt'
+import { pingProvider } from '../../chat/providers'
 import { daysSinceBackup, exportHousehold, importHousehold } from '../../storage/backup'
 import { KID_COLORS, nowISO, useStore } from '../store'
 
@@ -242,6 +243,16 @@ function ChatConfig() {
   const [provider, setProvider] = useState<'gemini' | 'claude'>(current?.provider ?? 'gemini')
   const [key, setKey] = useState('')
   const [saved, setSaved] = useState(false)
+  const [testResult, setTestResult] = useState<{ ok: boolean; detail: string } | null>(null)
+  const [testing, setTesting] = useState(false)
+
+  const runTest = async (): Promise<void> => {
+    if (!current?.apiKey) return
+    setTesting(true)
+    setTestResult(null)
+    setTestResult(await pingProvider(current.provider, current.apiKey))
+    setTesting(false)
+  }
 
   return (
     <div style={{ ...pcard, marginTop: 12 }}>
@@ -270,11 +281,25 @@ function ChatConfig() {
           onClick={() => { store.setChatConfig({ provider, apiKey: key.trim() }); setKey(''); setSaved(true) }}
         >Spara ✔</button>
         {current?.apiKey && (
-          <button className="btn btn-quiet" onClick={() => { store.setChatConfig(null); setSaved(false) }}>
-            Ta bort nyckeln
-          </button>
+          <>
+            <button className="btn btn-ghost" disabled={testing} onClick={() => void runTest()}>
+              {testing ? 'Testar …' : 'Testa anslutningen'}
+            </button>
+            <button className="btn btn-quiet" onClick={() => { store.setChatConfig(null); setSaved(false); setTestResult(null) }}>
+              Ta bort nyckeln
+            </button>
+          </>
         )}
       </div>
+      {testResult && (
+        <p style={{
+          margin: '8px 0 0', fontSize: 13, fontWeight: 700, lineHeight: 1.5,
+          color: testResult.ok ? '#1F7A50' : '#B4552E',
+          overflowWrap: 'anywhere',
+        }}>
+          {testResult.ok ? '✓ Anslutningen fungerar! ' : '✗ Fel: '}{testResult.detail}
+        </p>
+      )}
       <p style={{ margin: '8px 0 0', fontSize: 12.5, fontWeight: 700, color: current?.apiKey ? '#1F7A50' : '#8B8FA0' }}>
         {saved ? 'Sparat! Slå nu på chatten per barn ovan.' : current?.apiKey ? `✓ ${current.provider === 'gemini' ? 'Gemini' : 'Claude'}-nyckel finns på enheten. Chatten slås på per barn ovan.` : 'Ingen nyckel inlagd — Pi sover tills vidare.'}
       </p>

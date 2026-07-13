@@ -1,5 +1,8 @@
 import type { ChatContext, ChatMessage, ChatProvider, ChatReply } from './adapter'
-import { OFFLINE_LINE, REFUSAL_LINE, buildClassifyPrompt, buildSystemPrompt, parseClassification } from './prompts'
+import {
+  KEY_ERROR_LINE, OFFLINE_LINE, QUOTA_LINE, REFUSAL_LINE,
+  buildClassifyPrompt, buildSystemPrompt, parseClassification,
+} from './prompts'
 
 /* ============================================================
    Leverantörer: Gemini och Claude, direkt från enheten.
@@ -21,6 +24,38 @@ const MAX_HISTORY = 12 // meddelanden som skickas med (kostnad + fokus)
 const REQUEST_TIMEOUT_MS = 15_000 // barn ska aldrig stirra på "Pi funderar …" i evighet
 
 const dataUrlToBase64 = (dataUrl: string): string => dataUrl.split(',')[1] ?? ''
+
+/** Typat chattfel så olika orsaker kan få olika barnvänliga svar. */
+export class ChatError extends Error {
+  constructor(
+    public kind: 'nyckel' | 'kvot' | 'natverk',
+    detail: string,
+  ) {
+    super(detail)
+  }
+}
+
+export const statusToKind = (status: number): ChatError['kind'] =>
+  status === 400 || status === 401 || status === 403 ? 'nyckel' : status === 429 ? 'kvot' : 'natverk'
+
+/** Barnvänligt svar per felorsak — nyckelfel ska inte låtsas vara nätfel. */
+export function errorToLine(err: unknown): string {
+  if (err instanceof ChatError) {
+    if (err.kind === 'nyckel') return KEY_ERROR_LINE
+    if (err.kind === 'kvot') return QUOTA_LINE
+  }
+  return OFFLINE_LINE
+}
+
+/** Läs ut leverantörens felmeddelande ur svarskroppen (för förälderns test). */
+async function errorDetail(res: Response): Promise<string> {
+  try {
+    const data = (await res.json()) as { error?: { message?: string } }
+    return data.error?.message ?? res.statusText
+  } catch {
+    return res.statusText
+  }
+}
 
 /** fetch med hård tidsgräns — hängda anrop blir vänliga offline-svar. */
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
@@ -45,16 +80,23 @@ async function geminiGenerate(apiKey: string, system: string | null, turns: { ro
         ...(t.imagePng ? [{ inline_data: { mime_type: 'image/png', data: dataUrlToBase64(t.imagePng) } }] : []),
       ],
     })),
-    generationConfig: { maxOutputTokens: 250, temperature: 0.6 },
+    generationConfig: {
+      maxOutputTokens: 400,
+      temperature: 0.6,
+      // Gemini 2.5 "tänker" internt som standard och tankearbetet räknas
+      // mot tokentaket — utan detta blir svaret ofta HELT TOMT (ser ut
+      // som nätfel). Pi behöver inte tänka djupt: stäng av.
+      thinkingConfig: { thinkingBudget: 0 },
+    },
   }
   const res = await fetchWithTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
   )
-  if (!res.ok) throw new Error(`Gemini ${res.status}`)
+  if (!res.ok) throw new ChatError(statusToKind(res.status), `Gemini ${res.status}: ${await errorDetail(res)}`)
   const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim()
-  if (!text) throw new Error('Tomt svar från Gemini')
+  if (!text) throw new ChatError('natverk', 'Tomt svar från Gemini')
   return text
 }
 
@@ -88,10 +130,10 @@ async function claudeGenerate(apiKey: string, system: string | null, turns: { ro
     },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`Claude ${res.status}`)
+  if (!res.ok) throw new ChatError(statusToKind(res.status), `Claude ${res.status}: ${await errorDetail(res)}`)
   const data = (await res.json()) as { content?: { type: string; text?: string }[] }
   const text = data.content?.filter((c) => c.type === 'text').map((c) => c.text ?? '').join('').trim()
-  if (!text) throw new Error('Tomt svar från Claude')
+  if (!text) throw new ChatError('natverk', 'Tomt svar från Claude')
   return text
 }
 
@@ -124,8 +166,9 @@ function makeProvider(name: string, generate: Generate, apiKey: string): ChatPro
         }))
         const text = await generate(apiKey, buildSystemPrompt(context), turns)
         return { text, refusedOffTopic: false }
-      } catch {
-        return { text: OFFLINE_LINE, refusedOffTopic: false }
+      } catch (err) {
+        console.warn('Chattfel:', err) // felsökningsspår för föräldern (Safari-konsolen)
+        return { text: errorToLine(err), refusedOffTopic: false }
       }
     },
   }
@@ -136,3 +179,17 @@ export const createGeminiProvider = (apiKey: string): ChatProvider =>
 
 export const createClaudeProvider = (apiKey: string): ChatProvider =>
   makeProvider('claude', claudeGenerate, apiKey)
+
+/**
+ * Förälderns anslutningstest: ett minimalt anrop som visar det RIKTIGA
+ * felet (status + leverantörens meddelande) i stället för barnspråk.
+ */
+export async function pingProvider(provider: 'gemini' | 'claude', apiKey: string): Promise<{ ok: boolean; detail: string }> {
+  const generate = provider === 'claude' ? claudeGenerate : geminiGenerate
+  try {
+    const reply = await generate(apiKey, null, [{ role: 'user', text: 'Svara med exakt ett ord: OK' }])
+    return { ok: true, detail: `Svar från ${provider === 'claude' ? 'Claude' : 'Gemini'}: "${reply.slice(0, 60)}"` }
+  } catch (err) {
+    return { ok: false, detail: err instanceof Error ? err.message : String(err) }
+  }
+}
