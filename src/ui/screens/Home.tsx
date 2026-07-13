@@ -9,6 +9,7 @@ import { rewardProgress } from '../../engine/rewards'
 import { blixtTarget, unlockedBlixtTests } from '../../engine/blixt'
 import { sfx } from '../../sound'
 import { Pi } from '../components/Pi'
+import { RealmMap } from '../components/RealmMap'
 import { SoundToggle } from '../components/SoundToggle'
 import { WorldScenery } from '../components/WorldScenery'
 import { Sprite } from '../components/WorldSprites'
@@ -144,27 +145,45 @@ function HomeInner({ child }: { child: ChildProfile }) {
     store.startSession() // motorn väljer momentet
   }
 
+  // Riket först: barnet ser hela kartan och zoomar in i en värld.
+  const [view, setView] = useState<'riket' | 'varld'>('riket')
+  const enterWorld = (id: string): void => {
+    setWorldId(id)
+    hasScrolled.current = false // scrolla till aktuell nod i den nya världen
+    setView('varld')
+  }
+
+  const inRealm = view === 'riket'
+
   return (
     // height (inte minHeight): kartan scrollar i sin egen yta så att
     // sidopanel och världsväxlare alltid syns — som i ett riktigt spel.
     <div className="screen-fade" style={{ height: '100%', display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 330px)', gap: 0 }}>
       {/* Kartan */}
       <div style={{
-        padding: '14px 18px', background: theme.sky, display: 'flex', flexDirection: 'column',
+        padding: '14px 18px', background: inRealm ? '#BCE0EE' : theme.sky, display: 'flex', flexDirection: 'column',
         minWidth: 0, minHeight: 0, position: 'relative', overflow: 'hidden',
         // Grottan är mörk — ljus text där (nodtexterna använder variablerna).
-        ...(theme.horizon === 'grotta' ? ({ '--ink': '#F3EFFF', '--muted': '#BDB4DC', '--sun-ink': '#FFD98A' } as React.CSSProperties) : {}),
+        ...(!inRealm && theme.horizon === 'grotta' ? ({ '--ink': '#F3EFFF', '--muted': '#BDB4DC', '--sun-ink': '#FFD98A' } as React.CSSProperties) : {}),
       }}>
-        <WorldScenery theme={theme} />
+        {!inRealm && <WorldScenery theme={theme} />}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
           <span style={{ display: 'flex', gap: 8 }}>
             <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
             <SoundToggle />
           </span>
-          <span style={{ fontWeight: 900, fontSize: 17, color: theme.horizon === 'grotta' ? '#FFF3D6' : 'var(--ink)' }}>{world.emoji} {world.name}</span>
+          <span style={{ fontWeight: 900, fontSize: 17, color: !inRealm && theme.horizon === 'grotta' ? '#FFF3D6' : 'var(--ink)' }}>
+            {inRealm ? '🗺 Matteriket' : `${world.emoji} ${world.name}`}
+          </span>
           <span className="chip">🔥 {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
         </div>
 
+        {inRealm ? (
+          <div style={{ flex: 1, position: 'relative', margin: '10px -18px -14px' }}>
+            <RealmMap child={child} currentWorldId={currentMoment?.worldId ?? worldId} onPick={enterWorld} />
+          </div>
+        ) : (
+          <>
         <div style={{
           margin: '10px 0 4px', background: theme.banner.bg, border: `2px solid ${theme.banner.border}`, borderRadius: 12,
           padding: '8px 13px', fontSize: 13.5, fontWeight: 700, color: theme.banner.ink, lineHeight: 1.45,
@@ -291,17 +310,14 @@ function HomeInner({ child }: { child: ChildProfile }) {
           </div>
         </div>
 
-        {/* Världsväxlare */}
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', paddingTop: 6, position: 'relative', zIndex: 3 }}>
-          {WORLDS.map((w) => (
-            <button
-              key={w.id}
-              className="chip"
-              onClick={() => setWorldId(w.id)}
-              style={worldId === w.id ? { borderColor: 'var(--primary)', color: 'var(--primary)' } : { color: 'var(--muted)' }}
-            >{w.emoji} {w.name.split(' ')[0]}</button>
-          ))}
+        {/* Tillbaka till översikten över hela riket. */}
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 6, position: 'relative', zIndex: 3 }}>
+          <button className="chip" onClick={() => setView('riket')} style={{ fontWeight: 800 }}>
+            🗺 Hela Matteriket
+          </button>
         </div>
+          </>
+        )}
       </div>
 
       {/* Sidopanelen */}
