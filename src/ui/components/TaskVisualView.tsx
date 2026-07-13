@@ -12,6 +12,7 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
     case 'grupper': return <Grupper count={visual.groupCount} per={visual.itemsPerGroup} emoji={visual.emoji} />
     case 'brak': return <Brak parts={visual.parts} filled={visual.filled} secondary={visual.secondary} />
     case 'klocka': return <Klocka hours={visual.hours} minutes={visual.minutes} />
+    case 'form': return <Form shape={visual.shape} />
     case 'rektangel': return <Rektangel w={visual.w} h={visual.h} unit={visual.unit} />
     case 'ingen': return null
   }
@@ -154,6 +155,29 @@ function Klocka({ hours, minutes }: { hours: number; minutes: number }) {
       <line x1={60} y1={60} x2={hx} y2={hy} stroke="var(--ink)" strokeWidth={5} strokeLinecap="round" />
       <line x1={60} y1={60} x2={mx} y2={my} stroke="var(--coral)" strokeWidth={3.5} strokeLinecap="round" />
       <circle cx={60} cy={60} r={4} fill="var(--ink)" />
+    </svg>
+  )
+}
+
+/** Stora, tydliga geometriska former (inte emojis — de blir små och otydliga). */
+function Form({ shape }: { shape: 'cirkel' | 'triangel' | 'kvadrat' | 'rektangel' | 'femhorning' | 'sexhorning' }) {
+  const fill = 'color-mix(in srgb, var(--primary) 22%, #fff)'
+  const stroke = 'var(--primary)'
+  const polygon = (sides: number): string =>
+    Array.from({ length: sides })
+      .map((_, i) => {
+        const a = (i / sides) * Math.PI * 2 - Math.PI / 2
+        return `${80 + 62 * Math.cos(a)},${80 + 62 * Math.sin(a)}`
+      })
+      .join(' ')
+  return (
+    <svg viewBox="0 0 160 160" width={170} height={170} aria-hidden="true">
+      {shape === 'cirkel' && <circle cx={80} cy={80} r={60} fill={fill} stroke={stroke} strokeWidth={5} />}
+      {shape === 'kvadrat' && <rect x={24} y={24} width={112} height={112} fill={fill} stroke={stroke} strokeWidth={5} />}
+      {shape === 'rektangel' && <rect x={12} y={44} width={136} height={72} fill={fill} stroke={stroke} strokeWidth={5} />}
+      {shape === 'triangel' && <polygon points="80,18 148,138 12,138" fill={fill} stroke={stroke} strokeWidth={5} strokeLinejoin="round" />}
+      {shape === 'femhorning' && <polygon points={polygon(5)} fill={fill} stroke={stroke} strokeWidth={5} strokeLinejoin="round" />}
+      {shape === 'sexhorning' && <polygon points={polygon(6)} fill={fill} stroke={stroke} strokeWidth={5} strokeLinejoin="round" />}
     </svg>
   )
 }

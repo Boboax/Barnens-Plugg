@@ -120,10 +120,11 @@ const delaUppTal = g('dela-upp-tal', (level, seed, rng) => {
       misconceptions: { [total - part + 1]: 'en-fel', [total - part - 1]: 'en-fel' },
     })
   }
+  // Uppdelning skriven som öppen likhet — "7 är 6 och …?" förstod ingen.
   return numericTask({
     generatorId: id, level, seed,
-    prompt: `${total} är ${part} och …?`,
-    spokenPrompt: `${total} är ${part} och hur många till?`,
+    prompt: `${part} + __ = ${total}`,
+    spokenPrompt: `${part} plus vilket tal blir ${total}?`,
     value: total - part,
     visual: { kind: 'tiobas', groups: [{ tens: 0, ones: part }, { tens: 0, ones: total - part }] },
     explanation: `${part} och ${total - part} blir tillsammans ${total}.`,

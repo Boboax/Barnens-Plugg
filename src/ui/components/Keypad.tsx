@@ -13,9 +13,11 @@ interface KeypadProps {
   allowNegative?: boolean
   allowDecimal?: boolean
   disabled?: boolean
+  /** 'stor' = blixtpassen: stora tryckytor för snabba, säkra tryck. */
+  size?: 'normal' | 'stor'
 }
 
-export function Keypad({ value, onChange, onSubmit, allowNegative, allowDecimal, disabled }: KeypadProps) {
+export function Keypad({ value, onChange, onSubmit, allowNegative, allowDecimal, disabled, size = 'normal' }: KeypadProps) {
   const press = (key: string): void => {
     if (disabled) return
     sfx.klick()
@@ -29,14 +31,15 @@ export function Keypad({ value, onChange, onSubmit, allowNegative, allowDecimal,
     onChange(value + key)
   }
 
+  const stor = size === 'stor'
   const keyStyle: React.CSSProperties = {
-    background: 'var(--card)', border: '2px solid var(--line)', borderRadius: 14,
-    fontSize: 24, fontWeight: 800, padding: '12px 0', boxShadow: '0 3px 0 var(--line)',
-    fontFamily: 'inherit', color: 'var(--ink)',
+    background: 'var(--card)', border: '2px solid var(--line)', borderRadius: stor ? 18 : 14,
+    fontSize: stor ? 34 : 24, fontWeight: 800, padding: stor ? '20px 0' : '12px 0',
+    boxShadow: '0 3px 0 var(--line)', fontFamily: 'inherit', color: 'var(--ink)',
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, maxWidth: 290, width: '100%' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: stor ? 12 : 8, maxWidth: stor ? 460 : 290, width: '100%' }}>
       {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((k) => (
         <button key={k} style={keyStyle} onClick={() => press(k)} disabled={disabled}>{k}</button>
       ))}

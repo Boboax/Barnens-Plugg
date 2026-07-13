@@ -19,37 +19,41 @@ const g = (
 const former2d = g('former-2d', (level, seed, rng) => {
   const id = 'gen.former-2d'
   const shapes = [
-    { name: 'cirkel', emoji: '⚪', corners: 0, sides: 0 },
-    { name: 'triangel', emoji: '🔺', corners: 3, sides: 3 },
-    { name: 'kvadrat', emoji: '🟥', corners: 4, sides: 4 },
-    { name: 'rektangel', emoji: '▭', corners: 4, sides: 4 },
-    { name: 'femhörning', emoji: '⬠', corners: 5, sides: 5 },
-    { name: 'sexhörning', emoji: '⬡', corners: 6, sides: 6 },
+    { name: 'cirkel', shape: 'cirkel', corners: 0, sides: 0 },
+    { name: 'triangel', shape: 'triangel', corners: 3, sides: 3 },
+    { name: 'kvadrat', shape: 'kvadrat', corners: 4, sides: 4 },
+    { name: 'rektangel', shape: 'rektangel', corners: 4, sides: 4 },
+    { name: 'femhörning', shape: 'femhorning', corners: 5, sides: 5 },
+    { name: 'sexhörning', shape: 'sexhorning', corners: 6, sides: 6 },
   ] as const
   const pool = level <= 4 ? shapes.slice(0, 4) : shapes
   const shape = rng.pick(pool)
   if (level >= 6 || (shape.corners > 0 && rng.chance(0.5))) {
+    // Hörnfrågan visar formen som STOR bild — barnet räknar hörnen själv.
     const target = rng.pick(pool.filter((s) => s.corners > 0))
     return choiceTask({
       generatorId: id, level, seed, rng,
-      prompt: `Vilken form har ${target.corners} hörn?`,
-      correct: `${target.emoji} ${target.name}`,
-      distractors: pool
-        .filter((s) => s.name !== target.name && s.corners !== target.corners)
-        .slice(0, 3)
-        .map((s) => [`${s.emoji} ${s.name}`, null] as [string, null]),
+      prompt: `Hur många hörn har formen?`,
+      correct: String(target.corners),
+      distractors: [
+        [String(target.corners + 1), null],
+        [String(Math.max(0, target.corners - 1)), null],
+        [String(target.corners + 2), null],
+      ],
+      visual: { kind: 'form', shape: target.shape },
       explanation: `En ${target.name} har ${target.corners} hörn och ${target.sides} sidor.`,
     })
   }
   return choiceTask({
     generatorId: id, level, seed, rng,
-    prompt: `Vad heter formen ${shape.emoji}?`,
+    prompt: `Vad heter formen?`,
     correct: shape.name,
     distractors: pool
       .filter((s) => s.name !== shape.name)
       .slice(0, 3)
       .map((s) => [s.name, null] as [string, null]),
-    explanation: `${shape.emoji} är en ${shape.name}.`,
+    visual: { kind: 'form', shape: shape.shape },
+    explanation: `Formen på bilden är en ${shape.name}${shape.corners > 0 ? ` — den har ${shape.corners} hörn` : ' — den är helt rund, utan hörn'}.`,
   })
 })
 

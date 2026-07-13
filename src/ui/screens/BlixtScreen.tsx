@@ -159,14 +159,15 @@ export function BlixtScreen() {
         {previousBest > 0 && <span>🏅 rekord {previousBest}</span>}
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-        <p style={{ fontSize: 40, fontWeight: 900, margin: 0, letterSpacing: 1 }}>{task?.prompt.replace(' = ?', ' =')}</p>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <p style={{ fontSize: 48, fontWeight: 900, margin: 0, letterSpacing: 1 }}>{task?.prompt.replace(' = ?', ' =')}</p>
         <div style={{
-          minWidth: 110, border: `3px dashed ${flash === 'ratt' ? 'var(--mint)' : flash === 'fel' ? 'var(--coral)' : 'var(--primary)'}`,
-          borderRadius: 14, padding: '6px 18px', fontSize: 30, fontWeight: 900, textAlign: 'center',
+          minWidth: 160, minHeight: 64, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: `3px dashed ${flash === 'ratt' ? 'var(--mint)' : flash === 'fel' ? 'var(--coral)' : 'var(--primary)'}`,
+          borderRadius: 16, padding: '4px 20px', fontSize: 38, fontWeight: 900,
           color: 'var(--primary)', background: 'var(--card)', transition: 'border-color 0.15s',
-        }}>{value || ' '}</div>
-        <Keypad value={value} onChange={setValue} onSubmit={submit} />
+        }}>{value || '\u00A0'}</div>
+        <Keypad value={value} onChange={setValue} onSubmit={submit} size="stor" />
       </div>
     </div>
   )
