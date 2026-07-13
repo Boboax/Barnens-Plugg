@@ -3,6 +3,7 @@ import type { AnswerRecord, SessionPlan, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
 import { composeSession, taskForPart } from '../../engine/session'
 import { Pi } from '../components/Pi'
+import { PiVisar } from '../components/PiVisar'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
 import { todayISO, useStore } from '../store'
 
@@ -54,6 +55,16 @@ export function SessionScreen() {
     child && slots.length > 0 ? taskForPart(child, slots[0].momentId, slots[0].kind) : null,
   )
   const [correctCount, setCorrectCount] = useState(0)
+  // "Pi visar först": lösta exempel innan ett helt nytt moment övas.
+  const [introDone, setIntroDone] = useState(false)
+  const introMomentId = useMemo(() => {
+    if (!child) return undefined
+    const firstNew = slots.find((s) => s.kind === 'nytt')
+    if (!firstNew) return undefined
+    const skill = child.skills[firstNew.momentId]
+    return (skill?.attempts ?? 0) === 0 ? firstNew.momentId : undefined
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Repetitionsresultat per moment: [rätt, totalt]
   const reviewTally = useRef(new Map<string, [number, number]>())
   const reviewsFinished = useRef(new Set<string>())
@@ -113,6 +124,7 @@ export function SessionScreen() {
   }
 
   const moment = momentById(slot.momentId)
+  const showIntro = slot.kind === 'nytt' && slot.momentId === introMomentId && !introDone
 
   return (
     <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', padding: '10px 16px 16px' }}>
@@ -122,9 +134,12 @@ export function SessionScreen() {
           <i style={{ width: `${(index / slots.length) * 100}%` }} />
         </div>
         <span className="chip" style={{ color: 'var(--muted)' }}>
-          {PART_LABEL[slot.kind]} · {moment.title}
+          {showIntro ? '🐧 Pi visar först' : `${PART_LABEL[slot.kind]} · ${moment.title}`}
         </span>
       </div>
+      {showIntro ? (
+        <PiVisar momentId={slot.momentId} onDone={() => setIntroDone(true)} />
+      ) : (
       <TaskRunner
         key={`${index}-${task.ref.seed}`}
         task={task}
@@ -132,6 +147,7 @@ export function SessionScreen() {
         onComplete={handleComplete}
         onNext={advance}
       />
+      )}
     </div>
   )
 }

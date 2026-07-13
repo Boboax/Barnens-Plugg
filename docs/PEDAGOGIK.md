@@ -20,6 +20,8 @@ Här är kopplingen mellan forskning och implementation.
 | **Korta pass** | Uppmärksamhetsspann; distributed practice | Dagens pass ≈ 15 min: uppvärmning → nytt → blandat; tidsgräns per dag |
 | **Inga syskonjämförelser** | Social jämförelse demotiverar den som halkar efter | Varje barn ser bara sina egna mål och streaks; jämförelsen finns bara i föräldravyn |
 | **Adaptiv startdiagnos** | Computerized adaptive testing (CAT), förenklad | Binärsökning längs läroplansryggraden; inga rätt/fel visas; delas i korta pass för yngre barn |
+| **Lösta exempel först** | Worked examples / cognitive load theory (Sweller); nybörjare lär bäst av exempel före övning | "Pi visar först": två lösta exempel med förklaring första gången ett nytt moment öppnas (`PiVisar.tsx`) |
+| **Flytträning utan press** | Automaticitet krävs för arbetsminnesavlastning; tidspress skapar ångest (Boaler) — lösningen är tävling mot sig själv | Blixtpassen: skolans minuttest-format (1 minut, add/sub 0–10, 0–20, tabellerna) men rekordjakt mot eget rekord; skolans mål visas som ribba, fel kostar inget (`blixt.ts`) |
 
 ## Svårighetsskalan (nivå 1–10 per moment)
 

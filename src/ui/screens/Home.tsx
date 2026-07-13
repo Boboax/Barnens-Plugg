@@ -6,6 +6,7 @@ import { hasGenerator } from '../../generators'
 import { currentMomentId } from '../../engine/progress'
 import { dueForReview } from '../../engine/spaced-repetition'
 import { rewardProgress } from '../../engine/rewards'
+import { blixtTarget, unlockedBlixtTests } from '../../engine/blixt'
 import { Pi } from '../components/Pi'
 import { todayISO, useStore } from '../store'
 
@@ -205,6 +206,33 @@ function HomeInner({ child }: { child: ChildProfile }) {
             </div>
           )
         })}
+
+        {unlockedBlixtTests(child).length > 0 && (
+          <div className="card">
+            <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 4 }}>⚡ Blixtpass · 1 minut</div>
+            {unlockedBlixtTests(child).map((test) => {
+              const record = child.blixt?.[test.kind]
+              const target = blixtTarget(test.kind, store.household.blixtTargets)
+              const hitTarget = (record?.best ?? 0) >= target
+              return (
+                <button
+                  key={test.kind}
+                  onClick={() => { if (secondsLeft <= 0) return store.go('time-up'); store.startBlixt(test.kind) }}
+                  style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%',
+                    padding: '8px 0', borderBottom: '1.5px dashed var(--line)', fontSize: 13, fontWeight: 800,
+                    fontFamily: 'inherit', color: 'var(--ink)', textAlign: 'left', gap: 8,
+                  }}
+                >
+                  <span>{test.emoji} {test.title}</span>
+                  <span style={{ fontSize: 11.5, color: hitTarget ? 'var(--mint)' : 'var(--muted)', flexShrink: 0 }}>
+                    {record ? `🏅 ${record.best}` : 'nytt!'} {hitTarget ? '🎯' : `· mål ${target}`}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 13.5, fontWeight: 800 }}>⏱ Tid kvar idag</span>

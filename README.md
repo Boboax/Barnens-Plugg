@@ -17,6 +17,9 @@ Pingvinen Pi, tränar korta dagliga pass och utmanar bossar för att bemästra m
   distraktorer byggda kring kända missuppfattningar (glömd växling, likhetstecknet
   som "här kommer svaret", större nämnare = större bråk …).
 - **Kladdyta** på varje uppgift (finger/penna), sparas med svaret.
+- **"Pi visar först":** lösta exempel innan varje nytt moment (worked examples).
+- **Blixtpass:** skolans minuttest som rekordjakt — 1 minut, plus/minus 0–10,
+  0–20 och tabellerna, med skolans mål (konfigurerbart) som ribba.
 - **Föräldraläge bakom PIN:** veckorapport i klarspråk, tidsgräns per barn och dag,
   verkliga belöningar (kupongflöde, terminsmål enligt läroplanen), export/import av
   all data.

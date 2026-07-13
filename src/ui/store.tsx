@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type {
-  AnswerRecord, ChildProfile, Household, Reward, RewardTarget, SchoolYear, SkillState, Task,
+  AnswerRecord, BlixtKind, ChildProfile, Household, Reward, RewardTarget, SchoolYear, SkillState, Task,
 } from '../domain/types'
 import { MOMENTS } from '../domain/curriculum'
 import {
@@ -20,7 +20,7 @@ import { hashPin, verifyPin } from '../storage/pin'
 
 export type Screen =
   | 'profiles' | 'home' | 'session' | 'boss' | 'star'
-  | 'diagnosis' | 'parent' | 'time-up'
+  | 'blixt' | 'diagnosis' | 'parent' | 'time-up'
 
 export const KID_COLORS = ['#FF7A6E', '#3FBF87', '#4A56C6', '#E8A13C', '#8C6BC8', '#2FA8C7'] as const
 
@@ -46,6 +46,11 @@ interface StoreValue {
   /** Momentet vars boss/stjärnnivå utmanas just nu. */
   battleMomentId: string | undefined
   startBattle(momentId: string, kind: 'boss' | 'star'): void
+  /** Pågående blixttest. */
+  blixtKind: BlixtKind | undefined
+  startBlixt(kind: BlixtKind): void
+  recordBlixtResult(kind: BlixtKind, correct: number): void
+  setBlixtTarget(kind: BlixtKind, target: number): void
 
   // Barnhantering
   addChild(input: { name: string; color: string; birthYear: number; schoolYear: SchoolYear; dailyLimitMinutes: number }): void
@@ -91,6 +96,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [activeChildId, setActiveChildId] = useState<string>()
   const [parentUnlocked, setParentUnlocked] = useState(false)
   const [battleMomentId, setBattleMomentId] = useState<string>()
+  const [blixtKind, setBlixtKind] = useState<BlixtKind>()
 
   useEffect(() => {
     void loadHousehold().then((data) => {
@@ -136,6 +142,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     startBattle: (momentId, kind) => {
       setBattleMomentId(momentId)
       setScreen(kind)
+    },
+
+    blixtKind,
+    startBlixt: (kind) => {
+      setBlixtKind(kind)
+      setScreen('blixt')
+    },
+    recordBlixtResult: (kind, correct) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => {
+        const prev = c.blixt?.[kind]
+        if (prev && prev.best >= correct) return { ...c, blixt: { ...c.blixt, [kind]: { ...prev, lastAt: nowISO() } } }
+        return { ...c, blixt: { ...c.blixt, [kind]: { best: correct, lastAt: nowISO() } } }
+      })
+    },
+    setBlixtTarget: (kind, target) => {
+      setHousehold((h) => ({ ...h, blixtTargets: { ...h.blixtTargets, [kind]: target } }))
     },
 
     addChild: ({ name, color, birthYear, schoolYear, dailyLimitMinutes }) => {
@@ -320,7 +343,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     noteBackup: () => setHousehold((h) => ({ ...h, lastBackupAt: nowISO() })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId])
+  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, blixtKind])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

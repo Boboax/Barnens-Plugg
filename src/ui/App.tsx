@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Pi } from './components/Pi'
 import { BattleScreen } from './screens/BattleScreen'
+import { BlixtScreen } from './screens/BlixtScreen'
 import { DiagnosisScreen } from './screens/DiagnosisScreen'
 import { Home } from './screens/Home'
 import { ParentScreen } from './screens/ParentScreen'
@@ -10,7 +11,7 @@ import { TimeUp } from './screens/TimeUp'
 import { useStore } from './store'
 
 /** Skärmar där aktiv träningstid tickar mot dagens gräns. */
-const TIMED_SCREENS = new Set(['session', 'boss', 'star', 'diagnosis'])
+const TIMED_SCREENS = new Set(['session', 'boss', 'star', 'blixt', 'diagnosis'])
 const TICK_SECONDS = 5
 
 export function App() {
@@ -53,6 +54,7 @@ export function App() {
     case 'session': return <SessionScreen key={activeChild?.id} />
     case 'boss': return <BattleScreen kind="boss" />
     case 'star': return <BattleScreen kind="star" />
+    case 'blixt': return <BlixtScreen key={store.blixtKind} />
     case 'diagnosis': return <DiagnosisScreen />
     case 'parent': return <ParentScreen />
     case 'time-up': return <TimeUp />

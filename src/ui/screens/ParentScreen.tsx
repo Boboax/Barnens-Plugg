@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import type { ChildProfile, SchoolYear } from '../../domain/types'
 import { areaName, weeklyReport } from '../../engine/report'
 import { rewardProgress } from '../../engine/rewards'
+import { BLIXT_TESTS, blixtTarget } from '../../engine/blixt'
 import { daysSinceBackup, exportHousehold, importHousehold } from '../../storage/backup'
 import { KID_COLORS, nowISO, useStore } from '../store'
 
@@ -133,6 +134,7 @@ function OverviewTab() {
 }
 
 function ChildReport({ child }: { child: ChildProfile }) {
+  const store = useStore()
   const report = weeklyReport(child, nowISO())
   const scratches = child.answers.filter((a) => a.scratchPng).slice(-4).reverse()
   const [showScratch, setShowScratch] = useState(false)
@@ -168,6 +170,23 @@ function ChildReport({ child }: { child: ChildProfile }) {
                   {areaName(a.area)}: {Math.round(a.accuracy * 100)} %
                 </span>
               ))}
+            </div>
+          )}
+          {child.blixt && Object.keys(child.blixt).length > 0 && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+              {BLIXT_TESTS.filter((t) => child.blixt?.[t.kind]).map((t) => {
+                const record = child.blixt![t.kind]!
+                const target = blixtTarget(t.kind, store.household.blixtTargets)
+                return (
+                  <span key={t.kind} style={{
+                    fontSize: 12, fontWeight: 700, borderRadius: 99, padding: '3px 10px',
+                    background: record.best >= target ? '#E4F4EC' : '#F4F3EF',
+                    color: record.best >= target ? '#1F7A50' : '#2A2F3A',
+                  }}>
+                    {t.emoji} {t.title}: {record.best}/min {record.best >= target ? '· skolmålet nått 🎯' : `(mål ${target})`}
+                  </span>
+                )
+              })}
             </div>
           )}
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.6 }}>
@@ -208,6 +227,32 @@ function ChildrenTab() {
       {showForm ? <NewChildForm onDone={() => setShowForm(false)} /> : (
         <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ Lägg till barn</button>
       )}
+
+      {store.household.children.length > 0 && <BlixtTargets />}
+    </div>
+  )
+}
+
+function BlixtTargets() {
+  const store = useStore()
+  return (
+    <div style={{ ...pcard, marginTop: 12 }}>
+      <h4 style={h4}>⚡ Skolans minutmål (blixtpassen)</h4>
+      <p style={{ margin: '0 0 8px', fontSize: 13, color: '#8B8FA0', fontWeight: 600 }}>
+        Antal rätt på en minut som skolan kräver. Barnen ser målet som en ribba att nå — rekordjakten är mot sig själva.
+      </p>
+      {BLIXT_TESTS.map((test) => (
+        <div key={test.kind} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 14, fontWeight: 700 }}>
+          <span>{test.emoji} {test.title}</span>
+          <select
+            value={blixtTarget(test.kind, store.household.blixtTargets)}
+            onChange={(e) => store.setBlixtTarget(test.kind, Number(e.target.value))}
+            style={{ fontSize: 14, fontWeight: 700, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #EDEAE2' }}
+          >
+            {[10, 12, 15, 18, 20, 22, 25, 28, 30, 35, 40].map((n) => <option key={n} value={n}>{n} rätt</option>)}
+          </select>
+        </div>
+      ))}
     </div>
   )
 }

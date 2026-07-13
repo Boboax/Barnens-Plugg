@@ -7,6 +7,7 @@ import { classifyError, newSkillState, recomputeAvailability } from './progress'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
 import { composeBossTasks, composeStarTasks } from './session'
 import { rewardProgress } from './rewards'
+import { BLIXT_TESTS, blixtTask, blixtUnlocked } from './blixt'
 
 const makeProfile = (overrides: Partial<ChildProfile> = {}): ChildProfile => {
   const skills: Record<string, SkillState> = {}
@@ -104,6 +105,27 @@ describe('bosstrider', () => {
   it('stjärnnivån håller sig till nivå 8–10', () => {
     for (const task of composeStarTasks('vaxling-0-100')) {
       expect(task.ref.level).toBeGreaterThanOrEqual(8)
+    }
+  })
+})
+
+describe('blixtpass', () => {
+  it('låses upp när motsvarande moment börjat tränas', () => {
+    const profile = makeProfile()
+    expect(blixtUnlocked('add-sub-0-10', profile)).toBe(false)
+    profile.skills['add-sub-0-10'] = { ...profile.skills['add-sub-0-10'], mastery: 'in-progress' }
+    expect(blixtUnlocked('add-sub-0-10', profile)).toBe(true)
+  })
+
+  it('ger alltid korta, rena sifferuppgifter (aldrig text eller flerval)', () => {
+    const profile = makeProfile()
+    for (const test of BLIXT_TESTS) {
+      profile.skills[test.unlockMomentId] = { ...profile.skills[test.unlockMomentId], mastery: 'in-progress', rating: 600 }
+      for (let i = 0; i < 40; i++) {
+        const task = blixtTask(test.kind, profile)
+        expect(task.answer.kind, `${test.kind}: ${task.prompt}`).toBe('numeric')
+        expect(task.prompt.length, `${test.kind}: ${task.prompt}`).toBeLessThanOrEqual(24)
+      }
     }
   })
 })

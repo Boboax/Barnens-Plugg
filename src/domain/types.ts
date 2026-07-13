@@ -262,6 +262,17 @@ export interface ChildProfile {
   chatEnabled: boolean
 
   streak: { days: number; lastActiveDate: string }
+
+  /** Blixtpass-rekord (flyt): bästa antal rätt på en minut per testtyp. */
+  blixt?: Partial<Record<BlixtKind, BlixtRecord>>
+}
+
+/** Blixtpassens testtyper — speglar skolans minuttest. */
+export type BlixtKind = 'add-sub-0-10' | 'add-sub-0-20' | 'tabeller'
+
+export interface BlixtRecord {
+  best: number
+  lastAt: string
 }
 
 // ---------- Chattlogg (fas 5, men loggformatet är del av grundmodellen) ----------
@@ -287,5 +298,7 @@ export interface Household {
   chatLog: ChatLogEntry[]
   /** Chattkonfiguration (fas 5): leverantör + nyckel läggs in i föräldraläget. */
   chat?: { provider: 'gemini' | 'claude'; apiKey: string }
+  /** Skolans minutmål per blixttest (sätts i föräldraläget, standard 20). */
+  blixtTargets?: Partial<Record<BlixtKind, number>>
   lastBackupAt?: string
 }
