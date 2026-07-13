@@ -114,7 +114,10 @@ export function applyAnswer(
     recentMisconceptions,
     mastery:
       skill.mastery === 'available' ? 'in-progress'
-      : skill.mastery === 'in-progress' && isBossReady({ ...skill, rating, attempts: skill.attempts + 1 }) ? 'boss-ready'
+      // needs-review tränas om precis som in-progress — och måste kunna nå
+      // bossen igen, annars fastnar momentet i evig omträning.
+      : (skill.mastery === 'in-progress' || skill.mastery === 'needs-review') &&
+        isBossReady({ ...skill, rating, attempts: skill.attempts + 1 }) ? 'boss-ready'
       : skill.mastery,
   }
 

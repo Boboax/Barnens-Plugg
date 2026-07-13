@@ -44,10 +44,13 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
   const left = messagesLeftToday(child, store.household, todayISO())
 
   const send = async (text: string, withScratch = false): Promise<void> => {
-    const trimmed = text.trim()
+    let trimmed = text.trim()
     if (!trimmed || waiting || left <= 0) return
     sfx.klick()
     const scratchPng = withScratch ? getScratch() : undefined
+    // Tom kladdyta + "visa min uträkning" → be om hjälp i stället för att
+    // skicka en påstådd bild som inte finns (förvirrar modellen).
+    if (withScratch && !scratchPng) trimmed = 'Jag har inte ritat något än — kan du hjälpa mig komma igång med uppgiften?'
     const childMsg: ChatMessage = { role: 'child', text: trimmed, imagePngDataUrl: scratchPng }
     const history = [...messages, childMsg]
     setMessages(history)

@@ -3,7 +3,7 @@ import type { ChildProfile, SkillState } from '../domain/types'
 import { MOMENTS } from '../domain/curriculum'
 import { expectedSuccess, practiceLevel, updateRating } from './rating'
 import { REVIEW_INTERVALS_DAYS, scheduleFirstReview, scheduleNextReview } from './spaced-repetition'
-import { classifyError, newSkillState, recomputeAvailability } from './progress'
+import { applyAnswer, classifyError, newSkillState, recomputeAvailability } from './progress'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
 import { composeBossTasks, composeStarTasks } from './session'
 import { rewardProgress } from './rewards'
@@ -52,6 +52,24 @@ describe('förkunskapslåset', () => {
     const profile = makeProfile()
     expect(profile.skills['antal-0-10'].mastery).toBe('available')
     expect(profile.skills['vaxling-0-100'].mastery).toBe('locked')
+  })
+})
+
+describe('vägen tillbaka efter missad repetition', () => {
+  it('needs-review kan nå boss-ready igen (fastnar inte i evig omträning)', () => {
+    let skill: SkillState = {
+      ...newSkillState('vaxling-0-100'),
+      mastery: 'needs-review',
+      rating: 615,
+      attempts: 25,
+      correct: 18,
+    }
+    const task = { ref: { generatorId: 'gen.vaxling-0-100', level: 6 as const, seed: 1 }, prompt: '', visual: { kind: 'ingen' as const }, answer: { kind: 'numeric' as const, value: 1 }, explanation: '' }
+    // Några rätta svar ska lyfta ratingen över bossgränsen och öppna striden.
+    for (let i = 0; i < 5 && skill.mastery !== 'boss-ready'; i++) {
+      skill = applyAnswer(skill, task, true, 5000, 'ovning', '2026-01-01T10:00:00Z').skill
+    }
+    expect(skill.mastery).toBe('boss-ready')
   })
 })
 
