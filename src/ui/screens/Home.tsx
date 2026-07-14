@@ -159,7 +159,33 @@ function HomeInner({ child }: { child: ChildProfile }) {
   return (
     // height (inte minHeight): kartan scrollar i sin egen yta så att
     // sidopanel och världsväxlare alltid syns — som i ett riktigt spel.
-    <div className="screen-fade" style={{ height: '100%', display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 330px)', gap: 0 }}>
+    <div className="screen-fade" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Genomgående snidad trä-HUD över HELA skärmen (båda kolumnerna). */}
+      <div className="wood-bar" style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
+        padding: '12px 18px', flexShrink: 0, position: 'relative', zIndex: 5,
+      }}>
+        <span style={{ display: 'flex', gap: 8 }}>
+          <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
+          <SoundToggle />
+        </span>
+        {/* Titelskylt: snidad plakett som hänger ned över kartan (jfr förlagan).
+            Elementets proportion matchar bildens (600×328) → ingen förvrängning. */}
+        <span className="display" style={{
+          position: 'absolute', left: '50%', top: 3, transform: 'translateX(-50%)',
+          width: 210, aspectRatio: '600 / 328',
+          backgroundImage: 'var(--tex-plaque)', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat',
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+          paddingTop: 33, boxSizing: 'border-box',
+          fontWeight: 900, fontSize: 15.5, color: '#FBE7C2', textShadow: '0 1px 3px rgba(0,0,0,.85)',
+          zIndex: 6, pointerEvents: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {inRealm ? 'Matteriket' : world.name}
+        </span>
+        <span className="chip">🔥 {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
+      </div>
+
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 330px)', gap: 0 }}>
       {/* Kartan */}
       <div style={{
         padding: '14px 18px', background: inRealm ? '#1B1F30' : theme.sky, display: 'flex', flexDirection: 'column',
@@ -168,21 +194,6 @@ function HomeInner({ child }: { child: ChildProfile }) {
         ...(!inRealm && theme.horizon === 'grotta' ? ({ '--ink': '#F3EFFF', '--muted': '#BDB4DC', '--sun-ink': '#FFD98A' } as React.CSSProperties) : {}),
       }}>
         {!inRealm && <WorldScenery theme={theme} />}
-        {/* Snidad trä-HUD: sträcker sig kant till kant (negativa marginaler
-            matchar containerns padding 14px 18px). Mässingskant nedtill. */}
-        <div className="wood-bar" style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap',
-          position: 'relative', zIndex: 3, margin: '-14px -18px 0', padding: '12px 18px',
-        }}>
-          <span style={{ display: 'flex', gap: 8 }}>
-            <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
-            <SoundToggle />
-          </span>
-          <span className="display" style={{ fontWeight: 900, fontSize: 18, color: '#FFF3D6', textShadow: '0 1px 3px rgba(0,0,0,.6)' }}>
-            {inRealm ? '🗺 Matteriket' : `${world.emoji} ${world.name}`}
-          </span>
-          <span className="chip">🔥 {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
-        </div>
 
         {inRealm ? (
           <div style={{ flex: 1, position: 'relative', margin: '10px -18px -14px' }}>
@@ -454,6 +465,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
           <Pi mood="glad" size={64} />
         </div>
       </aside>
+      </div>
     </div>
   )
 }

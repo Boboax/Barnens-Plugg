@@ -85,6 +85,7 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
   const [artOk, setArtOk] = useState(false)
   const zooming = useRef(false)
   const artUrl = `${import.meta.env.BASE_URL}art/riket.webp`
+  const ringUrl = `${import.meta.env.BASE_URL}art/tex/nodering.webp`
 
   const pick = (region: Region): void => {
     if (zooming.current) return
@@ -226,32 +227,37 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                   }}
                 >
                   <span
-                    className={`map-node${isHere ? ' pulse-ring' : ''}`}
+                    className="map-node"
                     style={{
-                      position: 'relative', width: 68, height: 68, borderRadius: '50%',
-                      // Medaljong: ett inzoomat titthål in i just den platsen på
-                      // kartmålningen (fallback: världens temafärg + sprite).
+                      position: 'relative', width: 84, height: 84,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      filter: isHere
+                        ? 'drop-shadow(0 0 7px rgba(255,201,77,.95)) drop-shadow(0 3px 4px rgba(0,0,0,.4))'
+                        : 'drop-shadow(0 3px 4px rgba(0,0,0,.4))',
+                    }}
+                  >
+                    {/* Medaljongen i ringens hål (hålradie ≈ 0.56 → ~47px av 84). */}
+                    <span style={{
+                      width: 47, height: 47, borderRadius: '50%',
                       ...(artOk
                         ? { backgroundImage: `url(${artUrl})`, backgroundSize: '560%', backgroundPosition: `${region.art.x}% ${region.art.y}%`, backgroundRepeat: 'no-repeat' }
                         : { background: `radial-gradient(circle at 33% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 60%), ${theme.horizonColors[1]}` }),
-                      // Mässingsram med inre mörk kontur — som medaljongerna i förlagan.
-                      border: '3px solid #E6C56A',
-                      boxShadow: isHere
-                        ? 'inset 0 0 0 2px rgba(40,28,10,.55), 0 0 0 4px #8A6A38, 0 0 0 8px rgba(255,201,77,.4), 0 4px 6px rgba(0,0,0,.35)'
-                        : 'inset 0 0 0 2px rgba(40,28,10,.55), 0 0 0 3px #8A6A38, 0 4px 6px rgba(0,0,0,.35)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    {!artOk && <Sprite name={region.sprites[0]} size={38} />}
+                    }}>
+                      {!artOk && <Sprite name={region.sprites[0]} size={30} />}
+                    </span>
+                    {/* Ornamenterad mässingsring ovanpå (genomskinligt hål + utsida). */}
+                    <img src={ringUrl} alt="" aria-hidden="true"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
                     {complete && (
-                      <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true"
-                        style={{ position: 'absolute', top: -7, right: -7 }}>
+                      <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true"
+                        style={{ position: 'absolute', top: 2, right: 2, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.4))' }}>
                         <circle cx="12" cy="12" r="11" fill="var(--mint)" stroke="#fff" strokeWidth="2" />
                         <path d="M7,12.5 L10.5,16 L17,8.5" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                     {isHere && (
-                      <span style={{ position: 'absolute', top: -32, left: '50%', transform: 'translateX(-50%)' }}>
+                      <span style={{ position: 'absolute', top: -30, left: '50%', transform: 'translateX(-50%)' }}>
                         <Pi mood="glad" size={32} />
                       </span>
                     )}
