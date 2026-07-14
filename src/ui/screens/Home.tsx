@@ -8,6 +8,7 @@ import { dueForReview } from '../../engine/spaced-repetition'
 import { rewardProgress } from '../../engine/rewards'
 import { blixtTarget, unlockedBlixtTests } from '../../engine/blixt'
 import { sfx } from '../../sound'
+import { Icon } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { RealmMap } from '../components/RealmMap'
 import { SoundToggle } from '../components/SoundToggle'
@@ -182,7 +183,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
         }}>
           {inRealm ? 'Matteriket' : world.name}
         </span>
-        <span className="chip">🔥 {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
+        <span className="chip"><Icon name="eld" size={15} /> {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
       </div>
 
       <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 330px)', gap: 0 }}>
@@ -366,7 +367,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
         </div>
 
         <div className="panel">
-          <div style={{ fontWeight: 900, fontSize: 15, marginBottom: 6 }}>📚 Dagens pass · ca 15 min</div>
+          <div style={{ fontWeight: 900, fontSize: 15, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7 }}><Icon name="bok" size={20} /> Dagens pass · ca 15 min</div>
           <Row label="Uppvärmning: repetition" tag={due > 0 ? `${due} moment` : 'kort'} tagColor="rep" />
           <Row label={currentMoment ? currentMoment.title : 'Fritt läge'} tag="nytt" tagColor="new" />
           <Row label="Blandade uppgifter" tag="mix" tagColor="rep" />
@@ -429,7 +430,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
 
         {unlockedBlixtTests(child).length > 0 && (
           <div className="panel">
-            <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 4 }}>⚡ Blixtpass · 1 minut</div>
+            <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}><Icon name="blixt" size={18} /> Blixtpass · 1 minut</div>
             {unlockedBlixtTests(child).map((test) => {
               const record = child.blixt?.[test.kind]
               const target = blixtTarget(test.kind, store.household.blixtTargets)
@@ -455,7 +456,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
         )}
 
         <div className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 13.5, fontWeight: 800 }}>⏱ Tid kvar idag</span>
+          <span style={{ fontSize: 13.5, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 7 }}><Icon name="timglas" size={18} /> Tid kvar idag</span>
           <span style={{ fontWeight: 900, color: minutesLeft <= 5 ? 'var(--coral)' : 'var(--primary)', fontSize: 17 }}>
             {minutesLeft} min
           </span>
