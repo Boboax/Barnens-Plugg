@@ -10,6 +10,8 @@ document.documentElement.style.setProperty('--tex-parchment', `url(${import.meta
 document.documentElement.style.setProperty('--tex-wood', `url(${import.meta.env.BASE_URL}art/tex/wood.webp)`)
 document.documentElement.style.setProperty('--tex-frame', `url(${import.meta.env.BASE_URL}art/tex/panelframe.webp)`)
 document.documentElement.style.setProperty('--tex-stone', `url(${import.meta.env.BASE_URL}art/tex/stone.webp)`)
+document.documentElement.style.setProperty('--tex-nodering', `url(${import.meta.env.BASE_URL}art/tex/nodering.webp)`)
+document.documentElement.style.setProperty('--tex-plaque', `url(${import.meta.env.BASE_URL}art/tex/plaque.webp)`)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
