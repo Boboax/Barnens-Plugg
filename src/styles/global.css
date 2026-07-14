@@ -77,6 +77,19 @@
    Annars visades en ljus remsa nedtill vid home-indikatorn i standalone-läge. */
 html, body, #root { height: 100%; height: 100dvh; }
 
+/* Hemskärmsläge (standalone-PWA) på iOS/iPadOS: dokumentet självt "studsar"
+   (rubber-band) när man drar med fingret, så HELA appen glider och en
+   pergamentremsa blottas upp-/nedtill. overscroll-behavior räcker inte i
+   WebKit — vi naglar fast dokumentet vid vyn. Då scrollar bara de inre ytor
+   som själva äger sin scroll (föräldravyn, chatten). Appen ska kännas som en
+   app, inte som en webbsida man kan dra i. */
+html, body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   /* Pergament över hela appen (syns på uppgifts-/föräldravyer; kartorna

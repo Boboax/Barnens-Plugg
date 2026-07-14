@@ -164,42 +164,51 @@ async function geminiAttempt(
   const payload = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
 
   if (onDelta) {
-    // Streaming: barnet ser orden medan de skrivs — upplevd latens < 1 s.
-    const res = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`,
-      payload,
-    )
-    if (!res.ok) throw new ChatError(statusToKind(res.status), `${modelId} ${res.status}: ${await errorDetail(res)}`)
-    if (!res.body) throw new ChatError('natverk', `${modelId}: ingen ström`)
-    const reader = res.body.getReader()
-    const decoder = new TextDecoder()
-    let buf = ''
-    let full = ''
-    for (;;) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buf += decoder.decode(value, { stream: true })
-      let sep: number
-      while ((sep = buf.indexOf('\n\n')) !== -1) {
-        const event = buf.slice(0, sep)
-        buf = buf.slice(sep + 2)
-        for (const line of event.split('\n')) {
-          if (!line.startsWith('data:')) continue
-          const json = line.slice(5).trim()
-          if (!json || json === '[DONE]') continue
-          try {
-            const data = JSON.parse(json) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
-            const chunk = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? ''
-            if (chunk) {
-              full += chunk
-              onDelta(chunk)
-            }
-          } catch { /* halv rad — vänta på mer */ }
+    try {
+      // Streaming: barnet ser orden medan de skrivs — upplevd latens < 1 s.
+      const res = await fetchWithTimeout(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`,
+        payload,
+      )
+      if (!res.ok) throw new ChatError(statusToKind(res.status), `${modelId} ${res.status}: ${await errorDetail(res)}`)
+      if (!res.body) throw new ChatError('natverk', `${modelId}: ingen ström`)
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      let full = ''
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        let sep: number
+        while ((sep = buf.indexOf('\n\n')) !== -1) {
+          const event = buf.slice(0, sep)
+          buf = buf.slice(sep + 2)
+          for (const line of event.split('\n')) {
+            if (!line.startsWith('data:')) continue
+            const json = line.slice(5).trim()
+            if (!json || json === '[DONE]') continue
+            try {
+              const data = JSON.parse(json) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
+              const chunk = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? ''
+              if (chunk) {
+                full += chunk
+                onDelta(chunk)
+              }
+            } catch { /* halv rad — vänta på mer */ }
+          }
         }
       }
+      if (!full.trim()) throw new ChatError('natverk', `${modelId}: tomt streamsvar`)
+      return full.trim()
+    } catch (err) {
+      // Hemskärmsappen på iPad/Safari saknar ibland fetch-strömning (res.body
+      // är null, eller strömmen bryts) — då kastas ett 'natverk'-fel trots att
+      // nyckeln fungerar. Föräldralägets test lyckas för att det aldrig strömmar.
+      // Fall därför tillbaka till ETT vanligt anrop nedan (samma som testet) och
+      // leverera hela svaret på en gång. Äkta nyckel-/kvotfel ska INTE sväljas.
+      if (err instanceof ChatError && err.kind !== 'natverk') throw err
     }
-    if (!full.trim()) throw new ChatError('natverk', `${modelId}: tomt streamsvar`)
-    return full.trim()
   }
 
   const res = await fetchWithTimeout(
@@ -210,6 +219,7 @@ async function geminiAttempt(
   const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim()
   if (!text) throw new ChatError('natverk', `${modelId}: tomt svar`)
+  onDelta?.(text) // ström saknades → leverera hela svaret till (den grindade) strömmen
   return text
 }
 
