@@ -314,7 +314,7 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                 )}
                 <button
                   onClick={() => pick(region)}
-                  aria-label={`${world.name} — ${progress.done} av ${progress.total} klara`}
+                  aria-label={`${world.name} — ${progress.done} av ${progress.total} moment klarade`}
                   style={{
                     position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%, -50%)',
                     // Nuvarande region (med Pi) lyfts över grannmärkena.
@@ -380,7 +380,7 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                   }}>
                     {world.name}
                     <span style={{ display: 'block', fontWeight: 700, fontSize: 10.5, fontFamily: 'var(--font)', color: artOk ? '#6E6046' : dark ? '#CFC8E4' : 'var(--muted)' }}>
-                      {progress.total === 0 ? 'kommer snart' : complete ? 'allt klart! ✓' : `${progress.done} av ${progress.total} klara`}
+                      {progress.total === 0 ? 'kommer snart' : complete ? 'allt klart! ✓' : `${progress.done} / ${progress.total} moment klarade`}
                     </span>
                   </span>
                 </button>
