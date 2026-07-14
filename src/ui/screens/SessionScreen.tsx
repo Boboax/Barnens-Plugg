@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AnswerRecord, SessionPlan, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
+import { worldTheme } from '../worldThemes'
 import { composeSession, taskForPart } from '../../engine/session'
 import { chatReadyFor } from '../../chat'
 import type { ScratchPadHandle } from '../components/ScratchPad'
@@ -148,9 +149,25 @@ export function SessionScreen() {
   const moment = momentById(slot.momentId)
   const showIntro = slot.kind === 'nytt' && slot.momentId === introMomentId && !introDone
   const chatAvailable = chatReadyFor(child)
+  // Världstema bakom uppgiften: den målade världsbilden syns runt kanterna,
+  // men en varm pergamentslöja är tät i mitten så uppgiftstexten är knivskarp.
+  // Bakgrunden byter värld i takt med att man rör sig mellan moment i passet.
+  const theme = worldTheme(moment.worldId)
+  const worldBg = `${import.meta.env.BASE_URL}art/world/${moment.worldId}.webp`
 
   return (
-    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', padding: '10px 16px 16px', position: 'relative', overflow: 'hidden' }}>
+    <div className="screen-fade" style={{
+      minHeight: '100%', display: 'flex', flexDirection: 'column', padding: '10px 16px 16px',
+      position: 'relative', overflow: 'hidden',
+      background: `url(${worldBg}) center / cover no-repeat, ${theme.sky}`,
+    }}>
+      {/* Pergamentslöja: tät i mitten (läsbarhet), tunnare mot kanten där
+          världsscenen ramar in uppgiften. */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+        background: 'radial-gradient(ellipse 82% 78% at 50% 46%, rgba(245,238,222,.94) 0%, rgba(245,238,222,.9) 42%, rgba(245,238,222,.5) 82%, rgba(244,236,218,.16) 100%)',
+      }} />
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
         <button className="chip" onClick={() => store.go('home')}>✕ Avsluta</button>
         <div className="pbar" style={{ flex: 1 }}>
@@ -177,6 +194,7 @@ export function SessionScreen() {
         onScratchHandle={(h) => { scratchHandle.current = h }}
       />
       )}
+      </div>
 
       {/* Mattekompisen Pi — bara i övningspass, aldrig i strider. */}
       {chatAvailable && !showIntro && !chatOpen && (
