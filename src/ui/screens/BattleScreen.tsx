@@ -7,6 +7,7 @@ import {
   composeBossTasks, composeStarTasks,
 } from '../../engine/session'
 import { sfx } from '../../sound'
+import { Icon } from '../components/Icon'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
 import { WorldScenery } from '../components/WorldScenery'
 import { worldTheme } from '../worldThemes'
@@ -160,17 +161,31 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
           <div className="card" style={{ fontSize: 12.5, fontWeight: 800, textAlign: 'center', padding: '8px 12px' }}>
             {flash === 'hit' ? '💥 En sköld knäcktes!' : flash === 'miss' ? `${boss.emoji} "Hihi! Inte den här gången!"` : `"${boss.taunt}"`}
           </div>
-          {kind === 'boss'
-            ? <BossFigure boss={boss} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
-            : (
-              <span
-                className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'}
-                style={{ fontSize: 84, lineHeight: 1, display: 'inline-block' }}
-              >💎</span>
+          {/* Arenan: bossen gör entré, blixt + gnistskärvor vid träff. */}
+          <div className="boss-enter" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {flash === 'hit' && (
+              <>
+                <span key={`flash-${correct}`} className="hit-flash" />
+                {Array.from({ length: 8 }).map((_, s) => (
+                  <span key={`shard-${correct}-${s}`} className="shard-spoke" style={{ transform: `rotate(${s * 45}deg)` }}>
+                    <i style={{ animationDelay: `${s * 0.012}s` }} />
+                  </span>
+                ))}
+              </>
             )}
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 190 }}>
+            {kind === 'boss'
+              ? <BossFigure boss={boss} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
+              : (
+                <span
+                  className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'}
+                  style={{ fontSize: 84, lineHeight: 1, display: 'inline-block' }}
+                >💎</span>
+              )}
+          </div>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 200 }}>
             {Array.from({ length: needed }).map((_, i) => (
-              <span key={i} style={{ fontSize: 19, opacity: i < shieldsLeft ? 1 : 0.22, filter: i < shieldsLeft ? undefined : 'grayscale(1)' }}>🛡️</span>
+              <Icon key={i} name="skold" size={22}
+                style={{ opacity: i < shieldsLeft ? 1 : 0.25, filter: i < shieldsLeft ? undefined : 'grayscale(1)', transition: 'opacity .3s, filter .3s' }} />
             ))}
           </div>
           <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--muted)', textAlign: 'center', maxWidth: 200 }}>
