@@ -7,7 +7,7 @@ import type { ScratchPadHandle } from '../components/ScratchPad'
 import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
 import { ChatPanel } from '../components/ChatPanel'
-import { Icon } from '../components/Icon'
+import { Icon, HeroImg } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { PiVisar } from '../components/PiVisar'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
@@ -211,6 +211,8 @@ export function SessionScreen() {
 export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', celebrate = false }: {
   title: string; text: string; onDone(): void; buttonText?: string; celebrate?: boolean
 }) {
+  const store = useStore()
+  const hero = store.activeChild?.hero
   // Firandet (fanfar + konfetti) avfyras exakt en gång när kortet visas.
   useEffect(() => {
     if (celebrate) {
@@ -224,7 +226,13 @@ export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', c
       minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: 12, padding: 30, textAlign: 'center',
     }}>
-      <div className="bounce-in"><Pi mood="hejar" size={110} /></div>
+      {/* Vid seger firar barnets egen hjälte (om vald), annars Pi. */}
+      {celebrate && hero
+        ? <div className="bounce-in" style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+            <HeroImg kind={hero} variant="figur" style={{ height: 180, width: 'auto', maxWidth: 160, filter: 'drop-shadow(0 6px 12px rgba(0,0,0,.5))' }} />
+            <Pi mood="hejar" size={64} />
+          </div>
+        : <div className="bounce-in"><Pi mood="hejar" size={110} /></div>}
       <h2 className="pop-big" style={{ fontSize: 26, fontWeight: 900, margin: 0, animationDelay: '0.15s' }}>{title}</h2>
       <p style={{ color: 'var(--muted)', fontWeight: 700, maxWidth: 420, margin: 0 }}>{text}</p>
       <button className="btn btn-primary" onClick={onDone}>{buttonText}</button>

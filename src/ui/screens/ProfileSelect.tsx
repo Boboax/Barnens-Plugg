@@ -1,6 +1,6 @@
 import { sfx } from '../../sound'
 import { Avatar } from '../components/Avatar'
-import { Icon } from '../components/Icon'
+import { Icon, HeroImg } from '../components/Icon'
 import { SoundToggle } from '../components/SoundToggle'
 import { useStore } from '../store'
 
@@ -59,8 +59,10 @@ export function ProfileSelect() {
                 onClick={() => { sfx.whoosh(); store.selectChild(child.id) }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 15, color: '#FBF3DE', textShadow: nameShadow, fontFamily: 'inherit', animationDelay: `${i * 0.12}s` }}
               >
-                <span className="float-soft" style={{ animationDelay: `${i * 0.4}s`, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.5))' }}>
-                  <Avatar child={child} size={92} />
+                <span className="float-soft" style={{ animationDelay: `${i * 0.4}s`, filter: 'drop-shadow(0 6px 12px rgba(0,0,0,.55))', display: 'flex', alignItems: 'flex-end', height: child.hero ? 190 : 92 }}>
+                  {child.hero
+                    ? <HeroImg kind={child.hero} variant="figur" style={{ height: 190, width: 'auto', maxWidth: 150 }} />
+                    : <Avatar child={child} size={92} />}
                 </span>
                 {child.name}
                 <span style={{ fontWeight: 700, color: '#E7D8B8', fontSize: 13, textShadow: nameShadow }}>

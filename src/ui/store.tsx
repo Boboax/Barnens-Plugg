@@ -60,7 +60,7 @@ interface StoreValue {
 
   // Barnhantering
   addChild(input: { name: string; color: string; birthYear: number; schoolYear: SchoolYear; dailyLimitMinutes: number }): void
-  updateChild(id: string, patch: Partial<Pick<ChildProfile, 'name' | 'color' | 'dailyLimitMinutes' | 'chatEnabled' | 'schoolYear'>>): void
+  updateChild(id: string, patch: Partial<Pick<ChildProfile, 'name' | 'color' | 'dailyLimitMinutes' | 'chatEnabled' | 'schoolYear' | 'hero'>>): void
 
   // Träning
   recordAnswer(task: Task, correct: boolean, elapsedMs: number, context: AnswerRecord['context'], givenAnswer?: number | string, scratchPng?: string, hotStreak?: number): void

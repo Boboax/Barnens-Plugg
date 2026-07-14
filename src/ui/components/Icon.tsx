@@ -51,6 +51,25 @@ export const OBJEKT_ICONS = [
 ] as const
 export const isObjektIcon = (v: string): boolean => (OBJEKT_ICONS as readonly string[]).includes(v)
 
+/* Hjältefigurer (public/art/hero/*.webp): porträtt (byst, för avatar) och
+   helfigur (för spelarval/segerruta). Nyckeln kommer från child.hero. */
+export const HERO_KINDS = ['bagskytt', 'riddare', 'trollkarl'] as const
+export const HERO_LABEL: Record<string, string> = { bagskytt: 'Bågskytt', riddare: 'Riddare', trollkarl: 'Trollkarl' }
+
+export function HeroImg({ kind, variant = 'portratt', size, style }: {
+  kind: string; variant?: 'portratt' | 'figur'; size?: number; style?: React.CSSProperties
+}) {
+  const file = variant === 'portratt' ? `${kind}-portratt` : kind
+  return (
+    <img
+      src={`${import.meta.env.BASE_URL}art/hero/${file}.webp`}
+      alt=""
+      aria-hidden="true"
+      style={{ display: 'block', width: size, height: 'auto', objectFit: 'contain', ...style }}
+    />
+  )
+}
+
 export function ObjektIcon({ name, size = 22, style }: { name: string; size?: number; style?: React.CSSProperties }) {
   return (
     <img
