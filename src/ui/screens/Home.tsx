@@ -338,14 +338,20 @@ function HomeInner({ child }: { child: ChildProfile }) {
         )}
       </div>
 
-      {/* Sidopanelen */}
-      <aside style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', minHeight: 0 }}>
+      {/* Sidopanelen — mörk stenvägg (samma som kartan) så de ramade
+          panelerna vilar mot mörkt i stället för att krocka med ljust. */}
+      <aside style={{
+        padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', minHeight: 0,
+        background: 'linear-gradient(rgba(20,16,26,0.6), rgba(20,16,26,0.75)), var(--tex-stone, none) center / 300px repeat, #241C24',
+        boxShadow: 'inset 0 0 90px rgba(0,0,0,0.55)',
+      }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
             width: 38, height: 38, borderRadius: '50%', background: child.color, color: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 17,
+            boxShadow: '0 0 0 2px rgba(230,197,106,.8)',
           }}>{child.name.charAt(0).toUpperCase()}</span>
-          <span style={{ fontWeight: 900, fontSize: 17 }}>Hej {child.name}! 👋</span>
+          <span className="display" style={{ fontWeight: 900, fontSize: 17, color: '#FBF3DE', textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>Hej {child.name}! 👋</span>
         </div>
 
         <div className="panel">
