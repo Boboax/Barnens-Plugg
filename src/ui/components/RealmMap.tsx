@@ -225,16 +225,21 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                   <span
                     className={`map-node${isHere ? ' pulse-ring' : ''}`}
                     style={{
-                      position: 'relative', width: 64, height: 64, borderRadius: '50%',
-                      background: `radial-gradient(circle at 33% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 60%), ${theme.horizonColors[1]}`,
-                      border: '3px solid rgba(255,255,255,.9)',
+                      position: 'relative', width: 68, height: 68, borderRadius: '50%',
+                      // Medaljong: ett inzoomat titthål in i just den platsen på
+                      // kartmålningen (fallback: världens temafärg + sprite).
+                      ...(artOk
+                        ? { backgroundImage: `url(${artUrl})`, backgroundSize: '560%', backgroundPosition: `${region.art.x}% ${region.art.y}%`, backgroundRepeat: 'no-repeat' }
+                        : { background: `radial-gradient(circle at 33% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 60%), ${theme.horizonColors[1]}` }),
+                      // Mässingsram med inre mörk kontur — som medaljongerna i förlagan.
+                      border: '3px solid #E6C56A',
                       boxShadow: isHere
-                        ? '0 0 0 5px rgba(255,201,77,.4), 0 4px 0 rgba(0,0,0,.16)'
-                        : '0 4px 0 rgba(0,0,0,.16)',
+                        ? 'inset 0 0 0 2px rgba(40,28,10,.55), 0 0 0 4px #8A6A38, 0 0 0 8px rgba(255,201,77,.4), 0 4px 6px rgba(0,0,0,.35)'
+                        : 'inset 0 0 0 2px rgba(40,28,10,.55), 0 0 0 3px #8A6A38, 0 4px 6px rgba(0,0,0,.35)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
-                    <Sprite name={region.sprites[0]} size={38} />
+                    {!artOk && <Sprite name={region.sprites[0]} size={38} />}
                     {complete && (
                       <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true"
                         style={{ position: 'absolute', top: -7, right: -7 }}>
