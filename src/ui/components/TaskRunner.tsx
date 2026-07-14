@@ -4,6 +4,7 @@ import { matchMisconception } from '../../engine/progress'
 import { misconceptionInfo } from '../../engine/misconceptions'
 import { sfx } from '../../sound'
 import { prewarmSpeak, speak, stopSpeaking, ttsAvailable } from '../../tts'
+import { Icon } from './Icon'
 import { Keypad } from './Keypad'
 import { ScratchPad, type ScratchPadHandle } from './ScratchPad'
 import { TaskVisualView } from './TaskVisualView'
@@ -115,7 +116,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
               onClick={() => speak(task.spokenPrompt ?? task.prompt)}
               aria-label="Läs upp uppgiften"
               style={{ flexShrink: 0 }}
-            >🔊</button>
+            ><Icon name="ljud" size={17} /></button>
           )}
         </div>
 

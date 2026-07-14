@@ -358,7 +358,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
         {/* Tillbaka till översikten över hela riket. */}
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 6, position: 'relative', zIndex: 3 }}>
           <button className="chip" onClick={() => setView('riket')} style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="rulle" size={15} /> Hela Matteriket
+            <Icon name="karta" size={17} /> Hela Matteriket
           </button>
         </div>
           </>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { isMuted, setMuted, sfx } from '../../sound'
+import { Icon } from './Icon'
 
 /** Ljud på/av — sparas mellan sessioner. */
 export function SoundToggle() {
@@ -14,6 +15,6 @@ export function SoundToggle() {
         set(next)
         if (!next) sfx.ratt()
       }}
-    >{muted ? '🔇' : '🔊'}</button>
+    ><Icon name={muted ? 'ljud-av' : 'ljud'} size={18} /></button>
   )
 }

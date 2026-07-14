@@ -5,6 +5,7 @@ import { generateTask } from '../../generators'
 import { freshSeed } from '../../generators/rng'
 import { prewarmSpeak, speak, ttsAvailable } from '../../tts'
 import { Pi } from './Pi'
+import { Icon } from './Icon'
 import { TaskVisualView } from './TaskVisualView'
 
 /* ============================================================
@@ -80,7 +81,7 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
             {task.prompt}
           </p>
           {ttsAvailable() && (
-            <button className="chip" onClick={() => speak(`${task.spokenPrompt ?? task.prompt}. ${task.explanation}`)} aria-label="Läs upp">🔊</button>
+            <button className="chip" onClick={() => speak(`${task.spokenPrompt ?? task.prompt}. ${task.explanation}`)} aria-label="Läs upp"><Icon name="ljud" size={16} /></button>
           )}
         </div>
         <TaskVisualView visual={task.visual} />
