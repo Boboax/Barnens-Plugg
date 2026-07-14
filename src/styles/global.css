@@ -72,23 +72,23 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-/* Fyll HELA skärmen inkl. iOS safe-area (home-indikatorn) i hemskärmsläge:
-   100dvh = dynamisk viewport-höjd (med 100% som reserv för äldre webbläsare).
-   Annars visades en ljus remsa nedtill vid home-indikatorn i standalone-läge. */
-html, body, #root { height: 100%; height: 100dvh; }
-
 /* Hemskärmsläge (standalone-PWA) på iOS/iPadOS: dokumentet självt "studsar"
    (rubber-band) när man drar med fingret, så HELA appen glider och en
    pergamentremsa blottas upp-/nedtill. overscroll-behavior räcker inte i
-   WebKit — vi naglar fast dokumentet vid vyn. Då scrollar bara de inre ytor
-   som själva äger sin scroll (föräldravyn, chatten). Appen ska kännas som en
-   app, inte som en webbsida man kan dra i. */
+   WebKit — vi naglar fast dokumentet vid vyn (position:fixed; inset:0 fyller
+   HELA den synliga viewporten inkl. home-indikatorns yta tack vare
+   viewport-fit=cover). Då scrollar bara de inre ytor som själva äger sin
+   scroll (föräldravyn, chatten). Appen ska kännas som en app, inte en webbsida. */
 html, body {
   position: fixed;
   inset: 0;
   width: 100%;
   overflow: hidden;
 }
+/* #root fyller det fastnaglade dokumentet EXAKT. (Tidigare 100dvh gjorde
+   #root någon pixel kortare än inset:0 i standalone-läge → en ljus remsa av
+   body-pergamentet blottades nedtill. height:100% av fixed inset:0 = full höjd.) */
+html, body, #root { height: 100%; }
 
 body {
   margin: 0;

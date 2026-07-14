@@ -78,13 +78,22 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
   return (
     <div className="screen-fade" style={{
       position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(400px, 92vw)', zIndex: 20,
-      background: 'var(--bg)', borderLeft: '2px solid var(--line)', boxShadow: '-8px 0 24px rgba(40,30,10,.12)',
+      // Pergamentrulle med snidad mässingskant — matchar panelramarna, inte platt panel.
+      background: 'var(--tex-parchment, none) center / cover, var(--bg)',
+      borderLeft: '3px solid #8A6A38', boxShadow: '-12px 0 30px rgba(30,20,8,.34)',
       display: 'flex', flexDirection: 'column',
+      // Home-indikatorns yta nedtill fylls av panelens eget pergament (ingen ljus remsa).
+      paddingBottom: 'env(safe-area-inset-bottom)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '2px dashed var(--line)' }}>
-        <Pi mood="glad" size={34} />
-        <strong style={{ fontSize: 15 }}>Mattekompisen Pi</strong>
-        <span className="chip" style={{ marginLeft: 'auto', borderColor: 'var(--mint)', color: '#1F7A50', fontSize: 11 }}>● Bara matte här!</span>
+      {/* Snidad trä-list som rubrik — env(safe-area-inset-top) håller knapparna
+          nedanför iOS-klockan/batteriet. */}
+      <div className="wood-bar" style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: 'calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 10px 14px',
+      }}>
+        <Pi mood="glad" size={32} />
+        <strong style={{ fontSize: 15, color: '#F6EFDF', textShadow: '0 1px 2px rgba(0,0,0,.6)' }}>Mattekompisen Pi</strong>
+        <span className="chip" style={{ marginLeft: 'auto', background: 'linear-gradient(180deg,#2E6B4C,#1F5238)', borderColor: '#4FA97C', color: '#EAFBF1', fontSize: 11 }}>● Bara matte här!</span>
         <button className="chip" onClick={onClose} aria-label="Stäng chatten">✕</button>
       </div>
 
@@ -114,7 +123,7 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
           <button
             key={chip.label}
             className="chip"
-            style={{ borderColor: 'var(--primary)', color: 'var(--primary)', fontSize: 12 }}
+            style={{ fontSize: 12 }}
             disabled={waiting || left <= 0}
             onClick={() => void send(chip.text, 'withScratch' in chip && chip.withScratch, true)}
           >{chip.label}</button>
@@ -129,8 +138,9 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
           placeholder={left > 0 ? 'Skriv till Pi …' : 'Pi behöver vila — imorgon igen!'}
           disabled={waiting || left <= 0}
           style={{
-            flex: 1, background: 'var(--card)', border: '2px solid var(--line)', borderRadius: 999,
+            flex: 1, background: 'var(--card)', border: '2px solid #C9B489', borderRadius: 999,
             padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--ink)',
+            boxShadow: 'inset 0 1px 3px rgba(90,66,30,.18)',
           }}
         />
         <button
@@ -150,11 +160,18 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
   )
 }
 
+/* Pis repliker: ljust pergament (som en lapp hon räcker fram). */
 const bubbleAi: React.CSSProperties = {
-  background: 'var(--card)', border: '2px solid var(--line)', borderRadius: 16, borderBottomLeftRadius: 4,
-  padding: '9px 13px', fontSize: 14, fontWeight: 600, lineHeight: 1.45, maxWidth: '85%', alignSelf: 'flex-start',
+  background: 'linear-gradient(180deg, #FBF4E2, #F1E6CB)', border: '1.5px solid #C9B489',
+  borderRadius: 15, borderBottomLeftRadius: 4, padding: '9px 13px', fontSize: 14, fontWeight: 600,
+  lineHeight: 1.45, maxWidth: '85%', alignSelf: 'flex-start', color: '#3A322A',
+  boxShadow: '0 1px 2px rgba(60,44,20,.18)',
 }
+/* Barnets repliker: graverad bronsplatta (matchar chip/HUD) i stället för blått glas. */
 const bubbleMe: React.CSSProperties = {
-  background: 'var(--primary)', color: '#fff', borderRadius: 16, borderBottomRightRadius: 4,
-  padding: '9px 13px', fontSize: 14, fontWeight: 600, lineHeight: 1.45, maxWidth: '85%', alignSelf: 'flex-end',
+  background: 'linear-gradient(180deg, #4A3A26, #372819)', color: '#F3E4C4',
+  border: '1.5px solid #8A6A38', borderRadius: 15, borderBottomRightRadius: 4,
+  padding: '9px 13px', fontSize: 14, fontWeight: 600, lineHeight: 1.45, maxWidth: '85%',
+  alignSelf: 'flex-end', textShadow: '0 1px 1px rgba(0,0,0,.4)',
+  boxShadow: 'inset 0 1px 0 rgba(255,220,160,.25), 0 2px 4px rgba(0,0,0,.28)',
 }
