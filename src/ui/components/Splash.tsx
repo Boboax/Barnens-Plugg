@@ -100,13 +100,11 @@ export function Splash({ onDone }: { onDone(): void }) {
           trycket är gesten som startar musiken. */}
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, minHeight: 60, justifyContent: 'center' }}>
         {ready ? (
-          <span className="display" style={{
-            fontWeight: 900, fontSize: 20, letterSpacing: 0.4, color: '#241C24',
-            padding: '11px 26px', borderRadius: 99, whiteSpace: 'nowrap',
-            background: 'linear-gradient(180deg, #FFE9A6 0%, #F3C24A 55%, #D79A34 100%)',
-            border: '2px solid #A97C2E',
-            boxShadow: '0 4px 0 rgba(120,80,20,.55), 0 6px 14px rgba(0,0,0,.5)',
-            animation: 'pulse-glow 1.8s ease-in-out infinite',
+          // Samma snidade trä/guld-knapp som resten av appen (.btn-primary),
+          // förstorad och med ett mjukt pulserande sken som lockar till tryck.
+          <span className="btn btn-primary display splash-cta" style={{
+            fontSize: 'clamp(19px, 4.6vw, 25px)', padding: '15px 40px', borderRadius: 16,
+            letterSpacing: 0.5, whiteSpace: 'nowrap', pointerEvents: 'none',
           }}>Tryck för att börja ▶</span>
         ) : (
           <>

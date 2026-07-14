@@ -311,6 +311,13 @@ button:active > .map-node { transform: scale(0.96) translateY(2px); }
 }
 .splash-load { animation: splash-load 1.9s ease-in-out infinite; }
 
+/* "Tryck för att börja"-knappen andas och glöder gyllene så den lockar. */
+@keyframes splash-cta {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255,210,110,.5)); }
+  50% { transform: scale(1.045); filter: drop-shadow(0 0 16px rgba(255,210,110,.9)); }
+}
+.splash-cta { animation: splash-cta 1.9s ease-in-out infinite; }
+
 /* ---------- Levande karta: stämningspartiklar ---------- */
 
 /* Eldfluga/mote: svävar i en mjuk slinga och pulserar i sken. */
