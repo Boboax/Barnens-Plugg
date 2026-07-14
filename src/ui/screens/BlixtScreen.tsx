@@ -182,6 +182,9 @@ function Center({ children }: { children: React.ReactNode }) {
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: 14, padding: 30,
+      // Mjuk gyllene glöd i toppen så skärmen inte känns platt (matchar
+      // diagnos-korten) — blixten är en varm, positiv rekordjakt.
+      background: 'radial-gradient(ellipse 120% 60% at 50% 8%, #FFEFC9 0%, var(--bg) 58%)',
     }}>{children}</div>
   )
 }
