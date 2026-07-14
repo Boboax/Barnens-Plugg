@@ -46,6 +46,20 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         // Appen är helt lokal — inga runtime-anrop att cacha förutom appskalet.
         navigateFallback: `${base}index.html`,
+        // Låtarna (mp3, ~4 MB styck) precachas INTE — då sväller install:en.
+        // I stället cachas de vid första uppspelning (CacheFirst) så de startar
+        // direkt andra gången och fungerar offline sedan.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.endsWith('.mp3'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'lat-cache',
+              expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              rangeRequests: true,
+            },
+          },
+        ],
       },
     }),
   ],
