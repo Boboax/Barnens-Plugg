@@ -81,6 +81,7 @@ const URL_BOSS = [`${B}audio/bosslat.mp3`, `${B}audio/bosslat2.mp3`]
 let mScene: MusicScene | null = null
 let mCurrent: HTMLAudioElement | null = null
 let startEnded = false
+let startPlayed = false // uggle-låten spelas EN gång per app-öppning, aldrig om
 let trkStart: HTMLAudioElement | null = null
 let trkTheme: HTMLAudioElement | null = null
 const trkBoss: (HTMLAudioElement | null)[] = [null, null]
@@ -117,7 +118,7 @@ function ensureStart(): HTMLAudioElement {
   }
   return trkStart
 }
-function playStartOnce(): void { setCurrent(ensureStart()) }
+function playStartOnce(): void { startPlayed = true; setCurrent(ensureStart()) }
 
 /** Börja hämta startlåten redan under laddningsskärmen så den kan starta
     direkt när barnet trycker vidare (annars märks fördröjningen första gången). */
@@ -141,9 +142,11 @@ export function setMusicScene(scene: MusicScene): void {
   }
   mScene = scene
   if (scene === 'boss') playBossLoop()
-  else if (scene === 'start') { if (!startEnded) playStartOnce(); else playThemeLoop() }
+  // Uggle-låten spelas bara EN gång (vid app-öppning). Kommer man tillbaka till
+  // startskärmen sen loopar temalåten i stället — ingen omstart av ugglelåten.
+  else if (scene === 'start') { if (!startPlayed) playStartOnce(); else playThemeLoop() }
   else {
-    // 'spel': låt startlåten spela klart om den fortfarande går, annars tema.
+    // 'spel': låt uggle-låten spela klart om den fortfarande går, annars tema (loop).
     if (trkStart && !startEnded && mCurrent === trkStart) {
       trkBoss[0]?.pause(); trkBoss[1]?.pause()
     } else playThemeLoop()
