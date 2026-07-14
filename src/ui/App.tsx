@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { startMusic, stopMusic, unlockAudio } from '../sound'
+import { setMusicScene, pauseMusic, unlockAudio } from '../sound'
 import { Pi } from './components/Pi'
 import { Splash } from './components/Splash'
 import { BattleScreen } from './screens/BattleScreen'
@@ -57,13 +57,14 @@ export function App() {
     }
   }, [])
 
-  // Musiken följer skärmen — och tystnar när Pi sover.
+  // Musiken följer skärmen — och pausar (glömmer inte) när Pi sover.
+  // Startlåten spelar på spelarvalet och FÅR spela klart in på kartan; sen
+  // loopar temalåten tills en bosstrid, då bosslåtarna tar över.
   useEffect(() => {
-    if (piSover) { stopMusic(); return }
-    if (screen === 'home' || screen === 'session' || screen === 'diagnosis') startMusic('varld')
-    else if (screen === 'boss' || screen === 'star') startMusic('boss')
-    else if (screen === 'blixt') startMusic('blixt')
-    else stopMusic()
+    if (piSover) { pauseMusic(); return }
+    if (screen === 'boss' || screen === 'star') setMusicScene('boss')
+    else if (screen === 'profiles') setMusicScene('start')
+    else setMusicScene('spel') // home, session, diagnosis, blixt, time-up, parent
   }, [screen, piSover])
 
   // Tidsbokföring: tickar bara på träningsskärmar, bara vid aktivitet,
