@@ -97,14 +97,17 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
   }
 
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: artOk ? '#1B1F30' : undefined }}>
-      {/* Ambient utfyllnad ovanför/under målningen: samma bild, uppblåst och suddig. */}
-      {artOk && (
-        <img src={artUrl} alt="" aria-hidden="true" style={{
-          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill',
-          filter: 'blur(26px) brightness(0.55)', transform: 'scale(1.15)',
-        }} />
-      )}
+    <div style={{
+      position: 'absolute', inset: 0, overflow: 'hidden',
+      // Kartan hänger på en mörk stenvägg (dungeon-känsla). Sten-texturen
+      // kaklas; mörk ton ovanpå ger djup. Reserv: mörk enfärg.
+      background: 'linear-gradient(rgba(20,16,26,0.55), rgba(20,16,26,0.72)), var(--tex-stone, none) center / 340px repeat, #1B1F30',
+    }}>
+      {/* Vinjett så kanterna mörknar och den inramade kartan lyfter fram. */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        boxShadow: 'inset 0 0 120px rgba(0,0,0,0.6)',
+      }} />
 
       {/* Kartboxen: målningens proportioner, centrerad; zoomen sker här. */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
