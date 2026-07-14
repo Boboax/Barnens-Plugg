@@ -27,7 +27,7 @@ export function ProfileSelect() {
       ))}
       <div className="float-soft"><PiHero size={150} /></div>
       <h1 style={{ fontSize: 30, fontWeight: 900, margin: 0 }}>
-        Barnens <span style={{ color: 'var(--primary)' }}>Plugg</span>
+        Räknarnas <span style={{ color: 'var(--primary)' }}>rike</span>
       </h1>
 
       {children.length === 0 ? (

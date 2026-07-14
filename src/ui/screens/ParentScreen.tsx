@@ -729,7 +729,7 @@ function SafetyTab() {
       <div style={pcard}>
         <h4 style={h4}>ℹ️ Om appen</h4>
         <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
-          Barnens Plugg följer Lgr22:s centrala innehåll för matematik F–åk 6. Uppgifterna genereras av appens egen kod
+          Räknarnas rike följer Lgr22:s centrala innehåll för matematik F–åk 6. Uppgifterna genereras av appens egen kod
           (aldrig AI), svårigheten anpassas efter varje barn, och repetition schemaläggs med växande intervall.
           Ingen data lämnar enheten.
         </p>
