@@ -7,7 +7,7 @@ import { Pi } from './Pi'
    Försvinner själv efter ~2,2 s (eller direkt vid tryck).
    ============================================================ */
 
-const TITLE = 'Barnens Plugg'
+const TITLE = 'Räknarnas rike'
 const SPARKLES: { top: string; left: string; delay: number; emoji: string }[] = [
   { top: '18%', left: '22%', delay: 0.2, emoji: '✨' },
   { top: '12%', left: '68%', delay: 0.7, emoji: '⭐' },

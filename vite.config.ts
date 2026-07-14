@@ -28,8 +28,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['pi.svg'],
       manifest: {
-        name: 'Barnens Plugg',
-        short_name: 'Plugg',
+        name: 'Räknarnas rike',
+        short_name: 'Räknarna',
         description: 'Adaptiv matteträning för barn enligt svensk läroplan',
         lang: 'sv',
         display: 'standalone',

@@ -30,7 +30,7 @@ export function importHousehold(file: File): Promise<Household> {
     reader.onload = () => {
       try {
         const parsed = JSON.parse(String(reader.result)) as Household
-        if (!Array.isArray(parsed.children)) throw new Error('Filen ser inte ut som en Barnens Plugg-backup.')
+        if (!Array.isArray(parsed.children)) throw new Error('Filen ser inte ut som en Räknarnas rike-backup.')
         resolve(migrate(parsed))
       } catch (e) {
         reject(e instanceof Error ? e : new Error('Kunde inte läsa filen.'))
