@@ -30,18 +30,22 @@ interface Region {
   sprites: [SpriteName, SpriteName]
 }
 
+/* Koordinaterna följer den aktuella målningens geografi:
+   talstenarna (dal), glaciären (bråk), granskogen (gånger), runskogen
+   med drakskelettet (mönster), pyramidöknen (former), skeppshavet
+   (diagram) och kristallgrottan (samband). */
 const REGIONS: Region[] = [
-  { worldId: 'talens-dal', art: { x: 13, y: 72 }, svg: { x: 17, y: 76 }, sprites: ['lovtrad', 'blomma'] },
-  { worldId: 'multiplikationsskogen', art: { x: 46, y: 84 }, svg: { x: 42, y: 84 }, sprites: ['gran', 'svamp'] },
-  { worldId: 'brakberget', art: { x: 22, y: 38 }, svg: { x: 20, y: 42 }, sprites: ['snogran', 'sten'] },
-  { worldId: 'monsterskogen', art: { x: 55, y: 42 }, svg: { x: 50, y: 55 }, sprites: ['snurrtrad', 'orb'] },
-  { worldId: 'formernas-berg', art: { x: 85, y: 22 }, svg: { x: 74, y: 30 }, sprites: ['kristall', 'sten'] },
-  { worldId: 'diagramoarna', art: { x: 81, y: 78 }, svg: { x: 84, y: 74 }, sprites: ['palm', 'segelbat'] },
-  { worldId: 'sambandsgrottan', art: { x: 52, y: 13 }, svg: { x: 50, y: 16 }, sprites: ['stalagmit', 'kristall'] },
+  { worldId: 'talens-dal', art: { x: 12, y: 50 }, svg: { x: 17, y: 76 }, sprites: ['lovtrad', 'blomma'] },
+  { worldId: 'multiplikationsskogen', art: { x: 36, y: 66 }, svg: { x: 42, y: 84 }, sprites: ['gran', 'svamp'] },
+  { worldId: 'brakberget', art: { x: 30, y: 17 }, svg: { x: 20, y: 42 }, sprites: ['snogran', 'sten'] },
+  { worldId: 'monsterskogen', art: { x: 50, y: 55 }, svg: { x: 50, y: 55 }, sprites: ['snurrtrad', 'orb'] },
+  { worldId: 'formernas-berg', art: { x: 76, y: 47 }, svg: { x: 74, y: 30 }, sprites: ['kristall', 'sten'] },
+  { worldId: 'diagramoarna', art: { x: 74, y: 14 }, svg: { x: 84, y: 74 }, sprites: ['palm', 'segelbat'] },
+  { worldId: 'sambandsgrottan', art: { x: 80, y: 82 }, svg: { x: 50, y: 16 }, sprites: ['stalagmit', 'kristall'] },
 ]
 
-/** Målningens proportioner (1376×768) — knappkoordinaterna gäller inom den. */
-const ART_RATIO = '1376 / 768'
+/** Målningens proportioner — knappkoordinaterna gäller inom den. */
+const ART_RATIO = '1024 / 559'
 
 /** Resvägen genom riket i SVG-reserven, i läroplansordning (1000×640). */
 function realmTrail(): string {
