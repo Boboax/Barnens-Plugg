@@ -265,6 +265,14 @@ button:active > .map-node { transform: scale(0.96) translateY(2px); }
 }
 .pulse-ring { animation: pulse-ring 1.8s ease-in-out infinite; }
 
+/* Pulserande gyllene sken för "du står här"-noden. Använder drop-shadow så
+   glöden följer den runda mässingsringens form (inte en fyrkantig box). */
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(255,201,77,.95)) drop-shadow(0 3px 4px rgba(0,0,0,.45)); }
+  50% { filter: drop-shadow(0 0 16px rgba(255,201,77,.65)) drop-shadow(0 3px 4px rgba(0,0,0,.45)); }
+}
+.pulse-glow { animation: pulse-glow 1.8s ease-in-out infinite; }
+
 @keyframes shake-hard {
   0%,100% { transform: translate(0,0) rotate(0); }
   20% { transform: translate(-7px,3px) rotate(-4deg); }
