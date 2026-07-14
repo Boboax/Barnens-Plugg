@@ -1,4 +1,5 @@
 import { sfx } from '../../sound'
+import { Avatar } from '../components/Avatar'
 import { PiHero } from '../components/Pi'
 import { SoundToggle } from '../components/SoundToggle'
 import { useStore } from '../store'
@@ -55,15 +56,9 @@ export function ProfileSelect() {
                 onClick={() => { sfx.whoosh(); store.selectChild(child.id) }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 15, color: '#FBF3DE', textShadow: nameShadow, fontFamily: 'inherit', animationDelay: `${i * 0.12}s` }}
               >
-                <span className="float-soft" style={{
-                  width: 86, height: 86, borderRadius: '50%',
-                  background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.45), rgba(255,255,255,0) 55%), ${child.color}`,
-                  color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900,
-                  // Mässingsinfattning som brickorna i spelet.
-                  border: '3px solid #E6C56A',
-                  boxShadow: 'inset 0 0 0 2px rgba(40,28,10,.5), 0 0 0 3px #7A5E30, 0 5px 10px rgba(0,0,0,.5)',
-                  animationDelay: `${i * 0.4}s`,
-                }}>{child.name.charAt(0).toUpperCase()}</span>
+                <span className="float-soft" style={{ animationDelay: `${i * 0.4}s`, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.5))' }}>
+                  <Avatar child={child} size={92} />
+                </span>
                 {child.name}
                 <span style={{ fontWeight: 700, color: '#E7D8B8', fontSize: 13, textShadow: nameShadow }}>
                   {child.diagnosis.done ? `åk ${child.schoolYear === 'F' ? 'F' : child.schoolYear}` : 'ny spelare ✨'}
