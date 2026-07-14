@@ -348,7 +348,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
           <span style={{ fontWeight: 900, fontSize: 17 }}>Hej {child.name}! 👋</span>
         </div>
 
-        <div className="card">
+        <div className="panel">
           <div style={{ fontWeight: 900, fontSize: 15, marginBottom: 6 }}>📚 Dagens pass · ca 15 min</div>
           <Row label="Uppvärmning: repetition" tag={due > 0 ? `${due} moment` : 'kort'} tagColor="rep" />
           <Row label={currentMoment ? currentMoment.title : 'Fritt läge'} tag="nytt" tagColor="new" />
@@ -362,7 +362,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
           const progress = rewardProgress(reward, child)
           const left = progress.total - progress.done
           return (
-            <div className="card" key={reward.id} style={{ borderTop: '4px solid var(--sun)' }}>
+            <div className="panel" key={reward.id}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 <span style={{ fontSize: 30 }}>{reward.emoji}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -411,7 +411,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
         })}
 
         {unlockedBlixtTests(child).length > 0 && (
-          <div className="card">
+          <div className="panel">
             <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 4 }}>⚡ Blixtpass · 1 minut</div>
             {unlockedBlixtTests(child).map((test) => {
               const record = child.blixt?.[test.kind]
@@ -437,7 +437,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
           </div>
         )}
 
-        <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 13.5, fontWeight: 800 }}>⏱ Tid kvar idag</span>
           <span style={{ fontWeight: 900, color: minutesLeft <= 5 ? 'var(--coral)' : 'var(--primary)', fontSize: 17 }}>
             {minutesLeft} min
