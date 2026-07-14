@@ -40,6 +40,12 @@ interface TaskRunnerProps {
 
 const parseNumeric = (raw: string): number => Number(raw.replace('−', '-').replace(',', '.'))
 
+/* Uppgiftsinnehållet (svarsknappar, feedback-kort, kladd-etiketter) ligger på
+   LJUSA kort — texten måste därför ALLTID vara mörk, även i bosstrider där
+   skärmens --ink är ljus (annars blir svaren osynliga, ljus-på-ljust). */
+const ON_CARD_INK = '#35302E'
+const ON_CARD_MUTED = '#6E6656'
+
 export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle }: TaskRunnerProps) {
   const [value, setValue] = useState('')
   const [phase, setPhase] = useState<'svara' | 'feedback'>('svara')
@@ -109,6 +115,10 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
           <p style={{
             fontSize: task.prompt.length > 60 ? 19 : 26, fontWeight: 900, textAlign: 'center',
             margin: 0, lineHeight: 1.4, letterSpacing: 0.3,
+            // I strid är texten ljus över arenan → stark mörk skugga; annars mjuk.
+            textShadow: mode === 'prov'
+              ? '0 2px 7px rgba(0,0,0,.85), 0 0 3px rgba(0,0,0,.6)'
+              : '0 1px 2px rgba(255,247,235,.6)',
           }}>{task.prompt}</p>
           {ttsAvailable() && (
             <button
@@ -129,7 +139,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
               fontSize: 28, fontWeight: 900, textAlign: 'center', color: 'var(--primary)', background: 'var(--card)',
             }}>
               {value || '\u00A0'}
-              {task.answer.unit && <span style={{ fontSize: 16, color: 'var(--muted)', marginLeft: 6 }}>{task.answer.unit}</span>}
+              {task.answer.unit && <span style={{ fontSize: 16, color: ON_CARD_MUTED, marginLeft: 6 }}>{task.answer.unit}</span>}
             </div>
             {!inFeedback && (
               <Keypad
@@ -158,7 +168,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
                   style={{
                     background: 'var(--card)', border: '2.5px solid var(--line)', borderRadius: 14,
                     padding: '13px 10px', fontSize: 18, fontWeight: 900, boxShadow: '0 3px 0 var(--line)',
-                    fontFamily: 'inherit', color: 'var(--ink)',
+                    fontFamily: 'inherit', color: ON_CARD_INK,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >{isObjektIcon(choice.text) ? <ObjektIcon name={choice.text} size={44} /> : choice.text}</button>
@@ -171,16 +181,16 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
           <div className={lastResult.correct ? 'pop' : 'shake'} style={{
             background: lastResult.correct ? 'color-mix(in srgb, var(--mint) 16%, var(--card))' : 'color-mix(in srgb, var(--coral) 14%, var(--card))',
             border: `2px solid ${lastResult.correct ? 'var(--mint)' : 'var(--coral)'}`,
-            borderRadius: 16, padding: '12px 18px', maxWidth: 520, textAlign: 'center',
+            borderRadius: 16, padding: '12px 18px', maxWidth: 520, textAlign: 'center', color: ON_CARD_INK,
           }}>
             <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4 }}>
               {lastResult.correct ? 'Rätt!' : 'Inte riktigt — men nu lär vi oss!'}
             </div>
             {!lastResult.correct && (
               <>
-                {misconceptionHint() && <p style={{ margin: '4px 0', fontWeight: 700 }}>{misconceptionHint()}</p>}
-                <p style={{ margin: '4px 0', fontSize: 15, color: 'var(--ink)' }}>{task.explanation}</p>
-                <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 800, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                {misconceptionHint() && <p style={{ margin: '4px 0', fontWeight: 700, color: ON_CARD_INK }}>{misconceptionHint()}</p>}
+                <p style={{ margin: '4px 0', fontSize: 15, color: ON_CARD_INK }}>{task.explanation}</p>
+                <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 800, color: ON_CARD_MUTED, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
                   Rätt svar: {task.answer.kind === 'numeric'
                     ? `${String(task.answer.value).replace('.', ',').replace('-', '−')}${task.answer.unit ? ` ${task.answer.unit}` : ''}`
                     : (() => {
