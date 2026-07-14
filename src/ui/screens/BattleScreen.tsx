@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { Task } from '../../domain/types'
+import type { Boss, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
 import { worldById } from '../../domain/worlds'
 import {
@@ -21,6 +21,35 @@ import { useStore } from '../store'
    men kladdytan är alltid tillåten — som papper i skolan.
    Nya uppgifter varje försök. Att fly är alltid okej.
    ============================================================ */
+
+/* Bossfiguren: målad bild (per boss.id) med svävande idle, skakning vid
+   träff och besegrad-pose när sista skölden knäcks. Faller tillbaka till
+   bossens emoji för bossar som ännu saknar konst. */
+function BossFigure({ boss, state }: { boss: Boss; state: 'idle' | 'traffad' | 'besegrad' }) {
+  const [broken, setBroken] = useState(false)
+  const base = import.meta.env.BASE_URL
+  const src = state === 'besegrad'
+    ? `${base}art/boss/${boss.id}-besegrad.webp`
+    : `${base}art/boss/${boss.id}.webp`
+  const anim = state === 'traffad' ? 'shake-hard' : state === 'besegrad' ? 'pop-big' : 'float-soft'
+  if (broken) {
+    return <span className={anim} style={{ fontSize: 84, lineHeight: 1, display: 'inline-block' }}>{boss.emoji}</span>
+  }
+  return (
+    <img
+      src={src}
+      alt={boss.name}
+      className={anim}
+      onError={() => setBroken(true)}
+      style={{
+        height: 240, width: 'auto', objectFit: 'contain', display: 'block',
+        filter: state === 'besegrad'
+          ? 'drop-shadow(0 6px 10px rgba(0,0,0,.45))'
+          : 'drop-shadow(0 6px 10px rgba(0,0,0,.45)) drop-shadow(0 0 14px rgba(255,180,60,.35))',
+      }}
+    />
+  )
+}
 
 export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
   const store = useStore()
@@ -131,12 +160,14 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
           <div className="card" style={{ fontSize: 12.5, fontWeight: 800, textAlign: 'center', padding: '8px 12px' }}>
             {flash === 'hit' ? '💥 En sköld knäcktes!' : flash === 'miss' ? `${boss.emoji} "Hihi! Inte den här gången!"` : `"${boss.taunt}"`}
           </div>
-          <span
-            className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'}
-            style={{ fontSize: 84, lineHeight: 1, display: 'inline-block' }}
-          >
-            {kind === 'boss' ? boss.emoji : '💎'}
-          </span>
+          {kind === 'boss'
+            ? <BossFigure boss={boss} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
+            : (
+              <span
+                className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'}
+                style={{ fontSize: 84, lineHeight: 1, display: 'inline-block' }}
+              >💎</span>
+            )}
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 190 }}>
             {Array.from({ length: needed }).map((_, i) => (
               <span key={i} style={{ fontSize: 19, opacity: i < shieldsLeft ? 1 : 0.22, filter: i < shieldsLeft ? undefined : 'grayscale(1)' }}>🛡️</span>
