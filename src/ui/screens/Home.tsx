@@ -9,7 +9,7 @@ import { rewardProgress } from '../../engine/rewards'
 import { blixtTarget, unlockedBlixtTests } from '../../engine/blixt'
 import { sfx } from '../../sound'
 import { Avatar } from '../components/Avatar'
-import { Icon } from '../components/Icon'
+import { Icon, type IconName } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { RealmMap } from '../components/RealmMap'
 import { SoundToggle } from '../components/SoundToggle'
@@ -38,7 +38,7 @@ function nodeState(moment: Moment, skill: SkillState | undefined, isCurrent: boo
   return 'locked'
 }
 
-/** Nodernas märkesfärg. Glyferna ritas som SVG (spelkänsla, inga emojis). */
+/** Medaljongens ton per status (färgkodning barnet lär sig snabbt). */
 const NODE_BG: Record<NodeState, string> = {
   done: 'var(--mint)',
   star: 'var(--mint)',
@@ -49,40 +49,18 @@ const NODE_BG: Record<NodeState, string> = {
   coming: '#D8D4C8',
 }
 
-function NodeGlyph({ state, size = 24 }: { state: NodeState; size?: number }) {
-  const ink = state === 'oppen' ? 'var(--sun-ink)' : '#FFFFFF'
-  const paths: Record<NodeState, React.ReactNode> = {
-    done: <path d="M12,2 L14.9,8.6 L22,9.3 L16.7,14 L18.3,21 L12,17.3 L5.7,21 L7.3,14 L2,9.3 L9.1,8.6 Z" fill={ink} />,
-    star: <path d="M12,2 L14.9,8.6 L22,9.3 L16.7,14 L18.3,21 L12,17.3 L5.7,21 L7.3,14 L2,9.3 L9.1,8.6 Z" fill={ink} />,
-    now: ( // flagga: Pi står här
-      <>
-        <path d="M7,3 L7,21" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M8,4 L19,7.5 L8,11 Z" fill={ink} />
-      </>
-    ),
-    oppen: <path d="M8,5 L19,12 L8,19 Z" fill={ink} />,
-    boss: ( // korsade svärd
-      <>
-        <path d="M5,4 L16,15 M19,18 L16,15" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
-        <path d="M19,4 L8,15 M5,18 L8,15" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
-        <path d="M13.5,17.5 L18.5,12.5 M10.5,17.5 L5.5,12.5" stroke={ink} strokeWidth="2" strokeLinecap="round" />
-      </>
-    ),
-    locked: (
-      <>
-        <rect x="6" y="10" width="12" height="9" rx="2.4" fill={ink} />
-        <path d="M8.5,10 L8.5,7.5 A3.5,3.5 0 0,1 15.5,7.5 L15.5,10" stroke={ink} strokeWidth="2.4" fill="none" />
-      </>
-    ),
-    coming: ( // grodd: kommer snart
-      <>
-        <path d="M12,21 L12,12" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M12,13 Q6,13 5,7 Q11,7 12,13 Z" fill={ink} />
-        <path d="M12,11 Q18,11 19,5 Q13,5 12,11 Z" fill={ink} opacity="0.85" />
-      </>
-    ),
-  }
-  return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ display: 'block' }}>{paths[state]}</svg>
+/* Nodmärket är en MÅLAD ikon i mässingsringens hål — samma konststil som
+   rikeskartan (ingen platt SVG-glyf längre). Ikonen berättar status:
+   kristall = klar, stjärna = stjärnnivå, flagga = du står här, penna = träna,
+   svärd = boss, lås = låst, grodd = kommer snart. */
+const STATE_ICON: Record<NodeState, IconName> = {
+  done: 'kristall',
+  star: 'stjarna',
+  now: 'flagga',
+  oppen: 'penna',
+  boss: 'svards',
+  locked: 'las',
+  coming: 'grodd',
 }
 
 /* Kartans fasta geometri: HORISONTELL resa — varje moment får en kolumn,
@@ -174,14 +152,14 @@ function HomeInner({ child }: { child: ChildProfile }) {
         </span>
         {/* Titelskylt: snidad plakett som hänger ned över kartan (jfr förlagan).
             Elementets proportion matchar bildens (600×328) → ingen förvrängning.
-            Texten centreras på träytan (lite nedskjuten p.g.a. topp-ornamentet)
-            och är graverad guldtext för lyster. */}
+            Texten sitter mitt på träytan (plakettens trä är vertikalt centrerat i
+            bilden) och är graverad guldtext för lyster. */}
         <span className="display" style={{
           position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%)',
-          width: 224, aspectRatio: '600 / 328',
+          width: 240, aspectRatio: '600 / 328',
           backgroundImage: 'var(--tex-plaque)', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          paddingTop: '9%', boxSizing: 'border-box',
+          boxSizing: 'border-box',
           zIndex: 6, pointerEvents: 'none', whiteSpace: 'nowrap',
         }}>
           <span style={{
@@ -229,20 +207,26 @@ function HomeInner({ child }: { child: ChildProfile }) {
           position: 'relative', zIndex: 3,
         }}>📜 {chapter}</div>
 
-        {/* Vägen — HORISONTELL resa: scrolla i sidled, nod med bildtext under. */}
+        {/* Vägen — HORISONTELL resa: scrolla i sidled, nod med bildtext under.
+            Ritytan har EXAKT bredden moments*COL_W i px, och stig-SVG:n renderas
+            i samma px-skala (1 enhet = 1 px, ingen uttänjning). Då följer stigen
+            nodernas centrum precis. margin:auto centrerar korta världar och
+            låter långa scrolla (flex-säkert, till skillnad från justify center). */}
         <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', display: 'flex', alignItems: 'center', position: 'relative', zIndex: 2 }}>
-          <div style={{ position: 'relative', height: MAP_H, width: Math.max(moments.length * COL_W, 100), minWidth: '100%' }}>
-            {/* Stigen: guldtrampstenar dit barnet nått, blek antydan bortom. */}
-            {(() => {
-              const states = moments.map((m) => nodeState(m, child.skills[m.id], m.id === currentId))
-              const lastOpen = states.reduce((acc, s, i) => (s !== 'locked' && s !== 'coming' ? i : acc), 0)
-              const w = moments.length * COL_W
-              return (
+          {(() => {
+            const canvasW = moments.length * COL_W
+            const states = moments.map((m) => nodeState(m, child.skills[m.id], m.id === currentId))
+            const lastOpen = states.reduce((acc, s, i) => (s !== 'locked' && s !== 'coming' ? i : acc), 0)
+            const dark = theme.horizon === 'grotta'
+            return (
+              <div style={{ position: 'relative', height: MAP_H, width: canvasW, flexShrink: 0, margin: '0 auto' }}>
+                {/* Stigen: guldtrampstenar dit barnet nått, blek antydan bortom. */}
                 <svg
-                  viewBox={`0 0 ${w} ${MAP_H}`}
-                  preserveAspectRatio="none"
+                  viewBox={`0 0 ${canvasW} ${MAP_H}`}
+                  width={canvasW}
+                  height={MAP_H}
                   aria-hidden="true"
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
+                  style={{ position: 'absolute', left: 0, top: 0, zIndex: 0, pointerEvents: 'none' }}
                 >
                   <path d={windingPath(moments.length)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
                     strokeLinecap="round" opacity={0.3} />
@@ -253,92 +237,108 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   <path d={windingPath(moments.length, lastOpen)} stroke={theme.pathColor} strokeWidth={8.5} fill="none"
                     strokeLinecap="round" strokeDasharray="0.1 16" />
                 </svg>
-              )
-            })()}
 
-
-            {moments.map((moment, i) => {
-              const skill = child.skills[moment.id]
-              const state = nodeState(moment, skill, moment.id === currentId)
-              const isStar = state === 'star'
-              const clickable = state === 'now' || state === 'oppen' || state === 'boss' || state === 'done' || isStar
-              const onClick = (): void => {
-                if (secondsLeft <= 0) return store.go('time-up')
-                if (state === 'boss') store.startBattle(moment.id, 'boss')
-                else if (state === 'done') store.startBattle(moment.id, 'star')
-                else if (state === 'now' || state === 'oppen') store.startSession(moment.id)
-              }
-              const dark = theme.horizon === 'grotta'
-              return (
-                <button
-                  key={moment.id}
-                  ref={moment.id === currentId ? scrollToCurrent : undefined}
-                  onClick={onClick}
-                  disabled={!clickable}
-                  style={{
-                    position: 'absolute', zIndex: 2,
-                    left: nodeCx(i), top: nodeCy(i), transform: 'translate(-50%, -50%)',
-                    width: COL_W - 18,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, fontFamily: 'inherit',
-                    opacity: state === 'locked' || state === 'coming' ? 0.72 : 1,
-                  }}
-                >
-                  <span
-                    className={`map-node${state === 'now' ? ' pulse-ring' : state === 'boss' ? ' float-soft' : ''}`}
-                    style={{
-                      position: 'relative', width: state === 'now' ? 62 : 52, height: state === 'now' ? 62 : 52,
-                      borderRadius: '50%', flexShrink: 0,
-                      background: `radial-gradient(circle at 33% 28%, rgba(255,255,255,.5), rgba(255,255,255,0) 55%), ${NODE_BG[state]}`,
-                      border: '3px solid rgba(255,255,255,.85)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      boxShadow: state === 'now'
-                        ? '0 0 0 6px rgba(255,201,77,.35), 0 4px 0 rgba(0,0,0,.18)'
-                        : state === 'boss'
-                          ? '0 0 0 5px rgba(140,107,200,.3), 0 4px 0 rgba(0,0,0,.18)'
-                          : state === 'oppen'
-                            ? '0 0 0 3px var(--sun), 0 4px 0 rgba(0,0,0,.14)'
-                            : '0 4px 0 rgba(0,0,0,.14)',
-                    }}
-                  >
-                    <NodeGlyph state={state} size={state === 'now' ? 28 : 24} />
-                    {isStar && (
-                      <svg viewBox="0 0 24 24" width={18} height={18} aria-hidden="true"
-                        style={{ position: 'absolute', top: -9, right: -9, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.25))' }}>
-                        <path d="M12,3 L18,9 L12,21 L6,9 Z" fill="#8FD4F0" />
-                        <path d="M12,3 L18,9 L12,9 Z" fill="#C8ECFA" />
-                        <path d="M12,3 L6,9 L12,9 Z" fill="#5FB8E8" />
-                      </svg>
-                    )}
-                    {state === 'now' && (
-                      <span style={{ position: 'absolute', top: -30, left: '50%', transform: 'translateX(-50%)' }}>
-                        <Pi mood="glad" size={30} />
+                {moments.map((moment, i) => {
+                  const state = states[i]
+                  const isStar = state === 'star'
+                  const dim = state === 'locked' || state === 'coming'
+                  const clickable = state === 'now' || state === 'oppen' || state === 'boss' || state === 'done' || isStar
+                  const onClick = (): void => {
+                    if (secondsLeft <= 0) return store.go('time-up')
+                    if (state === 'boss') store.startBattle(moment.id, 'boss')
+                    else if (state === 'done') store.startBattle(moment.id, 'star')
+                    else if (state === 'now' || state === 'oppen') store.startSession(moment.id)
+                  }
+                  // Ringens centrum ligger EXAKT på (nodeCx, nodeCy) → stigen träffar
+                  // mitt i ringen. Bildtexten är absolut placerad under och flyttar
+                  // därför aldrig ringen ur led (tidigare bugg: hela stapeln centrerades).
+                  const size = state === 'now' ? 68 : 58
+                  const medallion = Math.round(size * 0.6)
+                  const iconSize = Math.round(size * 0.44)
+                  return (
+                    <button
+                      key={moment.id}
+                      ref={moment.id === currentId ? scrollToCurrent : undefined}
+                      onClick={onClick}
+                      disabled={!clickable}
+                      style={{
+                        position: 'absolute', zIndex: 2,
+                        left: nodeCx(i), top: nodeCy(i), transform: 'translate(-50%, -50%)',
+                        width: size, height: size, fontFamily: 'inherit',
+                        opacity: dim ? 0.85 : 1,
+                      }}
+                    >
+                      <span
+                        className={`map-node${state === 'now' ? ' pulse-glow' : state === 'boss' ? ' float-soft' : ''}`}
+                        style={{
+                          position: 'relative', width: size, height: size, flexShrink: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          // 'now' får sitt pulserande sken via .pulse-glow (följer ringens
+                          // runda form); övriga får statisk skugga/glöd här.
+                          filter: state === 'now'
+                            ? undefined
+                            : state === 'boss'
+                              ? 'drop-shadow(0 0 7px rgba(150,110,210,.85)) drop-shadow(0 3px 4px rgba(0,0,0,.45))'
+                              : 'drop-shadow(0 3px 4px rgba(0,0,0,.45))',
+                        }}
+                      >
+                        {/* Medaljong i ringens hål — statusfärgad, målad ikon ovanpå. */}
+                        <span style={{
+                          width: medallion, height: medallion, borderRadius: '50%',
+                          background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 58%), ${NODE_BG[state]}`,
+                          boxShadow: 'inset 0 -2px 5px rgba(0,0,0,.3)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Icon name={STATE_ICON[state]} size={iconSize}
+                            style={dim ? { filter: 'grayscale(.5) drop-shadow(0 1px 1px rgba(0,0,0,.3))' } : undefined} />
+                        </span>
+                        {/* Snidad mässingsring ovanpå (hålet är genomskinligt). */}
+                        <img src={`${import.meta.env.BASE_URL}art/tex/nodering.webp`} alt="" aria-hidden="true"
+                          style={{
+                            position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none',
+                            filter: dim ? 'grayscale(.7) brightness(.85)' : undefined,
+                          }} />
+                        {isStar && (
+                          <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true"
+                            style={{ position: 'absolute', top: -7, right: -7, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.4))' }}>
+                            <path d="M12,3 L18,9 L12,21 L6,9 Z" fill="#8FD4F0" />
+                            <path d="M12,3 L18,9 L12,9 Z" fill="#C8ECFA" />
+                            <path d="M12,3 L6,9 L12,9 Z" fill="#5FB8E8" />
+                          </svg>
+                        )}
+                        {state === 'now' && (
+                          <span style={{ position: 'absolute', top: -32, left: '50%', transform: 'translateX(-50%)' }}>
+                            <Pi mood="glad" size={32} />
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </span>
-                  {/* Bildtext under noden. */}
-                  <span style={{
-                    textAlign: 'center', lineHeight: 1.15,
-                    textShadow: dark
-                      ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)'
-                      : '0 1px 2px rgba(255,255,255,.95), 0 0 8px rgba(255,255,255,.8)',
-                  }}>
-                    <span style={{ display: 'block', fontWeight: 800, fontSize: 13, color: state === 'now' || state === 'oppen' ? 'var(--sun-ink)' : 'var(--ink)' }}>
-                      {moment.title}
-                    </span>
-                    <span style={{ display: 'block', fontWeight: 600, fontSize: 11, color: 'var(--muted)' }}>
-                      {state === 'coming' ? 'kommer snart'
-                        : state === 'boss' ? `Utmana ${world.boss.name}!`
-                        : state === 'done' ? 'klar! 💎'
-                        : isStar ? 'stjärnnivå klarad!'
-                        : state === 'locked' ? 'låst'
-                        : state === 'oppen' ? 'tryck för att träna!'
-                        : ''}
-                    </span>
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+                      {/* Bildtext under noden — absolut, påverkar inte ringens läge. */}
+                      <span style={{
+                        position: 'absolute', top: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
+                        width: COL_W - 8, textAlign: 'center', lineHeight: 1.15, pointerEvents: 'none',
+                        textShadow: dark
+                          ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)'
+                          : '0 1px 3px rgba(20,18,30,.9), 0 0 8px rgba(20,18,30,.7)',
+                      }}>
+                        <span style={{ display: 'block', fontWeight: 800, fontSize: 13, color: state === 'now' || state === 'oppen' ? 'var(--sun-ink)' : 'var(--ink)' }}>
+                          {moment.title}
+                        </span>
+                        <span style={{ display: 'block', fontWeight: 600, fontSize: 11, color: 'var(--muted)' }}>
+                          {state === 'coming' ? 'kommer snart'
+                            : state === 'boss' ? `Utmana ${world.boss.name}!`
+                            : state === 'done' ? 'klar! 💎'
+                            : isStar ? 'stjärnnivå klarad!'
+                            : state === 'locked' ? 'låst'
+                            : state === 'oppen' ? 'tryck för att träna!'
+                            : ''}
+                        </span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          })()}
         </div>
 
         {/* Tillbaka till översikten över hela riket. */}
