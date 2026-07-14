@@ -9,7 +9,7 @@ import { rewardProgress } from '../../engine/rewards'
 import { blixtTarget, unlockedBlixtTests } from '../../engine/blixt'
 import { sfx } from '../../sound'
 import { Avatar } from '../components/Avatar'
-import { Icon, type IconName } from '../components/Icon'
+import { Icon, type IconName, BelongIcon, isBelongIcon } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { RealmMap } from '../components/RealmMap'
 import { Ambience } from '../components/Ambience'
@@ -393,7 +393,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
           return (
             <div className="panel" key={reward.id}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <span style={{ fontSize: 30 }}>{reward.emoji}</span>
+                {isBelongIcon(reward.emoji)
+                  ? <BelongIcon name={reward.emoji} size={40} />
+                  : <span style={{ fontSize: 30 }}>{reward.emoji}</span>}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Belöning</div>
                   <div style={{ fontWeight: 900, fontSize: 15 }}>{reward.title}</div>

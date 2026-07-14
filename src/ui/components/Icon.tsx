@@ -21,3 +21,22 @@ export function Icon({ name, size = 20, style }: { name: IconName; size?: number
     />
   )
 }
+
+/* Belöningsikoner (public/art/beloning/*.webp) — föräldern väljer en per
+   belöning. Sparas som nyckel i reward.emoji. Äldre belöningar kan ha en
+   riktig emoji i stället; isBelongIcon skiljer dem åt så vi kan visa båda. */
+export const BELONING_ICONS = ['bio', 'glass', 'boll', 'spel', 'bok', 'bakverk', 'simning', 'konst', 'leksak'] as const
+export const isBelongIcon = (v: string): boolean => (BELONING_ICONS as readonly string[]).includes(v)
+
+export function BelongIcon({ name, size = 28, style }: { name: string; size?: number; style?: React.CSSProperties }) {
+  return (
+    <img
+      src={`${import.meta.env.BASE_URL}art/beloning/${name}.webp`}
+      alt=""
+      aria-hidden="true"
+      width={size}
+      height={size}
+      style={{ display: 'inline-block', verticalAlign: 'middle', objectFit: 'contain', flexShrink: 0, ...style }}
+    />
+  )
+}
