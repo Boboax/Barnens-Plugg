@@ -234,29 +234,71 @@ export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', c
 }) {
   const store = useStore()
   const hero = store.activeChild?.hero
-  // Firandet (fanfar + konfetti) avfyras exakt en gång när kortet visas.
+  // Firandet (fanfar + fyrverkeri) avfyras exakt en gång när kortet visas.
+  // En andra, lättare våg strax efter så segern känns rejält episk.
   useEffect(() => {
-    if (celebrate) {
-      sfx.fanfar()
-      fireConfetti({ count: 130 })
-    }
+    if (!celebrate) return
+    sfx.fanfar()
+    fireConfetti({ power: 1.15 })
+    const t = window.setTimeout(() => fireConfetti({ count: 90, power: 0.9 }), 650)
+    return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return (
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: 12, padding: 30, textAlign: 'center',
+      position: 'relative', overflow: 'hidden',
+      // Vid seger byts det lugna pergamentet mot en dramatisk mörk-gyllene
+      // scen så strålar, gnistor och guldkonfetti lyser — text blir ljus.
+      ...(celebrate ? {
+        background: 'radial-gradient(ellipse 92% 82% at 50% 42%, #4A3418 0%, #2A1C0C 52%, #150E05 100%)',
+        ...({ '--ink': '#FBF3DE', '--muted': '#E7D3AC' } as React.CSSProperties),
+      } : {}),
     }}>
-      {/* Vid seger firar barnets egen hjälte (om vald), annars Pi. */}
-      {celebrate && hero
-        ? <div className="bounce-in" style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
-            <HeroImg kind={hero} variant="figur" style={{ height: 180, width: 'auto', maxWidth: 160, filter: 'drop-shadow(0 6px 12px rgba(0,0,0,.5))' }} />
-            <Pi mood="hejar" size={64} />
-          </div>
-        : <div className="bounce-in"><Pi mood="hejar" size={110} /></div>}
-      <h2 className="pop-big" style={{ fontSize: 26, fontWeight: 900, margin: 0, animationDelay: '0.15s' }}>{title}</h2>
-      <p style={{ color: 'var(--muted)', fontWeight: 700, maxWidth: 420, margin: 0 }}>{text}</p>
-      <button className="btn btn-primary" onClick={onDone}>{buttonText}</button>
+      {celebrate && (
+        <>
+          {/* Långsamt roterande gyllene strålkrans bakom hjälten. */}
+          <div aria-hidden="true" style={{
+            position: 'absolute', left: '50%', top: '42%', width: '160vmax', height: '160vmax',
+            transform: 'translate(-50%,-50%)', pointerEvents: 'none', zIndex: 0, opacity: 0.55,
+            background: 'repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,214,120,.17) 0deg 7deg, rgba(255,214,120,0) 7deg 15deg)',
+            maskImage: 'radial-gradient(circle at 50% 50%, #000 0%, #000 28%, transparent 60%)',
+            WebkitMaskImage: 'radial-gradient(circle at 50% 50%, #000 0%, #000 28%, transparent 60%)',
+            animation: 'ray-spin 46s linear infinite',
+          }} />
+          {/* Varm glöd i mitten. */}
+          <div aria-hidden="true" style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+            background: 'radial-gradient(ellipse 55% 46% at 50% 40%, rgba(255,201,77,.3), rgba(255,201,77,0) 70%)',
+          }} />
+          {/* Svävande gnistor. */}
+          {Array.from({ length: 12 }).map((_, i) => {
+            const s = i * 43
+            return <span key={i} className="glint" style={{
+              left: `${8 + (s * 3) % 84}%`, top: `${12 + (s * 7) % 64}%`,
+              width: 8 + (s % 7), height: 8 + (s % 7), zIndex: 1,
+              ['--glow' as string]: i % 2 ? '#FFE7A8' : '#FFC94D',
+              ['--dur' as string]: `${2 + (s % 4) * 0.6}s`, animationDelay: `${-(s % 5) * 0.4}s`,
+            } as React.CSSProperties} />
+          })}
+        </>
+      )}
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        {/* Vid seger firar barnets egen hjälte (om vald), annars Pi. */}
+        {celebrate && hero
+          ? <div className="bounce-in" style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+              <HeroImg kind={hero} variant="figur" style={{ height: 200, width: 'auto', maxWidth: 170, filter: 'drop-shadow(0 8px 14px rgba(0,0,0,.6)) drop-shadow(0 0 26px rgba(255,201,77,.45))' }} />
+              <Pi mood="hejar" size={70} />
+            </div>
+          : <div className="bounce-in"><Pi mood="hejar" size={110} /></div>}
+        <h2 className={`pop-big${celebrate ? ' display' : ''}`} style={{
+          fontSize: celebrate ? 30 : 26, fontWeight: 900, margin: 0, animationDelay: '0.15s',
+          ...(celebrate ? { color: '#FFE7A8', textShadow: '0 2px 4px rgba(45,26,4,.9), 0 0 16px rgba(255,201,77,.5)' } : {}),
+        }}>{title}</h2>
+        <p style={{ color: 'var(--muted)', fontWeight: 700, maxWidth: 440, margin: 0 }}>{text}</p>
+        <button className="btn btn-primary" onClick={onDone} style={{ marginTop: 4 }}>{buttonText}</button>
+      </div>
     </div>
   )
 }

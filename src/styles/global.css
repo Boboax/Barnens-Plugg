@@ -317,6 +317,9 @@ button:active > .map-node { transform: scale(0.96) translateY(2px); }
 }
 .pop-big { animation: pop-big 0.5s cubic-bezier(.2,.8,.3,1.3) both; }
 
+/* Segerskärmens gyllene strålkrans — snurrar långsamt bakom hjälten. */
+@keyframes ray-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
 @keyframes splash-fade { to { opacity: 0; visibility: hidden; } }
 
 /* Laddningsradens gyllene fyllnad sveper fram och tillbaka under startbilden. */

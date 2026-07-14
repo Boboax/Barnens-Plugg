@@ -30,7 +30,22 @@ export function TimeUp() {
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: 12, padding: 30, textAlign: 'center',
+      position: 'relative', overflow: 'hidden',
+      // Kvällsstämning i stället för platt pergament: Pi somnar, dagen är slut.
+      background: 'radial-gradient(ellipse 95% 78% at 50% 32%, #3B3A66 0%, #24233F 55%, #14132A 100%)',
+      ...({ '--ink': '#F3ECDD', '--muted': '#C9C2DE' } as React.CSSProperties),
     }}>
+      {/* Stilla stjärnhimmel — lugn och ro. */}
+      {Array.from({ length: 14 }).map((_, i) => {
+        const s = i * 53
+        return <span key={i} className="glint" aria-hidden="true" style={{
+          left: `${6 + (s * 3) % 88}%`, top: `${8 + (s * 5) % 68}%`,
+          width: 5 + (s % 5), height: 5 + (s % 5),
+          ['--glow' as string]: '#FFF4D6', ['--dur' as string]: `${2.4 + (s % 5) * 0.5}s`,
+          animationDelay: `${-(s % 6) * 0.5}s`,
+        } as React.CSSProperties} />
+      })}
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
       <Pi mood="sover" size={110} />
       <h2 style={{ fontSize: 26, fontWeight: 900, margin: 0 }}>Bra jobbat idag{child ? `, ${child.name}` : ''}!</h2>
       <p style={{ color: 'var(--muted)', fontWeight: 700, maxWidth: 420, margin: 0 }}>
@@ -80,6 +95,7 @@ export function TimeUp() {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }
