@@ -303,6 +303,14 @@ button:active > .map-node { transform: scale(0.96) translateY(2px); }
 
 @keyframes splash-fade { to { opacity: 0; visibility: hidden; } }
 
+/* Laddningsradens gyllene fyllnad sveper fram och tillbaka under startbilden. */
+@keyframes splash-load {
+  0%   { width: 8%; margin-left: 0; }
+  50%  { width: 62%; }
+  100% { width: 8%; margin-left: 92%; }
+}
+.splash-load { animation: splash-load 1.9s ease-in-out infinite; }
+
 /* ---------- Levande karta: stämningspartiklar ---------- */
 
 /* Eldfluga/mote: svävar i en mjuk slinga och pulserar i sken. */
@@ -336,6 +344,32 @@ button:active > .map-node { transform: scale(0.96) translateY(2px); }
   position: absolute; width: 5px; height: 5px; border-radius: 50%;
   background: rgba(255,255,255,0.9); pointer-events: none;
   animation: flake-fall var(--dur, 7s) linear infinite;
+}
+
+/* ---------- Rörligt liv: varelser som korsar scenen ---------- */
+
+/* Driver i sidled över hela behållaren (fåglar, fjärilar, fladdermöss).
+   Vi animerar left (behållar-relativt) så varelsen alltid korsar just den
+   målade ytan, oavsett kolumnbredd. Bara en handfull element åt gången. */
+@keyframes drift-ltr { from { left: -14%; } to { left: 114%; } }
+@keyframes drift-rtl { from { left: 114%; } to { left: -14%; } }
+/* Mjuk höjdvaggning (fågelns/fladdermusens bana blir levande, inte spikrak). */
+@keyframes bob-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+/* Fjärilsvingar: horisontell hopklämning ser ut som vingslag. */
+@keyframes flutter { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.5); } }
+/* Löv som singlar ned och roterar. */
+@keyframes leaf-fall {
+  0%   { transform: translateY(-20%) rotate(0deg); opacity: 0; }
+  10%  { opacity: 0.9; }
+  90%  { opacity: 0.9; }
+  100% { transform: translateY(340px) rotate(340deg); opacity: 0; }
+}
+/* Fisk som hoppar i en båge och plaskar ned igen (mest osynlig under ytan). */
+@keyframes fish-leap {
+  0%, 66%, 100% { transform: translateY(48px) scaleY(0.85); opacity: 0; }
+  74% { opacity: 1; }
+  82% { transform: translateY(-12px) scaleY(1); opacity: 1; }
+  90% { opacity: 0.5; }
 }
 
 /* ---------- Bossstrid ---------- */

@@ -25,7 +25,13 @@ export function createRng(seed: number): Rng {
   }
   return {
     next,
-    int: (min, max) => min + Math.floor(next() * (max - min + 1)),
+    // Golva gränserna så råkade decimalgränser (t.ex. max/4) inte ger
+    // decimaltal i heltalsuppgifter. För heltalsargument är detta identitet,
+    // så alla befintliga seedade uppgifter är oförändrade (ett enda next()-anrop).
+    int: (min, max) => {
+      const lo = Math.floor(min)
+      return lo + Math.floor(next() * (Math.floor(max) - lo + 1))
+    },
     pick: (items) => items[Math.floor(next() * items.length)],
     shuffle: (items) => {
       const arr = [...items]

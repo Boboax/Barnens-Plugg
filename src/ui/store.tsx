@@ -247,12 +247,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           streak = { days: wasYesterday ? streak.days + 1 : 1, lastActiveDate: today }
         }
 
-        return {
-          ...c,
-          skills: recomputeAvailability({ ...c.skills, [momentId]: nextSkill }),
-          answers,
-          streak,
-        }
+        // Orubblig princip: blixtpass och diagnos påverkar ALDRIG rating,
+        // framsteg eller bossupplåsning. De loggas (för föräldravyn) och
+        // förlänger streaken, men skills lämnas orörda — annars kunde en
+        // snabb blixtrunda knuffa ett moment till "boss-ready" utan träning,
+        // och diagnosprober smutsade ned rating på oövade moment.
+        const skills = context === 'blixt' || context === 'diagnos'
+          ? c.skills
+          : recomputeAvailability({ ...c.skills, [momentId]: nextSkill })
+        return { ...c, skills, answers, streak }
       })
     },
 

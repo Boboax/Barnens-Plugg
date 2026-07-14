@@ -5,6 +5,7 @@ import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
 import { Keypad } from '../components/Keypad'
 import { Pi } from '../components/Pi'
+import { Icon } from '../components/Icon'
 import { useStore } from '../store'
 
 /* ============================================================
@@ -102,18 +103,18 @@ export function BlixtScreen() {
   if (phase === 'intro') {
     return (
       <Center>
-        <span style={{ fontSize: 54 }}>{cfg.emoji}</span>
+        <Icon name="blixt" size={54} />
         <h2 style={h2}>Blixtpass: {cfg.title}</h2>
         <p style={pStyle}>
           En minut — så många rätt du hinner! Fel kostar ingenting, de räknas bara inte.
         </p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <span className="chip">🏅 Ditt rekord: {previousBest || '–'}</span>
-          <span className="chip">🎯 Skolans mål: {target}</span>
+          <span className="chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="pokal" size={14} /> Ditt rekord: {previousBest || '–'}</span>
+          <span className="chip">Skolans mål: {target}</span>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn btn-quiet" onClick={() => store.go('home')}>← Tillbaka</button>
-          <button className="btn btn-primary" onClick={start}>Kör! ⚡</button>
+          <button className="btn btn-primary" onClick={start}>Kör!</button>
         </div>
       </Center>
     )
@@ -126,17 +127,17 @@ export function BlixtScreen() {
       <Center>
         <Pi mood="hejar" size={100} />
         <h2 style={h2}>
-          {correct} rätt på en minut{newRecord ? ' — NYTT REKORD! 🏅' : '!'}
+          {correct} rätt på en minut{newRecord ? ' — NYTT REKORD!' : '!'}
         </h2>
         <p style={pStyle}>
           {hitTarget
-            ? `Du klarade skolans mål (${target})! 🎯🎉`
+            ? `Du klarade skolans mål (${target})!`
             : `${target - correct} kvar till skolans mål (${target}) — du är på väg!`}
           {attempted > correct ? ` (${attempted - correct} fel räknades inte — helt okej!)` : ''}
         </p>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn btn-quiet" onClick={() => store.go('home')}>Till kartan</button>
-          <button className="btn btn-primary" onClick={start}>En gång till! ⚡</button>
+          <button className="btn btn-primary" onClick={start}>En gång till!</button>
         </div>
       </Center>
     )
@@ -147,16 +148,16 @@ export function BlixtScreen() {
   return (
     <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 16px 16px', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', maxWidth: 620 }}>
-        <span style={{ fontSize: 20 }}>{cfg.emoji}</span>
+        <Icon name="blixt" size={20} />
         <div className="pbar" style={{ flex: 1, height: 14 }}>
           <i style={{ width: `${progress * 100}%`, background: secondsLeft <= 10 ? 'var(--coral)' : 'var(--sun)', transition: 'width 1s linear' }} />
         </div>
         <span style={{ fontWeight: 900, fontSize: 20, fontVariantNumeric: 'tabular-nums', minWidth: 44, textAlign: 'right' }}>{secondsLeft}s</span>
       </div>
       <div style={{ display: 'flex', gap: 14, fontWeight: 800, fontSize: 14, color: 'var(--muted)' }}>
-        <span>✅ {correct} rätt</span>
-        <span>🎯 mål {target}</span>
-        {previousBest > 0 && <span>🏅 rekord {previousBest}</span>}
+        <span>{correct} rätt</span>
+        <span>mål {target}</span>
+        {previousBest > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="pokal" size={13} /> rekord {previousBest}</span>}
       </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>

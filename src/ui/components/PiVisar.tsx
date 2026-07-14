@@ -69,7 +69,7 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
           background: 'var(--card)', border: '2px solid var(--line)', borderRadius: 16,
           borderBottomLeftRadius: 4, padding: '10px 16px', maxWidth: 420, fontWeight: 700, fontSize: 15,
         }}>
-          Nytt äventyr: <strong>{moment.title}</strong>! Jag visar {EXAMPLE_COUNT === 2 && step === 0 ? 'två exempel' : 'ett till'} först — titta hur jag tänker. 🦉
+          Nytt äventyr: <strong>{moment.title}</strong>! Jag visar {EXAMPLE_COUNT === 2 && step === 0 ? 'två exempel' : 'ett till'} först — titta hur jag tänker.
         </div>
       </div>
 
@@ -91,13 +91,13 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
         <p style={{
           margin: 0, fontSize: 15, fontWeight: 700, textAlign: 'center', maxWidth: 460,
           background: '#FFF8E6', border: '2px solid #F2E3B8', borderRadius: 12, padding: '10px 14px', color: 'var(--sun-ink)',
-        }}>💡 Pi tänker: {task.explanation}</p>
+        }}>Pi tänker: {task.explanation}</p>
       </div>
 
       {step + 1 < examples.length ? (
         <button className="btn btn-primary" onClick={() => setStep(step + 1)}>Visa ett exempel till ▶</button>
       ) : (
-        <button className="btn btn-ok" onClick={onDone}>Nu provar jag själv! ✏️</button>
+        <button className="btn btn-ok" onClick={onDone}>Nu provar jag själv!</button>
       )}
     </div>
   )

@@ -1,5 +1,6 @@
 import { sfx } from '../../sound'
 import { Avatar } from '../components/Avatar'
+import { Icon } from '../components/Icon'
 import { SoundToggle } from '../components/SoundToggle'
 import { useStore } from '../store'
 
@@ -41,7 +42,7 @@ export function ProfileSelect() {
       {children.length === 0 ? (
         <>
           <p style={{ color: '#F3E9D6', fontWeight: 700, maxWidth: 420, textAlign: 'center', position: 'relative', zIndex: 1, textShadow: nameShadow }}>
-            Hej! Jag är Pi. 🦉 En vuxen behöver sätta upp appen först — det tar bara en minut.
+            Hej! Jag är Pi. En vuxen behöver sätta upp appen först — det tar bara en minut.
           </p>
           <button className="btn btn-primary" style={{ position: 'relative', zIndex: 1 }} onClick={() => store.go('parent')}>
             Kom igång (förälder) →
@@ -63,7 +64,7 @@ export function ProfileSelect() {
                 </span>
                 {child.name}
                 <span style={{ fontWeight: 700, color: '#E7D8B8', fontSize: 13, textShadow: nameShadow }}>
-                  {child.diagnosis.done ? `åk ${child.schoolYear === 'F' ? 'F' : child.schoolYear}` : 'ny spelare ✨'}
+                  {child.diagnosis.done ? `åk ${child.schoolYear === 'F' ? 'F' : child.schoolYear}` : 'ny spelare'}
                 </span>
               </button>
             ))}
@@ -71,16 +72,16 @@ export function ProfileSelect() {
         </>
       )}
 
-      <span style={{ position: 'fixed', left: 18, bottom: 16, zIndex: 2 }}><SoundToggle /></span>
+      <span style={{ position: 'fixed', left: 18, bottom: 'calc(16px + env(safe-area-inset-bottom))', zIndex: 2 }}><SoundToggle /></span>
       <span style={{
-        position: 'fixed', bottom: 8, left: '50%', transform: 'translateX(-50%)', zIndex: 2,
+        position: 'fixed', bottom: 'calc(8px + env(safe-area-inset-bottom))', left: '50%', transform: 'translateX(-50%)', zIndex: 2,
         fontSize: 11, fontWeight: 700, color: '#EAd9BE', opacity: 0.85, textShadow: '0 1px 2px rgba(0,0,0,.6)',
       }}>v{__APP_VERSION__}</span>
       <button
         className="chip"
         onClick={() => store.go('parent')}
-        style={{ position: 'fixed', right: 18, bottom: 16, zIndex: 2 }}
-      >🔒 Förälder</button>
+        style={{ position: 'fixed', right: 18, bottom: 'calc(16px + env(safe-area-inset-bottom))', zIndex: 2, display: 'flex', alignItems: 'center', gap: 6 }}
+      ><Icon name="las" size={14} /> Förälder</button>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import type { ScratchPadHandle } from '../components/ScratchPad'
 import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
 import { ChatPanel } from '../components/ChatPanel'
+import { Icon } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { PiVisar } from '../components/PiVisar'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
@@ -82,7 +83,7 @@ export function SessionScreen() {
   if (slots.length === 0 || !task) {
     return (
       <EndCard
-        title="Allt är klart här! 🎉"
+        title="Allt är klart här!"
         text="Det finns inget nytt att träna just nu — kika på kartan eller kom tillbaka imorgon."
         onDone={() => store.go('home')}
       />
@@ -136,7 +137,7 @@ export function SessionScreen() {
     const ratio = correctCount / slots.length
     return (
       <EndCard
-        title={ratio >= 0.8 ? 'Superjobbat! 🌟' : 'Bra kämpat! 💪'}
+        title={ratio >= 0.8 ? 'Superjobbat!' : 'Bra kämpat!'}
         text={`${correctCount} av ${slots.length} rätt. ${ratio >= 0.8 ? 'Du är på väg att bemästra det här!' : 'Varje försök gör dig starkare — imorgon tar vi det igen!'}`}
         onDone={() => store.go('home')}
         celebrate={ratio >= 0.8}
@@ -156,12 +157,12 @@ export function SessionScreen() {
           <i style={{ width: `${(index / slots.length) * 100}%` }} />
         </div>
         {combo >= 3 && !showIntro && (
-          <span key={combo} className="chip pop-big" style={{ borderColor: 'var(--sun)', color: 'var(--sun-ink)', background: '#FFF1D6' }}>
-            🔥 {combo} i rad!
+          <span key={combo} className="chip pop-big" style={{ borderColor: 'var(--sun)', color: 'var(--sun-ink)', background: '#FFF1D6', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Icon name="eld" size={14} /> {combo} i rad!
           </span>
         )}
         <span className="chip" style={{ color: 'var(--muted)' }}>
-          {showIntro ? '🦉 Pi visar först' : `${PART_LABEL[slot.kind]} · ${moment.title}`}
+          {showIntro ? 'Pi visar först' : `${PART_LABEL[slot.kind]} · ${moment.title}`}
         </span>
       </div>
       {showIntro ? (

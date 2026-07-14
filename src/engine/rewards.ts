@@ -65,15 +65,19 @@ export function rewardProgress(reward: Reward, profile: ChildProfile): RewardPro
     return s?.mastery === 'mastered' || s?.mastery === 'star'
   }
   const done = moments.filter((m) => isDone(m.id)).length
-  const total = Math.max(1, moments.length)
+  // Tom terminshalva (inga läroplansmoment) räknas som klar — annars fastnade
+  // belöningen olöslig på "0 av 1" (max(1, 0) gjorde den omöjlig att nå).
+  const total = moments.length
   const remaining = moments.filter((m) => !isDone(m.id))
   const left = remaining.length
   return {
     done,
     total,
-    ratio: done / total,
+    ratio: total ? done / total : 1,
     earned: done >= total,
-    label: `${done} av ${total} moment · ${reward.target.term} åk ${reward.target.year}`,
+    label: total === 0
+      ? `Terminsmål · ${reward.target.term} åk ${reward.target.year}`
+      : `${done} av ${total} moment · ${reward.target.term} åk ${reward.target.year}`,
     requirement:
       left <= 0 ? 'Klart!' : `Klara ${left} moment till i terminens mål (${reward.target.term} åk ${reward.target.year})`,
     nextSteps: remaining.map((m) => m.title),

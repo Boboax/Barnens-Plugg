@@ -16,9 +16,9 @@ import { nowISO, todayISO, useStore } from '../store'
    ============================================================ */
 
 const QUICK_CHIPS = [
-  { label: '💡 Ge mig en ledtråd', text: 'Kan jag få en ledtråd?' },
-  { label: '🤔 Jag förstår inte', text: 'Jag förstår inte uppgiften. Kan du förklara vad den betyder?' },
-  { label: '✏️ Visa min uträkning', text: 'Här är min uträkning — kan du titta på den?', withScratch: true },
+  { label: 'Ge mig en ledtråd', text: 'Kan jag få en ledtråd?' },
+  { label: 'Jag förstår inte', text: 'Jag förstår inte uppgiften. Kan du förklara vad den betyder?' },
+  { label: 'Visa min uträkning', text: 'Här är min uträkning — kan du titta på den?', withScratch: true },
 ] as const
 
 interface ChatPanelProps {
@@ -91,7 +91,7 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
       <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {messages.length === 0 && (
           <div style={bubbleAi}>
-            Hej {child.name}! 🦉 Jag är Pi. Fråga mig om uppgiften, be om en ledtråd — eller visa mig din uträkning!
+            Hej {child.name}! Jag är Pi. Fråga mig om uppgiften, be om en ledtråd — eller visa mig din uträkning!
           </div>
         )}
         {messages.map((m, i) => (

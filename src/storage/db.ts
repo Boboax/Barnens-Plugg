@@ -80,9 +80,18 @@ export async function requestPersistentStorage(): Promise<boolean> {
 
 /** Migrering mellan schemaversioner. En version hittills = ingen åtgärd. */
 export function migrate(data: Household): Household {
-  if (data.schemaVersion === PROFILE_SCHEMA_VERSION) return data
-  // Framtida migreringar kedjas här (v1→v2→v3 …).
-  return { ...data, schemaVersion: PROFILE_SCHEMA_VERSION }
+  // Normalisera saknade toppnivå-arrayer FÖRST — äldre eller handredigerade
+  // kopior kan sakna rewards/chatLog, och UI:t gör h.rewards.map(...) /
+  // h.chatLog direkt (skulle annars krascha på undefined vid import).
+  const base: Household = {
+    ...data,
+    children: Array.isArray(data.children) ? data.children : [],
+    rewards: Array.isArray(data.rewards) ? data.rewards : [],
+    chatLog: Array.isArray(data.chatLog) ? data.chatLog : [],
+  }
+  if (base.schemaVersion === PROFILE_SCHEMA_VERSION) return base
+  // Framtida schema-migreringar kedjas här (v1→v2→v3 …).
+  return { ...base, schemaVersion: PROFILE_SCHEMA_VERSION }
 }
 
 export function emptyHousehold(): Household {

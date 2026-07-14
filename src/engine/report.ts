@@ -43,9 +43,13 @@ const daysAgo = (iso: string, now: string): number =>
 
 export function weeklyReport(profile: ChildProfile, now: string): WeeklyReport {
   const week: AnswerRecord[] = profile.answers.filter((a) => daysAgo(a.at, now) < 7)
-  const answers = week.length
-  const correct = week.filter((a) => a.correct).length
-  const errors = week.filter((a) => !a.correct)
+  // Träffsäkerhet/områdesstatistik räknas BARA på riktig träning. Diagnosen
+  // (medvetet på oövat, ~50 % avsiktligt) och blixtpassen (fel "räknas inte")
+  // skulle annars dra ned siffrorna och motsäga appens egen inramning.
+  const trained = week.filter((a) => a.context !== 'diagnos' && a.context !== 'blixt')
+  const answers = trained.length
+  const correct = trained.filter((a) => a.correct).length
+  const errors = trained.filter((a) => !a.correct)
   const slarv = errors.filter((a) => a.errorKind === 'slarv').length
 
   const activeDates = new Set(week.map((a) => a.at.slice(0, 10)))
@@ -56,7 +60,7 @@ export function weeklyReport(profile: ChildProfile, now: string): WeeklyReport {
 
   // Missuppfattningar den här veckan.
   const misCount = new Map<MisconceptionTag, number>()
-  for (const a of week) {
+  for (const a of trained) {
     if (a.misconception && a.misconception !== 'okand' && a.errorKind === 'kunskap') {
       misCount.set(a.misconception, (misCount.get(a.misconception) ?? 0) + 1)
     }
@@ -69,7 +73,7 @@ export function weeklyReport(profile: ChildProfile, now: string): WeeklyReport {
 
   // Per område.
   const areaMap = new Map<CurriculumArea, { answers: number; correct: number }>()
-  for (const a of week) {
+  for (const a of trained) {
     const area = momentById(a.momentId).area
     const cur = areaMap.get(area) ?? { answers: 0, correct: 0 }
     cur.answers++
