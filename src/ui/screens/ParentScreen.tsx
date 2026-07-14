@@ -6,6 +6,7 @@ import { BLIXT_TESTS, blixtTarget } from '../../engine/blixt'
 import { pingProvider } from '../../chat/providers'
 import { CLOUD_VOICE, cloudTtsAvailable, kickVoiceList, preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
 import { daysSinceBackup, exportHousehold, importHousehold } from '../../storage/backup'
+import { BELONING_ICONS, BelongIcon, isBelongIcon } from '../components/Icon'
 import { KID_COLORS, nowISO, useStore } from '../store'
 
 /* ============================================================
@@ -530,14 +531,12 @@ function NewChildForm({ onDone }: { onDone(): void }) {
 
 /* ---------- Belöningar ---------- */
 
-const REWARD_EMOJI = ['🎬', '🍦', '⚽', '🎮', '📚', '🧁', '🏊', '🎨'] as const
-
 function RewardsTab() {
   const store = useStore()
   const { children, rewards } = store.household
   const [childId, setChildId] = useState(children[0]?.id ?? '')
   const [title, setTitle] = useState('')
-  const [emoji, setEmoji] = useState<string>(REWARD_EMOJI[0])
+  const [emoji, setEmoji] = useState<string>(BELONING_ICONS[0])
   const [targetType, setTargetType] = useState<'moments' | 'sessions' | 'term-goal'>('moments')
   const [count, setCount] = useState(5)
 
@@ -562,7 +561,9 @@ function RewardsTab() {
         const progress = rewardProgress(reward, child)
         return (
           <div key={reward.id} style={{ ...pcard, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 26 }}>{reward.emoji}</span>
+            {isBelongIcon(reward.emoji)
+              ? <BelongIcon name={reward.emoji} size={34} />
+              : <span style={{ fontSize: 26 }}>{reward.emoji}</span>}
             <div style={{ flex: 1, minWidth: 0 }}>
               <strong style={{ fontSize: 14 }}>{reward.title}</strong>
               <span style={{ color: '#8B8FA0', fontSize: 13, fontWeight: 700 }}> · {child.name}</span>
@@ -598,9 +599,12 @@ function RewardsTab() {
             value={title} onChange={(e) => setTitle(e.target.value)} placeholder='T.ex. "Biokväll med pappa"'
             style={{ fontSize: 15, fontWeight: 700, padding: '10px 14px', borderRadius: 10, border: '2px solid #EDEAE2' }}
           />
-          <div style={{ display: 'flex', gap: 6 }}>
-            {REWARD_EMOJI.map((e) => (
-              <button key={e} onClick={() => setEmoji(e)} style={{ fontSize: 22, padding: 4, borderRadius: 8, background: emoji === e ? '#EDEAE2' : 'transparent' }}>{e}</button>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {BELONING_ICONS.map((e) => (
+              <button key={e} onClick={() => setEmoji(e)} aria-label={e}
+                style={{ padding: 4, borderRadius: 10, lineHeight: 0, background: emoji === e ? '#EDEAE2' : 'transparent', border: emoji === e ? '2px solid #C9A24A' : '2px solid transparent' }}>
+                <BelongIcon name={e} size={38} />
+              </button>
             ))}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', fontSize: 14, fontWeight: 700 }}>
