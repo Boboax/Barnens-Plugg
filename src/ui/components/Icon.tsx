@@ -4,6 +4,7 @@
 export type IconName =
   | 'svards' | 'stjarna' | 'las' | 'flagga' | 'grodd' | 'blixt' | 'bok' | 'timglas'
   | 'skold' | 'pokal' | 'rulle' | 'penna' | 'pratbubbla' | 'eld' | 'kugge' | 'kristall'
+  | 'ljud' | 'ljud-av' | 'karta'
 
 export function Icon({ name, size = 20, style }: { name: IconName; size?: number; style?: React.CSSProperties }) {
   return (
