@@ -1,6 +1,5 @@
 import { sfx } from '../../sound'
 import { Avatar } from '../components/Avatar'
-import { PiHero } from '../components/Pi'
 import { SoundToggle } from '../components/SoundToggle'
 import { useStore } from '../store'
 
@@ -9,6 +8,7 @@ import { useStore } from '../store'
    målningen. Om bilden inte laddats faller bakgrunden till varm gradient. */
 
 const startBg = `${import.meta.env.BASE_URL}art/startbg.webp`
+const logo = `${import.meta.env.BASE_URL}art/logo.webp`
 
 export function ProfileSelect() {
   const store = useStore()
@@ -28,13 +28,15 @@ export function ProfileSelect() {
         background: 'radial-gradient(ellipse 60% 70% at 50% 52%, rgba(20,15,25,.5), rgba(20,15,25,0) 75%)',
       }} />
 
-      <div className="float-soft" style={{ position: 'relative', zIndex: 1 }}><PiHero size={150} /></div>
-      <h1 className="display" style={{
-        fontSize: 40, fontWeight: 900, margin: 0, position: 'relative', zIndex: 1,
-        color: '#FBE7C2', textShadow: '0 2px 8px rgba(0,0,0,.75), 0 0 22px rgba(255,180,60,.35)',
-      }}>
-        Räknarnas <span style={{ color: '#FFD98A' }}>rike</span>
-      </h1>
+      <img
+        src={logo}
+        alt="Räknarnas rike — Matteäventyret"
+        className="float-soft"
+        style={{
+          position: 'relative', zIndex: 1, width: 'min(560px, 82%)', height: 'auto',
+          filter: 'drop-shadow(0 6px 16px rgba(0,0,0,.55))', marginBottom: 4,
+        }}
+      />
 
       {children.length === 0 ? (
         <>
