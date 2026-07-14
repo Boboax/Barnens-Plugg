@@ -266,7 +266,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   // Ringens centrum ligger EXAKT på (nodeCx, nodeCy) → stigen träffar
                   // mitt i ringen. Bildtexten är absolut placerad under och flyttar
                   // därför aldrig ringen ur led (tidigare bugg: hela stapeln centrerades).
-                  const size = state === 'now' ? 68 : 58
+                  // Bossen är störst och tydligast — barnet ska genast se monstret.
+                  const size = state === 'boss' ? 76 : state === 'now' ? 68 : 58
                   const medallion = Math.round(size * 0.6)
                   const iconSize = Math.round(size * 0.44)
                   return (
@@ -292,19 +293,23 @@ function HomeInner({ child }: { child: ChildProfile }) {
                           filter: state === 'now'
                             ? undefined
                             : state === 'boss'
-                              ? 'drop-shadow(0 0 7px rgba(150,110,210,.85)) drop-shadow(0 3px 4px rgba(0,0,0,.45))'
+                              ? 'drop-shadow(0 0 9px rgba(224,84,52,.95)) drop-shadow(0 3px 4px rgba(0,0,0,.5))'
                               : 'drop-shadow(0 3px 4px rgba(0,0,0,.45))',
                         }}
                       >
-                        {/* Medaljong i ringens hål — statusfärgad, målad ikon ovanpå. */}
+                        {/* Medaljong i ringens hål. Boss = monstrets ansikte (så barnet
+                            genast ser VAR bossen är); annars statusfärgad målad ikon. */}
                         <span style={{
-                          width: medallion, height: medallion, borderRadius: '50%',
-                          background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 58%), ${NODE_BG[state]}`,
+                          width: medallion, height: medallion, borderRadius: '50%', overflow: 'hidden',
+                          background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 58%), ${state === 'boss' ? '#3A1E22' : NODE_BG[state]}`,
                           boxShadow: 'inset 0 -2px 5px rgba(0,0,0,.3)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
-                          <Icon name={STATE_ICON[state]} size={iconSize}
-                            style={dim ? { filter: 'grayscale(.5) drop-shadow(0 1px 1px rgba(0,0,0,.3))' } : undefined} />
+                          {state === 'boss'
+                            ? <img src={`${import.meta.env.BASE_URL}art/boss/${world.boss.id}.webp`} alt="" aria-hidden="true"
+                                style={{ width: '112%', height: '112%', objectFit: 'cover', objectPosition: 'center 12%' }} />
+                            : <Icon name={STATE_ICON[state]} size={iconSize}
+                                style={dim ? { filter: 'grayscale(.5) drop-shadow(0 1px 1px rgba(0,0,0,.3))' } : undefined} />}
                         </span>
                         {/* Snidad mässingsring ovanpå (hålet är genomskinligt). */}
                         <img src={`${import.meta.env.BASE_URL}art/tex/nodering.webp`} alt="" aria-hidden="true"
