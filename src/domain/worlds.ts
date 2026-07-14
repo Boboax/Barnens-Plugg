@@ -8,7 +8,7 @@ import type { World } from './types'
 export const WORLDS: World[] = [
   {
     id: 'talens-dal',
-    name: 'Talens dal',
+    name: 'Urtalens dal',
     emoji: '🏔',
     tagline: 'Där alla tal bor — från de allra minsta till de största.',
     boss: {
@@ -27,7 +27,7 @@ export const WORLDS: World[] = [
   },
   {
     id: 'multiplikationsskogen',
-    name: 'Multiplikationsskogen',
+    name: 'Tabellernas djupa skog',
     emoji: '🌲',
     tagline: 'Skogen där allt växer i grupper — två och två, fem och fem.',
     boss: {
@@ -46,7 +46,7 @@ export const WORLDS: World[] = [
   },
   {
     id: 'brakberget',
-    name: 'Bråkberget',
+    name: 'Bråkdrakens klippa',
     emoji: '⛰',
     tagline: 'Berget där allt delas i bitar — halvor, tredjedelar och hundradelar.',
     boss: {
@@ -65,7 +65,7 @@ export const WORLDS: World[] = [
   },
   {
     id: 'monsterskogen',
-    name: 'Mönsterskogen',
+    name: 'Den gömda algoritmens skog',
     emoji: '🌀',
     tagline: 'Här upprepar sig allt — om man bara ser mönstret.',
     boss: {
@@ -84,7 +84,7 @@ export const WORLDS: World[] = [
   },
   {
     id: 'formernas-berg',
-    name: 'Formernas berg',
+    name: 'Geometrins iskrona',
     emoji: '🔷',
     tagline: 'Trianglar, cirklar och vinklar så långt ögat når.',
     boss: {

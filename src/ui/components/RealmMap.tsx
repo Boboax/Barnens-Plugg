@@ -264,7 +264,7 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                   </span>
                   {/* Pergamentbanderoll — läsbar mot vilken kartmålning som helst. */}
                   <span className="display" style={{
-                    fontWeight: 900, fontSize: 12.5, lineHeight: 1.2, textAlign: 'center', whiteSpace: 'nowrap',
+                    fontWeight: 900, fontSize: 12.5, lineHeight: 1.15, textAlign: 'center', maxWidth: 132,
                     background: artOk ? 'rgba(246,238,220,.94)' : dark ? 'rgba(30,27,50,.85)' : 'rgba(255,252,244,.85)',
                     color: artOk ? '#3A3122' : dark ? '#F3EFFF' : 'var(--ink)',
                     border: `1.5px solid ${artOk ? '#6B5B40' : 'transparent'}`,
