@@ -168,12 +168,17 @@ function HomeInner({ child }: { child: ChildProfile }) {
         ...(!inRealm && theme.horizon === 'grotta' ? ({ '--ink': '#F3EFFF', '--muted': '#BDB4DC', '--sun-ink': '#FFD98A' } as React.CSSProperties) : {}),
       }}>
         {!inRealm && <WorldScenery theme={theme} />}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
+        {/* Snidad trä-HUD: sträcker sig kant till kant (negativa marginaler
+            matchar containerns padding 14px 18px). Mässingskant nedtill. */}
+        <div className="wood-bar" style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+          position: 'relative', zIndex: 3, margin: '-14px -18px 0', padding: '12px 18px',
+        }}>
           <span style={{ display: 'flex', gap: 8 }}>
             <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
             <SoundToggle />
           </span>
-          <span className="display" style={{ fontWeight: 900, fontSize: 18, color: inRealm || theme.horizon === 'grotta' ? '#FFF3D6' : 'var(--ink)' }}>
+          <span className="display" style={{ fontWeight: 900, fontSize: 18, color: '#FFF3D6', textShadow: '0 1px 3px rgba(0,0,0,.6)' }}>
             {inRealm ? '🗺 Matteriket' : `${world.emoji} ${world.name}`}
           </span>
           <span className="chip">🔥 {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
