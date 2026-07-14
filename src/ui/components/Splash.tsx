@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
+import { preloadStartSong } from '../../sound'
 
 /* ============================================================
    Wow-ögonblicket när appen öppnas: den målade utsikten över
    riket (startbg) med den kompletta logotypen (Pi, titel och
-   allt) som tonar in, magiska gnistor som glittrar och en
-   diskret laddningsrad. Inga emojis — allt är målad konst.
-   Försvinner själv efter ~2,2 s (eller direkt vid tryck).
+   allt) som tonar in och magiska gnistor som glittrar.
+   Kräver ETT tryck för att gå vidare — det trycket är
+   användargesten som får startlåten att spela direkt (låten
+   förladdas här under tiden). Inga emojis — allt är målad konst.
    ============================================================ */
 
 const base = import.meta.env.BASE_URL
@@ -25,19 +27,30 @@ const GLINTS: { top: string; left: string; delay: number; size: number }[] = [
 export function Splash({ onDone }: { onDone(): void }) {
   const [leaving, setLeaving] = useState(false)
   const [logoOk, setLogoOk] = useState(true)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const showFor = reduced ? 500 : 2200
-    const t1 = window.setTimeout(() => setLeaving(true), showFor)
-    const t2 = window.setTimeout(onDone, showFor + 450)
-    return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
+    // Förladda startlåten redan nu så den kan börja direkt vid trycket.
+    preloadStartSong()
+    // Låt logotyp/bakgrund tona in en stund, visa sedan "tryck för att börja".
+    const t = window.setTimeout(() => setReady(true), 900)
+    return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const go = (): void => {
+    if (leaving) return
+    setLeaving(true)
+    window.setTimeout(onDone, 250)
+  }
+
   return (
     <div
-      onPointerDown={() => { setLeaving(true); window.setTimeout(onDone, 250) }}
+      onPointerDown={go}
+      role="button"
+      tabIndex={0}
+      aria-label="Tryck för att börja"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') go() }}
       style={{
         position: 'fixed', inset: 0, zIndex: 999,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24,
@@ -83,21 +96,35 @@ export function Splash({ onDone }: { onDone(): void }) {
         )}
       </div>
 
-      {/* Diskret laddningsrad — glödande streck som pulserar. */}
-      <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-        <div aria-hidden="true" style={{
-          width: 168, height: 6, borderRadius: 99, overflow: 'hidden',
-          background: 'rgba(0,0,0,.35)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,.5), 0 0 0 1px rgba(255,201,77,.25)',
-        }}>
-          <div className="splash-load" style={{
-            height: '100%', borderRadius: 99,
-            background: 'linear-gradient(90deg, #F3C24A, #FFE39A, #F3C24A)',
-          }} />
-        </div>
-        <p className="display" style={{
-          margin: 0, fontWeight: 800, fontSize: 15, letterSpacing: 0.3,
-          color: '#F6EFDF', textShadow: '0 2px 6px rgba(0,0,0,.7)',
-        }}>Äventyret laddas …</p>
+      {/* Före: laddningsrad. När klart: pulserande "tryck för att börja" —
+          trycket är gesten som startar musiken. */}
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, minHeight: 60, justifyContent: 'center' }}>
+        {ready ? (
+          <span className="display" style={{
+            fontWeight: 900, fontSize: 20, letterSpacing: 0.4, color: '#241C24',
+            padding: '11px 26px', borderRadius: 99, whiteSpace: 'nowrap',
+            background: 'linear-gradient(180deg, #FFE9A6 0%, #F3C24A 55%, #D79A34 100%)',
+            border: '2px solid #A97C2E',
+            boxShadow: '0 4px 0 rgba(120,80,20,.55), 0 6px 14px rgba(0,0,0,.5)',
+            animation: 'pulse-glow 1.8s ease-in-out infinite',
+          }}>Tryck för att börja ▶</span>
+        ) : (
+          <>
+            <div aria-hidden="true" style={{
+              width: 168, height: 6, borderRadius: 99, overflow: 'hidden',
+              background: 'rgba(0,0,0,.35)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,.5), 0 0 0 1px rgba(255,201,77,.25)',
+            }}>
+              <div className="splash-load" style={{
+                height: '100%', borderRadius: 99,
+                background: 'linear-gradient(90deg, #F3C24A, #FFE39A, #F3C24A)',
+              }} />
+            </div>
+            <p className="display" style={{
+              margin: 0, fontWeight: 800, fontSize: 15, letterSpacing: 0.3,
+              color: '#F6EFDF', textShadow: '0 2px 6px rgba(0,0,0,.7)',
+            }}>Äventyret laddas …</p>
+          </>
+        )}
       </div>
     </div>
   )

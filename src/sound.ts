@@ -109,14 +109,19 @@ function playThemeLoop(): void {
   if (!trkTheme) trkTheme = mkTrack(URL_THEME, true)
   setCurrent(trkTheme)
 }
-function playStartOnce(): void {
+function ensureStart(): HTMLAudioElement {
   if (!trkStart) {
     trkStart = mkTrack(URL_START, false)
     // När startlåten tar slut tar temalåten vid (om vi inte är i en boss).
     trkStart.onended = () => { startEnded = true; if (mScene === 'spel' || mScene === 'start') playThemeLoop() }
   }
-  setCurrent(trkStart)
+  return trkStart
 }
+function playStartOnce(): void { setCurrent(ensureStart()) }
+
+/** Börja hämta startlåten redan under laddningsskärmen så den kan starta
+    direkt när barnet trycker vidare (annars märks fördröjningen första gången). */
+export function preloadStartSong(): void { ensureStart().load() }
 function playBossLoop(): void {
   if (!trkBoss[0]) {
     trkBoss[0] = mkTrack(URL_BOSS[0], false)
