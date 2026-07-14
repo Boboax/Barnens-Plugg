@@ -9,7 +9,6 @@ import {
 import { sfx } from '../../sound'
 import { Icon } from '../components/Icon'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
-import { WorldScenery } from '../components/WorldScenery'
 import { worldTheme } from '../worldThemes'
 import { EndCard } from './SessionScreen'
 import { useStore } from '../store'
@@ -117,14 +116,21 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
 
   const shieldsLeft = Math.max(0, needed - correct)
   const theme = worldTheme(moment.worldId)
+  const arenaBg = `${import.meta.env.BASE_URL}art/arena/${moment.worldId}.webp`
 
   return (
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column', padding: '10px 16px 16px',
-      background: theme.sky, position: 'relative', overflow: 'hidden',
-      ...(theme.horizon === 'grotta' ? ({ '--ink': '#F3EFFF', '--muted': '#BDB4DC', '--sun-ink': '#FFD98A' } as React.CSSProperties) : {}),
+      // Målad boss-arena (cover) bakom striden; ljus text ovanpå. Reserv: theme.sky.
+      background: `url(${arenaBg}) center / cover no-repeat, ${theme.sky}`,
+      position: 'relative', overflow: 'hidden',
+      ...({ '--ink': '#F6EFDF', '--muted': '#D9CDB4', '--sun-ink': '#FFE39A' } as React.CSSProperties),
     }}>
-      <WorldScenery theme={theme} />
+      {/* Dramatisk mörkscrim så rubrik/HUD är läsbara mot arenan. */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+        background: 'linear-gradient(180deg, rgba(15,12,22,.5) 0%, rgba(15,12,22,.12) 20%, rgba(15,12,22,.12) 70%, rgba(15,12,22,.55) 100%)',
+      }} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
         <button className="chip" onClick={() => store.go('home')}>🏃 Fly (försök igen senare)</button>
         <span style={{ fontWeight: 900, fontSize: 16 }}>
