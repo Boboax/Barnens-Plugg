@@ -20,12 +20,14 @@ const g = (
 
 const monsterEnkla = g('monster-enkla', (level, seed, rng) => {
   const id = 'gen.monster-enkla'
+  // Mönsterfigurer = nycklar till målade ikoner (public/art/objekt/*), ritas
+  // i följd-visualiseringen och som bildval — inga emojis längre.
   const pools = [
-    ['🔴', '🔵'],
-    ['⭐', '🌙'],
-    ['🐸', '🦆'],
-    ['🟨', '🟩', '🟦'],
-    ['🍎', '🍐', '🍋'],
+    ['cirkel-rod', 'cirkel-bla'],
+    ['stjarna-guld', 'mane'],
+    ['groda', 'anka'],
+    ['ruta-gul', 'ruta-gron', 'ruta-bla'],
+    ['apple', 'paron', 'citron'],
   ] as const
   const pool = level <= 4 ? rng.pick(pools.slice(0, 3)) : rng.pick(pools)
   // Mönsterenhet: AB, AAB, ABB eller ABC beroende på nivå.
@@ -41,11 +43,12 @@ const monsterEnkla = g('monster-enkla', (level, seed, rng) => {
   const wrong = pool.filter((p) => p !== correct)
   return choiceTask({
     generatorId: id, level, seed, rng,
-    prompt: `${seq.join(' ')} … Vad kommer sen?`,
-    spokenPrompt: 'Titta på mönstret. Vad kommer härnäst?',
+    prompt: 'Vilken figur kommer härnäst i mönstret?',
+    spokenPrompt: 'Titta på mönstret. Vilken figur kommer härnäst?',
     correct,
     distractors: wrong.slice(0, 2).map((w) => [w, null] as [string, null]),
-    explanation: `Mönstret upprepar sig: ${unit.join(' ')}. Nästa blir ${correct}.`,
+    visual: { kind: 'foljd', items: seq },
+    explanation: 'Mönstret upprepar sig i samma ordning hela tiden. Titta var i rundan du är — nästa figur är den som kommer efter.',
   })
 })
 

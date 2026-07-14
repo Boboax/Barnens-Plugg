@@ -136,16 +136,18 @@ export const pickTwoNames = (rng: Rng): [string, string] => {
   return [shuffled[0], shuffled[1]]
 }
 
-/** Saker att räkna i textuppgifter: [singular, plural, emoji]. */
+/** Saker att räkna i textuppgifter: [singular, plural, ikon-nyckel].
+    Tredje fältet är en nyckel till public/art/objekt/*.webp (målad ikon som
+    ritas i grupper-visualiseringen), inte längre en emoji. */
 const THINGS: [string, string, string][] = [
-  ['kula', 'kulor', '🔵'],
-  ['kort', 'kort', '🃏'],
-  ['äpple', 'äpplen', '🍎'],
-  ['klistermärke', 'klistermärken', '⭐'],
-  ['snäcka', 'snäckor', '🐚'],
-  ['kotte', 'kottar', '🌰'],
-  ['boll', 'bollar', '⚽'],
-  ['bulle', 'bullar', '🥐'],
+  ['kula', 'kulor', 'kula'],
+  ['kort', 'kort', 'kort'],
+  ['äpple', 'äpplen', 'apple'],
+  ['klistermärke', 'klistermärken', 'klistermarke'],
+  ['snäcka', 'snäckor', 'snacka'],
+  ['kotte', 'kottar', 'kotte'],
+  ['boll', 'bollar', 'boll'],
+  ['bulle', 'bullar', 'bulle'],
 ]
 export const pickThing = (rng: Rng): [string, string, string] => rng.pick(THINGS)
 

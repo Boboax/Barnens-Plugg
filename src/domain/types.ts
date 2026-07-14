@@ -100,6 +100,7 @@ export type TaskVisual =
   | { kind: 'tiobas'; groups: { tens: number; ones: number; hundreds?: number }[] }
   | { kind: 'tallinje'; min: number; max: number; marks?: number[]; highlight?: number }
   | { kind: 'grupper'; groupCount: number; itemsPerGroup: number; emoji: string }
+  | { kind: 'foljd'; items: string[] } // mönsterföljd (objekt-nycklar) + '?' på slutet
   | { kind: 'brak'; parts: number; filled: number; secondary?: { parts: number; filled: number } }
   | { kind: 'klocka'; hours: number; minutes: number }
   | { kind: 'form'; shape: 'cirkel' | 'triangel' | 'kvadrat' | 'rektangel' | 'femhorning' | 'sexhorning' }

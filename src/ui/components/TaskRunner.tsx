@@ -4,7 +4,7 @@ import { matchMisconception } from '../../engine/progress'
 import { misconceptionInfo } from '../../engine/misconceptions'
 import { sfx } from '../../sound'
 import { prewarmSpeak, speak, stopSpeaking, ttsAvailable } from '../../tts'
-import { Icon } from './Icon'
+import { Icon, isObjektIcon, ObjektIcon } from './Icon'
 import { Keypad } from './Keypad'
 import { ScratchPad, type ScratchPadHandle } from './ScratchPad'
 import { TaskVisualView } from './TaskVisualView'
@@ -159,8 +159,9 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
                     background: 'var(--card)', border: '2.5px solid var(--line)', borderRadius: 14,
                     padding: '13px 10px', fontSize: 18, fontWeight: 900, boxShadow: '0 3px 0 var(--line)',
                     fontFamily: 'inherit', color: 'var(--ink)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
-                >{choice.text}</button>
+                >{isObjektIcon(choice.text) ? <ObjektIcon name={choice.text} size={44} /> : choice.text}</button>
               ))}
             </div>
           )
@@ -179,10 +180,13 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
               <>
                 {misconceptionHint() && <p style={{ margin: '4px 0', fontWeight: 700 }}>{misconceptionHint()}</p>}
                 <p style={{ margin: '4px 0', fontSize: 15, color: 'var(--ink)' }}>{task.explanation}</p>
-                <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 800, color: 'var(--muted)' }}>
+                <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 800, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
                   Rätt svar: {task.answer.kind === 'numeric'
                     ? `${String(task.answer.value).replace('.', ',').replace('-', '−')}${task.answer.unit ? ` ${task.answer.unit}` : ''}`
-                    : task.answer.choices.find((c) => c.correct)?.text}
+                    : (() => {
+                        const t = task.answer.choices.find((c) => c.correct)?.text ?? ''
+                        return isObjektIcon(t) ? <ObjektIcon name={t} size={28} /> : t
+                      })()}
                 </p>
               </>
             )}

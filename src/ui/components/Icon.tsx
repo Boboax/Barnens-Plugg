@@ -40,3 +40,26 @@ export function BelongIcon({ name, size = 28, style }: { name: string; size?: nu
     />
   )
 }
+
+/* Räkneobjekt och mönsterfigurer (public/art/objekt/*.webp) — används i
+   genererade uppgifter (räkna föremål, fortsätt mönstret). Genereras med
+   nyckel i stället för emoji; isObjektIcon känner igen dem. */
+export const OBJEKT_ICONS = [
+  'kula', 'kort', 'apple', 'klistermarke', 'snacka', 'kotte', 'boll', 'bulle',
+  'cirkel-rod', 'cirkel-bla', 'stjarna-guld', 'mane', 'groda', 'anka',
+  'ruta-gul', 'ruta-gron', 'ruta-bla', 'paron', 'citron',
+] as const
+export const isObjektIcon = (v: string): boolean => (OBJEKT_ICONS as readonly string[]).includes(v)
+
+export function ObjektIcon({ name, size = 22, style }: { name: string; size?: number; style?: React.CSSProperties }) {
+  return (
+    <img
+      src={`${import.meta.env.BASE_URL}art/objekt/${name}.webp`}
+      alt=""
+      aria-hidden="true"
+      width={size}
+      height={size}
+      style={{ display: 'inline-block', verticalAlign: 'middle', objectFit: 'contain', flexShrink: 0, ...style }}
+    />
+  )
+}
