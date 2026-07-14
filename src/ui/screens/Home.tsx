@@ -228,10 +228,25 @@ function HomeInner({ child }: { child: ChildProfile }) {
             låter långa scrolla (flex-säkert, till skillnad från justify center). */}
         <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', display: 'flex', alignItems: 'center', position: 'relative', zIndex: 2 }}>
           {(() => {
-            const canvasW = moments.length * COL_W
+            const BOSS_END_W = 156 // extra bredd i slutet där världsbossen lurar
+            const nodesW = moments.length * COL_W
+            const canvasW = nodesW + BOSS_END_W
             const states = moments.map((m) => nodeState(m, child.skills[m.id], m.id === currentId))
             const lastOpen = states.reduce((acc, s, i) => (s !== 'locked' && s !== 'coming' ? i : acc), 0)
             const dark = theme.horizon === 'grotta'
+            // Världsbossen "lurar" i slutet tills alla moment är klara → besegrad.
+            const genTotal = moments.filter((m) => hasGenerator(m.generatorId)).length
+            const worldDone = moments.filter((m) => {
+              const s = child.skills[m.id]
+              return s?.mastery === 'mastered' || s?.mastery === 'star'
+            }).length
+            const worldComplete = genTotal > 0 && worldDone >= genTotal
+            const li = moments.length - 1
+            const [bx, by] = [nodesW + BOSS_END_W / 2, MAP_H / 2]
+            // Slutsträckan fram till bossen (guld om världen är klar, annars blek).
+            const bossLeg = moments.length > 0
+              ? `M${nodeCx(li)},${nodeCy(li)} Q${(nodeCx(li) + bx) / 2 + 20},${(nodeCy(li) + by) / 2} ${bx},${by}`
+              : ''
             return (
               <div style={{ position: 'relative', height: MAP_H, width: canvasW, flexShrink: 0, margin: '0 auto' }}>
                 {/* Stigen: guldtrampstenar dit barnet nått, blek antydan bortom. */}
@@ -250,6 +265,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     strokeLinecap="round" opacity={0.55} />
                   <path d={windingPath(moments.length, lastOpen)} stroke={theme.pathColor} strokeWidth={8.5} fill="none"
                     strokeLinecap="round" strokeDasharray="0.1 16" />
+                  {/* Sista sträckan ut till världsbossen. */}
+                  {bossLeg && <path d={bossLeg} stroke={theme.pathUnder} strokeWidth={20} fill="none" strokeLinecap="round" opacity={worldComplete ? 0.55 : 0.3} />}
+                  {bossLeg && <path d={bossLeg} stroke={worldComplete ? theme.pathColor : '#E05436'} strokeWidth={worldComplete ? 8.5 : 6} fill="none" strokeLinecap="round" strokeDasharray="0.1 16" opacity={worldComplete ? 1 : 0.5} />}
                 </svg>
 
                 {moments.map((moment, i) => {
@@ -355,6 +373,40 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     </button>
                   )
                 })}
+
+                {/* Världsbossen som lurar i slutet — alltid synlig. Vaken (rött sken,
+                    svävar) tills alla moment är klara, då visas den besegrad. Den
+                    fajtas inte här (momenten är striderna) → pointer-events off. */}
+                {genTotal > 0 && (
+                  <div style={{
+                    position: 'absolute', left: bx, top: by, transform: 'translate(-50%, -50%)', zIndex: 2,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, pointerEvents: 'none', width: BOSS_END_W - 8,
+                  }}>
+                    <img
+                      src={`${import.meta.env.BASE_URL}art/boss/${world.boss.id}${worldComplete ? '-besegrad' : ''}.webp`}
+                      alt="" aria-hidden="true"
+                      className={worldComplete ? undefined : 'float-soft'}
+                      style={{
+                        height: 104, width: 'auto', maxWidth: BOSS_END_W - 12, objectFit: 'contain',
+                        filter: worldComplete
+                          ? 'drop-shadow(0 4px 6px rgba(0,0,0,.5))'
+                          : 'drop-shadow(0 0 9px rgba(224,84,52,.75)) drop-shadow(0 4px 6px rgba(0,0,0,.5))',
+                        opacity: worldComplete ? 0.92 : 1,
+                      }}
+                    />
+                    <span style={{
+                      textAlign: 'center', lineHeight: 1.12,
+                      textShadow: dark ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)' : '0 1px 3px rgba(20,18,30,.9), 0 0 8px rgba(20,18,30,.7)',
+                    }}>
+                      <span style={{ display: 'block', fontWeight: 800, fontSize: 12.5, color: worldComplete ? 'var(--mint)' : 'var(--sun-ink)' }}>
+                        {world.boss.name}
+                      </span>
+                      <span style={{ display: 'block', fontWeight: 700, fontSize: 11, color: 'var(--muted)' }}>
+                        {worldComplete ? 'besegrad! ✓' : 'väktare'}
+                      </span>
+                    </span>
+                  </div>
+                )}
               </div>
             )
           })()}
