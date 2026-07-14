@@ -89,13 +89,22 @@ const trkBoss: (HTMLAudioElement | null)[] = [null, null]
 function mkTrack(url: string, loop: boolean): HTMLAudioElement {
   const a = new Audio(url); a.loop = loop; a.preload = 'auto'; a.volume = 0.5; return a
 }
+let retryCleanup: (() => void) | null = null
 function gesturePlay(a: HTMLAudioElement): void {
   if (muted) return
   a.play().catch(() => {
+    // Bara EN väntande gest-retry i taget (undvik att lyssnare hopar sig när
+    // play() nekas upprepade gånger innan första användargesten).
+    retryCleanup?.()
     const retry = (): void => {
+      retryCleanup = null
       window.removeEventListener('pointerdown', retry)
       window.removeEventListener('keydown', retry)
       if (mCurrent === a && !muted) void a.play().catch(() => { /* ge upp tyst */ })
+    }
+    retryCleanup = () => {
+      window.removeEventListener('pointerdown', retry)
+      window.removeEventListener('keydown', retry)
     }
     window.addEventListener('pointerdown', retry, { once: true })
     window.addEventListener('keydown', retry, { once: true })

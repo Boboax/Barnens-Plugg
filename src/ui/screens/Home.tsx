@@ -325,6 +325,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
                         }}>
                           {state === 'boss'
                             ? <img src={`${import.meta.env.BASE_URL}art/boss/${world.boss.id}.webp`} alt="" aria-hidden="true"
+                                onError={(e) => { e.currentTarget.style.display = 'none' }}
                                 style={{ width: '112%', height: '112%', objectFit: 'cover', objectPosition: 'center 12%' }} />
                             : <Icon name={STATE_ICON[state]} size={iconSize}
                                 style={dim ? { filter: 'grayscale(.5) drop-shadow(0 1px 1px rgba(0,0,0,.3))' } : undefined} />}
@@ -385,6 +386,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     <img
                       src={`${import.meta.env.BASE_URL}art/boss/${world.boss.id}${worldComplete ? '-besegrad' : ''}.webp`}
                       alt="" aria-hidden="true"
+                      onError={(e) => { e.currentTarget.style.display = 'none' }}
                       className={worldComplete ? undefined : 'float-soft'}
                       style={{
                         height: 104, width: 'auto', maxWidth: BOSS_END_W - 12, objectFit: 'contain',
