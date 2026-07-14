@@ -66,6 +66,26 @@ function realmTrail(): string {
   return d
 }
 
+/** Resväg i den MÅLADE kartans koordinater (art-procent → 1024×559), i
+    läroplansordning. `upTo` begränsar hur långt stigen ritas (nuvarande
+    region), så vi kan rita en tydlig "hittills"-del och en blek framtid. */
+function artTrail(upTo: number): string {
+  const pts = WORLDS.map((w) => {
+    const r = REGIONS.find((r) => r.worldId === w.id)!
+    return [(r.art.x / 100) * 1024, (r.art.y / 100) * 559] as const
+  })
+  const end = Math.max(0, Math.min(upTo, pts.length - 1))
+  let d = `M${pts[0][0]},${pts[0][1]}`
+  for (let i = 1; i <= end; i++) {
+    const [x0, y0] = pts[i - 1]
+    const [x1, y1] = pts[i]
+    const mx = (x0 + x1) / 2 + (y1 - y0) * 0.16
+    const my = (y0 + y1) / 2 - (x1 - x0) * 0.16
+    d += ` Q${mx},${my} ${x1},${y1}`
+  }
+  return d
+}
+
 function worldProgress(child: ChildProfile, worldId: string): { done: number; total: number } {
   const moments = momentsInWorld(worldId).filter((m) => hasGenerator(m.generatorId))
   const done = moments.filter((m) => {
@@ -132,6 +152,8 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
   const zooming = useRef(false)
   const artUrl = `${import.meta.env.BASE_URL}art/riket.webp`
   const ringUrl = `${import.meta.env.BASE_URL}art/tex/nodering.webp`
+  // Hur långt barnet nått i resvägen (för den upplysta "hittills"-stigen).
+  const currentIdx = Math.max(0, WORLDS.findIndex((w) => w.id === currentWorldId))
 
   const pick = (region: Region): void => {
     if (zooming.current) return
@@ -244,10 +266,28 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
             </>
           )}
 
+          {/* Resvägen genom riket, ritad på den målade kartan: en blek stig
+              genom hela riket + en tydlig gyllene "hittills"-del fram till den
+              region barnet är i just nu. Ligger under regionmärkena. */}
+          {artOk && (
+            <svg viewBox="0 0 1024 559" preserveAspectRatio="none" aria-hidden="true"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
+              <path d={artTrail(WORLDS.length - 1)} fill="none" stroke="#1B140C" strokeWidth={9}
+                strokeLinecap="round" opacity={0.3} />
+              <path d={artTrail(WORLDS.length - 1)} fill="none" stroke="#EAD393" strokeWidth={3.5}
+                strokeLinecap="round" strokeDasharray="0.1 15" opacity={0.4} />
+              <path d={artTrail(currentIdx)} fill="none" stroke="#1B140C" strokeWidth={11}
+                strokeLinecap="round" opacity={0.5} />
+              <path d={artTrail(currentIdx)} fill="none" stroke="#F3C24A" strokeWidth={5}
+                strokeLinecap="round" strokeDasharray="0.1 14"
+                style={{ filter: 'drop-shadow(0 0 3px rgba(243,194,74,.75))' }} />
+            </svg>
+          )}
+
           {/* Stämningsliv ovanpå målningen: eldflugor i skogarna, vattenglimt
               vid havet, kristallgnistor i grottan, snö på berget. */}
           {artOk && <AmbientLife />}
-          {/* Fåglar som drar över riket (utöver stämningspartiklarna). */}
+          {/* Tunna, långsamma moln som driver över kartan (ersätter fåglarna). */}
           {artOk && <Ambience scene="riket" />}
 
           {/* Regionernas knappar (och sprites i SVG-reserven). */}
@@ -277,7 +317,8 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                   aria-label={`${world.name} — ${progress.done} av ${progress.total} klara`}
                   style={{
                     position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%, -50%)',
-                    zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                    // Nuvarande region (med Pi) lyfts över grannmärkena.
+                    zIndex: isHere ? 5 : 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                     fontFamily: 'inherit',
                   }}
                 >
@@ -311,9 +352,20 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                         <path d="M7,12.5 L10.5,16 L17,8.5" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
+                    {/* Pi (ugglan) står på den region barnet är i just nu — stor
+                        och tydlig, svävar mjukt, med "Du är här"-fana under. */}
                     {isHere && (
-                      <span style={{ position: 'absolute', top: -30, left: '50%', transform: 'translateX(-50%)' }}>
-                        <Pi mood="glad" size={32} />
+                      <span className="float-soft" style={{
+                        position: 'absolute', top: -52, left: '50%', transform: 'translateX(-50%)',
+                        filter: 'drop-shadow(0 5px 6px rgba(0,0,0,.55))', zIndex: 6,
+                      }}>
+                        <Pi mood="glad" size={58} />
+                        <span className="display" style={{
+                          position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%) translateY(-6px)',
+                          whiteSpace: 'nowrap', fontSize: 10.5, fontWeight: 900, color: '#3A2E14',
+                          background: 'linear-gradient(#FFE7A8, #F3C24A)', border: '1.5px solid #A97C2E',
+                          borderRadius: 8, padding: '1px 8px', boxShadow: '0 2px 5px rgba(0,0,0,.5)',
+                        }}>Du är här</span>
                       </span>
                     )}
                   </span>
