@@ -3,7 +3,6 @@ import { MOMENTS_ORDERED, momentById } from '../domain/curriculum'
 import { generateTask, hasGenerator } from '../generators'
 import { freshSeed } from '../generators/rng'
 import { newSkillState, recomputeAvailability } from './progress'
-import { scheduleFirstReview } from './spaced-repetition'
 
 /* ============================================================
    Startdiagnosen — "Vi lär känna varandra".
@@ -72,10 +71,17 @@ export function nextDiagnosisTask(profile: ChildProfile): { momentId: string; ta
 
 /**
  * Avsluta diagnosen: fronten avgör startläget.
- * Momenten före fronten → behärskade (diagnosen ger "benefit of the doubt",
- * repetitionsschemat fångar det som ändå inte satt). Frontmomentet → startpunkt.
+ *
+ * Momenten före fronten markeras INTE som klara — barnet får gå rakt på
+ * bossen för det det redan kan (`boss-ready`, hög rating ⇒ svåra frågor).
+ * Diagnosen delar alltså inte ut moment gratis: den hoppar bara över
+ * inövningsgrinden och låter det kapabla barnet knäcka bossen direkt och
+ * på så vis FÖRTJÄNA momentet. Segern (`applyBossResult`) sätter `mastered`
+ * + repetitionsschema och låser upp nästa steg — så vägen klättras nedifrån
+ * och upp, en boss i taget, tills frontmomentet nås. Frontmomentet blir
+ * startpunkten för vanlig träning.
  */
-export function applyDiagnosisResult(profile: ChildProfile, now: string): Record<string, SkillState> {
+export function applyDiagnosisResult(profile: ChildProfile, _now: string): Record<string, SkillState> {
   const backbone = diagnosisBackbone()
   const s = searchState(profile.diagnosis, backbone, profile.schoolYear)
   const frontier = Math.min(Math.max(s.lo, 0), backbone.length)
@@ -84,12 +90,10 @@ export function applyDiagnosisResult(profile: ChildProfile, now: string): Record
   backbone.forEach((momentId, i) => {
     const base = skills[momentId] ?? newSkillState(momentId)
     if (i < frontier) {
-      skills[momentId] = {
-        ...base,
-        mastery: 'mastered',
-        rating: 700,
-        review: scheduleFirstReview(now),
-      }
+      // Rakt på bossen: rating 700 ⇒ svåra frågor (nivå ~6–7), passande för
+      // ett moment barnet enligt diagnosen redan behärskar. Inget
+      // repetitionsschema ännu — det sätts först när bossen är besegrad.
+      skills[momentId] = { ...base, mastery: 'boss-ready', rating: 700 }
     } else if (i === frontier) {
       // Nivå ~5 direkt: diagnosen har redan visat att allt före sitter,
       // så frontmomentet ska kännas som en utmaning — inte som mjukstart
