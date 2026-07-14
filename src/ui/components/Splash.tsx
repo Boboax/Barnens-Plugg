@@ -100,12 +100,17 @@ export function Splash({ onDone }: { onDone(): void }) {
           trycket är gesten som startar musiken. */}
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, minHeight: 60, justifyContent: 'center' }}>
         {ready ? (
-          // Samma snidade trä/guld-knapp som resten av appen (.btn-primary),
-          // förstorad och med ett mjukt pulserande sken som lockar till tryck.
-          <span className="btn btn-primary display splash-cta" style={{
-            fontSize: 'clamp(19px, 4.6vw, 25px)', padding: '15px 40px', borderRadius: 16,
-            letterSpacing: 0.5, whiteSpace: 'nowrap', pointerEvents: 'none',
-          }}>Tryck för att börja ▶</span>
+          // Samma ornerade snidade skylt som världstitlarna (--tex-plaque) med
+          // graverad guldtext — smälter in i appens signeringsestetik. Mjukt
+          // andas/glöd-sken lockar till tryck. Ingen pil.
+          <span className="display splash-cta" aria-hidden="true" style={{
+            width: 'min(370px, 80vw)', aspectRatio: '600 / 328',
+            backgroundImage: 'var(--tex-plaque)', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '0 15% 2%', boxSizing: 'border-box', whiteSpace: 'nowrap', pointerEvents: 'none',
+            fontWeight: 900, fontSize: 'clamp(18px, 4.2vw, 24px)', letterSpacing: 0.5,
+            color: '#FFE7A8', textShadow: '0 1px 2px rgba(45,26,4,.95), 0 0 3px rgba(45,26,4,.7)',
+          }}>Tryck för att börja</span>
         ) : (
           <>
             <div aria-hidden="true" style={{
