@@ -157,7 +157,10 @@ export function SessionScreen() {
 
   return (
     <div className="screen-fade" style={{
-      minHeight: '100%', display: 'flex', flexDirection: 'column', padding: '10px 16px 16px',
+      // env(safe-area-inset-top): annars hamnar Avsluta-raden under iOS-klockan
+      // i hemskärmsläge (viewport-fit=cover). Bakgrunden fyller ändå kant till kant.
+      minHeight: '100%', display: 'flex', flexDirection: 'column',
+      padding: 'calc(10px + env(safe-area-inset-top)) 16px 16px',
       position: 'relative', overflow: 'hidden',
       background: `url(${worldBg}) center / cover no-repeat, ${theme.sky}`,
     }}>

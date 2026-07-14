@@ -92,7 +92,7 @@ function ParentInner() {
 
   return (
     <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', background: '#F4F3EF' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', background: '#2E3350', color: '#fff', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(12px + env(safe-area-inset-top)) 18px 12px', background: '#2E3350', color: '#fff', flexWrap: 'wrap' }}>
         <span style={{ fontWeight: 800, fontSize: 15 }}>🔒 Föräldraläge</span>
         <div style={{ display: 'flex', gap: 4, marginLeft: 'auto', flexWrap: 'wrap' }}>
           {TABS.map(([id, label]) => (

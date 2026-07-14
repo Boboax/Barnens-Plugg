@@ -111,7 +111,7 @@ export function DiagnosisScreen() {
   }
 
   return (
-    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', padding: '10px 16px 16px' }}>
+    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', padding: 'calc(10px + env(safe-area-inset-top)) 16px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
         <button className="chip" onClick={store.leaveChild}>✕ Paus</button>
         <div className="pbar" style={{ flex: 1 }}>
