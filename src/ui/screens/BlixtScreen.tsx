@@ -146,7 +146,7 @@ export function BlixtScreen() {
   const progress = secondsLeft / BLIXT_SECONDS
 
   return (
-    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 16px 16px', gap: 10 }}>
+    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'calc(12px + env(safe-area-inset-top)) 16px 16px', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', maxWidth: 620 }}>
         <Icon name="blixt" size={20} />
         <div className="pbar" style={{ flex: 1, height: 14 }}>

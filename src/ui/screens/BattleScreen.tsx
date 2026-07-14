@@ -120,7 +120,9 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
 
   return (
     <div className="screen-fade" style={{
-      minHeight: '100%', display: 'flex', flexDirection: 'column', padding: '10px 16px 16px',
+      minHeight: '100%', display: 'flex', flexDirection: 'column',
+      // env(safe-area-inset-top): håll HUD-raden nedanför iOS-statusfältet.
+      padding: 'calc(10px + env(safe-area-inset-top)) 16px 16px',
       // Målad boss-arena (cover) bakom striden; ljus text ovanpå. Reserv: theme.sky.
       background: `url(${arenaBg}) center / cover no-repeat, ${theme.sky}`,
       position: 'relative', overflow: 'hidden',
