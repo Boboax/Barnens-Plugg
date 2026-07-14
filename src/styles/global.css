@@ -76,7 +76,9 @@ html, body, #root { height: 100%; }
 
 body {
   margin: 0;
-  background: var(--bg);
+  /* Pergament över hela appen (syns på uppgifts-/föräldravyer; kartorna
+     lägger egna bakgrunder ovanpå). Fäst så den inte scrollar. */
+  background: var(--tex-parchment, none) center / cover fixed, var(--bg);
   color: var(--ink);
   font-family: var(--font);
   font-size: 16px;
@@ -117,7 +119,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.2px; }
 .display { font-family: var(--font-display); letter-spacing: 0.2px; }
 
 .card {
-  background: var(--card);
+  /* Pergamenttextur (om laddad) med varm ton ovanpå — annars enfärgad reserv. */
+  background: linear-gradient(rgba(248, 241, 224, 0.35), rgba(240, 230, 205, 0.5)), var(--tex-parchment, none) center / cover, var(--card);
   border: 1.5px solid var(--line);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-card);
@@ -166,6 +169,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.2px; }
   font-size: 13px;
   font-weight: 700;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 2px rgba(60, 46, 20, 0.15);
+}
+
+/* Snidad trä-list (kartans HUD): mörk ek + mässingskant nedtill. */
+.wood-bar {
+  background: linear-gradient(rgba(30, 18, 8, 0.28), rgba(30, 18, 8, 0.28)), var(--tex-wood, none) center / cover, #2A1D10;
+  border-bottom: 3px solid #8A6A38;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35), inset 0 -1px 0 rgba(255, 210, 140, 0.25);
 }
 
 /* Kartnoder: taktil spelknapp — växer under fingret, trycks ner vid klick. */
