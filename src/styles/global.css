@@ -143,49 +143,64 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.2px; }
   .panel { border: 1.5px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; }
 }
 
+/* Alla knappar är ädelstenar infattade i brons: mörk bronskant, färgad
+   gradientyta med ljus bevel upptill, och en bronssockel (0 4px 0) som
+   trycks ihop vid klick — taktil spelknapp som matchar trä/mässing-temat. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 999px;
+  border-radius: 13px;
   padding: 12px 26px;
   font-weight: 800;
   font-size: 16px;
-  transition: transform 0.08s ease;
+  border: 2px solid #6E5426;
+  color: #FCF4E2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
-.btn:active { transform: translateY(2px); }
-/* Polerad "ädelsten": gradient + ljus bevel-kant upptill + tryckbar sockel. */
+.btn:active { transform: translateY(3px); }
 .btn-primary {
-  background: linear-gradient(180deg, #6672E2 0%, var(--primary) 48%, #3A45AC 100%);
-  color: #fff;
-  border: 1.5px solid #2C347E;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 4px 0 var(--primary-shadow), 0 5px 8px rgba(40, 34, 14, 0.25);
+  background: linear-gradient(180deg, #6E7AEA 0%, var(--primary) 50%, #2E3690 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -4px 7px rgba(0, 0, 0, 0.35), 0 4px 0 #574321, 0 7px 10px rgba(30, 22, 8, 0.4);
 }
-.btn-primary:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 1px 0 var(--primary-shadow); }
+.btn-primary:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 1px 0 #574321; }
 .btn-ok {
-  background: linear-gradient(180deg, #55BE90 0%, var(--mint) 48%, #2E8A62 100%);
-  color: #fff;
-  border: 1.5px solid #226848;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 4px 0 var(--mint-shadow), 0 5px 8px rgba(40, 34, 14, 0.25);
+  background: linear-gradient(180deg, #5FCE9C 0%, var(--mint) 50%, #237552 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -4px 7px rgba(0, 0, 0, 0.3), 0 4px 0 #574321, 0 7px 10px rgba(30, 22, 8, 0.4);
 }
-.btn-ok:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 1px 0 var(--mint-shadow); }
-.btn-ghost { background: var(--card); color: var(--primary); border: 2px solid var(--primary); }
-.btn-quiet { background: var(--card); color: var(--muted); border: 2px solid var(--line); font-size: 14px; padding: 8px 16px; }
-.btn:disabled { opacity: 0.45; pointer-events: none; }
+.btn-ok:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 1px 0 #574321; }
+.btn-ghost {
+  background: linear-gradient(180deg, #F8F1E0, #E6D8BC);
+  color: #5A4522; text-shadow: none;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7), 0 4px 0 #8A6A38, 0 6px 9px rgba(30, 22, 8, 0.3);
+}
+.btn-quiet { background: var(--card); color: var(--muted); border: 2px solid var(--line); font-size: 14px; padding: 8px 16px; text-shadow: none; }
+.btn:disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.3); }
 
+/* Chip = liten bronsknapp: mörkt stenfäste, mässingskant, gräddtext.
+   Läsbar både på den mörka trä-/sten-HUD:en och på ljusa paneler. */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--card);
-  border: 1.5px solid var(--line);
+  background: linear-gradient(180deg, #4A3A26 0%, #362819 100%);
+  border: 1.5px solid #8A6A38;
   border-radius: 999px;
-  padding: 5px 13px;
+  padding: 6px 13px;
   font-size: 13px;
-  font-weight: 700;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 2px rgba(60, 46, 20, 0.15);
+  font-weight: 800;
+  color: #F3E4C4;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.3), 0 2px 3px rgba(0, 0, 0, 0.3);
 }
+.chip:active { transform: translateY(1px); }
+
+/* Speltangent (sifferknappsatsen): trycks ihop mot sin bronssockel. */
+.keycap { transition: transform 0.06s ease, box-shadow 0.06s ease; }
+.keycap:active:not(:disabled) { transform: translateY(3px); }
+.keycap:disabled { opacity: 0.5; pointer-events: none; }
 
 /* Snidad trä-list (kartans HUD): mörk ek + mässingskant nedtill. */
 .wood-bar {

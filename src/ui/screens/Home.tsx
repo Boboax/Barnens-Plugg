@@ -359,9 +359,13 @@ function HomeInner({ child }: { child: ChildProfile }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
-            width: 38, height: 38, borderRadius: '50%', background: child.color, color: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 17,
-            boxShadow: '0 0 0 2px rgba(230,197,106,.8)',
+            width: 42, height: 42, borderRadius: '50%',
+            background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.45), rgba(255,255,255,0) 55%), ${child.color}`,
+            color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 900, fontSize: 18, textShadow: '0 1px 2px rgba(0,0,0,.5)',
+            // Mässingsinfattning: guldring + mörk inre kontur, som nodbrickorna.
+            border: '2.5px solid #E6C56A',
+            boxShadow: 'inset 0 0 0 2px rgba(40,28,10,.5), 0 0 0 2px #7A5E30, 0 2px 4px rgba(0,0,0,.45)',
           }}>{child.name.charAt(0).toUpperCase()}</span>
           <span className="display" style={{ fontWeight: 900, fontSize: 17, color: '#FBF3DE', textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>Hej {child.name}! 👋</span>
         </div>
