@@ -114,7 +114,7 @@ export function ScratchPad({ onReady }: { onReady?: (handle: ScratchPadHandle) =
     }}>
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '6px 12px', borderBottom: '2px dashed var(--line)', fontSize: 13, fontWeight: 800, color: 'var(--muted)',
+        padding: '6px 12px', borderBottom: '2px dashed var(--line)', fontSize: 13, fontWeight: 800, color: '#6E6656',
       }}>
         <span>Min uträkning</span>
         <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -136,7 +136,7 @@ export function ScratchPad({ onReady }: { onReady?: (handle: ScratchPadHandle) =
               canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height)
               hasInk.current = false
             }}
-            style={{ fontSize: 12, fontWeight: 800, color: 'var(--muted)', padding: '2px 8px' }}
+            style={{ fontSize: 12, fontWeight: 800, color: '#6E6656', padding: '2px 8px' }}
           >Sudda allt</button>
         </span>
       </div>
