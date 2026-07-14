@@ -13,8 +13,6 @@ import { Icon } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { RealmMap } from '../components/RealmMap'
 import { SoundToggle } from '../components/SoundToggle'
-import { WorldScenery } from '../components/WorldScenery'
-import { Sprite } from '../components/WorldSprites'
 import { worldTheme } from '../worldThemes'
 import { todayISO, useStore } from '../store'
 
@@ -121,6 +119,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
   const [worldId, setWorldId] = useState(currentMoment?.worldId ?? WORLDS[0].id)
   const world = worldById(worldId)
   const theme = worldTheme(worldId)
+  const worldBg = `${import.meta.env.BASE_URL}art/world/${worldId}.webp`
   const moments = momentsInWorld(worldId)
 
   const masteredInWorld = moments.filter((m) => {
@@ -199,14 +198,24 @@ function HomeInner({ child }: { child: ChildProfile }) {
       </div>
 
       <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 330px)', gap: 0 }}>
-      {/* Kartan */}
+      {/* Kartan. Världsvyn har nu en målad liggande bakgrund (cover) i stället
+          för ritad himmel+siluetter; texten görs alltid ljus där ovanpå. */}
       <div style={{
-        padding: '14px 18px', background: inRealm ? '#1B1F30' : theme.sky, display: 'flex', flexDirection: 'column',
+        padding: '14px 18px', display: 'flex', flexDirection: 'column',
         minWidth: 0, minHeight: 0, position: 'relative', overflow: 'hidden',
-        // Grottan är mörk — ljus text där (nodtexterna använder variablerna).
-        ...(!inRealm && theme.horizon === 'grotta' ? ({ '--ink': '#F3EFFF', '--muted': '#BDB4DC', '--sun-ink': '#FFD98A' } as React.CSSProperties) : {}),
+        background: inRealm
+          ? '#1B1F30'
+          : `url(${worldBg}) center / cover no-repeat, ${theme.sky}`,
+        // Ljus text över målningen (nodtexter/rubrik använder variablerna).
+        ...(!inRealm ? ({ '--ink': '#F6EFDF', '--muted': '#D9CDB4', '--sun-ink': '#FFE39A' } as React.CSSProperties) : {}),
       }}>
-        {!inRealm && <WorldScenery theme={theme} />}
+        {/* Mjuk mörkscrim upptill+nedtill så banner och nodtexter är läsbara. */}
+        {!inRealm && (
+          <div aria-hidden="true" style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+            background: 'linear-gradient(180deg, rgba(20,16,28,.45) 0%, rgba(20,16,28,0) 22%, rgba(20,16,28,0) 55%, rgba(20,16,28,.5) 100%)',
+          }} />
+        )}
 
         {inRealm ? (
           <div style={{ flex: 1, position: 'relative', margin: '10px -18px -14px' }}>
@@ -247,26 +256,6 @@ function HomeInner({ child }: { child: ChildProfile }) {
               )
             })()}
 
-            {/* Natur längs vägen — motsatt rad mot noden, aldrig över den. */}
-            {moments.map((moment, i) => (
-              <span
-                key={`sprite-${moment.id}`}
-                aria-hidden="true"
-                style={{
-                  position: 'absolute', zIndex: 1, pointerEvents: 'none',
-                  left: nodeCx(i) - 16 + ((i * 23) % 30) - 15,
-                  // noden ligger på övre/nedre raden → sprite på motsatt sida
-                  top: i % 2 === 0 ? 18 + ((i * 17) % 24) : MAP_H - 60 - ((i * 19) % 22),
-                }}
-              >
-                <Sprite
-                  name={theme.sprites[(i * 3 + 1) % theme.sprites.length]}
-                  size={30 + ((i * 17) % 20)}
-                  flip={i % 3 === 0}
-                  tone={(i % 2) as 0 | 1}
-                />
-              </span>
-            ))}
 
             {moments.map((moment, i) => {
               const skill = child.skills[moment.id]
