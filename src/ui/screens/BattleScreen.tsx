@@ -131,6 +131,27 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
         background: 'linear-gradient(180deg, rgba(15,12,22,.55) 0%, rgba(15,12,22,.22) 20%, rgba(15,12,22,.22) 70%, rgba(15,12,22,.6) 100%)',
       }} />
+      {/* Diamantnivån: kristallkall blå glöd + glittrande gnistor så den känns
+          som en premium-utmaning, tydligt skild från de röda bosstriderna. */}
+      {kind === 'star' && (
+        <div aria-hidden="true" style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
+          background: 'radial-gradient(ellipse 72% 62% at 50% 44%, rgba(120,205,240,.25) 0%, rgba(30,60,110,.12) 45%, rgba(20,30,60,0) 72%)',
+        }}>
+          {Array.from({ length: 14 }).map((_, i) => {
+            const seed = i * 37
+            return (
+              <span key={i} className="glint" style={{
+                left: `${8 + (seed * 3) % 84}%`, top: `${10 + (seed * 7) % 78}%`,
+                width: 7 + (seed % 8), height: 7 + (seed % 8),
+                ['--glow' as string]: i % 3 === 0 ? '#C8ECFA' : '#8FD4F0',
+                ['--dur' as string]: `${2 + (seed % 4) * 0.6}s`,
+                animationDelay: `${-(seed % 5) * 0.4}s`,
+              }} />
+            )
+          })}
+        </div>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
         <button className="chip" onClick={() => store.go('home')}>Fly (försök igen senare)</button>
         <span style={{ fontWeight: 900, fontSize: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
