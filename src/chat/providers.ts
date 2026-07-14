@@ -90,15 +90,17 @@ export function pickChatModels(models: GeminiModelInfo[]): string[] {
 /** Rätt generationConfig per modellgeneration (API:t bröts mellan 2.5 → 3 → 3.5). */
 function geminiConfigFor(id: string): Record<string, unknown> {
   const v = Number(/gemini-(\d+(?:\.\d+)?)/.exec(id)?.[1] ?? 0)
-  if (v >= 3.5) return { maxOutputTokens: 400, thinkingConfig: { thinkingLevel: 'MINIMAL' } }
-  if (v >= 3) return { maxOutputTokens: 800, thinkingConfig: { thinkingLevel: 'LOW' } }
-  return { maxOutputTokens: 400, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } }
+  // Kortare svarstak = snabbare svar. Pis repliker ska vara korta (≤40 ord),
+  // och "tänkandet" hålls på minsta nivå så första ordet kommer snabbt.
+  if (v >= 3.5) return { maxOutputTokens: 220, thinkingConfig: { thinkingLevel: 'MINIMAL' } }
+  if (v >= 3) return { maxOutputTokens: 320, thinkingConfig: { thinkingLevel: 'LOW' } }
+  return { maxOutputTokens: 220, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } }
 }
 
 export const lastGeminiModelUsed = (): string | null => workingGeminiModel
 
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001'
-const MAX_HISTORY = 12 // meddelanden som skickas med (kostnad + fokus)
+const MAX_HISTORY = 8 // meddelanden som skickas med (kostnad + fokus + kortare = snabbare)
 const REQUEST_TIMEOUT_MS = 15_000 // barn ska aldrig stirra på "Pi funderar …" i evighet
 
 const dataUrlToBase64 = (dataUrl: string): string => dataUrl.split(',')[1] ?? ''
@@ -297,7 +299,7 @@ async function geminiGenerate(apiKey: string, system: string | null, turns: { ro
 async function claudeGenerate(apiKey: string, system: string | null, turns: { role: 'user' | 'model'; text: string; imagePng?: string }[], opts: GenerateOpts = {}): Promise<string> {
   const body = {
     model: CLAUDE_MODEL,
-    max_tokens: opts.maxTokens ?? 250,
+    max_tokens: opts.maxTokens ?? 200,
     temperature: 0.6,
     ...(system ? { system } : {}),
     messages: turns.map((t) => ({
