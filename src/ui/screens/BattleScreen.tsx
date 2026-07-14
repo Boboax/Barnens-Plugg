@@ -99,7 +99,7 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
   if (finished) {
     return won ? (
       <EndCard
-        title={kind === 'boss' ? `${boss.name} är besegrad! ⚔️🎉` : 'Stjärnnivån klarad! 💎'}
+        title={kind === 'boss' ? `${boss.name} är besegrad!` : 'Stjärnnivån klarad!'}
         text={kind === 'boss' ? `"${boss.defeatLine}" — Momentet ${moment.title} är ditt. Vägen fortsätter!` : `Du klarade de allra svåraste uppgifterna i ${moment.title}. Diamanten är din!`}
         onDone={() => store.go('home')}
         celebrate
@@ -109,7 +109,7 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
         title={kind === 'boss' ? `${boss.name} står kvar … än!` : 'Nästan vid diamanten!'}
         text={`${correct} av ${total} rätt — du behövde ${needed}. Träna lite till, så tar du det nästa gång. Bossen väntar!`}
         onDone={() => store.go('home')}
-        buttonText="Tillbaka och träna 💪"
+        buttonText="Tillbaka och träna"
       />
     )
   }
@@ -129,14 +129,15 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
       {/* Dramatisk mörkscrim så rubrik/HUD är läsbara mot arenan. */}
       <div aria-hidden="true" style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-        background: 'linear-gradient(180deg, rgba(15,12,22,.5) 0%, rgba(15,12,22,.12) 20%, rgba(15,12,22,.12) 70%, rgba(15,12,22,.55) 100%)',
+        background: 'linear-gradient(180deg, rgba(15,12,22,.55) 0%, rgba(15,12,22,.22) 20%, rgba(15,12,22,.22) 70%, rgba(15,12,22,.6) 100%)',
       }} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
-        <button className="chip" onClick={() => store.go('home')}>🏃 Fly (försök igen senare)</button>
-        <span style={{ fontWeight: 900, fontSize: 16 }}>
-          {kind === 'boss' ? `⚔️ ${boss.name}` : `💎 Stjärnnivå: ${moment.title}`}
+        <button className="chip" onClick={() => store.go('home')}>Fly (försök igen senare)</button>
+        <span style={{ fontWeight: 900, fontSize: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name={kind === 'boss' ? 'svards' : 'kristall'} size={18} />
+          {kind === 'boss' ? boss.name : `Stjärnnivå: ${moment.title}`}
         </span>
-        <span className="chip" style={{ color: 'var(--muted)' }}>😴 Pi vilar under striden</span>
+        <span className="chip" style={{ color: 'var(--muted)' }}>Pi vilar under striden</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(180px, 230px)', gap: 12, flex: 1, minHeight: 0, position: 'relative', zIndex: 2 }}>
@@ -164,8 +165,12 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
 
         {/* Bossen */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <div className="card" style={{ fontSize: 12.5, fontWeight: 800, textAlign: 'center', padding: '8px 12px' }}>
-            {flash === 'hit' ? '💥 En sköld knäcktes!' : flash === 'miss' ? `${boss.emoji} "Hihi! Inte den här gången!"` : `"${boss.taunt}"`}
+          {/* Egen mörk ink: kortet har ljus pergamentbotten, men skärmens
+              ljusa --ink skulle annars göra texten osynlig här. */}
+          <div className="card" style={{ fontSize: 12.5, fontWeight: 800, textAlign: 'center', padding: '8px 12px', color: '#3A302A' }}>
+            {flash === 'hit'
+              ? <><Icon name="skold" size={15} style={{ marginRight: 5 }} />En sköld knäcktes!</>
+              : flash === 'miss' ? '"Hihi! Inte den här gången!"' : `"${boss.taunt}"`}
           </div>
           {/* Arenan: bossen gör entré, blixt + gnistskärvor vid träff. */}
           <div className="boss-enter" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -184,8 +189,10 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
               : (
                 <span
                   className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'}
-                  style={{ fontSize: 84, lineHeight: 1, display: 'inline-block' }}
-                >💎</span>
+                  style={{ display: 'inline-block', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.45))' }}
+                >
+                  <Icon name="kristall" size={92} />
+                </span>
               )}
           </div>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 200 }}>

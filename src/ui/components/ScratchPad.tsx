@@ -116,7 +116,7 @@ export function ScratchPad({ onReady }: { onReady?: (handle: ScratchPadHandle) =
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '6px 12px', borderBottom: '2px dashed var(--line)', fontSize: 13, fontWeight: 800, color: 'var(--muted)',
       }}>
-        <span>✏️ Min uträkning</span>
+        <span>Min uträkning</span>
         <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {COLORS.map((c) => (
             <button

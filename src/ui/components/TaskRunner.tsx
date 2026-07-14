@@ -172,7 +172,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
             borderRadius: 16, padding: '12px 18px', maxWidth: 520, textAlign: 'center',
           }}>
             <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4 }}>
-              {lastResult.correct ? '🌟 Rätt!' : 'Inte riktigt — men nu lär vi oss!'}
+              {lastResult.correct ? 'Rätt!' : 'Inte riktigt — men nu lär vi oss!'}
             </div>
             {!lastResult.correct && (
               <>

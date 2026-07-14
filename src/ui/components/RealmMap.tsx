@@ -5,6 +5,7 @@ import { WORLDS } from '../../domain/worlds'
 import { hasGenerator } from '../../generators'
 import { sfx } from '../../sound'
 import { Pi } from './Pi'
+import { Ambience } from './Ambience'
 import { CloudSvg, Sprite, type SpriteName } from './WorldSprites'
 import { worldTheme } from '../worldThemes'
 
@@ -246,6 +247,8 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
           {/* Stämningsliv ovanpå målningen: eldflugor i skogarna, vattenglimt
               vid havet, kristallgnistor i grottan, snö på berget. */}
           {artOk && <AmbientLife />}
+          {/* Fåglar som drar över riket (utöver stämningspartiklarna). */}
+          {artOk && <Ambience scene="riket" />}
 
           {/* Regionernas knappar (och sprites i SVG-reserven). */}
           {REGIONS.map((region) => {

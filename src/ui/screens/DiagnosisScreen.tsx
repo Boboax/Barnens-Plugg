@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { nextDiagnosisTask, PROBES_PER_PASS, diagnosisBackbone, searchState } from '../../engine/diagnosis'
 import { Pi } from '../components/Pi'
+import { Icon } from '../components/Icon'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
 import { useStore } from '../store'
 
@@ -45,7 +46,7 @@ export function DiagnosisScreen() {
     return (
       <Card>
         <Pi mood="hejar" size={100} />
-        <h2 style={h2}>Nu känner jag dig, {child.name}! 🎉</h2>
+        <h2 style={h2}>Nu känner jag dig, {child.name}!</h2>
         <p style={p}>Jag vet precis var vi ska börja. Kom så drar vi ut på äventyret i Matteriket!</p>
         <button className="btn btn-primary" onClick={() => store.go('home')}>Till kartan ▶</button>
       </Card>
@@ -56,7 +57,7 @@ export function DiagnosisScreen() {
     return (
       <Card>
         <Pi mood={diagnosis.done ? 'hejar' : 'glad'} size={100} />
-        <h2 style={h2}>Bra jobbat idag! ⭐</h2>
+        <h2 style={h2}>Bra jobbat idag!</h2>
         <p style={p}>
           {diagnosis.done
             ? 'Nu känner jag dig! Äventyret i Matteriket väntar.'
@@ -75,15 +76,15 @@ export function DiagnosisScreen() {
     return (
       <Card>
         <Pi mood="glad" size={110} />
-        <h2 style={h2}>Hej {child.name}! Jag är Pi. 🦉</h2>
+        <h2 style={h2}>Hej {child.name}! Jag är Pi.</h2>
         <p style={p}>
           Ska vi lära känna varandra? Jag visar några kluringar — vissa är lätta, vissa är svåra,
           och det är precis som det ska. Man kan inte svara fel på att lära känna någon!
         </p>
         <div style={{ display: 'flex', gap: 10 }}>
           {Array.from({ length: diagnosis.passesTotal }).map((_, i) => (
-            <span key={i} className="chip" style={i < diagnosis.passesDone ? { background: 'var(--mint)', color: '#fff', borderColor: 'var(--mint)' } : i === diagnosis.passesDone ? { borderColor: 'var(--sun)', color: 'var(--sun-ink)' } : {}}>
-              {i < diagnosis.passesDone ? '✓' : i === diagnosis.passesDone ? '🎈' : '🎁'} Pass {i + 1}
+            <span key={i} className="chip" style={{ display: 'flex', alignItems: 'center', gap: 5, ...(i < diagnosis.passesDone ? { background: 'var(--mint)', color: '#fff', borderColor: 'var(--mint)' } : i === diagnosis.passesDone ? { borderColor: 'var(--sun)', color: 'var(--sun-ink)' } : {}) }}>
+              {i < diagnosis.passesDone ? '✓' : <Icon name={i === diagnosis.passesDone ? 'flagga' : 'grodd'} size={13} />} Pass {i + 1}
             </span>
           ))}
         </div>
@@ -116,7 +117,7 @@ export function DiagnosisScreen() {
         <div className="pbar" style={{ flex: 1 }}>
           <i style={{ width: `${(probesThisPass / PROBES_PER_PASS) * 100}%`, background: 'var(--sun)' }} />
         </div>
-        <span className="chip" style={{ color: 'var(--muted)' }}>🎈 Vi lär känna varandra</span>
+        <span className="chip" style={{ color: 'var(--muted)' }}>Vi lär känna varandra</span>
       </div>
       <TaskRunner
         key={`${probesThisPass}-${next.task.ref.seed}`}

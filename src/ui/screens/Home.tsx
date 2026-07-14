@@ -12,6 +12,7 @@ import { Avatar } from '../components/Avatar'
 import { Icon, type IconName } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { RealmMap } from '../components/RealmMap'
+import { Ambience } from '../components/Ambience'
 import { SoundToggle } from '../components/SoundToggle'
 import { worldTheme } from '../worldThemes'
 import { todayISO, useStore } from '../store'
@@ -144,7 +145,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
       {/* Genomgående snidad trä-HUD över HELA skärmen (båda kolumnerna). */}
       <div className="wood-bar" style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
-        padding: '12px 18px', flexShrink: 0, position: 'relative', zIndex: 5,
+        padding: 'calc(12px + env(safe-area-inset-top)) 18px 12px', flexShrink: 0, position: 'relative', zIndex: 5,
       }}>
         <span style={{ display: 'flex', gap: 8 }}>
           <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
@@ -156,14 +157,15 @@ function HomeInner({ child }: { child: ChildProfile }) {
             bilden) och är graverad guldtext för lyster. */}
         <span className="display" style={{
           position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%)',
-          width: 240, aspectRatio: '600 / 328',
+          width: 'min(240px, 40vw)', aspectRatio: '600 / 328',
           backgroundImage: 'var(--tex-plaque)', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxSizing: 'border-box',
+          boxSizing: 'border-box', padding: '0 14%',
           zIndex: 6, pointerEvents: 'none', whiteSpace: 'nowrap',
         }}>
           <span style={{
-            fontWeight: 900, fontSize: (inRealm ? 17 : (world.name.length > 16 ? 12.5 : 15)), letterSpacing: 0.4,
+            fontWeight: 900, letterSpacing: 0.4, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+            fontSize: (inRealm ? 17 : (world.name.length > 18 ? 11.5 : world.name.length > 15 ? 12.5 : 15)),
             background: 'linear-gradient(180deg, #FFF3CC 0%, #F3C24A 52%, #C68C2E 100%)',
             WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
             WebkitTextStroke: '0.6px rgba(60,38,8,.55)',
@@ -191,7 +193,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
         {!inRealm && (
           <div aria-hidden="true" style={{
             position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-            background: 'linear-gradient(180deg, rgba(20,16,28,.45) 0%, rgba(20,16,28,0) 22%, rgba(20,16,28,0) 55%, rgba(20,16,28,.5) 100%)',
+            // Behåll ett konstant mörkt golv (~20 %) även i mitten så ljus
+            // nodtext aldrig hamnar ljus-mot-ljus över en solig del av målningen.
+            background: 'linear-gradient(180deg, rgba(20,16,28,.5) 0%, rgba(20,16,28,.2) 24%, rgba(20,16,28,.2) 60%, rgba(20,16,28,.56) 100%)',
           }} />
         )}
 
@@ -201,11 +205,13 @@ function HomeInner({ child }: { child: ChildProfile }) {
           </div>
         ) : (
           <>
+        {/* Rörligt liv över den målade världen (fjärilar, fåglar, löv …). */}
+        <Ambience scene={worldId} />
         <div style={{
           margin: '10px 0 4px', background: theme.banner.bg, border: `2px solid ${theme.banner.border}`, borderRadius: 12,
           padding: '8px 13px', fontSize: 13.5, fontWeight: 700, color: theme.banner.ink, lineHeight: 1.45,
-          position: 'relative', zIndex: 3,
-        }}>📜 {chapter}</div>
+          position: 'relative', zIndex: 3, display: 'flex', alignItems: 'center', gap: 8,
+        }}><Icon name="rulle" size={18} style={{ flexShrink: 0 }} /> {chapter}</div>
 
         {/* Vägen — HORISONTELL resa: scrolla i sidled, nod med bildtext under.
             Ritytan har EXAKT bredden moments*COL_W i px, och stig-SVG:n renderas
@@ -326,7 +332,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
                         <span style={{ display: 'block', fontWeight: 600, fontSize: 11, color: 'var(--muted)' }}>
                           {state === 'coming' ? 'kommer snart'
                             : state === 'boss' ? `Utmana ${world.boss.name}!`
-                            : state === 'done' ? 'klar! 💎'
+                            : state === 'done' ? 'klar!'
                             : isStar ? 'stjärnnivå klarad!'
                             : state === 'locked' ? 'låst'
                             : state === 'oppen' ? 'tryck för att träna!'
@@ -343,8 +349,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
 
         {/* Tillbaka till översikten över hela riket. */}
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 6, position: 'relative', zIndex: 3 }}>
-          <button className="chip" onClick={() => setView('riket')} style={{ fontWeight: 800 }}>
-            🗺 Hela Matteriket
+          <button className="chip" onClick={() => setView('riket')} style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="rulle" size={15} /> Hela Matteriket
           </button>
         </div>
           </>
@@ -360,7 +366,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Avatar child={child} size={46} />
-          <span className="display" style={{ fontWeight: 900, fontSize: 17, color: '#FBF3DE', textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>Hej {child.name}! 👋</span>
+          <span className="display" style={{ fontWeight: 900, fontSize: 17, color: '#FBF3DE', textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>Hej {child.name}!</span>
         </div>
 
         <div className="panel">
@@ -394,8 +400,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
                 )}
               </div>
               {progress.earned ? (
-                <div className="pop" style={{ marginTop: 8, fontWeight: 900, fontSize: 13.5, color: 'var(--mint)' }}>
-                  🎉 Du klarade det! Visa för en vuxen så får du din belöning!
+                <div className="pop" style={{ marginTop: 8, fontWeight: 900, fontSize: 13.5, color: 'var(--mint)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Icon name="pokal" size={18} /> Du klarade det! Visa för en vuxen så får du din belöning!
                 </div>
               ) : (
                 <>
@@ -409,9 +415,10 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   )}
                   {/* Nedräkning: stjärnor när målet är litet, mätare annars. */}
                   {progress.total <= 10 ? (
-                    <div style={{ display: 'flex', gap: 4, marginTop: 7, fontSize: 17 }}>
+                    <div style={{ display: 'flex', gap: 4, marginTop: 7 }}>
                       {Array.from({ length: progress.total }).map((_, i) => (
-                        <span key={i} style={{ opacity: i < progress.done ? 1 : 0.25, filter: i < progress.done ? undefined : 'grayscale(1)' }}>⭐</span>
+                        <Icon key={i} name="stjarna" size={18}
+                          style={{ opacity: i < progress.done ? 1 : 0.3, filter: i < progress.done ? undefined : 'grayscale(1)' }} />
                       ))}
                     </div>
                   ) : (
@@ -442,9 +449,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     fontFamily: 'inherit', color: 'var(--ink)', textAlign: 'left', gap: 8,
                   }}
                 >
-                  <span>{test.emoji} {test.title}</span>
-                  <span style={{ fontSize: 11.5, color: hitTarget ? 'var(--mint)' : 'var(--muted)', flexShrink: 0 }}>
-                    {record ? `🏅 ${record.best}` : 'nytt!'} {hitTarget ? '🎯' : `· mål ${target}`}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="blixt" size={15} /> {test.title}</span>
+                  <span style={{ fontSize: 11.5, color: hitTarget ? 'var(--mint)' : 'var(--muted)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {record ? <><Icon name="pokal" size={13} /> {record.best}</> : 'nytt!'} {hitTarget ? '· mål nått' : `· mål ${target}`}
                   </span>
                 </button>
               )

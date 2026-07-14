@@ -129,7 +129,7 @@ export function App() {
         >
           <div className="card bounce-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '26px 36px', textAlign: 'center' }}>
             <Pi mood="sover" size={100} />
-            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Pi tog en tupplur … 😴</h2>
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Pi tog en tupplur …</h2>
             <p style={{ margin: 0, color: 'var(--muted)', fontWeight: 700, maxWidth: 300 }}>
               Klockan är pausad — ingen tid har gått medan du var borta. Tryck så fortsätter vi!
             </p>

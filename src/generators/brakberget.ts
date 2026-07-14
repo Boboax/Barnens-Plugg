@@ -154,9 +154,13 @@ const brakRakna = g('brak-rakna', (level, seed, rng) => {
   const a = rng.int(1, d - 2)
   const b = rng.int(1, d - a - 1)
   const isAdd = level <= 6 || rng.chance(0.5)
-  const n = isAdd ? a + b : Math.max(a, b) - Math.min(a, b) || 1
-  const x = isAdd ? a : Math.max(a, b)
+  const x0 = isAdd ? a : Math.max(a, b)
   const y = isAdd ? b : Math.min(a, b)
+  // Subtraktion måste ge en positiv, nollskild skillnad — annars blev facit
+  // fel (t.ex. 1/4 − 1/4 rättades som 1/4). Höj täljaren när de är lika stora;
+  // x0+1 ≤ d-1 så bråket förblir äkta.
+  const x = !isAdd && x0 <= y ? y + 1 : x0
+  const n = isAdd ? a + b : x - y
   return choiceTask({
     generatorId: id, level, seed, rng,
     prompt: `${frac(x, d)} ${isAdd ? '+' : '−'} ${frac(y, d)} = ?`,

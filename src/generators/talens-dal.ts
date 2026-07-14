@@ -455,10 +455,16 @@ const overslagsrakning = g('overslagsrakning', (level, seed, rng) => {
   const id = 'gen.overslagsrakning'
   const nearHundred = (): number => rng.int(1, 9) * 100 + rng.pick([-8, -5, -3, 2, 4, 7] as const)
   const a = nearHundred()
-  const b = nearHundred()
+  let b = nearHundred()
   const isAdd = rng.chance(0.6)
   const roundedA = Math.round(a / 100) * 100
-  const roundedB = Math.round(b / 100) * 100
+  let roundedB = Math.round(b / 100) * 100
+  // Subtraktion med samma hundratal gav överslaget 0 och bara en distraktor —
+  // tvinga fram olika hundratal (b hålls kvar nära ett hundratal).
+  if (!isAdd && roundedA === roundedB) {
+    b = roundedB >= 500 ? b - 100 : b + 100
+    roundedB = Math.round(b / 100) * 100
+  }
   const correct = isAdd ? roundedA + roundedB : Math.abs(roundedA - roundedB)
   const distractors = uniqueDistractors(correct, [
     [correct + 100, 'en-fel'],
