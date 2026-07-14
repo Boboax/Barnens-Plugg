@@ -8,6 +8,8 @@ import './styles/global.css'
 // Sätts som CSS-variabler här så global.css kan referera dem utan hårdkodad bas.
 document.documentElement.style.setProperty('--tex-parchment', `url(${import.meta.env.BASE_URL}art/tex/parchment.webp)`)
 document.documentElement.style.setProperty('--tex-wood', `url(${import.meta.env.BASE_URL}art/tex/wood.webp)`)
+document.documentElement.style.setProperty('--tex-frame', `url(${import.meta.env.BASE_URL}art/tex/panelframe.webp)`)
+document.documentElement.style.setProperty('--tex-stone', `url(${import.meta.env.BASE_URL}art/tex/stone.webp)`)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

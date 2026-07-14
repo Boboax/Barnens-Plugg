@@ -127,6 +127,22 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.2px; }
   padding: 14px 16px;
 }
 
+/* Snidad träpanel: ornamenterad ram via 9-slice border-image.
+   Ramkällan är 512px med innerkant vid 95px → slice 95. Används på de
+   större panelerna (sidopanelens kort m.m.); parchment fyller innanför. */
+.panel {
+  background: linear-gradient(rgba(248, 241, 224, 0.4), rgba(240, 230, 205, 0.55)), var(--tex-parchment, none) center / cover, var(--card);
+  background-clip: padding-box;
+  border: 19px solid transparent;
+  border-image: var(--tex-frame) 95 / 19px / 0 stretch;
+  box-shadow: 0 5px 14px rgba(50, 36, 14, 0.28);
+  padding: 6px 12px;
+}
+/* Reserv om rambilden saknas: vanlig kortstil. */
+@supports not (border-image: url(x) 1 fill) {
+  .panel { border: 1.5px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; }
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
