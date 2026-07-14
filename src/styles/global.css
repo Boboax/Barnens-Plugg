@@ -8,6 +8,27 @@
    En profilfärg per barn sätts som --kid på :root av appen.
    ============================================================ */
 
+/* Rubriktypsnitt: Grenze 700 (SIL Open Font License, via Google Fonts) —
+   fantasy-känsla med NORMALA bokstavsformer (viktigt: barn som lär sig
+   läsa ska känna igen varje bokstav; t.ex. Metamorphous "ð"-d valdes bort).
+   Bundlas lokalt (inga CDN-anrop — appen är offline). */
+@font-face {
+  font-family: 'Grenze';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/grenze-700-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Grenze';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/grenze-700-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
   /* Grund: pergament i stället för gräddvitt */
   --bg: #EFE6D1;
@@ -37,7 +58,7 @@
 
   /* Typografi: serif för rubriker/världsnamn, sans för allt räknande */
   --font: ui-rounded, -apple-system, "SF Pro Rounded", "Segoe UI", Roboto, sans-serif;
-  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-display: "Grenze", "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
 
   /* Rytm */
   --r-sm: 10px;
