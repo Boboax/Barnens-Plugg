@@ -80,6 +80,51 @@ interface RealmMapProps {
   onPick(worldId: string): void
 }
 
+/* Stämningspartiklar utplacerade vid kartans olika trakter (deterministiskt,
+   ingen slump → stabilt mellan omritningar). Ligger mellan målning (z0) och
+   regionknappar (z2). Respekterar prefers-reduced-motion via global CSS. */
+type Emitter = { x: number; y: number; glow: string; kind: 'mote' | 'glint' | 'flake'; n: number }
+const AMBIENT_EMITTERS: Emitter[] = [
+  { x: 36, y: 64, glow: '#FFE27A', kind: 'mote', n: 5 },   // Tabellernas skog — eldflugor
+  { x: 49, y: 52, glow: '#C6A2F5', kind: 'mote', n: 5 },   // Algoritmens glänta — violetta motes
+  { x: 80, y: 80, glow: '#8FE8F0', kind: 'mote', n: 5 },   // Sambandsgrottan — kristallmotes
+  { x: 73, y: 16, glow: '#FFFFFF', kind: 'glint', n: 6 },  // Diagramöarna — vattenglimt
+  { x: 55, y: 78, glow: '#9BE8FF', kind: 'glint', n: 4 },  // grottsjöns glimt
+  { x: 28, y: 20, glow: '#FFFFFF', kind: 'flake', n: 7 },  // Bråkdrakens klippa — snö
+]
+
+function AmbientLife() {
+  return (
+    <div aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', overflow: 'hidden' }}>
+      {AMBIENT_EMITTERS.flatMap((e, ei) =>
+        Array.from({ length: e.n }).map((_, i) => {
+          const seed = ei * 7 + i * 13
+          const left = e.x + ((seed * 3) % 11) - 5      // ±5% spridning
+          const top = e.y + ((seed * 5) % 11) - 5
+          const dur = 4 + ((seed) % 5)                  // 4–8 s
+          const delay = -((seed * 0.37) % dur)
+          const dx = ((seed % 5) - 2) * 8               // drift
+          const dy = e.kind === 'flake' ? 70 : ((seed % 4) - 2) * 9
+          return (
+            <span
+              key={`${ei}-${i}`}
+              className={e.kind}
+              style={{
+                left: `${left}%`, top: `${top}%`,
+                ['--glow' as string]: e.glow,
+                ['--dur' as string]: `${dur}s`,
+                ['--dx' as string]: `${dx}px`,
+                ['--dy' as string]: `${dy}px`,
+                animationDelay: `${delay}s`,
+              }}
+            />
+          )
+        }),
+      )}
+    </div>
+  )
+}
+
 export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
   const [zoomTo, setZoomTo] = useState<{ x: number; y: number } | null>(null)
   const [artOk, setArtOk] = useState(false)
@@ -110,13 +155,16 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
         boxShadow: 'inset 0 0 120px rgba(0,0,0,0.6)',
       }} />
 
-      {/* Kartboxen: målningens proportioner, centrerad; zoomen sker här. */}
-      <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
+      {/* Kartboxen: målningens proportioner, centrerad; zoomen sker här.
+          Storleken styrs av (stabila) BREDDEN + fast bildproportion — aldrig
+          av fönsterhöjden. Annars flyttar iOS Safari ringarna när adressfältet
+          fälls in/ut och höjden ändras. */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div
           style={{
-            position: 'relative', margin: 'auto',
+            position: 'relative',
             ...(artOk
-              ? { width: '100%', maxHeight: '100%', aspectRatio: ART_RATIO }
+              ? { width: '100%', aspectRatio: ART_RATIO }
               : { width: '100%', height: '100%' }),
             transformOrigin: zoomTo ? `${zoomTo.x}% ${zoomTo.y}%` : '50% 50%',
             transform: zoomTo ? 'scale(2.6)' : 'scale(1)',
@@ -194,6 +242,10 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
               </span>
             </>
           )}
+
+          {/* Stämningsliv ovanpå målningen: eldflugor i skogarna, vattenglimt
+              vid havet, kristallgnistor i grottan, snö på berget. */}
+          {artOk && <AmbientLife />}
 
           {/* Regionernas knappar (och sprites i SVG-reserven). */}
           {REGIONS.map((region) => {

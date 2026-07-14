@@ -174,17 +174,26 @@ function HomeInner({ child }: { child: ChildProfile }) {
           <SoundToggle />
         </span>
         {/* Titelskylt: snidad plakett som hänger ned över kartan (jfr förlagan).
-            Elementets proportion matchar bildens (600×328) → ingen förvrängning. */}
+            Elementets proportion matchar bildens (600×328) → ingen förvrängning.
+            Texten centreras på träytan (lite nedskjuten p.g.a. topp-ornamentet)
+            och är graverad guldtext för lyster. */}
         <span className="display" style={{
-          position: 'absolute', left: '50%', top: 3, transform: 'translateX(-50%)',
-          width: 210, aspectRatio: '600 / 328',
+          position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%)',
+          width: 224, aspectRatio: '600 / 328',
           backgroundImage: 'var(--tex-plaque)', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat',
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-          paddingTop: 33, boxSizing: 'border-box',
-          fontWeight: 900, fontSize: 15.5, color: '#FBE7C2', textShadow: '0 1px 3px rgba(0,0,0,.85)',
-          zIndex: 6, pointerEvents: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          paddingTop: '9%', boxSizing: 'border-box',
+          zIndex: 6, pointerEvents: 'none', whiteSpace: 'nowrap',
         }}>
-          {inRealm ? 'Matteriket' : world.name}
+          <span style={{
+            fontWeight: 900, fontSize: (inRealm ? 17 : (world.name.length > 16 ? 12.5 : 15)), letterSpacing: 0.4,
+            background: 'linear-gradient(180deg, #FFF3CC 0%, #F3C24A 52%, #C68C2E 100%)',
+            WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+            WebkitTextStroke: '0.6px rgba(60,38,8,.55)',
+            filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.7))',
+          }}>
+            {inRealm ? 'Matteriket' : world.name}
+          </span>
         </span>
         <span className="chip"><Icon name="eld" size={15} /> {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
       </div>

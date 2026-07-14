@@ -295,6 +295,41 @@ button:active > .map-node { transform: scale(0.96) translateY(2px); }
 
 @keyframes splash-fade { to { opacity: 0; visibility: hidden; } }
 
+/* ---------- Levande karta: stämningspartiklar ---------- */
+
+/* Eldfluga/mote: svävar i en mjuk slinga och pulserar i sken. */
+@keyframes mote-drift {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  20%  { opacity: 1; }
+  50%  { transform: translate(var(--dx, 14px), var(--dy, -18px)); }
+  80%  { opacity: 1; }
+  100% { transform: translate(0, 0); opacity: 0; }
+}
+.mote {
+  position: absolute; width: 7px; height: 7px; border-radius: 50%;
+  background: radial-gradient(circle, var(--glow, #FFE27A) 0%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+  animation: mote-drift var(--dur, 6s) ease-in-out infinite;
+}
+/* Glitter/glimt: tindrar på plats (hav, kristaller). */
+@keyframes glint-twinkle { 0%,100% { opacity: 0; transform: scale(0.4); } 50% { opacity: 1; transform: scale(1); } }
+.glint {
+  position: absolute; width: 6px; height: 6px; pointer-events: none;
+  background: radial-gradient(circle, var(--glow, #fff) 0%, rgba(255,255,255,0) 72%);
+  animation: glint-twinkle var(--dur, 3s) ease-in-out infinite;
+}
+/* Snö/damm: faller och driver i sidled. */
+@keyframes flake-fall {
+  0%   { transform: translate(0, -6px); opacity: 0; }
+  15%  { opacity: 0.9; }
+  100% { transform: translate(var(--dx, 10px), var(--dy, 70px)); opacity: 0; }
+}
+.flake {
+  position: absolute; width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(255,255,255,0.9); pointer-events: none;
+  animation: flake-fall var(--dur, 7s) linear infinite;
+}
+
 /* ---------- Bossstrid ---------- */
 
 /* Bossen gör entré: skjuter upp och studsar in. */
