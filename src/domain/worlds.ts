@@ -65,7 +65,7 @@ export const WORLDS: World[] = [
   },
   {
     id: 'monsterskogen',
-    name: 'Den gömda algoritmens skog',
+    name: 'Den gömda algoritmens glänta',
     emoji: '🌀',
     tagline: 'Här upprepar sig allt — om man bara ser mönstret.',
     boss: {
@@ -84,7 +84,7 @@ export const WORLDS: World[] = [
   },
   {
     id: 'formernas-berg',
-    name: 'Geometrins iskrona',
+    name: 'Pyramidernas öken',
     emoji: '🔷',
     tagline: 'Trianglar, cirklar och vinklar så långt ögat når.',
     boss: {
