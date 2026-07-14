@@ -60,46 +60,93 @@ export function setMuted(value: boolean): void {
   muted = value
   try { localStorage.setItem(LS_KEY, value ? 'av' : 'pa') } catch { /* privat läge */ }
   if (master && ctx) master.gain.setTargetAtTime(value ? 0 : 1, ctx.currentTime, 0.05)
-  // Temalåten är en riktig ljudfil (utanför Web Audio-mastern) — styr separat.
-  if (value) themeEl?.pause()
-  else if (themeWanted && themeEl) void themeEl.play().catch(() => { /* väntar på gest */ })
+  // Låtarna är riktiga ljudfiler (utanför Web Audio-mastern) — styr separat.
+  if (value) mCurrent?.pause()
+  else if (mCurrent) gesturePlay(mCurrent)
 }
 
-/* ---------- Temalåt (enda ljudfilen — startskärmens signaturmusik) ----------
-   Undantag från "inga ljudfiler"-principen: en målad startlåt. Spelas via ett
-   HTMLAudioElement (inte Web Audio-syntesen), loopar lågmält och respekterar
-   ljud av/på. Autoplay kan blockeras utan användargest → vi försöker igen vid
-   första pekning/tangenttryck. */
-let themeEl: HTMLAudioElement | null = null
-let themeWanted = false
+/* ---------- Musikregissör (riktiga låtfiler) ----------
+   Medvetet undantag från "inga ljudfiler"-principen: målade låtar.
+   - 'start' : startlåten spelas EN gång (klipps inte när man går till kartan).
+   - 'spel'  : när startlåten är slut loopar temalåten som bakgrund.
+   - 'boss'  : de två bosslåtarna spelas om vartannat i loop tills striden är slut.
+   Spelas via HTMLAudioElement, respekterar ljud av/på, och försöker igen vid
+   första gest om webbläsaren blockerar autoplay. Ligger utanför PWA-precachen. */
+type MusicScene = 'start' | 'spel' | 'boss'
+const B = import.meta.env.BASE_URL
+const URL_START = `${B}audio/startlat.mp3`
+const URL_THEME = `${B}audio/temalat.mp3`
+const URL_BOSS = [`${B}audio/bosslat.mp3`, `${B}audio/bosslat2.mp3`]
 
-export function playTheme(url: string): void {
-  themeWanted = true
-  if (!themeEl) {
-    themeEl = new Audio(url)
-    themeEl.loop = true
-    themeEl.volume = 0.5
-    themeEl.preload = 'auto'
+let mScene: MusicScene | null = null
+let mCurrent: HTMLAudioElement | null = null
+let startEnded = false
+let trkStart: HTMLAudioElement | null = null
+let trkTheme: HTMLAudioElement | null = null
+const trkBoss: (HTMLAudioElement | null)[] = [null, null]
+
+function mkTrack(url: string, loop: boolean): HTMLAudioElement {
+  const a = new Audio(url); a.loop = loop; a.preload = 'auto'; a.volume = 0.5; return a
+}
+function gesturePlay(a: HTMLAudioElement): void {
+  if (muted) return
+  a.play().catch(() => {
+    const retry = (): void => {
+      window.removeEventListener('pointerdown', retry)
+      window.removeEventListener('keydown', retry)
+      if (mCurrent === a && !muted) void a.play().catch(() => { /* ge upp tyst */ })
+    }
+    window.addEventListener('pointerdown', retry, { once: true })
+    window.addEventListener('keydown', retry, { once: true })
+  })
+}
+function setCurrent(a: HTMLAudioElement): void {
+  mCurrent = a
+  for (const t of [trkStart, trkTheme, trkBoss[0], trkBoss[1]]) if (t && t !== a) t.pause()
+  gesturePlay(a)
+}
+function playThemeLoop(): void {
+  if (!trkTheme) trkTheme = mkTrack(URL_THEME, true)
+  setCurrent(trkTheme)
+}
+function playStartOnce(): void {
+  if (!trkStart) {
+    trkStart = mkTrack(URL_START, false)
+    // När startlåten tar slut tar temalåten vid (om vi inte är i en boss).
+    trkStart.onended = () => { startEnded = true; if (mScene === 'spel' || mScene === 'start') playThemeLoop() }
   }
-  const attempt = (): void => {
-    if (!themeWanted || muted || !themeEl) return
-    themeEl.play().catch(() => {
-      const retry = (): void => {
-        window.removeEventListener('pointerdown', retry)
-        window.removeEventListener('keydown', retry)
-        attempt()
-      }
-      window.addEventListener('pointerdown', retry, { once: true })
-      window.addEventListener('keydown', retry, { once: true })
-    })
+  setCurrent(trkStart)
+}
+function playBossLoop(): void {
+  if (!trkBoss[0]) {
+    trkBoss[0] = mkTrack(URL_BOSS[0], false)
+    trkBoss[1] = mkTrack(URL_BOSS[1], false)
+    // De två bosslåtarna växlar i evig loop tills scenen byts.
+    trkBoss[0].onended = () => { if (mScene === 'boss' && trkBoss[1]) setCurrent(trkBoss[1]) }
+    trkBoss[1].onended = () => { if (mScene === 'boss' && trkBoss[0]) setCurrent(trkBoss[0]) }
   }
-  attempt()
+  setCurrent(trkBoss[0]!)
 }
 
-export function stopTheme(): void {
-  themeWanted = false
-  if (themeEl) { themeEl.pause(); themeEl.currentTime = 0 }
+/** Väljer musikscen efter appens läge. Idempotent: samma scen återupptar bara. */
+export function setMusicScene(scene: MusicScene): void {
+  if (scene === mScene) {
+    if (mCurrent && !muted && mCurrent.paused) gesturePlay(mCurrent)
+    return
+  }
+  mScene = scene
+  if (scene === 'boss') playBossLoop()
+  else if (scene === 'start') { if (!startEnded) playStartOnce(); else playThemeLoop() }
+  else {
+    // 'spel': låt startlåten spela klart om den fortfarande går, annars tema.
+    if (trkStart && !startEnded && mCurrent === trkStart) {
+      trkBoss[0]?.pause(); trkBoss[1]?.pause()
+    } else playThemeLoop()
+  }
 }
+
+/** Pausar musiken utan att glömma scenen (t.ex. när Pi somnar). */
+export function pauseMusic(): void { mCurrent?.pause() }
 
 /* ---------- Tonhjälpare ---------- */
 
