@@ -1,8 +1,11 @@
-import { sfx } from '../../sound'
+import { useEffect } from 'react'
+import { playTheme, stopTheme, sfx } from '../../sound'
 import { Avatar } from '../components/Avatar'
 import { Icon, HeroImg } from '../components/Icon'
 import { SoundToggle } from '../components/SoundToggle'
 import { useStore } from '../store'
+
+const themeUrl = `${import.meta.env.BASE_URL}audio/startlat.mp3`
 
 /* Startskärmen: den målade valvbakgrunden (public/art/startbg.webp) med
    titel, Pi och spelarval på en mjuk mörkscrim så texten är läsbar mot
@@ -14,6 +17,13 @@ const logo = `${import.meta.env.BASE_URL}art/logo.webp`
 export function ProfileSelect() {
   const store = useStore()
   const { children } = store.household
+
+  // Startskärmens signaturlåt: spelas medan man är här, tystnar när man lämnar
+  // (barnet väljs → världsmusiken tar vid). Respekterar ljud av/på och autoplay.
+  useEffect(() => {
+    playTheme(themeUrl)
+    return () => stopTheme()
+  }, [])
 
   const nameShadow = '0 2px 5px rgba(0,0,0,.7)'
 

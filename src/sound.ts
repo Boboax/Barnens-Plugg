@@ -60,6 +60,45 @@ export function setMuted(value: boolean): void {
   muted = value
   try { localStorage.setItem(LS_KEY, value ? 'av' : 'pa') } catch { /* privat läge */ }
   if (master && ctx) master.gain.setTargetAtTime(value ? 0 : 1, ctx.currentTime, 0.05)
+  // Temalåten är en riktig ljudfil (utanför Web Audio-mastern) — styr separat.
+  if (value) themeEl?.pause()
+  else if (themeWanted && themeEl) void themeEl.play().catch(() => { /* väntar på gest */ })
+}
+
+/* ---------- Temalåt (enda ljudfilen — startskärmens signaturmusik) ----------
+   Undantag från "inga ljudfiler"-principen: en målad startlåt. Spelas via ett
+   HTMLAudioElement (inte Web Audio-syntesen), loopar lågmält och respekterar
+   ljud av/på. Autoplay kan blockeras utan användargest → vi försöker igen vid
+   första pekning/tangenttryck. */
+let themeEl: HTMLAudioElement | null = null
+let themeWanted = false
+
+export function playTheme(url: string): void {
+  themeWanted = true
+  if (!themeEl) {
+    themeEl = new Audio(url)
+    themeEl.loop = true
+    themeEl.volume = 0.5
+    themeEl.preload = 'auto'
+  }
+  const attempt = (): void => {
+    if (!themeWanted || muted || !themeEl) return
+    themeEl.play().catch(() => {
+      const retry = (): void => {
+        window.removeEventListener('pointerdown', retry)
+        window.removeEventListener('keydown', retry)
+        attempt()
+      }
+      window.addEventListener('pointerdown', retry, { once: true })
+      window.addEventListener('keydown', retry, { once: true })
+    })
+  }
+  attempt()
+}
+
+export function stopTheme(): void {
+  themeWanted = false
+  if (themeEl) { themeEl.pause(); themeEl.currentTime = 0 }
 }
 
 /* ---------- Tonhjälpare ---------- */
