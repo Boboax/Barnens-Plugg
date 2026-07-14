@@ -87,20 +87,22 @@ function NodeGlyph({ state, size = 24 }: { state: NodeState; size?: number }) {
   return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ display: 'block' }}>{paths[state]}</svg>
 }
 
-/* Kartans fasta geometri: varje moment får en rad, noderna växlar
-   vänster/höger och en ritad väg slingrar mellan cirkelcentrumen. */
-const ROW_H = 96
-const MAP_W = 460 // designbredd — vägens SVG skalas med behållaren
-const nodeCx = (i: number): number => (i % 2 === 0 ? 30 : 0.45 * MAP_W + 30)
-const nodeCy = (i: number, n: number): number => (n - 1 - i) * ROW_H + ROW_H / 2
+/* Kartans fasta geometri: HORISONTELL resa — varje moment får en kolumn,
+   noderna växlar övre/nedre rad och en ritad väg slingrar vänster→höger
+   mellan cirkelcentrumen. Barnet börjar till vänster, framsteg åt höger. */
+const COL_W = 150            // bredd per nod (px)
+const MAP_H = 300            // designhöjd — vägens SVG skalas med behållaren
+const nodeCx = (i: number): number => i * COL_W + COL_W / 2
+const nodeCy = (i: number): number => (i % 2 === 0 ? 0.66 * MAP_H : 0.34 * MAP_H)
 
-/** Vägen genom de första `upTo + 1` noderna (n = radantal för y-beräkningen). */
+/** Vägen genom de första `upTo + 1` noderna. */
 function windingPath(n: number, upTo = n - 1): string {
-  let d = `M${nodeCx(0)},${nodeCy(0, n)}`
+  let d = `M${nodeCx(0)},${nodeCy(0)}`
   for (let i = 1; i <= upTo; i++) {
-    const [x0, y0] = [nodeCx(i - 1), nodeCy(i - 1, n)]
-    const [x1, y1] = [nodeCx(i), nodeCy(i, n)]
-    d += ` C${x0},${y0 - 42} ${x1},${y1 + 42} ${x1},${y1}`
+    const [x0, y0] = [nodeCx(i - 1), nodeCy(i - 1)]
+    const [x1, y1] = [nodeCx(i), nodeCy(i)]
+    // Vågig kurva: kontrollpunkter förskjutna i x ger mjuka backar upp/ned.
+    d += ` C${x0 + 52},${y0} ${x1 - 52},${y1} ${x1},${y1}`
   }
   return d
 }
@@ -138,7 +140,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
   const scrollToCurrent = (el: HTMLButtonElement | null): void => {
     if (el && !hasScrolled.current) {
       hasScrolled.current = true
-      el.scrollIntoView({ block: 'center' })
+      el.scrollIntoView({ inline: 'center', block: 'nearest' })
     }
   }
 
@@ -209,26 +211,25 @@ function HomeInner({ child }: { child: ChildProfile }) {
           position: 'relative', zIndex: 3,
         }}>📜 {chapter}</div>
 
-        {/* Vägen — fast rutnät med slingrande stig och sprites längs kanten. */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 6px', position: 'relative', zIndex: 2 }}>
-          <div style={{ position: 'relative', maxWidth: MAP_W, margin: '0 auto', height: moments.length * ROW_H }}>
+        {/* Vägen — HORISONTELL resa: scrolla i sidled, nod med bildtext under. */}
+        <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', display: 'flex', alignItems: 'center', position: 'relative', zIndex: 2 }}>
+          <div style={{ position: 'relative', height: MAP_H, width: Math.max(moments.length * COL_W, 100), minWidth: '100%' }}>
             {/* Stigen: guldtrampstenar dit barnet nått, blek antydan bortom. */}
             {(() => {
               const states = moments.map((m) => nodeState(m, child.skills[m.id], m.id === currentId))
               const lastOpen = states.reduce((acc, s, i) => (s !== 'locked' && s !== 'coming' ? i : acc), 0)
+              const w = moments.length * COL_W
               return (
                 <svg
-                  viewBox={`0 0 ${MAP_W} ${moments.length * ROW_H}`}
+                  viewBox={`0 0 ${w} ${MAP_H}`}
                   preserveAspectRatio="none"
                   aria-hidden="true"
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
                 >
-                  {/* Hela sträckan: knappt synlig — man anar vart resan bär. */}
                   <path d={windingPath(moments.length)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
                     strokeLinecap="round" opacity={0.3} />
                   <path d={windingPath(moments.length)} stroke={theme.pathColor} strokeWidth={7} fill="none"
                     strokeLinecap="round" strokeDasharray="0.1 18" opacity={0.25} />
-                  {/* Upplåst sträcka: full lyster. */}
                   <path d={windingPath(moments.length, lastOpen)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
                     strokeLinecap="round" opacity={0.55} />
                   <path d={windingPath(moments.length, lastOpen)} stroke={theme.pathColor} strokeWidth={8.5} fill="none"
@@ -237,20 +238,21 @@ function HomeInner({ child }: { child: ChildProfile }) {
               )
             })()}
 
-            {/* Natur längs vägen — deterministiskt utplacerad, aldrig över noderna. */}
+            {/* Natur längs vägen — motsatt rad mot noden, aldrig över den. */}
             {moments.map((moment, i) => (
               <span
                 key={`sprite-${moment.id}`}
                 aria-hidden="true"
                 style={{
                   position: 'absolute', zIndex: 1, pointerEvents: 'none',
-                  top: (moments.length - 1 - i) * ROW_H + 14 + ((i * 53) % 38),
-                  ...(i % 2 === 0 ? { left: `${68 + ((i * 37) % 16)}%` } : { left: `${1 + ((i * 29) % 9)}%` }),
+                  left: nodeCx(i) - 16 + ((i * 23) % 30) - 15,
+                  // noden ligger på övre/nedre raden → sprite på motsatt sida
+                  top: i % 2 === 0 ? 18 + ((i * 17) % 24) : MAP_H - 60 - ((i * 19) % 22),
                 }}
               >
                 <Sprite
                   name={theme.sprites[(i * 3 + 1) % theme.sprites.length]}
-                  size={30 + ((i * 17) % 22)}
+                  size={30 + ((i * 17) % 20)}
                   flip={i % 3 === 0}
                   tone={(i % 2) as 0 | 1}
                 />
@@ -268,6 +270,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
                 else if (state === 'done') store.startBattle(moment.id, 'star')
                 else if (state === 'now' || state === 'oppen') store.startSession(moment.id)
               }
+              const dark = theme.horizon === 'grotta'
               return (
                 <button
                   key={moment.id}
@@ -276,9 +279,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   disabled={!clickable}
                   style={{
                     position: 'absolute', zIndex: 2,
-                    top: (moments.length - 1 - i) * ROW_H, height: ROW_H,
-                    left: i % 2 === 0 ? 0 : '45%', width: '55%',
-                    display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'inherit', textAlign: 'left',
+                    left: nodeCx(i), top: nodeCy(i), transform: 'translate(-50%, -50%)',
+                    width: COL_W - 18,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, fontFamily: 'inherit',
                     opacity: state === 'locked' || state === 'coming' ? 0.72 : 1,
                   }}
                 >
@@ -287,7 +290,6 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     style={{
                       position: 'relative', width: state === 'now' ? 62 : 52, height: state === 'now' ? 62 : 52,
                       borderRadius: '50%', flexShrink: 0,
-                      // Glansig spelknapp: ljus reflex uppe till vänster + grundfärgen.
                       background: `radial-gradient(circle at 33% 28%, rgba(255,255,255,.5), rgba(255,255,255,0) 55%), ${NODE_BG[state]}`,
                       border: '3px solid rgba(255,255,255,.85)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -315,24 +317,24 @@ function HomeInner({ child }: { child: ChildProfile }) {
                       </span>
                     )}
                   </span>
+                  {/* Bildtext under noden. */}
                   <span style={{
-                    minWidth: 0,
-                    // Mjuk halo bakom texten — läsbart även över mörk skog/bergssiluett.
-                    textShadow: theme.horizon === 'grotta'
-                      ? '0 1px 3px rgba(20,18,40,.9), 0 0 8px rgba(20,18,40,.7)'
-                      : '0 1px 2px rgba(255,255,255,.9), 0 0 8px rgba(255,255,255,.75)',
+                    textAlign: 'center', lineHeight: 1.15,
+                    textShadow: dark
+                      ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)'
+                      : '0 1px 2px rgba(255,255,255,.95), 0 0 8px rgba(255,255,255,.8)',
                   }}>
-                    <span style={{ display: 'block', fontWeight: 800, fontSize: 14, color: state === 'now' || state === 'oppen' ? 'var(--sun-ink)' : 'var(--ink)' }}>
+                    <span style={{ display: 'block', fontWeight: 800, fontSize: 13, color: state === 'now' || state === 'oppen' ? 'var(--sun-ink)' : 'var(--ink)' }}>
                       {moment.title}
                     </span>
-                    <span style={{ display: 'block', fontWeight: 600, fontSize: 12, color: 'var(--muted)' }}>
+                    <span style={{ display: 'block', fontWeight: 600, fontSize: 11, color: 'var(--muted)' }}>
                       {state === 'coming' ? 'kommer snart'
                         : state === 'boss' ? `Utmana ${world.boss.name}!`
-                        : state === 'done' ? 'klar! (tryck för stjärnnivån 💎)'
+                        : state === 'done' ? 'klar! 💎'
                         : isStar ? 'stjärnnivå klarad!'
-                        : state === 'locked' ? 'kräver tidigare moment'
-                        : state === 'oppen' ? 'upplåst — tryck för att träna!'
-                        : moment.description}
+                        : state === 'locked' ? 'låst'
+                        : state === 'oppen' ? 'tryck för att träna!'
+                        : ''}
                     </span>
                   </span>
                 </button>
