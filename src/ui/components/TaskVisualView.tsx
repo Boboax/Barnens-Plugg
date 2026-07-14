@@ -1,4 +1,5 @@
 import type { TaskVisual } from '../../domain/types'
+import { isObjektIcon, ObjektIcon } from './Icon'
 
 /* ============================================================
    Visuellt stöd enligt CRA-principen: tiobasblock, tallinje,
@@ -10,6 +11,7 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
     case 'tiobas': return <Tiobas groups={visual.groups} />
     case 'tallinje': return <Tallinje min={visual.min} max={visual.max} marks={visual.marks} highlight={visual.highlight} />
     case 'grupper': return <Grupper count={visual.groupCount} per={visual.itemsPerGroup} emoji={visual.emoji} />
+    case 'foljd': return <Foljd items={visual.items} />
     case 'brak': return <Brak parts={visual.parts} filled={visual.filled} secondary={visual.secondary} />
     case 'klocka': return <Klocka hours={visual.hours} minutes={visual.minutes} />
     case 'form': return <Form shape={visual.shape} />
@@ -78,6 +80,24 @@ function Tallinje({ min, max, marks = [], highlight }: { min: number; max: numbe
   )
 }
 
+/* Mönsterföljd: raden av figurer barnet ska fortsätta, med en frågeruta sist. */
+function Foljd({ items }: { items: string[] }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+      {items.map((key, i) => (
+        isObjektIcon(key)
+          ? <ObjektIcon key={i} name={key} size={40} />
+          : <span key={i} style={{ fontSize: 34 }}>{key}</span>
+      ))}
+      <span style={{
+        width: 44, height: 44, borderRadius: 12, border: '3px dashed var(--sun)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 26, fontWeight: 900, color: 'var(--sun-ink)',
+      }}>?</span>
+    </div>
+  )
+}
+
 function Grupper({ count, per, emoji }: { count: number; per: number; emoji: string }) {
   const items = Array.from({ length: per })
   return (
@@ -87,7 +107,11 @@ function Grupper({ count, per, emoji }: { count: number; per: number; emoji: str
           display: 'grid', gridTemplateColumns: `repeat(${Math.min(per, 5)}, auto)`, gap: 3,
           background: 'var(--card)', border: '2px dashed var(--line)', borderRadius: 12, padding: '8px 10px',
         }}>
-          {items.map((_, i) => <span key={i} style={{ fontSize: 20 }}>{emoji}</span>)}
+          {items.map((_, i) => (
+            isObjektIcon(emoji)
+              ? <ObjektIcon key={i} name={emoji} size={24} />
+              : <span key={i} style={{ fontSize: 20 }}>{emoji}</span>
+          ))}
         </div>
       ))}
     </div>
