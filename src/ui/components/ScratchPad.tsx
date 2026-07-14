@@ -85,7 +85,7 @@ export function ScratchPad({ onReady }: { onReady?: (handle: ScratchPadHandle) =
         out.width = Math.round(canvas.width * ratio)
         out.height = Math.round(canvas.height * ratio)
         const octx = out.getContext('2d')!
-        octx.fillStyle = '#FFFDF6'
+        octx.fillStyle = '#F1E8D2' // pergamentton — matchar kladdytan barnet ritade på
         octx.fillRect(0, 0, out.width, out.height)
         octx.drawImage(canvas, 0, 0, out.width, out.height)
         return out.toDataURL('image/png')
@@ -108,9 +108,9 @@ export function ScratchPad({ onReady }: { onReady?: (handle: ScratchPadHandle) =
   }, [])
 
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', background: '#FFFDF6',
-      border: '2px solid var(--line)', borderRadius: 16, overflow: 'hidden', height: '100%', minHeight: 200,
+    <div className="card" style={{
+      display: 'flex', flexDirection: 'column', padding: 0,
+      borderRadius: 16, overflow: 'hidden', height: '100%', minHeight: 200,
     }}>
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
