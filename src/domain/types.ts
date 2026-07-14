@@ -270,7 +270,14 @@ export interface ChildProfile {
 
   /** Blixtpass-rekord (flyt): bästa antal rätt på en minut per testtyp. */
   blixt?: Partial<Record<BlixtKind, BlixtRecord>>
+
+  /** Vald hjältefigur (målad karaktär). Optionellt = bakåtkompatibelt; sätts i
+      föräldraläget och bor bara lokalt. Styr avatar + hjältebild. */
+  hero?: HeroKind
 }
+
+/** Målade hjältefigurer (public/art/hero/*). Nyckeln bor lokalt per barn. */
+export type HeroKind = 'bagskytt' | 'riddare' | 'trollkarl'
 
 /** Blixtpassens testtyper — speglar skolans minuttest. */
 export type BlixtKind = 'add-sub-0-10' | 'add-sub-0-20' | 'tabeller'

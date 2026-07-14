@@ -6,7 +6,7 @@ import { BLIXT_TESTS, blixtTarget } from '../../engine/blixt'
 import { pingProvider } from '../../chat/providers'
 import { CLOUD_VOICE, cloudTtsAvailable, kickVoiceList, preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
 import { daysSinceBackup, exportHousehold, importHousehold } from '../../storage/backup'
-import { BELONING_ICONS, BelongIcon, isBelongIcon } from '../components/Icon'
+import { BELONING_ICONS, BelongIcon, isBelongIcon, HERO_KINDS, HERO_LABEL, HeroImg } from '../components/Icon'
 import { KID_COLORS, nowISO, useStore } from '../store'
 
 /* ============================================================
@@ -466,6 +466,20 @@ function ChildSettings({ child }: { child: ChildProfile }) {
         >
           {YEARS.map((y) => <option key={y} value={y}>{y === 'F' ? 'Förskoleklass' : `Åk ${y}`}</option>)}
         </select>
+      </div>
+      <div style={{ padding: '6px 0' }}>
+        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>Hjältefigur (avatar + hjältebild)</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <button className="chip" onClick={() => store.updateChild(child.id, { hero: undefined })} style={!child.hero ? activeChip : {}}>Ingen (monogram)</button>
+          {HERO_KINDS.map((k) => (
+            <button key={k} onClick={() => store.updateChild(child.id, { hero: k })}
+              style={{ padding: 4, borderRadius: 10, lineHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                border: child.hero === k ? '2px solid #C9A24A' : '2px solid transparent', background: child.hero === k ? '#EDEAE2' : 'transparent' }}>
+              <HeroImg kind={k} variant="portratt" size={52} style={{ borderRadius: 8 }} />
+              <span style={{ fontSize: 10.5, fontWeight: 800, color: '#6B6656' }}>{HERO_LABEL[k]}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
