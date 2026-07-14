@@ -219,7 +219,7 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                   }}
                 >
                   <span
-                    className={isHere ? 'pulse-ring' : undefined}
+                    className={`map-node${isHere ? ' pulse-ring' : ''}`}
                     style={{
                       position: 'relative', width: 64, height: 64, borderRadius: '50%',
                       background: `radial-gradient(circle at 33% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 60%), ${theme.horizonColors[1]}`,
@@ -244,13 +244,17 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                       </span>
                     )}
                   </span>
-                  <span style={{
-                    fontWeight: 900, fontSize: 12.5, lineHeight: 1.15, textAlign: 'center', maxWidth: 110,
-                    color: dark ? '#F3EFFF' : 'var(--ink)',
-                    textShadow: dark ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)' : '0 1px 2px rgba(255,255,255,.9), 0 0 7px rgba(255,255,255,.8)',
+                  {/* Pergamentbanderoll — läsbar mot vilken kartmålning som helst. */}
+                  <span className="display" style={{
+                    fontWeight: 900, fontSize: 12.5, lineHeight: 1.2, textAlign: 'center', whiteSpace: 'nowrap',
+                    background: artOk ? 'rgba(246,238,220,.94)' : dark ? 'rgba(30,27,50,.85)' : 'rgba(255,252,244,.85)',
+                    color: artOk ? '#3A3122' : dark ? '#F3EFFF' : 'var(--ink)',
+                    border: `1.5px solid ${artOk ? '#6B5B40' : 'transparent'}`,
+                    borderRadius: 7, padding: '3px 9px',
+                    boxShadow: artOk ? '0 2px 5px rgba(0,0,0,.4)' : '0 1px 4px rgba(0,0,0,.2)',
                   }}>
                     {world.name}
-                    <span style={{ display: 'block', fontWeight: 700, fontSize: 10.5, color: dark ? '#CFC8E4' : 'var(--muted)' }}>
+                    <span style={{ display: 'block', fontWeight: 700, fontSize: 10.5, fontFamily: 'var(--font)', color: artOk ? '#6E6046' : dark ? '#CFC8E4' : 'var(--muted)' }}>
                       {progress.total === 0 ? 'kommer snart' : complete ? 'allt klart! ✓' : `${progress.done} av ${progress.total} klara`}
                     </span>
                   </span>

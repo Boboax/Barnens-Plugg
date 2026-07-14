@@ -1,43 +1,52 @@
 /* ============================================================
-   Barnens Plugg — designsystem
-   Varm gräddvit botten, runda former, stora tryckytor.
+   Barnens Plugg — designsystem, "fantasy game client"
+   Pergament och mörka ramar (matchar den målade kartkonsten),
+   runda former, stora tryckytor. Rubriker i serif för äventyrs-
+   känsla — men ALL matematik och alla siffror förblir i den
+   maximalt läsbara sans-serifen (medvetet: barnen ska aldrig
+   behöva tolka snirkliga siffror).
    En profilfärg per barn sätts som --kid på :root av appen.
    ============================================================ */
 
 :root {
-  /* Grund */
-  --bg: #FFF9EF;
-  --card: #FFFFFF;
-  --ink: #2E3350;
-  --muted: #8A8FA8;
-  --line: #EFE6D4;
+  /* Grund: pergament i stället för gräddvitt */
+  --bg: #EFE6D1;
+  --card: #F8F1E0;
+  --ink: #35302E;
+  --muted: #837A66;
+  --line: #D8C8A4;
+  --frame: #6B5B40; /* mörk ramlinje runt paneler */
 
   /* Identitet */
   --primary: #4A56C6;
-  --primary-shadow: #37409A;
+  --primary-shadow: #333C8E;
   --sun: #FFC94D;
   --sun-ink: #7A5A00;
   --coral: #FF7A6E;
-  --mint: #3FBF87;
-  --mint-shadow: #2E9367;
+  --mint: #3FA87A;
+  --mint-shadow: #277A56;
   --boss: #8C6BC8;
 
   /* Semantik */
-  --ok: #3FBF87;
+  --ok: #3FA87A;
   --warn: #E8A13C;
   --err: #E2574C;
 
   /* Barnets profilfärg (sätts dynamiskt) */
   --kid: var(--primary);
 
-  /* Typografi */
+  /* Typografi: serif för rubriker/världsnamn, sans för allt räknande */
   --font: ui-rounded, -apple-system, "SF Pro Rounded", "Segoe UI", Roboto, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
 
   /* Rytm */
   --r-sm: 10px;
-  --r-md: 16px;
-  --r-lg: 22px;
-  --shadow-card: 0 3px 10px rgba(60, 50, 20, 0.07);
+  --r-md: 14px;
+  --r-lg: 20px;
+  --shadow-card:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 1px 0 rgba(107, 91, 64, 0.35),
+    0 4px 12px rgba(60, 46, 20, 0.16);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -82,8 +91,13 @@ input, textarea { font-family: inherit; }
 
 /* ---------- Återkommande primitiver ---------- */
 
+/* Rubriker i serif — äventyrsboken. Matten förblir sans (se :root). */
+h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.2px; }
+.display { font-family: var(--font-display); letter-spacing: 0.2px; }
+
 .card {
   background: var(--card);
+  border: 1.5px solid var(--line);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-card);
   padding: 14px 16px;
@@ -101,9 +115,21 @@ input, textarea { font-family: inherit; }
   transition: transform 0.08s ease;
 }
 .btn:active { transform: translateY(2px); }
-.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 0 var(--primary-shadow); }
-.btn-primary:active { box-shadow: 0 2px 0 var(--primary-shadow); }
-.btn-ok { background: var(--mint); color: #fff; box-shadow: 0 4px 0 var(--mint-shadow); }
+/* Polerad "ädelsten": gradient + ljus bevel-kant upptill + tryckbar sockel. */
+.btn-primary {
+  background: linear-gradient(180deg, #6672E2 0%, var(--primary) 48%, #3A45AC 100%);
+  color: #fff;
+  border: 1.5px solid #2C347E;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 4px 0 var(--primary-shadow), 0 5px 8px rgba(40, 34, 14, 0.25);
+}
+.btn-primary:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 1px 0 var(--primary-shadow); }
+.btn-ok {
+  background: linear-gradient(180deg, #55BE90 0%, var(--mint) 48%, #2E8A62 100%);
+  color: #fff;
+  border: 1.5px solid #226848;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 4px 0 var(--mint-shadow), 0 5px 8px rgba(40, 34, 14, 0.25);
+}
+.btn-ok:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 1px 0 var(--mint-shadow); }
 .btn-ghost { background: var(--card); color: var(--primary); border: 2px solid var(--primary); }
 .btn-quiet { background: var(--card); color: var(--muted); border: 2px solid var(--line); font-size: 14px; padding: 8px 16px; }
 .btn:disabled { opacity: 0.45; pointer-events: none; }
@@ -118,19 +144,26 @@ input, textarea { font-family: inherit; }
   padding: 5px 13px;
   font-size: 13px;
   font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 2px rgba(60, 46, 20, 0.15);
 }
+
+/* Kartnoder: taktil spelknapp — växer under fingret, trycks ner vid klick. */
+.map-node { transition: transform 0.12s ease; }
+button:hover > .map-node { transform: scale(1.06); }
+button:active > .map-node { transform: scale(0.96) translateY(2px); }
 
 .pbar {
   height: 10px;
   border-radius: 99px;
-  background: #EFEAF9;
+  background: #DCCEAA;
+  box-shadow: inset 0 1px 3px rgba(70, 56, 28, 0.4);
   overflow: hidden;
 }
 .pbar > i {
   display: block;
   height: 100%;
   border-radius: 99px;
-  background: var(--mint);
+  background: linear-gradient(180deg, #55BE90, var(--mint));
   transition: width 0.4s ease;
 }
 

@@ -92,9 +92,10 @@ const MAP_W = 460 // designbredd — vägens SVG skalas med behållaren
 const nodeCx = (i: number): number => (i % 2 === 0 ? 30 : 0.45 * MAP_W + 30)
 const nodeCy = (i: number, n: number): number => (n - 1 - i) * ROW_H + ROW_H / 2
 
-function windingPath(n: number): string {
+/** Vägen genom de första `upTo + 1` noderna (n = radantal för y-beräkningen). */
+function windingPath(n: number, upTo = n - 1): string {
   let d = `M${nodeCx(0)},${nodeCy(0, n)}`
-  for (let i = 1; i < n; i++) {
+  for (let i = 1; i <= upTo; i++) {
     const [x0, y0] = [nodeCx(i - 1), nodeCy(i - 1, n)]
     const [x1, y1] = [nodeCx(i), nodeCy(i, n)]
     d += ` C${x0},${y0 - 42} ${x1},${y1 + 42} ${x1},${y1}`
@@ -172,7 +173,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
             <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
             <SoundToggle />
           </span>
-          <span style={{ fontWeight: 900, fontSize: 17, color: inRealm || theme.horizon === 'grotta' ? '#FFF3D6' : 'var(--ink)' }}>
+          <span className="display" style={{ fontWeight: 900, fontSize: 18, color: inRealm || theme.horizon === 'grotta' ? '#FFF3D6' : 'var(--ink)' }}>
             {inRealm ? '🗺 Matteriket' : `${world.emoji} ${world.name}`}
           </span>
           <span className="chip">🔥 {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad</span>
@@ -193,18 +194,30 @@ function HomeInner({ child }: { child: ChildProfile }) {
         {/* Vägen — fast rutnät med slingrande stig och sprites längs kanten. */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '14px 6px', position: 'relative', zIndex: 2 }}>
           <div style={{ position: 'relative', maxWidth: MAP_W, margin: '0 auto', height: moments.length * ROW_H }}>
-            {/* Stigen: sliten väg + trampstenar mellan nodernas centrum. */}
-            <svg
-              viewBox={`0 0 ${MAP_W} ${moments.length * ROW_H}`}
-              preserveAspectRatio="none"
-              aria-hidden="true"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
-            >
-              <path d={windingPath(moments.length)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
-                strokeLinecap="round" opacity={0.55} />
-              <path d={windingPath(moments.length)} stroke={theme.pathColor} strokeWidth={8.5} fill="none"
-                strokeLinecap="round" strokeDasharray="0.1 16" />
-            </svg>
+            {/* Stigen: guldtrampstenar dit barnet nått, blek antydan bortom. */}
+            {(() => {
+              const states = moments.map((m) => nodeState(m, child.skills[m.id], m.id === currentId))
+              const lastOpen = states.reduce((acc, s, i) => (s !== 'locked' && s !== 'coming' ? i : acc), 0)
+              return (
+                <svg
+                  viewBox={`0 0 ${MAP_W} ${moments.length * ROW_H}`}
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
+                >
+                  {/* Hela sträckan: knappt synlig — man anar vart resan bär. */}
+                  <path d={windingPath(moments.length)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
+                    strokeLinecap="round" opacity={0.3} />
+                  <path d={windingPath(moments.length)} stroke={theme.pathColor} strokeWidth={7} fill="none"
+                    strokeLinecap="round" strokeDasharray="0.1 18" opacity={0.25} />
+                  {/* Upplåst sträcka: full lyster. */}
+                  <path d={windingPath(moments.length, lastOpen)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
+                    strokeLinecap="round" opacity={0.55} />
+                  <path d={windingPath(moments.length, lastOpen)} stroke={theme.pathColor} strokeWidth={8.5} fill="none"
+                    strokeLinecap="round" strokeDasharray="0.1 16" />
+                </svg>
+              )
+            })()}
 
             {/* Natur längs vägen — deterministiskt utplacerad, aldrig över noderna. */}
             {moments.map((moment, i) => (
@@ -252,7 +265,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   }}
                 >
                   <span
-                    className={state === 'now' ? 'pulse-ring' : state === 'boss' ? 'float-soft' : undefined}
+                    className={`map-node${state === 'now' ? ' pulse-ring' : state === 'boss' ? ' float-soft' : ''}`}
                     style={{
                       position: 'relative', width: state === 'now' ? 62 : 52, height: state === 'now' ? 62 : 52,
                       borderRadius: '50%', flexShrink: 0,
