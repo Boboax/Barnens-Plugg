@@ -157,19 +157,20 @@ function HomeInner({ child }: { child: ChildProfile }) {
             bilden) och är graverad guldtext för lyster. */}
         <span className="display" style={{
           position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%)',
-          width: 'min(240px, 40vw)', aspectRatio: '600 / 328',
+          width: 'min(210px, 38vw)', aspectRatio: '600 / 328',
           backgroundImage: 'var(--tex-plaque)', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxSizing: 'border-box', padding: '0 14%',
+          boxSizing: 'border-box', padding: '0 13%',
           zIndex: 6, pointerEvents: 'none', whiteSpace: 'nowrap',
         }}>
+          {/* Fast guldfärg (INTE background-clip:text) — Safari renderar inget
+              när background-clip:text kombineras med overflow, vilket gjorde
+              skylten tom. Mörk skugga ger ändå gravyrkänsla mot träet. */}
           <span style={{
-            fontWeight: 900, letterSpacing: 0.4, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
-            fontSize: (inRealm ? 17 : (world.name.length > 18 ? 11.5 : world.name.length > 15 ? 12.5 : 15)),
-            background: 'linear-gradient(180deg, #FFF3CC 0%, #F3C24A 52%, #C68C2E 100%)',
-            WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-            WebkitTextStroke: '0.6px rgba(60,38,8,.55)',
-            filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.7))',
+            fontWeight: 900, letterSpacing: 0.4,
+            fontSize: (inRealm ? 17 : (world.name.length > 18 ? 11 : world.name.length > 14 ? 12.5 : 15)),
+            color: '#FFE7A8',
+            textShadow: '0 1px 2px rgba(45,26,4,.95), 0 0 3px rgba(45,26,4,.7)',
           }}>
             {inRealm ? 'Matteriket' : world.name}
           </span>
@@ -207,10 +208,17 @@ function HomeInner({ child }: { child: ChildProfile }) {
           <>
         {/* Rörligt liv över den målade världen (fjärilar, fåglar, löv …). */}
         <Ambience scene={worldId} />
+        {/* Berättelseremsan sitter NEDANFÖR den hängande skylten (marginTop
+            rensar skyltens överhäng, så tavlan aldrig ligger framför rutan).
+            Pergamentstil i stället för platt färgruta så den smälter in i
+            den målade världen. */}
         <div style={{
-          margin: '10px 0 4px', background: theme.banner.bg, border: `2px solid ${theme.banner.border}`, borderRadius: 12,
-          padding: '8px 13px', fontSize: 13.5, fontWeight: 700, color: theme.banner.ink, lineHeight: 1.45,
+          margin: '64px 0 4px', borderRadius: 12,
+          background: 'linear-gradient(rgba(246,236,212,.95), rgba(230,213,176,.95)), var(--tex-parchment, none) center / cover',
+          border: '2px solid #7A6544',
+          padding: '8px 14px', fontSize: 13.5, fontWeight: 700, color: '#3E3016', lineHeight: 1.45,
           position: 'relative', zIndex: 3, display: 'flex', alignItems: 'center', gap: 8,
+          boxShadow: '0 3px 10px rgba(0,0,0,.35)',
         }}><Icon name="rulle" size={18} style={{ flexShrink: 0 }} /> {chapter}</div>
 
         {/* Vägen — HORISONTELL resa: scrolla i sidled, nod med bildtext under.
