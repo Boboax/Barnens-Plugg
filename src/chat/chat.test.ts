@@ -72,20 +72,22 @@ describe('dynamiskt modellval', () => {
     tts: /tts/.test(id),
   })
 
-  it('väljer nyaste generationens lite-modell först (lägst latens), hoppar över specialvarianter', () => {
+  it('väljer alltid lite-varianten först (lägst latens), nyaste lite överst, hoppar över specialvarianter', () => {
     const picked = pickChatModels([
       m('gemini-2.5-flash'), m('gemini-2.5-flash-lite'), m('gemini-3-flash'),
       m('gemini-3.5-flash'), m('gemini-3.5-flash-lite'), m('gemini-3.5-flash-preview'),
       m('gemini-3.5-pro'), m('gemini-2.5-flash-tts'), m('gemini-3-flash-image'),
     ])
-    // Inom samma generation vinner lite (snabbast); nyare generation slår äldre.
+    // Snabbast först: nyaste lite överst, sedan äldre lite.
     expect(picked[0]).toBe('gemini-3.5-flash-lite')
-    expect(picked[1]).toBe('gemini-3.5-flash')
+    expect(picked[1]).toBe('gemini-2.5-flash-lite')
+    // Lite går ALLTID före fullstor flash — även när flash är nyare generation.
+    expect(picked.indexOf('gemini-2.5-flash-lite')).toBeLessThan(picked.indexOf('gemini-3.5-flash'))
     expect(picked).not.toContain('gemini-2.5-flash-tts')
     expect(picked).not.toContain('gemini-3-flash-image')
   })
 
-  it('faller tillbaka på vanliga flash när ingen lite finns', () => {
+  it('faller tillbaka på fullstora flash när ingen lite finns', () => {
     const picked = pickChatModels([m('gemini-3.5-flash'), m('gemini-3-flash')])
     expect(picked[0]).toBe('gemini-3.5-flash')
   })
