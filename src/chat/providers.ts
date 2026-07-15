@@ -24,7 +24,9 @@ import {
  * ListModels-API:et vilka modeller NYCKELN faktiskt har och väljer bästa
  * flash-modellen dynamiskt. Kända namn ligger kvar som sista utväg.
  */
-const GEMINI_FALLBACK_IDS = ['gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash']
+// Lite-varianterna först: de är byggda för låg latens och räcker gott för Pis
+// korta, hårt styrda svar. Kända namn används bara om ListModels inte svarar.
+const GEMINI_FALLBACK_IDS = ['gemini-3.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash']
 let workingGeminiModel: string | null = null
 
 export interface GeminiModelInfo {
@@ -69,20 +71,26 @@ export function pickClassifyModel(models: GeminiModelInfo[]): string | null {
 
 /**
  * Bästa chattkandidaterna för Pi: SNABBAST FÖRST. Pis svar är korta
- * (≤60 ord) och hårt styrda av systemprompten — flash-lite räcker gott
- * och svarar mycket snabbare än fullstora flash (som från 3.5 är en
- * stor "frontier"-modell). Inom samma generation: lite före standard.
+ * (≤40 ord) och hårt styrda av systemprompten — då räcker den lätta
+ * flash-lite-modellen gott, och den svarar MYCKET snabbare än fullstora
+ * flash (som från gen 3 är stora "frontier"-modeller).
+ *
+ * Regel: ALLA lite-varianter går före ALLA fullstora flash — även om en
+ * fullstor flash är en nyare generation. Låg latens väger tyngst för ett
+ * barn som väntar. Inom varje grupp: nyast först, basvariant före preview.
+ * Fullstora flash finns bara kvar som reserv ifall nyckeln saknar lite.
  */
 export function pickChatModels(models: GeminiModelInfo[]): string[] {
-  const score = (m: GeminiModelInfo): number =>
-    m.version * 100 +
-    (/lite/.test(m.id) ? 25 : 0) - // lite = byggd för låg latens
-    (/preview|exp/.test(m.id) ? 10 : 0) -
-    m.id.length * 0.01
-  const ids = models
-    .filter((m) => !m.tts && /flash/.test(m.id) && !/image|live|audio|embed/.test(m.id))
-    .sort((a, b) => score(b) - score(a))
-    .map((m) => m.id)
+  const isChat = (m: GeminiModelInfo): boolean =>
+    !m.tts && /flash/.test(m.id) && !/image|live|audio|embed/.test(m.id)
+  const byBest = (a: GeminiModelInfo, b: GeminiModelInfo): number =>
+    b.version - a.version || // nyast först
+    (/preview|exp/.test(a.id) ? 1 : 0) - (/preview|exp/.test(b.id) ? 1 : 0) || // stabil före preview
+    a.id.length - b.id.length // basvariant (kortast namn) först
+  const flash = models.filter(isChat)
+  const lite = flash.filter((m) => /lite/.test(m.id)).sort(byBest)
+  const heavy = flash.filter((m) => !/lite/.test(m.id)).sort(byBest)
+  const ids = [...lite, ...heavy].map((m) => m.id)
   for (const known of GEMINI_FALLBACK_IDS) if (!ids.includes(known)) ids.push(known)
   return ids.slice(0, 4)
 }
