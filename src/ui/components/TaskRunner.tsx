@@ -5,6 +5,7 @@ import { misconceptionInfo } from '../../engine/misconceptions'
 import { sfx } from '../../sound'
 import { prewarmSpeak, speak, stopSpeaking, ttsAvailable } from '../../tts'
 import { Icon, isObjektIcon, ObjektIcon } from './Icon'
+import { Pi } from './Pi'
 import { Keypad } from './Keypad'
 import { ScratchPad, type ScratchPadHandle } from './ScratchPad'
 import { TaskVisualView } from './TaskVisualView'
@@ -36,6 +37,8 @@ interface TaskRunnerProps {
   onNext?(): void
   /** Ger föräldern till komponenten åtkomst till kladdytan (chatten: "visa min uträkning"). */
   onScratchHandle?(handle: ScratchPadHandle): void
+  /** Visa en liten Pi-nudge ("tryck på ett svar") — sätts bara på första uppgiften. */
+  firstTask?: boolean
 }
 
 const parseNumeric = (raw: string): number => Number(raw.replace('−', '-').replace(',', '.'))
@@ -46,11 +49,19 @@ const parseNumeric = (raw: string): number => Number(raw.replace('−', '-').rep
 const ON_CARD_INK = '#35302E'
 const ON_CARD_MUTED = '#6E6656'
 
-export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle }: TaskRunnerProps) {
+/* Pis peppande tillrop (rätt) och trygga uppmuntran (fel). Appens EGNA
+   deterministiska strängar — inte AI-chatten. Growth mindset: vi berömmer
+   ansträngning och strategi ("bra kämpat"), aldrig "vad smart du är". */
+const PI_CHEERS = ['Rätt!', 'Bra jobbat!', 'Snyggt räknat!', 'Precis rätt!', 'Ja — du fixade det!', 'Starkt jobbat!']
+const PI_ENCOURAGE = ['Bra kämpat! Nu lär vi oss.', 'Nästan — vi tar det tillsammans!', 'Bra försök! Kolla här.', 'Oj, en klurig! Nu tittar vi.']
+const pick = (pool: string[]): string => pool[Math.floor(Math.random() * pool.length)]
+
+export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle, firstTask = false }: TaskRunnerProps) {
   const [value, setValue] = useState('')
   const [phase, setPhase] = useState<'svara' | 'feedback'>('svara')
   const [answered, setAnswered] = useState(false)
   const [lastResult, setLastResult] = useState<TaskResult>()
+  const [coachLine, setCoachLine] = useState('')
   const startedAt = useRef(Date.now())
   const scratchRef = useRef<ScratchPadHandle>()
 
@@ -60,6 +71,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
     setPhase('svara')
     setAnswered(false)
     setLastResult(undefined)
+    setCoachLine('')
     startedAt.current = Date.now()
     scratchRef.current?.clear()
     stopSpeaking()
@@ -81,6 +93,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
     setLastResult(result)
     if (mode === 'ovning') {
       setPhase('feedback')
+      setCoachLine(pick(correct ? PI_CHEERS : PI_ENCOURAGE)) // Pis tillrop
       if (correct) sfx.ratt()
       else sfx.fel()
     } else if (mode === 'diagnos') {
@@ -177,14 +190,26 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
           )
         )}
 
+        {/* Första uppgiften: en liten Pi visar VAR man svarar (försvinner sen). */}
+        {mode === 'ovning' && firstTask && !answered && !inFeedback && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: ON_CARD_INK, fontWeight: 700, fontSize: 13.5 }}>
+            <Pi mood="glad" size={40} />
+            <span>{task.answer.kind === 'numeric' ? 'Skriv talet och tryck på ✓' : 'Tryck på svaret du tror är rätt!'}</span>
+          </div>
+        )}
+
         {inFeedback && lastResult && (
           <div className={lastResult.correct ? 'pop' : 'shake'} style={{
             background: lastResult.correct ? 'color-mix(in srgb, var(--mint) 16%, var(--card))' : 'color-mix(in srgb, var(--coral) 14%, var(--card))',
             border: `2px solid ${lastResult.correct ? 'var(--mint)' : 'var(--coral)'}`,
             borderRadius: 16, padding: '12px 18px', maxWidth: 520, textAlign: 'center', color: ON_CARD_INK,
           }}>
-            <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4 }}>
-              {lastResult.correct ? 'Rätt!' : 'Inte riktigt — men nu lär vi oss!'}
+            {/* Pi hejar (rätt) eller funderar tillsammans (fel) med varierat tillrop. */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 4 }}>
+              <Pi mood={lastResult.correct ? 'hejar' : 'funderar'} size={44} />
+              <span style={{ fontSize: 20, fontWeight: 900 }}>
+                {coachLine || (lastResult.correct ? 'Rätt!' : 'Nu lär vi oss!')}
+              </span>
             </div>
             {!lastResult.correct && (
               <>
