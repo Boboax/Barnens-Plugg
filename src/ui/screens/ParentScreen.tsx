@@ -91,8 +91,8 @@ function ParentInner() {
   ]
 
   return (
-    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', background: '#F4F3EF' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(12px + env(safe-area-inset-top)) 18px 12px', background: '#2E3350', color: '#fff', flexWrap: 'wrap' }}>
+    <div className="screen-fade" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F4F3EF' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(12px + env(safe-area-inset-top)) 18px 12px', background: '#2E3350', color: '#fff', flexWrap: 'wrap', flexShrink: 0 }}>
         <span style={{ fontWeight: 800, fontSize: 15 }}>🔒 Föräldraläge</span>
         <div style={{ display: 'flex', gap: 4, marginLeft: 'auto', flexWrap: 'wrap' }}>
           {TABS.map(([id, label]) => (
@@ -107,7 +107,10 @@ function ParentInner() {
           >Lås & stäng</button>
         </div>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 18px', color: '#2A2F3A' }}>
+      {/* minHeight:0 krävs för att flex-barnet ska KRYMPA och bli scrollbart —
+          annars växer det med innehållet och man kan inte nå längst ner
+          (t.ex. AI-nyckeln), särskilt sedan dokumentet naglats fast. */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '14px 18px calc(24px + env(safe-area-inset-bottom))', color: '#2A2F3A' }}>
         {tab === 'oversikt' && <OverviewTab />}
         {tab === 'barn' && <ChildrenTab />}
         {tab === 'beloningar' && <RewardsTab />}
