@@ -192,6 +192,7 @@ export function SessionScreen() {
         key={`${index}-${task.ref.seed}`}
         task={task}
         mode="ovning"
+        firstTask={index === 0}
         onComplete={handleComplete}
         onNext={advance}
         onScratchHandle={(h) => { scratchHandle.current = h }}
