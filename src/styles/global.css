@@ -85,16 +85,22 @@ html, body {
   width: 100%;
   overflow: hidden;
 }
-/* #root fyller det fastnaglade dokumentet EXAKT. (Tidigare 100dvh gjorde
-   #root någon pixel kortare än inset:0 i standalone-läge → en ljus remsa av
-   body-pergamentet blottades nedtill. height:100% av fixed inset:0 = full höjd.) */
 html, body, #root { height: 100%; }
+
+/* iOS fyller ytan bakom home-indikatorn/statusfältet med DOKUMENTETS
+   bakgrundsfärg. Den måste därför vara den mörka ramtonen (= theme-color),
+   annars blev det en ljus pergamentremsa nedtill i hemskärmsläget. Själva
+   pergamentet flyttas till #root nedan — det fyller vyn och innehållsvyerna
+   ligger ovanpå, så en eventuell safe-area-glipa blir en diskret mörk kant. */
+html, body { background-color: #241C24; }
+
+/* Pergamentbotten för hela appen bor nu på #root (fyller den fastnaglade
+   vyn). Uppgifts-/föräldravyer syns mot den; kartor/strider lägger egna
+   bakgrunder ovanpå. */
+#root { background: var(--tex-parchment, none) center / cover, var(--bg); }
 
 body {
   margin: 0;
-  /* Pergament över hela appen (syns på uppgifts-/föräldravyer; kartorna
-     lägger egna bakgrunder ovanpå). Fäst så den inte scrollar. */
-  background: var(--tex-parchment, none) center / cover fixed, var(--bg);
   color: var(--ink);
   font-family: var(--font);
   font-size: 16px;
