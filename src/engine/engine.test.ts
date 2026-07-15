@@ -133,12 +133,11 @@ describe('startdiagnosen', () => {
     expect(guard).toBeLessThanOrEqual(Math.ceil(Math.log2(backbone.length)) + 3)
 
     const skills = applyDiagnosisResult(profile, '2026-01-01')
-    // Momenten barnet klarar → rakt på bossen (förtjänas, delas inte ut).
-    expect(skills[backbone[3]].mastery).toBe('boss-ready')
+    // Momenten barnet redan kan → behärskade (visas som klara, inte som bossar).
+    expect(skills[backbone[3]].mastery).toBe('mastered')
     expect(skills[backbone[8]].mastery).toBe('in-progress')
-    // Ingen repetition ännu — schemat sätts först när bossen är besegrad.
-    expect(skills[backbone[0]].mastery).toBe('boss-ready')
-    expect(skills[backbone[0]].review).toBeUndefined()
+    // Repetitionsschema sätts på det som diagnosen godkände.
+    expect(skills[backbone[0]].review).toBeDefined()
   })
 })
 
