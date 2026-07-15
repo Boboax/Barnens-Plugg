@@ -95,6 +95,12 @@ function HomeInner({ child }: { child: ChildProfile }) {
   const store = useStore()
   const currentId = useMemo(() => currentMomentId(child), [child])
   const currentMoment = currentId ? momentById(currentId) : undefined
+  const currentWorld = currentMoment ? worldById(currentMoment.worldId) : undefined
+  const currentSkill = currentId ? child.skills[currentId] : undefined
+  // Har barnet FAKTISKT tränat på det rekommenderade momentet? (styr knapptexten)
+  // attempts, inte mastery: diagnosen sätter frontmomentet till in-progress utan
+  // att barnet spelat, så vi vill inte säga "Fortsätt" redan dag ett.
+  const hasStarted = (currentSkill?.attempts ?? 0) > 0
   const [worldId, setWorldId] = useState(currentMoment?.worldId ?? WORLDS[0].id)
   const world = worldById(worldId)
   const theme = worldTheme(worldId)
@@ -367,6 +373,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
                             : state === 'done' ? 'klar!'
                             : isStar ? 'stjärnnivå klarad!'
                             : state === 'locked' ? 'låst'
+                            : state === 'now' ? 'börja här!'
                             : state === 'oppen' ? 'tryck för att träna!'
                             : ''}
                         </span>
@@ -439,10 +446,26 @@ function HomeInner({ child }: { child: ChildProfile }) {
         <div className="panel">
           <div style={{ fontWeight: 900, fontSize: 15, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7 }}><Icon name="bok" size={20} /> Dagens pass · ca 15 min</div>
           <Row label="Uppvärmning: repetition" tag={due > 0 ? `${due} moment` : 'kort'} tagColor="rep" />
-          <Row label={currentMoment ? currentMoment.title : 'Fritt läge'} tag="nytt" tagColor="new" />
+          <Row label={currentMoment ? currentMoment.title : 'Fritt läge'} tag={hasStarted ? 'pågår' : 'nytt'} tagColor="new" />
           <Row label="Blandade uppgifter" tag="mix" tagColor="rep" />
+
+          {/* Pi pekar tydligt ut nästa steg — barnet ska aldrig behöva undra
+              var det ska trycka. Knappen tar alltid till RÄTT övning. */}
+          <div style={{
+            display: 'flex', gap: 8, alignItems: 'center', marginTop: 10,
+            background: 'linear-gradient(rgba(246,236,212,.96), rgba(230,213,176,.96)), var(--tex-parchment, none) center / cover',
+            border: '2px solid #7A6544', borderRadius: 12, padding: '8px 10px', color: '#3E3016',
+          }}>
+            <Pi mood="glad" size={34} />
+            <span style={{ fontSize: 12.5, fontWeight: 700, lineHeight: 1.35 }}>
+              {currentMoment
+                ? <>{hasStarted ? 'Vi fortsätter med' : 'Nästa'}: <b>{currentMoment.title}</b>{currentWorld ? <> i {currentWorld.name}</> : null}. Tryck på knappen så tar jag dig dit!</>
+                : <>Tryck på knappen så börjar vi träna tillsammans!</>}
+            </span>
+          </div>
+
           <button className="btn btn-primary" style={{ width: '100%', marginTop: 10 }} onClick={startTraining}>
-            Starta passet ▶
+            {hasStarted ? 'Fortsätt passet ▶' : 'Starta passet ▶'}
           </button>
         </div>
 
