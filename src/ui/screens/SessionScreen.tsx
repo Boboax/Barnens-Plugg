@@ -280,11 +280,13 @@ export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', c
         <>
           {/* Långsamt roterande gyllene strålkrans bakom hjälten. */}
           <div aria-hidden="true" style={{
-            position: 'absolute', left: '50%', top: '42%', width: '160vmax', height: '160vmax',
+            // Måste täcka HELA skärmen — centrerad på mitten och rejält större än
+            // vyn, med opak maskkärna långt ut i hörnen (ingen synlig cirkelkant).
+            position: 'absolute', left: '50%', top: '50%', width: '260vmax', height: '260vmax',
             transform: 'translate(-50%,-50%)', pointerEvents: 'none', zIndex: 0, opacity: 0.55,
             background: 'repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,214,120,.17) 0deg 7deg, rgba(255,214,120,0) 7deg 15deg)',
-            maskImage: 'radial-gradient(circle at 50% 50%, #000 0%, #000 28%, transparent 60%)',
-            WebkitMaskImage: 'radial-gradient(circle at 50% 50%, #000 0%, #000 28%, transparent 60%)',
+            maskImage: 'radial-gradient(circle at 50% 50%, #000 0%, #000 52%, transparent 86%)',
+            WebkitMaskImage: 'radial-gradient(circle at 50% 50%, #000 0%, #000 52%, transparent 86%)',
             animation: 'ray-spin 46s linear infinite',
           }} />
           {/* Varm glöd i mitten. */}

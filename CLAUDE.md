@@ -75,6 +75,14 @@ publikt för Pages på gratisplanen.
 
 ## Fallgropar
 
+- **Text över målade bakgrunder måste ALLTID ha garanterad kontrast.** Arena-,
+  världs-, sol- och nattbakgrunder varierar från ljust till mörkt inom samma
+  bild — lita därför aldrig på att bakgrunden ger kontrast, och lita aldrig på
+  enbart en textskugga. Frågetext, knapptext och förklaringar ska sitta på en
+  egen platta/pill (t.ex. pergament `#FBF4E2`→`#F0E6CD` med mörk text
+  `#35302E`) eller ha en tillräckligt tät scrim under sig. Barnen läser på
+  iPad i starkt ljus; svag kontrast = oläsbart. (Bakgrund: barn kunde inte läsa
+  "Vad är 7 − 8?" på kunskapskollen — ljus text över en solig del av världen.)
 - **Generatorer får inte använda `Date.now()`/`Math.random()` för innehåll**
   — allt slumpat går via seedad `createRng(seed)` så uppgifter är
   reproducerbara. `freshSeed()` används bara för att välja NYTT frö.

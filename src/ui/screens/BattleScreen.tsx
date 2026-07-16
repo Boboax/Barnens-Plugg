@@ -136,7 +136,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
       <div aria-hidden="true" style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
         background: friendly
-          ? 'linear-gradient(180deg, rgba(60,40,14,.5) 0%, rgba(60,40,14,.24) 22%, rgba(60,40,14,.24) 70%, rgba(60,40,14,.52) 100%)'
+          ? 'linear-gradient(180deg, rgba(52,34,10,.58) 0%, rgba(52,34,10,.4) 30%, rgba(52,34,10,.4) 66%, rgba(52,34,10,.62) 100%)'
           : 'linear-gradient(180deg, rgba(15,12,22,.58) 0%, rgba(15,12,22,.24) 20%, rgba(15,12,22,.24) 70%, rgba(15,12,22,.62) 100%)',
       }} />
       {kind === 'star' && (
