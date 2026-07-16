@@ -45,6 +45,31 @@ export function recomputeAvailability(skills: Record<string, SkillState>): Recor
   return next
 }
 
+/**
+ * Engångsreparation av gamla profiler. En tidigare version av diagnosen
+ * markerade ALLA moment före fronten som 'boss-ready' (direkt, utan träning
+ * → attempts 0), vilket gjorde hela kartan till bossnoder. Här görs de om
+ * till 'mastered' med repetitionsschema — precis som diagnosen gör nu.
+ *
+ * Legitima boss-ready (barnet har tränat fram dem) har attempts ≥
+ * BOSS_READY_MIN_ATTEMPTS och lämnas ORÖRDA. Idempotent: efter körning finns
+ * inga boss-ready-med-0-försök kvar, så en ny inläsning gör ingenting.
+ */
+export function repairDiagnosisBossReady(
+  skills: Record<string, SkillState>,
+  now: string,
+): Record<string, SkillState> {
+  let changed = false
+  const next: Record<string, SkillState> = { ...skills }
+  for (const [id, s] of Object.entries(skills)) {
+    if (s && s.mastery === 'boss-ready' && s.attempts === 0) {
+      next[id] = { ...s, mastery: 'mastered', rating: Math.max(s.rating, 700), review: s.review ?? scheduleFirstReview(now) }
+      changed = true
+    }
+  }
+  return changed ? recomputeAvailability(next) : skills
+}
+
 const MISCONCEPTION_MEMORY = 10
 
 /**

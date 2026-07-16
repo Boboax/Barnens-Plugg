@@ -3,7 +3,7 @@ import type { ChildProfile, SkillState } from '../domain/types'
 import { MOMENTS } from '../domain/curriculum'
 import { expectedSuccess, practiceLevel, updateRating } from './rating'
 import { REVIEW_INTERVALS_DAYS, scheduleFirstReview, scheduleNextReview } from './spaced-repetition'
-import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability } from './progress'
+import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady } from './progress'
 import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
 import { composeBossTasks, composeStarTasks } from './session'
@@ -138,6 +138,21 @@ describe('startdiagnosen', () => {
     expect(skills[backbone[8]].mastery).toBe('in-progress')
     // Repetitionsschema sätts på det som diagnosen godkände.
     expect(skills[backbone[0]].review).toBeDefined()
+  })
+
+  it('reparerar gamla profiler: diagnos-bossar (boss-ready utan träning) → mastered', () => {
+    const skills: Record<string, SkillState> = {
+      diag: { ...newSkillState('diag'), mastery: 'boss-ready', rating: 700, attempts: 0 },
+      real: { ...newSkillState('real'), mastery: 'boss-ready', rating: 640, attempts: 14 },
+      prog: { ...newSkillState('prog'), mastery: 'in-progress', rating: 550, attempts: 3 },
+    }
+    const out = repairDiagnosisBossReady(skills, '2026-01-01')
+    // Diagnos-skapad boss (0 försök) läks till behärskad med repetition.
+    expect(out.diag.mastery).toBe('mastered')
+    expect(out.diag.review).toBeDefined()
+    // Legitimt framtränad boss (≥12 försök) och pågående moment lämnas orörda.
+    expect(out.real.mastery).toBe('boss-ready')
+    expect(out.prog.mastery).toBe('in-progress')
   })
 })
 
