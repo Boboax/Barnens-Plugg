@@ -7,17 +7,31 @@ import { isObjektIcon, ObjektIcon } from './Icon'
    ============================================================ */
 
 export function TaskVisualView({ visual }: { visual: TaskVisual }) {
-  switch (visual.kind) {
-    case 'tiobas': return <Tiobas groups={visual.groups} />
-    case 'tallinje': return <Tallinje min={visual.min} max={visual.max} marks={visual.marks} highlight={visual.highlight} />
-    case 'grupper': return <Grupper count={visual.groupCount} per={visual.itemsPerGroup} emoji={visual.emoji} />
-    case 'foljd': return <Foljd items={visual.items} />
-    case 'brak': return <Brak parts={visual.parts} filled={visual.filled} secondary={visual.secondary} />
-    case 'klocka': return <Klocka hours={visual.hours} minutes={visual.minutes} />
-    case 'form': return <Form shape={visual.shape} />
-    case 'rektangel': return <Rektangel w={visual.w} h={visual.h} unit={visual.unit} />
-    case 'ingen': return null
-  }
+  if (visual.kind === 'ingen') return null
+  const inner = (() => {
+    switch (visual.kind) {
+      case 'tiobas': return <Tiobas groups={visual.groups} />
+      case 'tallinje': return <Tallinje min={visual.min} max={visual.max} marks={visual.marks} highlight={visual.highlight} />
+      case 'grupper': return <Grupper count={visual.groupCount} per={visual.itemsPerGroup} emoji={visual.emoji} />
+      case 'foljd': return <Foljd items={visual.items} />
+      case 'brak': return <Brak parts={visual.parts} filled={visual.filled} secondary={visual.secondary} />
+      case 'klocka': return <Klocka hours={visual.hours} minutes={visual.minutes} />
+      case 'form': return <Form shape={visual.shape} />
+      case 'rektangel': return <Rektangel w={visual.w} h={visual.h} unit={visual.unit} />
+    }
+  })()
+  // Ljus "kortyta" runt bilden med ÅTERSTÄLLDA färgvariabler: annars ärver
+  // visualen skärmens --ink/--card (som t.ex. i bosstriden är LJUSA) och då
+  // blir mörka streck/siffror osynliga (t.ex. klockans siffror och timvisare).
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', maxWidth: '100%',
+      background: 'linear-gradient(180deg, #FBF4E2, #F1E6CB)', border: '2px solid #C9B489',
+      borderRadius: 16, padding: '10px 14px', color: '#2E3350',
+      boxShadow: '0 2px 6px rgba(60,44,20,.18)',
+      ...({ '--ink': '#2E3350', '--muted': '#6E6656', '--card': '#FBF4E2', '--line': '#C9B489' } as React.CSSProperties),
+    }}>{inner}</div>
+  )
 }
 
 function Tiobas({ groups }: { groups: { tens: number; ones: number; hundreds?: number }[] }) {
@@ -60,7 +74,7 @@ function Tallinje({ min, max, marks = [], highlight }: { min: number; max: numbe
   const ticks: number[] = []
   for (let n = Math.ceil(min / step) * step; n <= max; n += step) ticks.push(n)
   return (
-    <svg viewBox={`0 0 ${width} 64`} style={{ width: '100%', maxWidth: 520 }} aria-hidden="true">
+    <svg viewBox={`0 0 ${width} 64`} style={{ width: 460, maxWidth: '100%' }} aria-hidden="true">
       <line x1={pad - 8} y1={32} x2={width - pad + 8} y2={32} stroke="var(--line)" strokeWidth={4} strokeLinecap="round" />
       {ticks.map((n) => (
         <g key={n}>
@@ -153,32 +167,43 @@ function Brak({ parts, filled, secondary }: { parts: number; filled: number; sec
   )
 }
 
+/* Analog klocka. FASTA färger (inte var(--ink)/var(--card)) så siffror och
+   visare alltid syns, oavsett skärmens färgtema (bosstriden gör --ink ljus).
+   Kort tjock mörk visare = timme; lång smal röd visare = minut — tydligt
+   åtskilda så barnet förstår vilken som är vilken. */
 function Klocka({ hours, minutes }: { hours: number; minutes: number }) {
+  const FACE = '#FCFBF6', RIM = '#2E3350', HOUR = '#2E3350', MIN = '#E2574C'
   const hourAngle = ((hours % 12) + minutes / 60) * 30 - 90
   const minAngle = minutes * 6 - 90
-  const rad = (deg: number): [number, number] => [
-    60 + 38 * Math.cos((deg * Math.PI) / 180) * 0.62,
-    60 + 38 * Math.sin((deg * Math.PI) / 180) * 0.62,
-  ]
-  const [hx, hy] = rad(hourAngle)
-  const mx = 60 + 44 * Math.cos((minAngle * Math.PI) / 180) * 0.86
-  const my = 60 + 44 * Math.sin((minAngle * Math.PI) / 180) * 0.86
+  const hx = 60 + 30 * Math.cos((hourAngle * Math.PI) / 180)
+  const hy = 60 + 30 * Math.sin((hourAngle * Math.PI) / 180)
+  const mx = 60 + 46 * Math.cos((minAngle * Math.PI) / 180)
+  const my = 60 + 46 * Math.sin((minAngle * Math.PI) / 180)
   return (
-    <svg viewBox="0 0 120 120" width={150} height={150} aria-hidden="true">
-      <circle cx={60} cy={60} r={52} fill="var(--card)" stroke="var(--ink)" strokeWidth={4} />
+    <svg viewBox="0 0 120 120" width={158} height={158} aria-hidden="true">
+      <circle cx={60} cy={60} r={54} fill={FACE} stroke={RIM} strokeWidth={4} />
+      {/* Minutmarkeringar runt kanten. */}
+      {Array.from({ length: 60 }).map((_, i) => {
+        const a = (i * 6 - 90) * (Math.PI / 180)
+        const big = i % 5 === 0
+        return <line key={`t${i}`}
+          x1={60 + 50 * Math.cos(a)} y1={60 + 50 * Math.sin(a)}
+          x2={60 + (big ? 44 : 47) * Math.cos(a)} y2={60 + (big ? 44 : 47) * Math.sin(a)}
+          stroke={RIM} strokeWidth={big ? 1.8 : 0.8} opacity={big ? 1 : 0.5} />
+      })}
+      {/* Timsiffror 1–12. */}
       {Array.from({ length: 12 }).map((_, i) => {
-        const a = (i * 30 - 90) * (Math.PI / 180)
-        const x = 60 + 44 * Math.cos(a)
-        const y = 60 + 44 * Math.sin(a)
+        const a = ((i + 1) * 30 - 90) * (Math.PI / 180)
         return (
-          <text key={i} x={x} y={y + 4} fontSize={11} fontWeight={800} textAnchor="middle" fill="var(--ink)">
-            {i === 0 ? 12 : i}
+          <text key={i} x={60 + 38 * Math.cos(a)} y={60 + 38 * Math.sin(a) + 4}
+            fontSize={12} fontWeight={900} textAnchor="middle" fill={RIM}>
+            {i + 1}
           </text>
         )
       })}
-      <line x1={60} y1={60} x2={hx} y2={hy} stroke="var(--ink)" strokeWidth={5} strokeLinecap="round" />
-      <line x1={60} y1={60} x2={mx} y2={my} stroke="var(--coral)" strokeWidth={3.5} strokeLinecap="round" />
-      <circle cx={60} cy={60} r={4} fill="var(--ink)" />
+      <line x1={60} y1={60} x2={hx} y2={hy} stroke={HOUR} strokeWidth={6} strokeLinecap="round" />
+      <line x1={60} y1={60} x2={mx} y2={my} stroke={MIN} strokeWidth={3.5} strokeLinecap="round" />
+      <circle cx={60} cy={60} r={4.5} fill={HOUR} />
     </svg>
   )
 }
