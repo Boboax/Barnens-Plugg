@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AnswerRecord, SessionPlan, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
-import { worldById } from '../../domain/worlds'
 import { worldTheme } from '../worldThemes'
 import { composeSession, taskForPart } from '../../engine/session'
 import { chatReadyFor } from '../../chat'
@@ -137,30 +136,47 @@ export function SessionScreen() {
 
   if (done) {
     const ratio = correctCount / slots.length
-    // Pi förtydligar VÄGEN TILL "KLAR": träna → bossen vaknar → besegra
-    // bossen → momentet blir klart och nästa nod öppnas.
+    const strong = ratio >= 0.8
     const trainedId = slots.find((s) => s.kind === 'nytt')?.momentId
     const trained = trainedId ? child.skills[trainedId] : undefined
     const trainedMoment = trainedId ? momentById(trainedId) : undefined
+    const alreadyDone = trained?.mastery === 'mastered' || trained?.mastery === 'star'
+
+    // NODEN BLIR KLAR via Pis korta kunskapskoll — aldrig via en boss (bossen
+    // bor bara i slutet av varje värld). Gick den fokuserade nod-träningen bra
+    // leder vi DIREKT in i kollen, så noden kan bli klar på plats utan att leta
+    // på kartan. (Val med föräldern: "kort Pi-koll direkt efter".)
+    if (store.sessionFocused && trainedId && trainedMoment && strong && !alreadyDone) {
+      return (
+        <EndCard
+          title="Superjobbat!"
+          text={`${correctCount} av ${slots.length} rätt! Nu vill Pi se vad du kan — klarar du kollen blir ${trainedMoment.title} klart. ✓`}
+          buttonText="Visa vad du kan för Pi ▶"
+          onDone={() => store.startBattle(trainedId, 'check')}
+          celebrate
+        />
+      )
+    }
+
     let nextStep = ''
     if (trainedMoment && trained) {
-      const bossName = worldById(trainedMoment.worldId).boss.name
-      if (trained.mastery === 'boss-ready') {
-        nextStep = `Bossen har vaknat! Möt ${bossName} på kartan och besegra den — då blir ${trainedMoment.title} klart och nästa nod öppnas.`
-      } else if (trained.mastery === 'mastered' || trained.mastery === 'star') {
-        nextStep = `${trainedMoment.title} är klart — nästa nod är öppen på kartan!`
+      if (alreadyDone) {
+        nextStep = `${trainedMoment.title} är klart! Vill du testa diamantnivån trycker du på noden på kartan.`
+      } else if (store.sessionFocused) {
+        // Fokuserad träning men inte stark nog än → mer träning, sedan Pis koll.
+        nextStep = `Träna ${trainedMoment.title} lite till, så visar du snart Pi vad du kan!`
       } else {
-        nextStep = `Träna ${trainedMoment.title} lite till så vaknar bossen. Besegra bossen så blir noden klar och nästa öppnas!`
+        nextStep = 'Bra jobbat! Tryck på en nod på kartan när du vill visa Pi vad du kan.'
       }
     } else {
-      nextStep = ratio >= 0.8 ? 'Du är på väg att bemästra det här!' : 'Varje försök gör dig starkare — imorgon tar vi det igen!'
+      nextStep = strong ? 'Du är på väg att bemästra det här!' : 'Varje försök gör dig starkare — imorgon tar vi det igen!'
     }
     return (
       <EndCard
-        title={ratio >= 0.8 ? 'Superjobbat!' : 'Bra kämpat!'}
+        title={strong ? 'Superjobbat!' : 'Bra kämpat!'}
         text={`${correctCount} av ${slots.length} rätt. ${nextStep}`}
         onDone={() => store.go('home')}
-        celebrate={ratio >= 0.8}
+        celebrate={strong}
       />
     )
   }
