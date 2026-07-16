@@ -274,6 +274,10 @@ export interface ChildProfile {
   /** Vald hjältefigur (målad karaktär). Optionellt = bakåtkompatibelt; sätts i
       föräldraläget och bor bara lokalt. Styr avatar + hjältebild. */
   hero?: HeroKind
+
+  /** Har barnet sett Pis förklaring av diamantnivån? Optionellt =
+      bakåtkompatibelt; visas en gång, sedan hoppas introt över. */
+  seenStarIntro?: boolean
 }
 
 /** Målade hjältefigurer (public/art/hero/*). Nyckeln bor lokalt per barn. */

@@ -66,6 +66,8 @@ interface StoreValue {
   recordAnswer(task: Task, correct: boolean, elapsedMs: number, context: AnswerRecord['context'], givenAnswer?: number | string, scratchPng?: string, hotStreak?: number): void
   finishBoss(momentId: string, won: boolean): void
   finishStar(momentId: string, won: boolean): void
+  /** Markera att barnet sett Pis diamantnivå-förklaring (visas en gång). */
+  markStarIntroSeen(): void
   finishReview(momentId: string, passed: boolean): void
   recordDiagnosisProbe(momentId: string, level: number, correct: boolean): void
   finishDiagnosisPass(converged: boolean): void
@@ -276,6 +278,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ...c,
         skills: { ...c.skills, [momentId]: applyStarResult(c.skills[momentId] ?? newSkillState(momentId), won) },
       }))
+    },
+
+    markStarIntroSeen: () => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => (c.seenStarIntro ? c : { ...c, seenStarIntro: true }))
     },
 
     finishReview: (momentId, passed) => {
