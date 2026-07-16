@@ -58,7 +58,8 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   const tasks = useMemo<Task[]>(() => {
     if (kind === 'boss') return worldBossId ? composeWorldBossTasks(worldBossId) : []
     if (!momentId) return []
-    return kind === 'check' ? composeCheckTasks(momentId) : composeStarTasks(momentId)
+    // Kollen matchas mot barnets egen nivå på momentet (rättvis bekräftelse).
+    return kind === 'check' ? composeCheckTasks(momentId, child?.skills[momentId]?.rating) : composeStarTasks(momentId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [momentId, worldBossId, kind])
 

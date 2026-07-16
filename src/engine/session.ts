@@ -2,7 +2,7 @@ import type { ChildProfile, DifficultyLevel, SessionPlan, Task } from '../domain
 import { momentById, momentsInWorld } from '../domain/curriculum'
 import { generateTask, hasGenerator } from '../generators'
 import { freshSeed, createRng } from '../generators/rng'
-import { variedLevel } from './rating'
+import { variedLevel, practiceLevel } from './rating'
 import { dueForReview, REVIEW_TASK_COUNT } from './spaced-repetition'
 import { currentMomentId } from './progress'
 
@@ -107,14 +107,24 @@ export const WORLDBOSS_SHIELDS_TO_WIN = 11 // ≈ 80 %-kravet
 export const STAR_TASK_COUNT = 8
 export const STAR_CORRECT_TO_WIN = 6
 
-/** Nodens kunskapskoll: några frågor från momentet, nivå 4–6. Nya frön. */
-export function composeCheckTasks(momentId: string): Task[] {
+/**
+ * Nodens kunskapskoll: några frågor från momentet. Kollen är en BEKRÄFTELSE på
+ * det barnet nyss tränade, så nivån läggs kring barnets egen övningsnivå (en
+ * aning snäll) — inte en fast hög nivå som kunde bli orättvist svår direkt
+ * efter ett lätt moment. Utan känd rating (kartans manuella koll) faller vi
+ * tillbaka på nivå 4–6. Nya frön varje gång.
+ */
+export function composeCheckTasks(momentId: string, rating?: number): Task[] {
   const moment = momentById(momentId)
   if (!moment.generatorId) throw new Error(`Momentet ${momentId} saknar generator`)
   const rng = createRng(freshSeed())
+  const base = rating !== undefined ? practiceLevel(rating) : (5 as DifficultyLevel)
+  const lo = Math.max(1, base - 1) as DifficultyLevel
+  const hi = Math.min(10, base + 1) as DifficultyLevel
+  const levels: DifficultyLevel[] = [lo, base, base, hi, base]
   const tasks: Task[] = []
   for (let i = 0; i < CHECK_TASK_COUNT; i++) {
-    tasks.push(generateTask(moment.generatorId, rng.pick([4, 5, 5, 6, 6] as const), freshSeed()))
+    tasks.push(generateTask(moment.generatorId, rng.pick(levels), freshSeed()))
   }
   return tasks
 }
