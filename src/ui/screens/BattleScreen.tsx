@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { Boss, Task } from '../../domain/types'
+import type { Boss, Moment, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
 import { worldById } from '../../domain/worlds'
 import {
@@ -8,6 +8,7 @@ import {
 } from '../../engine/session'
 import { sfx } from '../../sound'
 import { Icon } from '../components/Icon'
+import { Pi } from '../components/Pi'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
 import { worldTheme } from '../worldThemes'
 import { EndCard } from './SessionScreen'
@@ -64,11 +65,17 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
   const [correct, setCorrect] = useState(0)
   const [flash, setFlash] = useState<'hit' | 'miss' | null>(null)
   const [finished, setFinished] = useState(false)
+  const [introDone, setIntroDone] = useState(false)
 
   if (!child || !momentId) return null
   const moment = momentById(momentId)
   const world = worldById(moment.worldId)
   const boss = world.boss
+
+  // Första gången diamantnivån dyker upp förklarar Pi vad det är (en gång).
+  if (kind === 'star' && !child.seenStarIntro && !introDone) {
+    return <StarIntro moment={moment} onStart={() => { store.markStarIntroSeen(); setIntroDone(true) }} />
+  }
 
   const total = kind === 'boss' ? BOSS_TASK_COUNT : STAR_TASK_COUNT
   const needed = kind === 'boss' ? BOSS_SHIELDS_TO_WIN : STAR_CORRECT_TO_WIN
@@ -228,6 +235,47 @@ export function BattleScreen({ kind }: { kind: 'boss' | 'star' }) {
             Varje rätt svar knäcker en sköld — knäck {needed} så {kind === 'boss' ? 'faller bossen' : 'är diamanten din'}!
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+/* Pi förklarar diamantnivån första gången den dyker upp. Kristallkall blå
+   scen (samma familj som stjärnstriden), lugn och inbjudande — betonar att
+   det är en frivillig extrautmaning utan tidspress där fel inte straffas. */
+function StarIntro({ moment, onStart }: { moment: Moment; onStart: () => void }) {
+  return (
+    <div className="screen-fade" style={{
+      minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: 14, padding: 30, textAlign: 'center', position: 'relative', overflow: 'hidden',
+      background: 'radial-gradient(ellipse 92% 82% at 50% 42%, #16324F 0%, #0E1F36 55%, #081019 100%)',
+      ...({ '--ink': '#EAF6FF', '--muted': '#AFC9DE' } as React.CSSProperties),
+    }}>
+      {Array.from({ length: 12 }).map((_, i) => {
+        const s = i * 37
+        return <span key={i} className="glint" aria-hidden="true" style={{
+          left: `${8 + (s * 3) % 84}%`, top: `${10 + (s * 7) % 74}%`,
+          width: 7 + (s % 7), height: 7 + (s % 7), zIndex: 1,
+          ['--glow' as string]: i % 3 === 0 ? '#C8ECFA' : '#8FD4F0',
+          ['--dur' as string]: `${2 + (s % 4) * 0.6}s`, animationDelay: `${-(s % 5) * 0.4}s`,
+        } as React.CSSProperties} />
+      })}
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, maxWidth: 470 }}>
+        <div className="bounce-in" style={{ display: 'flex', alignItems: 'flex-end', gap: 10 }}>
+          <span className="float-soft" style={{ display: 'inline-block', filter: 'drop-shadow(0 0 16px rgba(143,212,240,.7))' }}>
+            <Icon name="kristall" size={82} />
+          </span>
+          <Pi mood="glad" size={68} />
+        </div>
+        <h2 className="pop-big display" style={{ fontSize: 28, fontWeight: 900, margin: 0, color: '#C8ECFA', textShadow: '0 2px 6px rgba(0,20,40,.85)' }}>
+          Diamantnivån!
+        </h2>
+        <p style={{ color: 'var(--ink)', fontWeight: 700, margin: 0, lineHeight: 1.5 }}>
+          Snyggt jobbat — du har klarat <b>{moment.title}</b>! Nu öppnas <b>diamantnivån</b>: de allra klurigaste
+          uppgifterna, för dig som vill utmana dig själv lite extra. Ingen klocka, och fel gör ingenting.
+          Klara {STAR_CORRECT_TO_WIN} av {STAR_TASK_COUNT} så är diamanten din!
+        </p>
+        <button className="btn btn-primary" onClick={onStart}>Jag är redo ▶</button>
       </div>
     </div>
   )
