@@ -422,6 +422,7 @@ function BlixtTargets() {
 
 function ChildSettings({ child }: { child: ChildProfile }) {
   const store = useStore()
+  const [confirmRedo, setConfirmRedo] = useState(false)
   return (
     <div style={pcard}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -483,6 +484,28 @@ function ChildSettings({ child }: { child: ChildProfile }) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Startdiagnos: gör om placeringen om den känns fel (t.ex. för lätta
+          uppgifter). Nollställer framstegen — därför tvåstegsbekräftelse. */}
+      <div style={{ padding: '10px 0 2px', borderTop: '1px solid #EDEAE2', marginTop: 6 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Startdiagnos (nivåplacering)</div>
+        <div style={{ fontSize: 12.5, color: '#8B8FA0', fontWeight: 700, marginBottom: 8 }}>
+          {child.diagnosis.done
+            ? 'Klar. Känns nivån fel? Gör om diagnosen — den letar upp rätt startnivå igen.'
+            : 'Pågår — körs klart nästa gång barnet loggar in.'}
+        </div>
+        {!confirmRedo ? (
+          <button className="chip" onClick={() => setConfirmRedo(true)}>Gör om diagnosen …</button>
+        ) : (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 800, color: '#B4552E' }}>
+              Nollställer {child.name}s framsteg och gör om placeringen. Säker?
+            </span>
+            <button className="btn btn-primary" style={{ padding: '6px 14px' }} onClick={() => { store.redoDiagnosis(child.id); setConfirmRedo(false) }}>Ja, gör om</button>
+            <button className="chip" onClick={() => setConfirmRedo(false)}>Avbryt</button>
+          </div>
+        )}
       </div>
     </div>
   )

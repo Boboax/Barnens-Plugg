@@ -117,27 +117,61 @@ describe('startdiagnosen', () => {
     expect(startIndexForYear('4', backbone)).toBeGreaterThan(startIndexForYear('2', backbone))
   })
 
-  it('binärsökningen konvergerar och sätter startläget', () => {
+  it('trappstegsmetoden hittar taket och sätter startläget (robust mot ett slarvfel)', () => {
     const profile = makeProfile()
     const backbone = diagnosisBackbone()
-    // Simulera ett barn som kan de första 8 momenten.
+    // Barn som klarar de första 8 momenten men inte moment 8 och uppåt.
     const canDo = new Set(backbone.slice(0, 8))
     let guard = 0
+    let injectedSlip = false
     for (;;) {
       const s = searchState(profile.diagnosis, backbone, profile.schoolYear)
       if (s.converged) break
       const momentId = backbone[s.nextIndex]
-      profile.diagnosis.probes.push({ momentId, correct: canDo.has(momentId), level: 5 })
-      if (++guard > 30) throw new Error('konvergerar inte')
+      let correct = canDo.has(momentId)
+      // Ett enda slarvfel lågt ner ska INTE kollapsa skattningen.
+      if (correct && !injectedSlip && profile.diagnosis.probes.length === 2) { correct = false; injectedSlip = true }
+      profile.diagnosis.probes.push({ momentId, correct, level: 5 })
+      if (++guard > 80) throw new Error('konvergerar inte')
     }
-    expect(guard).toBeLessThanOrEqual(Math.ceil(Math.log2(backbone.length)) + 3)
 
     const skills = applyDiagnosisResult(profile, '2026-01-01')
-    // Momenten barnet redan kan → behärskade (visas som klara, inte som bossar).
-    expect(skills[backbone[3]].mastery).toBe('mastered')
-    expect(skills[backbone[8]].mastery).toBe('in-progress')
-    // Repetitionsschema sätts på det som diagnosen godkände.
+    // Fronten hamnar nära den verkliga gränsen (index 8) trots slarvfelet.
+    const frontierIdx = backbone.findIndex((id) => skills[id].mastery === 'in-progress')
+    expect(frontierIdx).toBeGreaterThanOrEqual(6)
+    expect(frontierIdx).toBeLessThanOrEqual(10)
+    // Moment klart under fronten → behärskade, med repetitionsschema.
+    expect(skills[backbone[2]].mastery).toBe('mastered')
     expect(skills[backbone[0]].review).toBeDefined()
+  })
+
+  it('starkt barn (klarar allt) placeras överst — inte för lätt', () => {
+    const profile = makeProfile()
+    const backbone = diagnosisBackbone()
+    let guard = 0
+    for (;;) {
+      const s = searchState(profile.diagnosis, backbone, profile.schoolYear)
+      if (s.converged) break
+      profile.diagnosis.probes.push({ momentId: backbone[s.nextIndex], correct: true, level: 5 })
+      if (++guard > 80) throw new Error('tak: konvergerar inte')
+    }
+    const skills = applyDiagnosisResult(profile, '2026-01-01')
+    expect(backbone.findIndex((id) => skills[id].mastery === 'in-progress')).toBe(backbone.length - 1)
+  })
+
+  it('barn som inte klarar ens det lättaste placeras längst ner (grinder inte 10 min)', () => {
+    const profile = makeProfile()
+    const backbone = diagnosisBackbone()
+    let guard = 0
+    for (;;) {
+      const s = searchState(profile.diagnosis, backbone, profile.schoolYear)
+      if (s.converged) break
+      profile.diagnosis.probes.push({ momentId: backbone[s.nextIndex], correct: false, level: 5 })
+      if (++guard > 80) throw new Error('golv: konvergerar inte')
+    }
+    expect(guard).toBeLessThan(20) // golvet upptäcks snabbt
+    const skills = applyDiagnosisResult(profile, '2026-01-01')
+    expect(backbone.findIndex((id) => skills[id].mastery === 'in-progress')).toBe(0)
   })
 
   it('reparerar gamla profiler: diagnos-bossar (boss-ready utan träning) → mastered', () => {
