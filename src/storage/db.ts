@@ -91,7 +91,12 @@ export function migrate(data: Household): Household {
   const base: Household = {
     ...data,
     children: (Array.isArray(data.children) ? data.children : []).map((c) =>
-      c && c.skills ? { ...c, skills: repairDiagnosisBossReady(c.skills, now) } : c,
+      c && c.skills
+        // repairDiagnosisBossReady räknar om tillgänglighet med bossgrinden, så
+        // nedströms världar låses bakom bossen även i profiler placerade innan
+        // grinden fanns (t.ex. barn som redan klarat en värld utan bosstrid).
+        ? { ...c, skills: repairDiagnosisBossReady(c.skills, now, c.conqueredWorlds ?? []) }
+        : c,
     ),
     rewards: Array.isArray(data.rewards) ? data.rewards : [],
     chatLog: Array.isArray(data.chatLog) ? data.chatLog : [],

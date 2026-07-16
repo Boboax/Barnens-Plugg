@@ -278,7 +278,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // och diagnosprober smutsade ned rating på oövade moment.
         const skills = context === 'blixt' || context === 'diagnos'
           ? c.skills
-          : recomputeAvailability({ ...c.skills, [momentId]: nextSkill })
+          : recomputeAvailability({ ...c.skills, [momentId]: nextSkill }, c.conqueredWorlds ?? [])
         return { ...c, skills, answers, streak }
       })
     },
@@ -291,18 +291,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         skills: recomputeAvailability({
           ...c.skills,
           [momentId]: applyBossResult(c.skills[momentId] ?? newSkillState(momentId), won, todayISO()),
-        }),
+        }, c.conqueredWorlds ?? []),
       }))
     },
 
     finishWorldBoss: (worldId, won) => {
       if (!activeChildId || !won) return
-      // Vinst mot världsbossen → världen erövrad (klimax + firande, ingen grind).
-      patchChild(activeChildId, (c) => (
-        c.conqueredWorlds?.includes(worldId)
-          ? c
-          : { ...c, conqueredWorlds: [...(c.conqueredWorlds ?? []), worldId] }
-      ))
+      // Vinst mot världsbossen → världen erövrad. Räkna om tillgänglighet så att
+      // NÄSTA värld nu öppnas (bossgrinden släpper). Detta är enda vägen vidare.
+      patchChild(activeChildId, (c) => {
+        if (c.conqueredWorlds?.includes(worldId)) return c
+        const conqueredWorlds = [...(c.conqueredWorlds ?? []), worldId]
+        return { ...c, conqueredWorlds, skills: recomputeAvailability(c.skills, conqueredWorlds) }
+      })
     },
 
     finishStar: (momentId, won) => {
@@ -330,7 +331,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       for (const m of MOMENTS) fresh[m.id] = newSkillState(m.id)
       return {
         ...c,
-        skills: recomputeAvailability(fresh),
+        skills: recomputeAvailability(fresh, []),
+        // Ny placering börjar om från noll — även erövrade världar nollställs så
+        // bossgrinden gäller på nytt utifrån den nya diagnosen.
+        conqueredWorlds: [],
         diagnosis: { passesDone: 0, passesTotal: 1, done: false, probes: [] },
       }
     }),
@@ -342,7 +346,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         skills: recomputeAvailability({
           ...c.skills,
           [momentId]: applyReviewResult(c.skills[momentId] ?? newSkillState(momentId), passed, todayISO()),
-        }),
+        }, c.conqueredWorlds ?? []),
       }))
     },
 

@@ -1,7 +1,8 @@
 import type {
   AnswerRecord, ChildProfile, MasteryState, MisconceptionTag, SkillState, Task,
 } from '../domain/types'
-import { MOMENTS, MOMENTS_ORDERED, momentById } from '../domain/curriculum'
+import { MOMENTS, momentById } from '../domain/curriculum'
+import { WORLDS } from '../domain/worlds'
 import { hasGenerator } from '../generators'
 import { RATING_START, isBossReady, practiceLevel, updateRating } from './rating'
 import { scheduleFirstReview, scheduleNextReview, scheduleRetryReview } from './spaced-repetition'
@@ -31,12 +32,40 @@ export function newSkillState(momentId: string): SkillState {
 const isDone = (s: SkillState | undefined): boolean =>
   s?.mastery === 'mastered' || s?.mastery === 'star'
 
-/** Räkna om locked/available utifrån förkunskaper. Muterar inte. */
-export function recomputeAvailability(skills: Record<string, SkillState>): Record<string, SkillState> {
+/** Generatorförsedda moment i en värld (de som faktiskt går att träna). */
+function genMomentIdsInWorld(worldId: string): string[] {
+  return MOMENTS.filter((m) => m.worldId === worldId && hasGenerator(m.generatorId)).map((m) => m.id)
+}
+
+/** Är alla (tränbara) moment i en värld behärskade? Tom värld räknas EJ som klar. */
+export function worldMomentsComplete(skills: Record<string, SkillState>, worldId: string): boolean {
+  const ids = genMomentIdsInWorld(worldId)
+  return ids.length > 0 && ids.every((id) => isDone(skills[id]))
+}
+
+/**
+ * Räkna om locked/available utifrån förkunskaper OCH bossgrinden. Muterar inte.
+ *
+ * Bossgrind (orubblig princip: framsteg styrs av appkod): för att korsa in i
+ * en NY värld måste den förra världens boss vara besegrad. Konkret — ett
+ * moment vars förkunskap ligger i en ANNAN värld låses upp först när DEN
+ * världen finns i `conqueredWorlds`. Moment inom samma värld påverkas inte.
+ * `conqueredWorlds` default tom = inga bossar tagna än (t.ex. ny profil).
+ */
+export function recomputeAvailability(
+  skills: Record<string, SkillState>,
+  conqueredWorlds: readonly string[] = [],
+): Record<string, SkillState> {
+  const conquered = new Set(conqueredWorlds)
   const next: Record<string, SkillState> = { ...skills }
   for (const moment of MOMENTS) {
     const skill = next[moment.id] ?? newSkillState(moment.id)
-    const unlocked = moment.prerequisites.every((p) => isDone(next[p]))
+    const prereqsDone = moment.prerequisites.every((p) => isDone(next[p]))
+    const bossGateOpen = moment.prerequisites.every((p) => {
+      const pWorld = momentById(p).worldId
+      return pWorld === moment.worldId || conquered.has(pWorld)
+    })
+    const unlocked = prereqsDone && bossGateOpen
     let mastery: MasteryState = skill.mastery
     if (skill.mastery === 'locked' && unlocked) mastery = 'available'
     if (skill.mastery === 'available' && !unlocked) mastery = 'locked'
@@ -58,16 +87,17 @@ export function recomputeAvailability(skills: Record<string, SkillState>): Recor
 export function repairDiagnosisBossReady(
   skills: Record<string, SkillState>,
   now: string,
+  conqueredWorlds: readonly string[] = [],
 ): Record<string, SkillState> {
-  let changed = false
   const next: Record<string, SkillState> = { ...skills }
   for (const [id, s] of Object.entries(skills)) {
     if (s && s.mastery === 'boss-ready' && s.attempts === 0) {
       next[id] = { ...s, mastery: 'mastered', rating: Math.max(s.rating, 700), review: s.review ?? scheduleFirstReview(now) }
-      changed = true
     }
   }
-  return changed ? recomputeAvailability(next) : skills
+  // Alltid räkna om tillgänglighet — så bossgrinden greppar även gamla profiler
+  // som placerades innan grinden fanns (nedströms världar låses bakom bossen).
+  return recomputeAvailability(next, conqueredWorlds)
 }
 
 const MISCONCEPTION_MEMORY = 10
@@ -201,20 +231,55 @@ export function applyReviewResult(skill: SkillState, passed: boolean, now: strin
   }
 }
 
-/** Nästa moment att träna: needs-review först, sedan läroplansordningen. */
+/**
+ * Nästa moment att träna. Repetition (needs-review) går alltid först — den
+ * är tillåten var som helst. Därefter går vi igenom världarna i läroplans-
+ * ordning och STANNAR vid den första världen som inte är både klar OCH
+ * erövrad: är det moment kvar tränar vi dem; är alla moment klara men bossen
+ * kvar returnerar vi undefined (barnet ska möta bossen — se bossPendingWorldId).
+ * Så hoppar vi aldrig förbi en oerövrad boss in i nästa värld.
+ */
 export function currentMomentId(profile: ChildProfile): string | undefined {
   const skills = profile.skills
   const withGen = (id: string): boolean => hasGenerator(momentById(id).generatorId)
   const needsReview = Object.values(skills).find((s) => s.mastery === 'needs-review' && withGen(s.momentId))
   if (needsReview) return needsReview.momentId
-  const inProgress = Object.values(skills).find(
-    (s) => (s.mastery === 'in-progress' || s.mastery === 'boss-ready') && withGen(s.momentId),
-  )
-  if (inProgress) return inProgress.momentId
-  // Första tillgängliga i läroplansordning med byggd generator.
-  for (const moment of MOMENTS_ORDERED) {
-    const s = skills[moment.id]
-    if (s?.mastery === 'available' && hasGenerator(moment.generatorId)) return moment.id
+  const conquered = new Set(profile.conqueredWorlds ?? [])
+  for (const world of WORLDS) {
+    const ids = genMomentIdsInWorld(world.id)
+    if (ids.length === 0) continue
+    const complete = ids.every((id) => isDone(skills[id]))
+    if (!complete) {
+      // Träna vidare i denna värld: pågående/boss-redo först, annars nästa öppna.
+      const active = ids.find((id) => {
+        const m = skills[id]?.mastery
+        return m === 'in-progress' || m === 'boss-ready'
+      })
+      if (active) return active
+      const avail = ids.find((id) => skills[id]?.mastery === 'available')
+      return avail ?? ids.find((id) => skills[id]?.mastery !== 'locked')
+    }
+    // Världen klar men bossen inte besegrad → stanna (barnet möter bossen).
+    if (!conquered.has(world.id)) return undefined
+    // Klar OCH erövrad → gå vidare till nästa värld.
+  }
+  return undefined
+}
+
+/**
+ * Vilken världs boss väntar just nu (alla moment klara men världen inte
+ * erövrad)? Den avgör "Du är här" och den gula knappen när det inte finns
+ * något moment kvar att träna. undefined = ingen boss väntar.
+ */
+export function bossPendingWorldId(profile: ChildProfile): string | undefined {
+  const skills = profile.skills
+  const conquered = new Set(profile.conqueredWorlds ?? [])
+  for (const world of WORLDS) {
+    const ids = genMomentIdsInWorld(world.id)
+    if (ids.length === 0) continue
+    if (!ids.every((id) => isDone(skills[id]))) return undefined // moment kvar → ingen boss än
+    if (!conquered.has(world.id)) return world.id // klar men oerövrad → bossen väntar
+    // annars nästa värld
   }
   return undefined
 }
