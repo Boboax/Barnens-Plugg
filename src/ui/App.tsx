@@ -13,7 +13,7 @@ import { TimeUp } from './screens/TimeUp'
 import { useStore } from './store'
 
 /** Skärmar där aktiv träningstid tickar mot dagens gräns. */
-const TIMED_SCREENS = new Set(['session', 'boss', 'star', 'blixt', 'diagnosis'])
+const TIMED_SCREENS = new Set(['session', 'check', 'boss', 'star', 'blixt', 'diagnosis'])
 const TICK_SECONDS = 5
 /**
  * Aktivitetsbaserad tid: klockan räknar bara när barnet faktiskt gör något.
@@ -62,9 +62,11 @@ export function App() {
   // loopar temalåten tills en bosstrid, då bosslåtarna tar över.
   useEffect(() => {
     if (piSover) { pauseMusic(); return }
-    if (screen === 'boss' || screen === 'star') setMusicScene('boss')
+    // Bara VÄRLDSBOSSEN (klimaxstriden) får den dramatiska boss-musiken.
+    // Nodens vänliga kunskapskoll ('check') och diamanten ('star') kör temalåten.
+    if (screen === 'boss') setMusicScene('boss')
     else if (screen === 'profiles') setMusicScene('start')
-    else setMusicScene('spel') // home, session, diagnosis, blixt, time-up, parent
+    else setMusicScene('spel') // home, session, check, star, diagnosis, blixt, time-up, parent
   }, [screen, piSover])
 
   // Tidsbokföring: tickar bara på träningsskärmar, bara vid aktivitet,
@@ -104,6 +106,7 @@ export function App() {
       case 'profiles': return <ProfileSelect />
       case 'home': return <Home />
       case 'session': return <SessionScreen key={activeChild?.id} />
+      case 'check': return <BattleScreen kind="check" />
       case 'boss': return <BattleScreen kind="boss" />
       case 'star': return <BattleScreen kind="star" />
       case 'blixt': return <BlixtScreen key={store.blixtKind} />
