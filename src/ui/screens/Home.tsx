@@ -26,14 +26,14 @@ import { todayISO, useStore } from '../store'
    ============================================================ */
 
 /** 'now' = motorns aktiva moment (Pi står här); 'oppen' = upplåst och valbart. */
-type NodeState = 'done' | 'star' | 'now' | 'oppen' | 'boss' | 'locked' | 'coming'
+type NodeState = 'done' | 'star' | 'now' | 'oppen' | 'redo' | 'locked' | 'coming'
 
 function nodeState(moment: Moment, skill: SkillState | undefined, isCurrent: boolean): NodeState {
   if (!hasGenerator(moment.generatorId)) return 'coming'
   if (!skill) return 'locked'
   if (skill.mastery === 'star') return 'star'
   if (skill.mastery === 'mastered') return 'done'
-  if (skill.mastery === 'boss-ready') return 'boss'
+  if (skill.mastery === 'boss-ready') return 'redo' // redo för Pis kunskapskoll (ingen boss)
   if (isCurrent) return 'now'
   if (skill.mastery === 'in-progress' || skill.mastery === 'needs-review' || skill.mastery === 'available') return 'oppen'
   return 'locked'
@@ -45,7 +45,7 @@ const NODE_BG: Record<NodeState, string> = {
   star: 'var(--mint)',
   now: 'var(--sun)',
   oppen: '#FFDF94',
-  boss: 'var(--boss)',
+  redo: 'var(--sun)',
   locked: '#D8D4C8',
   coming: '#D8D4C8',
 }
@@ -59,7 +59,7 @@ const STATE_ICON: Record<NodeState, IconName> = {
   star: 'stjarna',
   now: 'flagga',
   oppen: 'penna',
-  boss: 'svards',
+  redo: 'stjarna', // redo att visa vad du kan för Pi
   locked: 'las',
   coming: 'grodd',
 }
@@ -247,6 +247,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
               return s?.mastery === 'mastered' || s?.mastery === 'star'
             }).length
             const worldComplete = genTotal > 0 && worldDone >= genTotal
+            // Världsbossen får utmanas när alla moment är klara; besegrad när erövrad.
+            const conquered = child.conqueredWorlds?.includes(worldId) ?? false
+            const bossReady = worldComplete && !conquered
             const li = moments.length - 1
             const [bx, by] = [nodesW + BOSS_END_W / 2, MAP_H / 2]
             // Slutsträckan fram till bossen (guld om världen är klar, annars blek).
@@ -280,19 +283,19 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   const state = states[i]
                   const isStar = state === 'star'
                   const dim = state === 'locked' || state === 'coming'
-                  const clickable = state === 'now' || state === 'oppen' || state === 'boss' || state === 'done' || isStar
+                  const clickable = state === 'now' || state === 'oppen' || state === 'redo' || state === 'done' || isStar
                   const onClick = (): void => {
                     if (secondsLeft <= 0) return store.go('time-up')
-                    if (state === 'boss') store.startBattle(moment.id, 'boss')
-                    else if (state === 'done') store.startBattle(moment.id, 'star')
+                    if (state === 'redo') store.startBattle(moment.id, 'check') // Pis vänliga kunskapskoll
+                    else if (state === 'done') store.startBattle(moment.id, 'star') // diamantnivån
                     // Nodtryck = FOKUSERAD träning på just det momentet (inte hela passet).
                     else if (state === 'now' || state === 'oppen') store.startSession(moment.id, true)
                   }
                   // Ringens centrum ligger EXAKT på (nodeCx, nodeCy) → stigen träffar
                   // mitt i ringen. Bildtexten är absolut placerad under och flyttar
                   // därför aldrig ringen ur led (tidigare bugg: hela stapeln centrerades).
-                  // Bossen är störst och tydligast — barnet ska genast se monstret.
-                  const size = state === 'boss' ? 76 : state === 'now' ? 68 : 58
+                  // "redo" (dags för Pi-koll) och "now" är de aktiva noderna → lite större.
+                  const size = state === 'redo' || state === 'now' ? 70 : 58
                   const medallion = Math.round(size * 0.6)
                   const iconSize = Math.round(size * 0.44)
                   return (
@@ -309,33 +312,27 @@ function HomeInner({ child }: { child: ChildProfile }) {
                       }}
                     >
                       <span
-                        className={`map-node${state === 'now' ? ' pulse-glow' : state === 'boss' ? ' float-soft' : ''}`}
+                        className={`map-node${state === 'now' || state === 'redo' ? ' pulse-glow' : ''}`}
                         style={{
                           position: 'relative', width: size, height: size, flexShrink: 0,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          // 'now' får sitt pulserande sken via .pulse-glow (följer ringens
-                          // runda form); övriga får statisk skugga/glöd här.
-                          filter: state === 'now'
+                          // 'now'/'redo' får pulserande sken via .pulse-glow (följer ringen);
+                          // övriga får statisk skugga.
+                          filter: state === 'now' || state === 'redo'
                             ? undefined
-                            : state === 'boss'
-                              ? 'drop-shadow(0 0 9px rgba(224,84,52,.95)) drop-shadow(0 3px 4px rgba(0,0,0,.5))'
-                              : 'drop-shadow(0 3px 4px rgba(0,0,0,.45))',
+                            : 'drop-shadow(0 3px 4px rgba(0,0,0,.45))',
                         }}
                       >
-                        {/* Medaljong i ringens hål. Boss = monstrets ansikte (så barnet
-                            genast ser VAR bossen är); annars statusfärgad målad ikon. */}
+                        {/* Medaljong i ringens hål: statusfärgad målad ikon. Bossmonstret
+                            visas INTE längre per nod — det bor bara hos världsbossen i slutet. */}
                         <span style={{
                           width: medallion, height: medallion, borderRadius: '50%', overflow: 'hidden',
-                          background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 58%), ${state === 'boss' ? '#3A1E22' : NODE_BG[state]}`,
+                          background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 58%), ${NODE_BG[state]}`,
                           boxShadow: 'inset 0 -2px 5px rgba(0,0,0,.3)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
-                          {state === 'boss'
-                            ? <img src={`${import.meta.env.BASE_URL}art/boss/${world.boss.id}.webp`} alt="" aria-hidden="true"
-                                onError={(e) => { e.currentTarget.style.display = 'none' }}
-                                style={{ width: '112%', height: '112%', objectFit: 'cover', objectPosition: 'center 12%' }} />
-                            : <Icon name={STATE_ICON[state]} size={iconSize}
-                                style={dim ? { filter: 'grayscale(.5) drop-shadow(0 1px 1px rgba(0,0,0,.3))' } : undefined} />}
+                          <Icon name={STATE_ICON[state]} size={iconSize}
+                            style={dim ? { filter: 'grayscale(.5) drop-shadow(0 1px 1px rgba(0,0,0,.3))' } : undefined} />
                         </span>
                         {/* Snidad mässingsring ovanpå (hålet är genomskinligt). */}
                         <img src={`${import.meta.env.BASE_URL}art/tex/nodering.webp`} alt="" aria-hidden="true"
@@ -365,13 +362,13 @@ function HomeInner({ child }: { child: ChildProfile }) {
                           ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)'
                           : '0 1px 3px rgba(20,18,30,.9), 0 0 8px rgba(20,18,30,.7)',
                       }}>
-                        <span style={{ display: 'block', fontWeight: 800, fontSize: 13, color: state === 'now' || state === 'oppen' ? 'var(--sun-ink)' : 'var(--ink)' }}>
+                        <span style={{ display: 'block', fontWeight: 800, fontSize: 13, color: state === 'now' || state === 'oppen' || state === 'redo' ? 'var(--sun-ink)' : 'var(--ink)' }}>
                           {moment.title}
                         </span>
                         <span style={{ display: 'block', fontWeight: 600, fontSize: 11, color: 'var(--muted)' }}>
                           {state === 'coming' ? 'kommer snart'
-                            : state === 'boss' ? `Utmana ${world.boss.name}!`
-                            : state === 'done' ? 'klar!'
+                            : state === 'redo' ? 'visa vad du kan!'
+                            : state === 'done' ? 'prova diamanten!'
                             : isStar ? 'stjärnnivå klarad!'
                             : state === 'locked' ? 'låst'
                             : state === 'now' ? 'börja här!'
@@ -383,39 +380,46 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   )
                 })}
 
-                {/* Världsbossen som lurar i slutet — alltid synlig. Vaken (rött sken,
-                    svävar) tills alla moment är klara, då visas den besegrad. Den
-                    fajtas inte här (momenten är striderna) → pointer-events off. */}
+                {/* Världsbossen i slutet: den STORA striden. Väktare (sover) tills
+                    alla noder är klara → då vaknar den och går att utmana (rött sken,
+                    tryckbar) → besegrad när världen är erövrad. */}
                 {genTotal > 0 && (
-                  <div style={{
-                    position: 'absolute', left: bx, top: by, transform: 'translate(-50%, -50%)', zIndex: 2,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, pointerEvents: 'none', width: BOSS_END_W - 8,
-                  }}>
+                  <button
+                    disabled={!bossReady}
+                    onClick={() => { if (secondsLeft <= 0) return store.go('time-up'); store.startWorldBoss(worldId) }}
+                    aria-label={bossReady ? `Utmana ${world.boss.name}` : undefined}
+                    style={{
+                      position: 'absolute', left: bx, top: by, transform: 'translate(-50%, -50%)', zIndex: 2,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: BOSS_END_W - 8,
+                      fontFamily: 'inherit', background: 'none', border: 'none',
+                      pointerEvents: bossReady ? 'auto' : 'none',
+                    }}
+                  >
                     <img
-                      src={`${import.meta.env.BASE_URL}art/boss/${world.boss.id}${worldComplete ? '-besegrad' : ''}.webp`}
+                      src={`${import.meta.env.BASE_URL}art/boss/${world.boss.id}${conquered ? '-besegrad' : ''}.webp`}
                       alt="" aria-hidden="true"
                       onError={(e) => { e.currentTarget.style.display = 'none' }}
-                      className={worldComplete ? undefined : 'float-soft'}
+                      className={conquered ? undefined : 'float-soft'}
                       style={{
                         height: 104, width: 'auto', maxWidth: BOSS_END_W - 12, objectFit: 'contain',
-                        filter: worldComplete
+                        filter: conquered
                           ? 'drop-shadow(0 4px 6px rgba(0,0,0,.5))'
-                          : 'drop-shadow(0 0 9px rgba(224,84,52,.75)) drop-shadow(0 4px 6px rgba(0,0,0,.5))',
-                        opacity: worldComplete ? 0.92 : 1,
+                          : `drop-shadow(0 0 ${bossReady ? 12 : 9}px rgba(224,84,52,${bossReady ? 0.95 : 0.7})) drop-shadow(0 4px 6px rgba(0,0,0,.5))`,
+                        opacity: conquered ? 0.92 : 1,
                       }}
                     />
                     <span style={{
                       textAlign: 'center', lineHeight: 1.12,
                       textShadow: dark ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)' : '0 1px 3px rgba(20,18,30,.9), 0 0 8px rgba(20,18,30,.7)',
                     }}>
-                      <span style={{ display: 'block', fontWeight: 800, fontSize: 12.5, color: worldComplete ? 'var(--mint)' : 'var(--sun-ink)' }}>
+                      <span style={{ display: 'block', fontWeight: 800, fontSize: 12.5, color: conquered ? 'var(--mint)' : 'var(--sun-ink)' }}>
                         {world.boss.name}
                       </span>
                       <span style={{ display: 'block', fontWeight: 700, fontSize: 11, color: 'var(--muted)' }}>
-                        {worldComplete ? 'besegrad! ✓' : 'väktare'}
+                        {conquered ? 'erövrad! ✓' : bossReady ? 'Möt bossen!' : 'väktare'}
                       </span>
                     </span>
-                  </div>
+                  </button>
                 )}
               </div>
             )

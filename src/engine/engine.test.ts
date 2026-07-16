@@ -6,7 +6,7 @@ import { REVIEW_INTERVALS_DAYS, scheduleFirstReview, scheduleNextReview } from '
 import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady } from './progress'
 import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
-import { composeBossTasks, composeStarTasks } from './session'
+import { composeCheckTasks, composeWorldBossTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
 import { rewardProgress } from './rewards'
 import { BLIXT_TESTS, blixtTask, blixtUnlocked } from './blixt'
 
@@ -190,15 +190,22 @@ describe('startdiagnosen', () => {
   })
 })
 
-describe('bosstrider', () => {
-  it('bygger rätt antal frågor med nya frön varje gång', () => {
-    const a = composeBossTasks('vaxling-0-100')
-    const b = composeBossTasks('vaxling-0-100')
-    expect(a.length).toBe(12)
+describe('prov: kunskapskoll, världsboss, diamant', () => {
+  it('nodens kunskapskoll bygger rätt antal frågor med nya frön varje gång', () => {
+    const a = composeCheckTasks('vaxling-0-100')
+    const b = composeCheckTasks('vaxling-0-100')
+    expect(a.length).toBe(CHECK_TASK_COUNT)
     expect(a.map((t) => t.ref.seed).join()).not.toBe(b.map((t) => t.ref.seed).join())
   })
 
-  it('stjärnnivån håller sig till nivå 8–10', () => {
+  it('världsbossen blandar frågor från hela världen', () => {
+    const tasks = composeWorldBossTasks('talens-dal')
+    expect(tasks.length).toBe(WORLDBOSS_TASK_COUNT)
+    // Frågor från flera olika moment i världen (inte bara ett).
+    expect(new Set(tasks.map((t) => t.ref.generatorId)).size).toBeGreaterThan(1)
+  })
+
+  it('diamantnivån håller sig till nivå 8–10', () => {
     for (const task of composeStarTasks('vaxling-0-100')) {
       expect(task.ref.level).toBeGreaterThanOrEqual(8)
     }

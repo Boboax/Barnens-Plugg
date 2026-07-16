@@ -282,6 +282,10 @@ export interface ChildProfile {
   /** Har barnet sett Pis förklaring av hur kartans noder fungerar? Optionellt
       = bakåtkompatibelt; visas en gång på hemskärmen. */
   seenMapIntro?: boolean
+
+  /** Världar där barnet besegrat världsbossen (klimaxstriden i slutet).
+      Optionellt = bakåtkompatibelt. Kosmetiskt/firande — gatear inte nästa värld. */
+  conqueredWorlds?: string[]
 }
 
 /** Målade hjältefigurer (public/art/hero/*). Nyckeln bor lokalt per barn. */

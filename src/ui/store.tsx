@@ -22,7 +22,7 @@ import { hashPin, verifyPin } from '../storage/pin'
    ============================================================ */
 
 export type Screen =
-  | 'profiles' | 'home' | 'session' | 'boss' | 'star'
+  | 'profiles' | 'home' | 'session' | 'check' | 'boss' | 'star'
   | 'blixt' | 'diagnosis' | 'parent' | 'time-up'
 
 export const KID_COLORS = ['#FF7A6E', '#3FBF87', '#4A56C6', '#E8A13C', '#8C6BC8', '#2FA8C7'] as const
@@ -46,9 +46,13 @@ interface StoreValue {
   go(screen: Screen): void
   selectChild(id: string): void
   leaveChild(): void
-  /** Momentet vars boss/stjärnnivå utmanas just nu. */
+  /** Momentet vars kunskapskoll/stjärnnivå körs just nu. */
   battleMomentId: string | undefined
-  startBattle(momentId: string, kind: 'boss' | 'star'): void
+  /** Världen vars boss (klimaxstrid i slutet) utmanas just nu. */
+  battleWorldId: string | undefined
+  startBattle(momentId: string, kind: 'check' | 'star'): void
+  /** Starta världsbossen (den stora striden när alla noder i världen är klara). */
+  startWorldBoss(worldId: string): void
   /** Momentet barnet valde på kartan för nästa pass (undefined = motorn väljer). */
   sessionMomentId: string | undefined
   /** Fokuserat pass? (nodtryck = bara det momentet; "Starta passet" = fullt pass). */
@@ -66,7 +70,10 @@ interface StoreValue {
 
   // Träning
   recordAnswer(task: Task, correct: boolean, elapsedMs: number, context: AnswerRecord['context'], givenAnswer?: number | string, scratchPng?: string, hotStreak?: number): void
-  finishBoss(momentId: string, won: boolean): void
+  /** Resultat av nodens kunskapskoll (vinst → momentet behärskat). */
+  finishCheck(momentId: string, won: boolean): void
+  /** Resultat av världsbossen (vinst → världen erövrad). */
+  finishWorldBoss(worldId: string, won: boolean): void
   finishStar(momentId: string, won: boolean): void
   /** Markera att barnet sett Pis diamantnivå-förklaring (visas en gång). */
   markStarIntroSeen(): void
@@ -118,6 +125,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [activeChildId, setActiveChildId] = useState<string>()
   const [parentUnlocked, setParentUnlocked] = useState(false)
   const [battleMomentId, setBattleMomentId] = useState<string>()
+  const [battleWorldId, setBattleWorldId] = useState<string>()
   const [blixtKind, setBlixtKind] = useState<BlixtKind>()
   const [sessionMomentId, setSessionMomentId] = useState<string>()
   const [sessionFocused, setSessionFocused] = useState(false)
@@ -175,9 +183,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
 
     battleMomentId,
+    battleWorldId,
     startBattle: (momentId, kind) => {
       setBattleMomentId(momentId)
       setScreen(kind)
+    },
+    startWorldBoss: (worldId) => {
+      setBattleWorldId(worldId)
+      setScreen('boss')
     },
 
     sessionMomentId,
@@ -270,8 +283,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })
     },
 
-    finishBoss: (momentId, won) => {
+    finishCheck: (momentId, won) => {
       if (!activeChildId) return
+      // Vinst i nodens kunskapskoll → momentet behärskat (öppnar nästa nod).
       patchChild(activeChildId, (c) => ({
         ...c,
         skills: recomputeAvailability({
@@ -279,6 +293,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           [momentId]: applyBossResult(c.skills[momentId] ?? newSkillState(momentId), won, todayISO()),
         }),
       }))
+    },
+
+    finishWorldBoss: (worldId, won) => {
+      if (!activeChildId || !won) return
+      // Vinst mot världsbossen → världen erövrad (klimax + firande, ingen grind).
+      patchChild(activeChildId, (c) => (
+        c.conqueredWorlds?.includes(worldId)
+          ? c
+          : { ...c, conqueredWorlds: [...(c.conqueredWorlds ?? []), worldId] }
+      ))
     },
 
     finishStar: (momentId, won) => {
@@ -439,7 +463,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setHousehold((h) => ({ ...h, chat: config ?? undefined }))
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, blixtKind, sessionMomentId, sessionFocused])
+  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, battleWorldId, blixtKind, sessionMomentId, sessionFocused])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

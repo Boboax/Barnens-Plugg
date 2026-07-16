@@ -1,5 +1,5 @@
 import type { ChildProfile, DifficultyLevel, SessionPlan, Task } from '../domain/types'
-import { momentById } from '../domain/curriculum'
+import { momentById, momentsInWorld } from '../domain/curriculum'
 import { generateTask, hasGenerator } from '../generators'
 import { freshSeed, createRng } from '../generators/rng'
 import { variedLevel } from './rating'
@@ -91,37 +91,46 @@ export function taskForPart(profile: ChildProfile, momentId: string, kind: 'uppv
 }
 
 /* ============================================================
-   Bosstrider och stjärnnivå.
+   Nodens kunskapskoll, världsbossen och stjärnnivån.
    ============================================================ */
 
-export const BOSS_TASK_COUNT = 12
-export const BOSS_SHIELDS_TO_WIN = 10 // ≈ 80 %-kravet
+/* Kunskapskollen ("Visa vad du kan för Pi") avgör om en NOD blir klar.
+   Kort och vänlig — ingen boss, ingen klocka, fel straffas aldrig. */
+export const CHECK_TASK_COUNT = 8
+export const CHECK_CORRECT_TO_WIN = 6 // 75 % — solid, inte perfektion
+
+/* Världsbossen är klimaxstriden i SLUTET av en värld (sällsynt, dramatisk).
+   Blandar frågor från hela världens moment. */
+export const WORLDBOSS_TASK_COUNT = 14
+export const WORLDBOSS_SHIELDS_TO_WIN = 11 // ≈ 80 %-kravet
+
 export const STAR_TASK_COUNT = 8
 export const STAR_CORRECT_TO_WIN = 6
 
-/**
- * Bygg frågorna till en bosstrid: blandade nivåer 5–7 från momentet,
- * plus ett par frågor från förkunskaperna (blandning motverkar
- * "nyss tränat"-effekten). Nya frön varje försök — går inte att memorera.
- */
-export function composeBossTasks(momentId: string): Task[] {
+/** Nodens kunskapskoll: några frågor från momentet, nivå 4–6. Nya frön. */
+export function composeCheckTasks(momentId: string): Task[] {
   const moment = momentById(momentId)
   if (!moment.generatorId) throw new Error(`Momentet ${momentId} saknar generator`)
   const rng = createRng(freshSeed())
   const tasks: Task[] = []
-
-  const prereqsWithGen = moment.prerequisites
-    .map((p) => momentById(p))
-    .filter((m) => hasGenerator(m.generatorId))
-  const prereqCount = Math.min(2, prereqsWithGen.length)
-
-  for (let i = 0; i < BOSS_TASK_COUNT - prereqCount; i++) {
-    const level = rng.pick([5, 5, 6, 6, 6, 7] as const)
-    tasks.push(generateTask(moment.generatorId, level, freshSeed()))
+  for (let i = 0; i < CHECK_TASK_COUNT; i++) {
+    tasks.push(generateTask(moment.generatorId, rng.pick([4, 5, 5, 6, 6] as const), freshSeed()))
   }
-  for (let i = 0; i < prereqCount; i++) {
-    const prereq = rng.pick(prereqsWithGen)
-    tasks.push(generateTask(prereq.generatorId!, 5, freshSeed()))
+  return tasks
+}
+
+/**
+ * Världsbossens frågor: blandat från HELA världens generatorförsedda moment
+ * (ett riktigt slutprov för världen), nivå 5–7. Nya frön varje försök.
+ */
+export function composeWorldBossTasks(worldId: string): Task[] {
+  const moments = momentsInWorld(worldId).filter((m) => hasGenerator(m.generatorId))
+  if (moments.length === 0) return []
+  const rng = createRng(freshSeed())
+  const tasks: Task[] = []
+  for (let i = 0; i < WORLDBOSS_TASK_COUNT; i++) {
+    const m = rng.pick(moments)
+    tasks.push(generateTask(m.generatorId!, rng.pick([5, 6, 6, 7, 7] as const), freshSeed()))
   }
   return rng.shuffle(tasks)
 }
