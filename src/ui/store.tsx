@@ -71,6 +71,8 @@ interface StoreValue {
   finishReview(momentId: string, passed: boolean): void
   recordDiagnosisProbe(momentId: string, level: number, correct: boolean): void
   finishDiagnosisPass(converged: boolean): void
+  /** Nollställ placering + framsteg och kör om startdiagnosen (föräldervalt). */
+  redoDiagnosis(childId: string): void
 
   // Tid
   secondsLeftToday(child: ChildProfile): number
@@ -284,6 +286,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => (c.seenStarIntro ? c : { ...c, seenStarIntro: true }))
     },
+
+    redoDiagnosis: (id) => patchChild(id, (c) => {
+      // Färska färdigheter så gammal placering rensas helt; profil/namn/
+      // belöningar/historik behålls. Diagnosen körs som ett enda pass.
+      const fresh: Record<string, SkillState> = {}
+      for (const m of MOMENTS) fresh[m.id] = newSkillState(m.id)
+      return {
+        ...c,
+        skills: recomputeAvailability(fresh),
+        diagnosis: { passesDone: 0, passesTotal: 1, done: false, probes: [] },
+      }
+    }),
 
     finishReview: (momentId, passed) => {
       if (!activeChildId) return
