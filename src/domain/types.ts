@@ -278,6 +278,10 @@ export interface ChildProfile {
   /** Har barnet sett Pis förklaring av diamantnivån? Optionellt =
       bakåtkompatibelt; visas en gång, sedan hoppas introt över. */
   seenStarIntro?: boolean
+
+  /** Har barnet sett Pis förklaring av hur kartans noder fungerar? Optionellt
+      = bakåtkompatibelt; visas en gång på hemskärmen. */
+  seenMapIntro?: boolean
 }
 
 /** Målade hjältefigurer (public/art/hero/*). Nyckeln bor lokalt per barn. */

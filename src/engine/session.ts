@@ -21,6 +21,10 @@ import { currentMomentId } from './progress'
 const NEW_TASK_COUNT = 8
 const MIXED_TASK_COUNT = 4
 const MAX_REVIEW_MOMENTS = 2
+// Fokuserad nodträning: bara det valda momentet. 12 = når "boss-redo"
+// (BOSS_READY_MIN_ATTEMPTS) på ett fokuserat pass om det går bra → bossen
+// vaknar direkt, så vägen till "klar" blir tydlig och snabb.
+const FOCUSED_TASK_COUNT = 12
 
 /** Kan momentet tränas som "nytt" just nu? (upplåst + byggd generator) */
 export function isTrainable(profile: ChildProfile, momentId: string): boolean {
@@ -30,8 +34,15 @@ export function isTrainable(profile: ChildProfile, momentId: string): boolean {
   return openStates.has(skill.mastery) && hasGenerator(momentById(momentId).generatorId)
 }
 
-export function composeSession(profile: ChildProfile, today: string, preferredMomentId?: string): SessionPlan {
+export function composeSession(profile: ChildProfile, today: string, preferredMomentId?: string, focused = false): SessionPlan {
   const parts: SessionPlan['parts'] = []
+
+  // Fokuserad nodträning: barnet tryckte på EN specifik nod och vill träna
+  // just det momentet — då hoppar vi över uppvärmning/blandat (som hör till
+  // "Dagens pass") och kör bara det valda momentet.
+  if (focused && preferredMomentId && isTrainable(profile, preferredMomentId)) {
+    return { parts: [{ kind: 'nytt', momentId: preferredMomentId, taskCount: FOCUSED_TASK_COUNT }] }
+  }
 
   const due = dueForReview(profile.skills, today)
     .filter((s) => hasGenerator(momentById(s.momentId).generatorId))

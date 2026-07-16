@@ -285,7 +285,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     if (secondsLeft <= 0) return store.go('time-up')
                     if (state === 'boss') store.startBattle(moment.id, 'boss')
                     else if (state === 'done') store.startBattle(moment.id, 'star')
-                    else if (state === 'now' || state === 'oppen') store.startSession(moment.id)
+                    // Nodtryck = FOKUSERAD träning på just det momentet (inte hela passet).
+                    else if (state === 'now' || state === 'oppen') store.startSession(moment.id, true)
                   }
                   // Ringens centrum ligger EXAKT på (nodeCx, nodeCy) → stigen träffar
                   // mitt i ringen. Bildtexten är absolut placerad under och flyttar
@@ -563,6 +564,46 @@ function HomeInner({ child }: { child: ChildProfile }) {
         </div>
       </aside>
       </div>
+      {/* Pi förklarar hur noderna fungerar — en gång per barn. */}
+      {!child.seenMapIntro && <MapIntro onDone={() => store.markMapIntroSeen()} />}
+    </div>
+  )
+}
+
+/* Pis engångsförklaring av kartans noder: träna → bossen vaknar → besegra
+   bossen → noden blir klar → nästa öppnas. Så barnet förstår hur man tar
+   sig vidare. */
+function MapIntro({ onDone }: { onDone(): void }) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 20, background: 'rgba(15,12,20,.72)',
+    }}>
+      <div className="card bounce-in" style={{ maxWidth: 440, width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12, padding: '22px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center' }}><Pi mood="glad" size={84} /></div>
+        <h2 className="display" style={{ fontSize: 22, fontWeight: 900, margin: 0, color: 'var(--ink)' }}>Så funkar äventyret!</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, textAlign: 'left', fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>
+          <Legend icon="penna" bg="#FFDF94">Tryck på en nod och <b>träna</b> momentet.</Legend>
+          <Legend icon="svards" bg="var(--boss)">När du tränat tillräckligt <b>vaknar bossen</b> — möt den!</Legend>
+          <Legend icon="kristall" bg="var(--mint)">Besegra bossen så blir noden <b>klar</b> och <b>nästa öppnas</b>.</Legend>
+          <Legend icon="las" bg="#D8D4C8">Ett lås betyder att du inte kommit dit än.</Legend>
+        </div>
+        <button className="btn btn-primary" onClick={onDone} style={{ marginTop: 4 }}>Jag fattar! ▶</button>
+      </div>
+    </div>
+  )
+}
+
+function Legend({ icon, bg, children }: { icon: IconName; bg: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span style={{
+        width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: bg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'inset 0 -2px 4px rgba(0,0,0,.25)',
+      }}>
+        <Icon name={icon} size={18} />
+      </span>
+      <span>{children}</span>
     </div>
   )
 }
