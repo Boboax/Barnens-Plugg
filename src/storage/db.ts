@@ -1,5 +1,6 @@
 import type { Household } from '../domain/types'
 import { PROFILE_SCHEMA_VERSION } from '../domain/types'
+import { repairDiagnosisBossReady } from '../engine/progress'
 
 /* ============================================================
    Lagring: IndexedDB med localStorage som reservutväg.
@@ -83,9 +84,15 @@ export function migrate(data: Household): Household {
   // Normalisera saknade toppnivå-arrayer FÖRST — äldre eller handredigerade
   // kopior kan sakna rewards/chatLog, och UI:t gör h.rewards.map(...) /
   // h.chatLog direkt (skulle annars krascha på undefined vid import).
+  // Reparera samtidigt gamla profiler där diagnosen skrev alla moment som
+  // 'boss-ready' (→ hela kartan blev bossar). Körs vid varje inläsning/import
+  // och är idempotent.
+  const now = new Date().toISOString().slice(0, 10)
   const base: Household = {
     ...data,
-    children: Array.isArray(data.children) ? data.children : [],
+    children: (Array.isArray(data.children) ? data.children : []).map((c) =>
+      c && c.skills ? { ...c, skills: repairDiagnosisBossReady(c.skills, now) } : c,
+    ),
     rewards: Array.isArray(data.rewards) ? data.rewards : [],
     chatLog: Array.isArray(data.chatLog) ? data.chatLog : [],
   }
