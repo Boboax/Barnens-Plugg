@@ -168,22 +168,35 @@ export function pauseMusic(): void { mCurrent?.pause() }
 /* ---------- App-livscykel: tysta ljudet när appen göms/stängs ----------
    På iOS fortsätter en HTMLAudioElement spela även när PWA:n läggs i
    bakgrunden eller "stängs" (flikbyte, hemknapp, låst skärm) — låten hörs
-   då kvar. Vi pausar därför låten och suspenderar Web Audio-kontexten så
-   fort sidan göms, och återupptar (om ljud är på och låten spelade) när den
-   blir synlig igen. Scenen glöms aldrig — vi återupptar exakt där vi var. */
+   då kvar. Vi pausar därför ALLA låtspår och suspenderar Web Audio-kontexten
+   så fort appen tappar fokus/göms, och återupptar (om ljud är på och låten
+   spelade) när den blir synlig igen. Scenen glöms aldrig.
+
+   iOS standalone-PWA fyrar INTE `visibilitychange` pålitligt vid bakgrund/
+   skärmlås — därför lyssnar vi även på window `blur`/`focus` och `pagehide`/
+   `pageshow`. Alla pekar på samma idempotenta hide/show (en `audioHidden`-
+   vakt gör att överlappande signaler inte skriver över "spelade den?"-minnet,
+   annars kunde återupptagningen tappas när två hide-signaler kom tätt). */
 let wasPlayingBeforeHide = false
+let audioHidden = false
 function onAppHide(): void {
+  if (audioHidden) return
+  audioHidden = true
   wasPlayingBeforeHide = !!mCurrent && !mCurrent.paused
-  mCurrent?.pause()
+  // Pausa varje spår, inte bara mCurrent — så inget hänger kvar om spåren
+  // hunnit växla (bosslåtarna) precis när appen göms.
+  for (const t of [trkStart, trkTheme, trkBoss[0], trkBoss[1]]) t?.pause()
   if (ctx && ctx.state === 'running') void ctx.suspend()
 }
 function onAppShow(): void {
+  if (!audioHidden) return
+  audioHidden = false
   if (ctx && ctx.state === 'suspended') void ctx.resume()
   if (wasPlayingBeforeHide && mCurrent && !muted) gesturePlay(mCurrent)
   wasPlayingBeforeHide = false
 }
 
-/** Kopplar ljudet till sidans synlighet. Anropas en gång vid appstart. */
+/** Kopplar ljudet till appens synlighet/fokus. Anropas en gång vid appstart. */
 let lifecycleInstalled = false
 export function installAudioLifecycle(): void {
   if (typeof document === 'undefined' || lifecycleInstalled) return
@@ -192,8 +205,10 @@ export function installAudioLifecycle(): void {
     if (document.visibilityState === 'hidden') onAppHide()
     else onAppShow()
   })
-  // pagehide/pageshow täcker bfcache-frys och iOS-appstängning som inte
-  // alltid ger visibilitychange.
+  // blur/focus är den pålitligaste bakgrundssignalen i iOS standalone-PWA;
+  // pagehide/pageshow täcker bfcache-frys och appstängning.
+  window.addEventListener('blur', onAppHide)
+  window.addEventListener('focus', onAppShow)
   window.addEventListener('pagehide', onAppHide)
   window.addEventListener('pageshow', onAppShow)
 }
