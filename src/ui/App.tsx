@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { setMusicScene, pauseMusic, unlockAudio } from '../sound'
+import { setMusicScene, pauseMusic, unlockAudio, installAudioLifecycle } from '../sound'
 import { Pi } from './components/Pi'
 import { Splash } from './components/Splash'
 import { BattleScreen } from './screens/BattleScreen'
@@ -43,6 +43,10 @@ export function App() {
     window.addEventListener('pointerdown', unlock, { once: true })
     return () => window.removeEventListener('pointerdown', unlock)
   }, [])
+
+  // Tysta musiken när appen göms/stängs (annars spelar mp3-låten kvar i
+  // bakgrunden på iOS). Återupptas automatiskt när appen blir synlig igen.
+  useEffect(() => { installAudioLifecycle() }, [])
 
   // All interaktion räknas som aktivitet (peka, rita, skriva).
   useEffect(() => {
