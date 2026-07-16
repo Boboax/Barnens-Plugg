@@ -51,7 +51,9 @@ interface StoreValue {
   startBattle(momentId: string, kind: 'boss' | 'star'): void
   /** Momentet barnet valde på kartan för nästa pass (undefined = motorn väljer). */
   sessionMomentId: string | undefined
-  startSession(momentId?: string): void
+  /** Fokuserat pass? (nodtryck = bara det momentet; "Starta passet" = fullt pass). */
+  sessionFocused: boolean
+  startSession(momentId?: string, focused?: boolean): void
   /** Pågående blixttest. */
   blixtKind: BlixtKind | undefined
   startBlixt(kind: BlixtKind): void
@@ -68,6 +70,8 @@ interface StoreValue {
   finishStar(momentId: string, won: boolean): void
   /** Markera att barnet sett Pis diamantnivå-förklaring (visas en gång). */
   markStarIntroSeen(): void
+  /** Markera att barnet sett Pis kart-/nodförklaring (visas en gång). */
+  markMapIntroSeen(): void
   finishReview(momentId: string, passed: boolean): void
   recordDiagnosisProbe(momentId: string, level: number, correct: boolean): void
   finishDiagnosisPass(converged: boolean): void
@@ -116,6 +120,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [battleMomentId, setBattleMomentId] = useState<string>()
   const [blixtKind, setBlixtKind] = useState<BlixtKind>()
   const [sessionMomentId, setSessionMomentId] = useState<string>()
+  const [sessionFocused, setSessionFocused] = useState(false)
 
   useEffect(() => {
     void loadHousehold().then((data) => {
@@ -176,8 +181,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
 
     sessionMomentId,
-    startSession: (momentId) => {
+    sessionFocused,
+    startSession: (momentId, focused = false) => {
       setSessionMomentId(momentId)
+      setSessionFocused(focused)
       setScreen('session')
     },
 
@@ -285,6 +292,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     markStarIntroSeen: () => {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => (c.seenStarIntro ? c : { ...c, seenStarIntro: true }))
+    },
+
+    markMapIntroSeen: () => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => (c.seenMapIntro ? c : { ...c, seenMapIntro: true }))
     },
 
     redoDiagnosis: (id) => patchChild(id, (c) => {
@@ -427,7 +439,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setHousehold((h) => ({ ...h, chat: config ?? undefined }))
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, blixtKind, sessionMomentId])
+  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, blixtKind, sessionMomentId, sessionFocused])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

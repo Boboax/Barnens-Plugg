@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AnswerRecord, SessionPlan, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
+import { worldById } from '../../domain/worlds'
 import { worldTheme } from '../worldThemes'
 import { composeSession, taskForPart } from '../../engine/session'
 import { chatReadyFor } from '../../chat'
@@ -46,7 +47,7 @@ export function SessionScreen() {
   // Passet planeras EN gång vid start (medvetet: profilen uppdateras under passet).
   const slots = useMemo<Slot[]>(() => {
     if (!child) return []
-    const plan = composeSession(child, todayISO(), store.sessionMomentId)
+    const plan = composeSession(child, todayISO(), store.sessionMomentId, store.sessionFocused)
     const out: Slot[] = []
     for (const part of plan.parts) {
       for (let i = 0; i < part.taskCount; i++) {
@@ -136,10 +137,28 @@ export function SessionScreen() {
 
   if (done) {
     const ratio = correctCount / slots.length
+    // Pi förtydligar VÄGEN TILL "KLAR": träna → bossen vaknar → besegra
+    // bossen → momentet blir klart och nästa nod öppnas.
+    const trainedId = slots.find((s) => s.kind === 'nytt')?.momentId
+    const trained = trainedId ? child.skills[trainedId] : undefined
+    const trainedMoment = trainedId ? momentById(trainedId) : undefined
+    let nextStep = ''
+    if (trainedMoment && trained) {
+      const bossName = worldById(trainedMoment.worldId).boss.name
+      if (trained.mastery === 'boss-ready') {
+        nextStep = `Bossen har vaknat! Möt ${bossName} på kartan och besegra den — då blir ${trainedMoment.title} klart och nästa nod öppnas.`
+      } else if (trained.mastery === 'mastered' || trained.mastery === 'star') {
+        nextStep = `${trainedMoment.title} är klart — nästa nod är öppen på kartan!`
+      } else {
+        nextStep = `Träna ${trainedMoment.title} lite till så vaknar bossen. Besegra bossen så blir noden klar och nästa öppnas!`
+      }
+    } else {
+      nextStep = ratio >= 0.8 ? 'Du är på väg att bemästra det här!' : 'Varje försök gör dig starkare — imorgon tar vi det igen!'
+    }
     return (
       <EndCard
         title={ratio >= 0.8 ? 'Superjobbat!' : 'Bra kämpat!'}
-        text={`${correctCount} av ${slots.length} rätt. ${ratio >= 0.8 ? 'Du är på väg att bemästra det här!' : 'Varje försök gör dig starkare — imorgon tar vi det igen!'}`}
+        text={`${correctCount} av ${slots.length} rätt. ${nextStep}`}
         onDone={() => store.go('home')}
         celebrate={ratio >= 0.8}
       />
