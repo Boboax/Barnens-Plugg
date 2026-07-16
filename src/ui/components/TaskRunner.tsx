@@ -124,14 +124,17 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
       gap: 14, flex: 1, minHeight: 0,
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', maxWidth: 560 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', maxWidth: 560 }}>
+          {/* Frågan sitter ALLTID på en egen ljus pergamentplatta med mörk text.
+              Läsbarheten får aldrig bero på bakgrunden bakom (arena, sol, natt) —
+              se regeln i CLAUDE.md om text över målade bakgrunder. */}
           <p style={{
             fontSize: task.prompt.length > 60 ? 19 : 26, fontWeight: 900, textAlign: 'center',
-            margin: 0, lineHeight: 1.4, letterSpacing: 0.3,
-            // I strid är texten ljus över arenan → stark mörk skugga; annars mjuk.
-            textShadow: mode === 'prov'
-              ? '0 2px 7px rgba(0,0,0,.85), 0 0 3px rgba(0,0,0,.6)'
-              : '0 1px 2px rgba(255,247,235,.6)',
+            margin: 0, lineHeight: 1.35, letterSpacing: 0.3,
+            color: ON_CARD_INK,
+            background: 'linear-gradient(180deg, rgba(251,244,226,.98), rgba(240,230,205,.98))',
+            border: '2px solid #C9B489', borderRadius: 14, padding: '10px 20px',
+            boxShadow: '0 2px 8px rgba(45,30,10,.32)',
           }}>{task.prompt}</p>
           {ttsAvailable() && (
             <button
