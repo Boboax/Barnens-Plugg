@@ -165,6 +165,39 @@ export function setMusicScene(scene: MusicScene): void {
 /** Pausar musiken utan att glömma scenen (t.ex. när Pi somnar). */
 export function pauseMusic(): void { mCurrent?.pause() }
 
+/* ---------- App-livscykel: tysta ljudet när appen göms/stängs ----------
+   På iOS fortsätter en HTMLAudioElement spela även när PWA:n läggs i
+   bakgrunden eller "stängs" (flikbyte, hemknapp, låst skärm) — låten hörs
+   då kvar. Vi pausar därför låten och suspenderar Web Audio-kontexten så
+   fort sidan göms, och återupptar (om ljud är på och låten spelade) när den
+   blir synlig igen. Scenen glöms aldrig — vi återupptar exakt där vi var. */
+let wasPlayingBeforeHide = false
+function onAppHide(): void {
+  wasPlayingBeforeHide = !!mCurrent && !mCurrent.paused
+  mCurrent?.pause()
+  if (ctx && ctx.state === 'running') void ctx.suspend()
+}
+function onAppShow(): void {
+  if (ctx && ctx.state === 'suspended') void ctx.resume()
+  if (wasPlayingBeforeHide && mCurrent && !muted) gesturePlay(mCurrent)
+  wasPlayingBeforeHide = false
+}
+
+/** Kopplar ljudet till sidans synlighet. Anropas en gång vid appstart. */
+let lifecycleInstalled = false
+export function installAudioLifecycle(): void {
+  if (typeof document === 'undefined' || lifecycleInstalled) return
+  lifecycleInstalled = true
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') onAppHide()
+    else onAppShow()
+  })
+  // pagehide/pageshow täcker bfcache-frys och iOS-appstängning som inte
+  // alltid ger visibilitychange.
+  window.addEventListener('pagehide', onAppHide)
+  window.addEventListener('pageshow', onAppShow)
+}
+
 /* ---------- Tonhjälpare ---------- */
 
 const freq = (base: number, semitones: number): number => base * 2 ** (semitones / 12)
