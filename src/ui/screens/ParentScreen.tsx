@@ -432,6 +432,36 @@ function ChildSettings({ child }: { child: ChildProfile }) {
         <strong>{child.name}</strong>
         <span style={{ color: '#8B8FA0', fontSize: 13, fontWeight: 700 }}>f. {child.birthYear} · åk {child.schoolYear}</span>
       </div>
+
+      {/* Startdiagnos / nivåplacering — högst upp så den är lätt att hitta.
+          Gör om den om nivån känns fel (t.ex. för lätta uppgifter). */}
+      <div style={{ background: '#F4F2EC', borderRadius: 12, padding: '10px 12px', marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13.5, fontWeight: 800, marginBottom: 2 }}>
+          <span>🧭 Startdiagnos (nivåplacering)</span>
+        </div>
+        <div style={{ fontSize: 12.5, color: '#6B6B78', fontWeight: 600, marginBottom: 8 }}>
+          {child.diagnosis.done
+            ? 'Klar. Känns nivån fel (för lätt/svår)? Gör om den så letar Pi upp rätt startnivå igen.'
+            : 'Pågår — körs klart nästa gång barnet loggar in.'}
+        </div>
+        {!confirmRedo ? (
+          <button
+            onClick={() => setConfirmRedo(true)}
+            style={{ fontSize: 13.5, fontWeight: 800, padding: '9px 16px', borderRadius: 10, background: '#2E3350', color: '#fff', fontFamily: 'inherit' }}
+          >Gör om diagnosen …</button>
+        ) : (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 800, color: '#B4552E', width: '100%' }}>
+              Nollställer {child.name}s framsteg och gör om placeringen. Säker?
+            </span>
+            <button onClick={() => { store.redoDiagnosis(child.id); setConfirmRedo(false) }}
+              style={{ fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 10, background: '#E2574C', color: '#fff', fontFamily: 'inherit' }}>Ja, gör om diagnosen</button>
+            <button onClick={() => setConfirmRedo(false)}
+              style={{ fontSize: 13.5, fontWeight: 700, padding: '8px 14px', borderRadius: 10, background: '#EDEAE2', color: '#2A2F3A', fontFamily: 'inherit' }}>Avbryt</button>
+          </div>
+        )}
+      </div>
+
       <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, fontSize: 14, fontWeight: 700, padding: '6px 0' }}>
         <span>⏱ Tid per dag: <strong>{child.dailyLimitMinutes} min</strong></span>
         <input
@@ -484,28 +514,6 @@ function ChildSettings({ child }: { child: ChildProfile }) {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Startdiagnos: gör om placeringen om den känns fel (t.ex. för lätta
-          uppgifter). Nollställer framstegen — därför tvåstegsbekräftelse. */}
-      <div style={{ padding: '10px 0 2px', borderTop: '1px solid #EDEAE2', marginTop: 6 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Startdiagnos (nivåplacering)</div>
-        <div style={{ fontSize: 12.5, color: '#8B8FA0', fontWeight: 700, marginBottom: 8 }}>
-          {child.diagnosis.done
-            ? 'Klar. Känns nivån fel? Gör om diagnosen — den letar upp rätt startnivå igen.'
-            : 'Pågår — körs klart nästa gång barnet loggar in.'}
-        </div>
-        {!confirmRedo ? (
-          <button className="chip" onClick={() => setConfirmRedo(true)}>Gör om diagnosen …</button>
-        ) : (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12.5, fontWeight: 800, color: '#B4552E' }}>
-              Nollställer {child.name}s framsteg och gör om placeringen. Säker?
-            </span>
-            <button className="btn btn-primary" style={{ padding: '6px 14px' }} onClick={() => { store.redoDiagnosis(child.id); setConfirmRedo(false) }}>Ja, gör om</button>
-            <button className="chip" onClick={() => setConfirmRedo(false)}>Avbryt</button>
-          </div>
-        )}
       </div>
     </div>
   )
