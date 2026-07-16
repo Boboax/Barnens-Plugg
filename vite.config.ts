@@ -6,10 +6,18 @@ import pkg from './package.json'
 
 // Versionsstämpel: paketversion + git-hash + byggtid — så att man alltid
 // kan se exakt vilken version en platta kör (PWA:er ligger lätt en version efter).
+// Patch-numret räknas AUTOMATISKT från antalet commits, så versionen rör sig
+// vid varje bygge (annars fastnade den på 1.0.0 eftersom package.json aldrig
+// bumpas). Kräver full git-historik i CI (fetch-depth: 0 i deploy.yml).
 let gitSha = 'dev'
+let commitCount = '0'
 try {
   gitSha = execSync('git rev-parse --short HEAD').toString().trim()
-} catch { /* utanför git — behåll 'dev' */ }
+  commitCount = execSync('git rev-list --count HEAD').toString().trim()
+} catch { /* utanför git — behåll standardvärden */ }
+// major.minor från package.json, patch = commit-antal → 1.0.<n>.
+const [major = '1', minor = '0'] = pkg.version.split('.')
+const appVersion = `${major}.${minor}.${commitCount}`
 const buildTime = new Date().toISOString().slice(0, 16).replace('T', ' ')
 
 // Byggs för GitHub Pages under /Barnens-Plugg/ som standard.
@@ -19,7 +27,7 @@ const base = process.env.BASE_PATH ?? '/Barnens-Plugg/'
 export default defineConfig({
   base,
   define: {
-    __APP_VERSION__: JSON.stringify(`${pkg.version} (${gitSha})`),
+    __APP_VERSION__: JSON.stringify(`${appVersion} (${gitSha})`),
     __BUILD_TIME__: JSON.stringify(buildTime),
   },
   plugins: [
