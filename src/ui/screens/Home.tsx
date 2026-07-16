@@ -3,7 +3,7 @@ import type { ChildProfile, Moment, SkillState } from '../../domain/types'
 import { momentsInWorld, momentById } from '../../domain/curriculum'
 import { WORLDS, worldById } from '../../domain/worlds'
 import { hasGenerator } from '../../generators'
-import { currentMomentId } from '../../engine/progress'
+import { currentMomentId, bossPendingWorldId, worldMomentsComplete } from '../../engine/progress'
 import { dueForReview } from '../../engine/spaced-repetition'
 import { rewardProgress } from '../../engine/rewards'
 import { blixtTarget, unlockedBlixtTests } from '../../engine/blixt'
@@ -94,14 +94,23 @@ export function Home() {
 function HomeInner({ child }: { child: ChildProfile }) {
   const store = useStore()
   const currentId = useMemo(() => currentMomentId(child), [child])
+  // Väntar en världsboss? (alla moment klara men världen inte erövrad) — då är
+  // BOSSEN nästa steg, inte ett nytt moment. Styr "Du är här", vy och knapp.
+  const pendingBossWorldId = useMemo(() => bossPendingWorldId(child), [child])
+  const pendingBossWorld = pendingBossWorldId ? worldById(pendingBossWorldId) : undefined
   const currentMoment = currentId ? momentById(currentId) : undefined
-  const currentWorld = currentMoment ? worldById(currentMoment.worldId) : undefined
+  const currentWorld = currentMoment ? worldById(currentMoment.worldId)
+    : pendingBossWorld
   const currentSkill = currentId ? child.skills[currentId] : undefined
   // Har barnet FAKTISKT tränat på det rekommenderade momentet? (styr knapptexten)
   // attempts, inte mastery: diagnosen sätter frontmomentet till in-progress utan
   // att barnet spelat, så vi vill inte säga "Fortsätt" redan dag ett.
   const hasStarted = (currentSkill?.attempts ?? 0) > 0
-  const [worldId, setWorldId] = useState(currentMoment?.worldId ?? WORLDS[0].id)
+  // "Du är här" och startvyn: bossvärlden om en boss väntar, annars aktuellt moment.
+  const focusWorldId = pendingBossWorldId ?? currentMoment?.worldId ?? WORLDS[0].id
+  // Boss väntar OCH inget moment kvar att träna → gula knappen tar till bossen.
+  const bossIsNextStep = !!pendingBossWorldId && !currentId
+  const [worldId, setWorldId] = useState(focusWorldId)
   const world = worldById(worldId)
   const theme = worldTheme(worldId)
   const worldBg = `${import.meta.env.BASE_URL}art/world/${worldId}.webp`
@@ -111,7 +120,18 @@ function HomeInner({ child }: { child: ChildProfile }) {
     const s = child.skills[m.id]
     return s?.mastery === 'mastered' || s?.mastery === 'star'
   }).length
-  const chapter = world.chapters[Math.min(masteredInWorld, world.chapters.length - 1)]
+  // Berättelseremsan: sista kapitlet ("… bossen besegrad, vägen öppnas") får
+  // ENDAST visas när bossen faktiskt är erövrad. Är alla moment klara men bossen
+  // kvar visar vi i stället en tydlig bossmaning (annars ljuger banderollen om
+  // att bossen är slagen — precis buggen på fotot).
+  const worldConquered = child.conqueredWorlds?.includes(worldId) ?? false
+  const worldAllMomentsDone = worldMomentsComplete(child.skills, worldId)
+  const lastChapter = world.chapters.length - 1
+  const chapter = worldConquered
+    ? world.chapters[lastChapter]
+    : worldAllMomentsDone
+      ? `Alla moment i ${world.name} är klara — ${world.boss.name} vaknar! Dags att möta bossen.`
+      : world.chapters[Math.min(masteredInWorld, lastChapter - 1)]
 
   const due = dueForReview(child.skills, todayISO()).length
   const secondsLeft = store.secondsLeftToday(child)
@@ -131,7 +151,10 @@ function HomeInner({ child }: { child: ChildProfile }) {
   const startTraining = (): void => {
     if (secondsLeft <= 0) return store.go('time-up')
     sfx.whoosh()
-    store.startSession() // motorn väljer momentet
+    // Väntar en boss och inget moment kvar att träna → gula knappen tar till
+    // bossen (enda vägen vidare). Annars vanligt pass (motorn väljer momentet).
+    if (bossIsNextStep && pendingBossWorldId) store.startWorldBoss(pendingBossWorldId)
+    else store.startSession()
   }
 
   // Riket först: barnet ser hela kartan och zoomar in i en värld.
@@ -208,7 +231,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
 
         {inRealm ? (
           <div style={{ flex: 1, position: 'relative', margin: '10px -18px -14px' }}>
-            <RealmMap child={child} currentWorldId={currentMoment?.worldId ?? worldId} onPick={enterWorld} />
+            <RealmMap child={child} currentWorldId={focusWorldId} onPick={enterWorld} />
           </div>
         ) : (
           <>
@@ -461,16 +484,18 @@ function HomeInner({ child }: { child: ChildProfile }) {
             background: 'linear-gradient(rgba(246,236,212,.96), rgba(230,213,176,.96)), var(--tex-parchment, none) center / cover',
             border: '2px solid #7A6544', borderRadius: 12, padding: '8px 10px', color: '#3E3016',
           }}>
-            <Pi mood="glad" size={34} />
+            <Pi mood={bossIsNextStep ? 'hejar' : 'glad'} size={34} />
             <span style={{ fontSize: 12.5, fontWeight: 700, lineHeight: 1.35 }}>
-              {currentMoment
+              {bossIsNextStep && pendingBossWorld
+                ? <>Alla moment i <b>{pendingBossWorld.name}</b> är klara! Nu vaknar <b>{pendingBossWorld.boss.name}</b>. Tryck så tar jag dig till bossstriden!</>
+                : currentMoment
                 ? <>{hasStarted ? 'Vi fortsätter med' : 'Nästa'}: <b>{currentMoment.title}</b>{currentWorld ? <> i {currentWorld.name}</> : null}. Tryck på knappen så tar jag dig dit!</>
                 : <>Tryck på knappen så börjar vi träna tillsammans!</>}
             </span>
           </div>
 
           <button className="btn btn-primary" style={{ width: '100%', marginTop: 10 }} onClick={startTraining}>
-            {hasStarted ? 'Fortsätt passet ▶' : 'Starta passet ▶'}
+            {bossIsNextStep && pendingBossWorld ? `Möt ${pendingBossWorld.boss.name}! ⚔` : hasStarted ? 'Fortsätt passet ▶' : 'Starta passet ▶'}
           </button>
         </div>
 
@@ -588,9 +613,9 @@ function MapIntro({ onDone }: { onDone(): void }) {
         <h2 className="display" style={{ fontSize: 22, fontWeight: 900, margin: 0, color: 'var(--ink)' }}>Så funkar äventyret!</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, textAlign: 'left', fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>
           <Legend icon="penna" bg="#FFDF94">Tryck på en nod och <b>träna</b> momentet.</Legend>
-          <Legend icon="svards" bg="var(--boss)">När du tränat tillräckligt <b>vaknar bossen</b> — möt den!</Legend>
-          <Legend icon="kristall" bg="var(--mint)">Besegra bossen så blir noden <b>klar</b> och <b>nästa öppnas</b>.</Legend>
-          <Legend icon="las" bg="#D8D4C8">Ett lås betyder att du inte kommit dit än.</Legend>
+          <Legend icon="kristall" bg="var(--mint)">Klara <b>Pis vänliga koll</b> så blir noden <b>klar</b> ✓.</Legend>
+          <Legend icon="svards" bg="var(--boss)">När <b>alla</b> noder i världen är klara <b>vaknar världsbossen</b>.</Legend>
+          <Legend icon="las" bg="#D8D4C8"><b>Besegra bossen</b> så öppnas <b>nästa värld</b>!</Legend>
         </div>
         <button className="btn btn-primary" onClick={onDone} style={{ marginTop: 4 }}>Jag fattar! ▶</button>
       </div>

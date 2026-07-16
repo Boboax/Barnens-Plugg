@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { ChildProfile, SkillState } from '../domain/types'
-import { MOMENTS } from '../domain/curriculum'
+import { MOMENTS, momentById, momentsInWorld } from '../domain/curriculum'
+import { WORLDS } from '../domain/worlds'
+import { hasGenerator } from '../generators'
 import { expectedSuccess, practiceLevel, updateRating } from './rating'
 import { REVIEW_INTERVALS_DAYS, scheduleFirstReview, scheduleNextReview } from './spaced-repetition'
-import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady } from './progress'
+import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady, currentMomentId, bossPendingWorldId, worldMomentsComplete } from './progress'
 import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
 import { composeCheckTasks, composeWorldBossTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
@@ -187,6 +189,42 @@ describe('startdiagnosen', () => {
     // Legitimt framtränad boss (≥12 försök) och pågående moment lämnas orörda.
     expect(out.real.mastery).toBe('boss-ready')
     expect(out.prog.mastery).toBe('in-progress')
+  })
+})
+
+describe('bossgrinden: bossen öppnar nästa värld', () => {
+  const w0 = WORLDS[0].id
+  const masterFirstWorld = (): ChildProfile => {
+    const profile = makeProfile()
+    for (const m of momentsInWorld(w0)) {
+      profile.skills[m.id] = { ...profile.skills[m.id], mastery: 'mastered', rating: 700 }
+    }
+    return profile
+  }
+
+  it('alla moment klara men bossen kvar → bossen väntar, inget moment att träna, nästa värld låst', () => {
+    const profile = masterFirstWorld()
+    profile.skills = recomputeAvailability(profile.skills, []) // ingen erövrad boss
+    expect(worldMomentsComplete(profile.skills, w0)).toBe(true)
+    // Bossen är nästa steg — vi hoppar INTE vidare till nästa värld.
+    expect(bossPendingWorldId(profile)).toBe(w0)
+    expect(currentMomentId(profile)).toBeUndefined()
+    // Ett moment i en senare värld (förkunskap i w0) är fortfarande låst.
+    const laterGated = MOMENTS.find(
+      (m) => m.worldId !== w0 && hasGenerator(m.generatorId) &&
+        m.prerequisites.some((p) => momentById(p).worldId === w0),
+    )
+    if (laterGated) expect(profile.skills[laterGated.id].mastery).toBe('locked')
+  })
+
+  it('erövrad boss → nästa värld öppnas och blir aktuell', () => {
+    const profile = masterFirstWorld()
+    profile.conqueredWorlds = [w0]
+    profile.skills = recomputeAvailability(profile.skills, [w0])
+    expect(bossPendingWorldId(profile)).not.toBe(w0)
+    const next = currentMomentId(profile)
+    expect(next).toBeDefined()
+    expect(momentById(next!).worldId).not.toBe(w0)
   })
 })
 

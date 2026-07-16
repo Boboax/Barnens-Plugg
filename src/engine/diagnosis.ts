@@ -161,5 +161,8 @@ export function applyDiagnosisResult(profile: ChildProfile, now: string): Record
     }
   })
 
-  return recomputeAvailability(skills)
+  // Bossgrinden gäller även efter diagnos: världar som placeringen "klarade"
+  // erövras inte automatiskt — barnet möter deras bossar bakåt först (medvetet
+  // val: bossen är i slutet av varje värld). conqueredWorlds är normalt tom här.
+  return recomputeAvailability(skills, profile.conqueredWorlds ?? [])
 }

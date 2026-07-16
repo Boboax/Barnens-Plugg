@@ -107,6 +107,18 @@ publikt för Pages på gratisplanen.
   det redan — följ mönstret).
 - **Diagnosen visar aldrig rätt/fel** — den är inramad som "vi lär känna
   varandra". Bryt inte den illusionen i UI-ändringar.
+- **Världsbossen är en HÅRD grind mellan världar.** När alla (tränbara) moment
+  i en värld är klara vaknar världsbossen — och nästa värld öppnas FÖRST när
+  bossen besegrats (`conqueredWorlds`). Grinden sitter i
+  `recomputeAvailability(skills, conqueredWorlds)`: ett moment vars förkunskap
+  ligger i en annan värld låses upp först när DEN världen är erövrad.
+  `currentMomentId`/`bossPendingWorldId` går igenom `WORLDS` i ordning och
+  STANNAR vid första klara-men-oerövrade världen (då är bossen nästa steg, inte
+  ett nytt moment). Hoppa aldrig förbi bossen: bygg inte om availability eller
+  "Du är här" så att en oerövrad boss kan förbigås. Gäller även bakåt —
+  diagnos-placerade/redan klarade världar måste också bossas (medvetet val med
+  föräldern). Kapitelbanderollens SISTA kapitel ("… bossen besegrad, vägen
+  öppnas") får bara visas när världen är erövrad, aldrig innan.
 
 ## Roadmap (prioritetsordning, beslutad med föräldern)
 

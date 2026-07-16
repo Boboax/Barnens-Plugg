@@ -295,7 +295,13 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
             const world = WORLDS.find((w) => w.id === region.worldId)!
             const theme = worldTheme(region.worldId)
             const progress = worldProgress(child, region.worldId)
-            const complete = progress.total > 0 && progress.done === progress.total
+            const momentsDone = progress.total > 0 && progress.done === progress.total
+            const conquered = child.conqueredWorlds?.includes(region.worldId) ?? false
+            // "Klar" (grön bock + "allt klart!") kräver att BOSSEN är besegrad —
+            // inte bara att momenten är gjorda. Alla moment klara men boss kvar
+            // = "möt bossen!". Så kartan aldrig säger klart innan bossen är slagen.
+            const complete = momentsDone && conquered
+            const bossWaiting = momentsDone && !conquered
             const isHere = region.worldId === currentWorldId
             const pos = artOk ? region.art : region.svg
             // På målningen är hela riket dramatiskt mörkt — ljus text överallt.
@@ -380,7 +386,10 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                   }}>
                     {world.name}
                     <span style={{ display: 'block', fontWeight: 700, fontSize: 10.5, fontFamily: 'var(--font)', color: artOk ? '#6E6046' : dark ? '#CFC8E4' : 'var(--muted)' }}>
-                      {progress.total === 0 ? 'kommer snart' : complete ? 'allt klart! ✓' : `${progress.done} / ${progress.total} moment klarade`}
+                      {progress.total === 0 ? 'kommer snart'
+                        : complete ? 'allt klart! ✓'
+                        : bossWaiting ? 'möt bossen! ⚔'
+                        : `${progress.done} / ${progress.total} moment klarade`}
                     </span>
                   </span>
                 </button>
