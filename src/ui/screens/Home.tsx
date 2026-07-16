@@ -157,8 +157,11 @@ function HomeInner({ child }: { child: ChildProfile }) {
     else store.startSession()
   }
 
-  // Riket först: barnet ser hela kartan och zoomar in i en värld.
-  const [view, setView] = useState<'riket' | 'varld'>('riket')
+  // Öppna i den AKTUELLA världens karta (fokusvärlden) — inte hela riket.
+  // Så landar man tillbaka i rätt värld efter att ha klarat/lämnat en nod, i
+  // stället för att bollas ut till den stora översikten. Hela riket är ett
+  // knapptryck bort ("Hela Matteriket").
+  const [view, setView] = useState<'riket' | 'varld'>('varld')
   const enterWorld = (id: string): void => {
     setWorldId(id)
     hasScrolled.current = false // scrolla till aktuell nod i den nya världen
