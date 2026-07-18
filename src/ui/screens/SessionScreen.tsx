@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AnswerRecord, SessionPlan, Task } from '../../domain/types'
+import type { ChatMessage } from '../../chat/adapter'
 import { momentById } from '../../domain/curriculum'
 import { worldTheme } from '../worldThemes'
 import { composeSession, taskForPart } from '../../engine/session'
@@ -64,6 +65,9 @@ export function SessionScreen() {
   const [correctCount, setCorrectCount] = useState(0)
   const [combo, setCombo] = useState(0)
   const [chatOpen, setChatOpen] = useState(false)
+  // Pi-samtal per uppgift: nyckel = uppgiftens identitet. Så överlever samtalet
+  // att panelen stängs/öppnas för SAMMA uppgift, men börjar om vid ny uppgift.
+  const [chatThreads, setChatThreads] = useState<Record<string, ChatMessage[]>>({})
   const scratchHandle = useRef<ScratchPadHandle>()
   // "Pi visar först": lösta exempel innan ett helt nytt moment övas.
   const [introDone, setIntroDone] = useState(false)
@@ -182,6 +186,8 @@ export function SessionScreen() {
   }
 
   const moment = momentById(slot.momentId)
+  // Uppgiftens identitet (samma nyckel som TaskRunner) — Pi-samtalet knyts hit.
+  const taskKey = `${index}-${task.ref.seed}`
   const showIntro = slot.kind === 'nytt' && slot.momentId === introMomentId && !introDone
   const chatAvailable = chatReadyFor(child)
   // Världstema bakom uppgiften: den målade världsbilden syns runt kanterna,
@@ -257,6 +263,8 @@ export function SessionScreen() {
             momentTitle: moment.title,
             currentTaskPrompt: task.prompt,
           }}
+          messages={chatThreads[taskKey] ?? []}
+          onMessagesChange={(msgs) => setChatThreads((t) => ({ ...t, [taskKey]: msgs }))}
           getScratch={() => scratchHandle.current?.snapshot()}
           onClose={() => setChatOpen(false)}
         />

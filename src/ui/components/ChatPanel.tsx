@@ -23,15 +23,18 @@ const QUICK_CHIPS = [
 
 interface ChatPanelProps {
   context: ChatContext
+  /** Samtalet för AKTUELL uppgift — ligger hos föräldern (SessionScreen) så det
+      överlever att panelen stängs och öppnas igen. Nollställs vid ny uppgift. */
+  messages: ChatMessage[]
+  onMessagesChange(messages: ChatMessage[]): void
   /** Hämtar kladdytans PNG (eller undefined om inget ritats). */
   getScratch(): string | undefined
   onClose(): void
 }
 
-export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
+export function ChatPanel({ context, messages, onMessagesChange, getScratch, onClose }: ChatPanelProps) {
   const store = useStore()
   const child = store.activeChild
-  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [waiting, setWaiting] = useState(false)
   const [streamText, setStreamText] = useState('')
@@ -54,7 +57,7 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
     if (withScratch && !scratchPng) trimmed = 'Jag har inte ritat något än — kan du hjälpa mig komma igång med uppgiften?'
     const childMsg: ChatMessage = { role: 'child', text: trimmed, imagePngDataUrl: scratchPng }
     const history = [...messages, childMsg]
-    setMessages(history)
+    onMessagesChange(history)
     setInput('')
     setWaiting(true)
     store.appendChatLog({ at: nowISO(), childId: child.id, role: 'child', text: trimmed, scratchPng })
@@ -66,7 +69,7 @@ export function ChatPanel({ context, getScratch, onClose }: ChatPanelProps) {
       onDelta: (chunk) => setStreamText((s) => s + chunk),
     })
     setStreamText('')
-    setMessages((m) => [...m, { role: 'ai', text: reply.text }])
+    onMessagesChange([...history, { role: 'ai', text: reply.text }])
     setWaiting(false)
     sfx.ratt()
     store.appendChatLog({
