@@ -59,17 +59,44 @@ export const MOMENTS: Moment[] = [
     title: 'Tiokamraterna',
     description: 'Paren som bygger tio: 1+9, 2+8, 3+7 …',
   }),
+  // Memoreringsordning (medvetet val med föräldern): ren addition → ren
+  // subtraktion → blandat, först 0–10 sedan 0–20. Samma termin behålls så
+  // ordningen på stigen styrs av definitionsordningen här.
+  def({
+    id: 'addition-0-10', world: 'talens-dal', area: 'taluppfattning', term: t('1', 'HT', 2), gen: true,
+    prereq: ['talkamrater-10'],
+    title: 'Addition 0–10',
+    description: 'Memorera plus i det lilla talområdet — bygg flyt.',
+  }),
+  def({
+    id: 'subtraktion-0-10', world: 'talens-dal', area: 'taluppfattning', term: t('1', 'HT', 2), gen: true,
+    prereq: ['addition-0-10'],
+    title: 'Subtraktion 0–10',
+    description: 'Memorera minus i det lilla talområdet.',
+  }),
   def({
     id: 'add-sub-0-10', world: 'talens-dal', area: 'taluppfattning', term: t('1', 'HT', 2), gen: true,
-    prereq: ['talkamrater-10'],
+    prereq: ['subtraktion-0-10'],
     title: 'Plus och minus 0–10',
-    description: 'Addition och subtraktion i det lilla talområdet.',
+    description: 'Blandad addition och subtraktion i det lilla talområdet.',
+  }),
+  def({
+    id: 'addition-0-20', world: 'talens-dal', area: 'taluppfattning', term: t('1', 'VT', 1), gen: true,
+    prereq: ['add-sub-0-10'],
+    title: 'Addition 0–20',
+    description: 'Plus ut till 20 — utan tiotalsövergång.',
+  }),
+  def({
+    id: 'subtraktion-0-20', world: 'talens-dal', area: 'taluppfattning', term: t('1', 'VT', 1), gen: true,
+    prereq: ['addition-0-20'],
+    title: 'Subtraktion 0–20',
+    description: 'Minus ut till 20 — utan växling.',
   }),
   def({
     id: 'add-sub-0-20', world: 'talens-dal', area: 'taluppfattning', term: t('1', 'VT', 1), gen: true,
-    prereq: ['add-sub-0-10'],
+    prereq: ['subtraktion-0-20'],
     title: 'Plus och minus 0–20',
-    description: 'Utan tiotalsövergång — talraden ut till 20.',
+    description: 'Blandat ut till 20 — utan tiotalsövergång.',
   }),
   def({
     id: 'tiotalsovergang-20', world: 'talens-dal', area: 'taluppfattning', term: t('1', 'VT', 2), gen: true,

@@ -299,6 +299,9 @@ export type BlixtKind = 'add-sub-0-10' | 'add-sub-0-20' | 'tabeller'
 export interface BlixtRecord {
   best: number
   lastAt: string
+  /** Svårighetstrappa: börjar på 0 (lätt) och stiger ett steg varje gång barnet
+      når minutmålet — så blixtrundorna blir successivt svårare. Aldrig en grind. */
+  tier?: number
 }
 
 // ---------- Chattlogg (fas 5, men loggformatet är del av grundmodellen) ----------
