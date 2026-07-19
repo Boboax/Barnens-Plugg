@@ -14,14 +14,14 @@ Här är kopplingen mellan forskning och implementation.
 | **Omedelbar korrektiv feedback** | Hattie & Timperley (2007) | Fel svar ⇒ missuppfattningsspecifik ledtråd + pedagogisk förklaring, direkt |
 | **Missuppfattningsdiagnostik** | Diagnostisk taxonomi à la DfE/NCETM; distraktorer som avslöjar tänkandet | Varje distraktor taggas (glömd växling, likhetstecken-som-resultat …); motorn ser *varför* det blev fel (`misconceptions.ts`) |
 | **Growth mindset-feedback** | Dweck; Mueller & Dweck (1998): beröm processen, inte personen | "Bra kämpat — varje försök gör dig starkare", aldrig "vad smart du är" |
-| **Ingen tidspress på prov** | Boaler (2014): tidspress är starkt kopplad till matteångest | Bossen har inga klockor; sköldarna är bossens, fel svar bestraffas inte |
+| **Ingen tidspress på bossar/koll** | Boaler (2014): tidspress är starkt kopplad till matteångest | Bossen och nodens kunskapskoll har inga klockor; sköldarna är bossens, fel svar bestraffas inte |
 | **Belöna träning, inte fart** | Deci m.fl.; yttre belöningar för hastighet urholkar noggrannhet | Belöningar kopplas till moment/pass/terminsmål — aldrig poäng eller tid |
 | **Rimlighet & självkontroll** | Ingår i Lgr22:s centrala innehåll | Egna moment: "Är det rimligt?", "Kontrollera svaret", "Överslagsräkning"; slarvfelsdetektorn särskiljer slarv från kunskapslucka |
 | **Korta pass** | Uppmärksamhetsspann; distributed practice | Dagens pass ≈ 15 min: uppvärmning → nytt → blandat; tidsgräns per dag |
 | **Inga syskonjämförelser** | Social jämförelse demotiverar den som halkar efter | Varje barn ser bara sina egna mål och streaks; jämförelsen finns bara i föräldravyn |
 | **Adaptiv startdiagnos** | Computerized adaptive testing (CAT), förenklad | Binärsökning längs läroplansryggraden; inga rätt/fel visas; delas i korta pass för yngre barn |
 | **Lösta exempel först** | Worked examples / cognitive load theory (Sweller); nybörjare lär bäst av exempel före övning | "Pi visar först": två lösta exempel med förklaring första gången ett nytt moment öppnas (`PiVisar.tsx`) |
-| **Flytträning utan press** | Automaticitet krävs för arbetsminnesavlastning; tidspress skapar ångest (Boaler) — lösningen är tävling mot sig själv | Blixtpassen: skolans minuttest-format (1 minut, add/sub 0–10, 0–20, tabellerna) men rekordjakt mot eget rekord; skolans mål visas som ribba, fel kostar inget (`blixt.ts`) |
+| **Flyt som krav — men aldrig skadligt** | Automaticitet avlastar arbetsminnet (Sweller, cognitive load theory); **mastery learning** (Bloom): gå vidare först när steget sitter, med obegränsade omförsök; retrieval practice (Roediger & Karpicke). Tidspressens ångestrisk (Boaler 2014; Ashcraft & Kirk 2001; Beilock) doseras efter ålder i stället för att slopas | Blixtpassen är **KRAV-grindar**: momentet efter öppnas först när blixten klarats (`BLIXT_GATE`), men med *obegränsade omförsök* och aldrig "underkänt" ("nästan — försök igen"). **FK: ingen synlig klocka** ("gör så snabbt du kan", tiden mäts tyst för föräldern); **åk1+: skolans minutklocka.** Svårigheten trappar från lätt och stiger när målet nås (`blixt.ts`). Beslut med föräldern juli 2026. |
 
 ## Svårighetsskalan (nivå 1–10 per moment)
 

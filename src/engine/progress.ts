@@ -32,6 +32,8 @@ export function newSkillState(momentId: string): SkillState {
 const isDone = (s: SkillState | undefined): boolean =>
   s?.mastery === 'mastered' || s?.mastery === 'star'
 
+const EMPTY_SET: ReadonlySet<string> = new Set()
+
 /** Generatorförsedda moment i en värld (de som faktiskt går att träna). */
 function genMomentIdsInWorld(worldId: string): string[] {
   return MOMENTS.filter((m) => m.worldId === worldId && hasGenerator(m.generatorId)).map((m) => m.id)
@@ -55,6 +57,7 @@ export function worldMomentsComplete(skills: Record<string, SkillState>, worldId
 export function recomputeAvailability(
   skills: Record<string, SkillState>,
   conqueredWorlds: readonly string[] = [],
+  blixtBlocked: ReadonlySet<string> = EMPTY_SET,
 ): Record<string, SkillState> {
   const conquered = new Set(conqueredWorlds)
   const next: Record<string, SkillState> = { ...skills }
@@ -65,7 +68,8 @@ export function recomputeAvailability(
       const pWorld = momentById(p).worldId
       return pWorld === moment.worldId || conquered.has(pWorld)
     })
-    const unlocked = prereqsDone && bossGateOpen
+    // Flyt-grind: momentet hålls låst tills blixten före det är klarad.
+    const unlocked = prereqsDone && bossGateOpen && !blixtBlocked.has(moment.id)
     let mastery: MasteryState = skill.mastery
     if (skill.mastery === 'locked' && unlocked) mastery = 'available'
     if (skill.mastery === 'available' && !unlocked) mastery = 'locked'
@@ -88,6 +92,7 @@ export function repairDiagnosisBossReady(
   skills: Record<string, SkillState>,
   now: string,
   conqueredWorlds: readonly string[] = [],
+  blixtBlocked: ReadonlySet<string> = EMPTY_SET,
 ): Record<string, SkillState> {
   const next: Record<string, SkillState> = { ...skills }
   for (const [id, s] of Object.entries(skills)) {
@@ -95,9 +100,9 @@ export function repairDiagnosisBossReady(
       next[id] = { ...s, mastery: 'mastered', rating: Math.max(s.rating, 700), review: s.review ?? scheduleFirstReview(now) }
     }
   }
-  // Alltid räkna om tillgänglighet — så bossgrinden greppar även gamla profiler
-  // som placerades innan grinden fanns (nedströms världar låses bakom bossen).
-  return recomputeAvailability(next, conqueredWorlds)
+  // Alltid räkna om tillgänglighet — så boss- OCH flyt-grinden greppar även
+  // gamla profiler som placerades innan grindarna fanns.
+  return recomputeAvailability(next, conqueredWorlds, blixtBlocked)
 }
 
 /**
@@ -291,8 +296,9 @@ export function currentMomentId(profile: ChildProfile): string | undefined {
         return m === 'in-progress' || m === 'boss-ready'
       })
       if (active) return active
-      const avail = ids.find((id) => skills[id]?.mastery === 'available')
-      return avail ?? ids.find((id) => skills[id]?.mastery !== 'locked')
+      // Nästa öppna moment. Finns inget (allt före klart, nästa låst av en
+      // flyt-grind) → returnera undefined; Home visar då blixt-grinden som steg.
+      return ids.find((id) => skills[id]?.mastery === 'available')
     }
     // Världen klar men bossen inte besegrad → stanna (barnet möter bossen).
     if (!conquered.has(world.id)) return undefined

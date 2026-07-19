@@ -12,9 +12,13 @@ uttryckligen förstått avvägningen (dokumenterad i `docs/PEDAGOGIK.md`).
 1. **Uppgifter genereras av deterministisk kod, aldrig av AI.** Garanterar
    korrekthet, läroplanstrohet, offline och noll kostnad. AI (fas 5) är enbart
    ett samtalslager som aldrig rättar, aldrig låser upp framsteg, aldrig ger svar.
-2. **Ingen tidspress på prov.** Bosstrider har ingen klocka. Sköldarna är
-   bossens — fel svar bestraffas aldrig. Enda tidssatta läget är blixtpassen,
-   som är frivillig rekordjakt mot sig själv (speglar skolans minuttest).
+2. **Ingen tidspress på bossar/kunskapskoll.** Bosstrider och nodens
+   kunskapskoll har ingen klocka. Sköldarna är bossens — fel svar bestraffas
+   aldrig. Blixtpassen speglar skolans minuttest och är en KRAV-grind för flyt
+   (momentet efter öppnas först när blixten klarats) — MEN med obegränsade
+   omförsök och aldrig "underkänt". Tidspress doseras efter ålder: FK utan
+   synlig klocka ("gör så snabbt du kan", tiden mäts i det tysta), åk1+ med
+   klocka. Medvetet val med föräldern (juli 2026, se `docs/PEDAGOGIK.md`).
 3. **Belöningar kopplas till behärskade moment och träningsvana — aldrig till
    poäng, hastighet eller jämförelse mellan syskonen.** Syskon ser aldrig
    varandras framsteg (bara föräldravyn gör det).

@@ -9,7 +9,7 @@ import {
   applyAnswer, applyBossResult, applyReviewResult, applyStarResult, newSkillState, recomputeAvailability,
 } from '../engine/progress'
 import { applyDiagnosisResult, diagnosisPassesForAge } from '../engine/diagnosis'
-import { blixtTarget, blixtMaxTier } from '../engine/blixt'
+import { blixtMaxTier, blixtBlockedMoments } from '../engine/blixt'
 import { activeDayCount, masteredCount } from '../engine/rewards'
 import { resetNamePool, setNamePool } from '../generators/helpers'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
@@ -62,7 +62,7 @@ interface StoreValue {
   /** Pågående blixttest. */
   blixtKind: BlixtKind | undefined
   startBlixt(kind: BlixtKind): void
-  recordBlixtResult(kind: BlixtKind, correct: number): void
+  recordBlixtResult(kind: BlixtKind, correct: number, cleared: boolean, timeMs?: number): void
   setBlixtTarget(kind: BlixtKind, target: number): void
 
   // Barnhantering
@@ -207,18 +207,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setBlixtKind(kind)
       setScreen('blixt')
     },
-    recordBlixtResult: (kind, correct) => {
+    recordBlixtResult: (kind, correct, cleared, timeMs) => {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => {
         const prev = c.blixt?.[kind]
         const maxTier = blixtMaxTier(kind)
         const prevTier = Math.min(maxTier, Math.max(0, prev?.tier ?? 0))
-        // Nådde barnet minutmålet? → trappan stiger ett steg (svårare nästa gång).
-        // Inte en grind: framsteget påverkar bara nästa blixtrundas svårighet.
-        const reachedTarget = correct >= blixtTarget(kind, household.blixtTargets)
-        const tier = reachedTarget ? Math.min(maxTier, prevTier + 1) : prevTier
+        // Klarad runda → trappan stiger ett steg (svårare nästa gång) OCH grinden
+        // öppnas. Inte klarad → oförändrad trappa, ingen bestraffning.
+        const tier = cleared ? Math.min(maxTier, prevTier + 1) : prevTier
         const best = Math.max(prev?.best ?? 0, correct)
-        return { ...c, blixt: { ...c.blixt, [kind]: { best, lastAt: nowISO(), tier } } }
+        const bestTimeMs = cleared && timeMs !== undefined
+          ? Math.min(prev?.bestTimeMs ?? timeMs, timeMs)
+          : prev?.bestTimeMs
+        const rec = { best, lastAt: nowISO(), tier, cleared: (prev?.cleared ?? false) || cleared, bestTimeMs }
+        const next = { ...c, blixt: { ...c.blixt, [kind]: rec } }
+        // Klarad flyt-grind → räkna om tillgänglighet så nästa moment öppnas.
+        return { ...next, skills: recomputeAvailability(next.skills, next.conqueredWorlds ?? [], blixtBlockedMoments(next)) }
       })
     },
     setBlixtTarget: (kind, target) => {
@@ -285,7 +290,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // och diagnosprober smutsade ned rating på oövade moment.
         const skills = context === 'blixt' || context === 'diagnos'
           ? c.skills
-          : recomputeAvailability({ ...c.skills, [momentId]: nextSkill }, c.conqueredWorlds ?? [])
+          : recomputeAvailability({ ...c.skills, [momentId]: nextSkill }, c.conqueredWorlds ?? [], blixtBlockedMoments(c))
         return { ...c, skills, answers, streak }
       })
     },
@@ -298,7 +303,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         skills: recomputeAvailability({
           ...c.skills,
           [momentId]: applyBossResult(c.skills[momentId] ?? newSkillState(momentId), won, todayISO()),
-        }, c.conqueredWorlds ?? []),
+        }, c.conqueredWorlds ?? [], blixtBlockedMoments(c)),
       }))
     },
 
@@ -309,7 +314,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       patchChild(activeChildId, (c) => {
         if (c.conqueredWorlds?.includes(worldId)) return c
         const conqueredWorlds = [...(c.conqueredWorlds ?? []), worldId]
-        return { ...c, conqueredWorlds, skills: recomputeAvailability(c.skills, conqueredWorlds) }
+        return { ...c, conqueredWorlds, skills: recomputeAvailability(c.skills, conqueredWorlds, blixtBlockedMoments(c)) }
       })
     },
 
@@ -338,7 +343,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       for (const m of MOMENTS) fresh[m.id] = newSkillState(m.id)
       return {
         ...c,
-        skills: recomputeAvailability(fresh, []),
+        skills: recomputeAvailability(fresh, [], blixtBlockedMoments(c)),
         // Ny placering börjar om från noll — även erövrade världar nollställs så
         // bossgrinden gäller på nytt utifrån den nya diagnosen.
         conqueredWorlds: [],
@@ -353,7 +358,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         skills: recomputeAvailability({
           ...c.skills,
           [momentId]: applyReviewResult(c.skills[momentId] ?? newSkillState(momentId), passed, todayISO()),
-        }, c.conqueredWorlds ?? []),
+        }, c.conqueredWorlds ?? [], blixtBlockedMoments(c)),
       }))
     },
 

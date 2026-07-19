@@ -10,7 +10,7 @@ import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
 import { composeCheckTasks, composeWorldBossTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
 import { rewardProgress } from './rewards'
-import { BLIXT_TESTS, blixtTask, blixtUnlocked, blixtLevel, blixtTier, blixtMaxTier } from './blixt'
+import { BLIXT_TESTS, blixtTask, blixtUnlocked, blixtLevel, blixtTier, blixtMaxTier, blixtTimed, BLIXT_GATE, blixtBlockedMoments, pendingBlixtKind } from './blixt'
 import { backfillSplitAddSub } from './progress'
 
 const makeProfile = (overrides: Partial<ChildProfile> = {}): ChildProfile => {
@@ -277,6 +277,41 @@ describe('blixtpass', () => {
     expect(blixtLevel('add-sub-0-10', easy)).toBeLessThan(blixtLevel('add-sub-0-10', hard))
     // Trappan klämmer till maxtier — ingen ändlös upptrappning.
     expect(blixtTier('add-sub-0-10', hard)).toBe(blixtMaxTier('add-sub-0-10'))
+  })
+})
+
+describe('flyt-grind (blixt som krav för att gå vidare)', () => {
+  const reachAddSub010 = (): ChildProfile => {
+    const p = makeProfile()
+    for (const id of ['antal-0-10', 'talrad-0-20', 'dela-upp-tal', 'talkamrater-10', 'addition-0-10', 'subtraktion-0-10', 'add-sub-0-10']) {
+      p.skills[id] = { ...p.skills[id], mastery: 'mastered' }
+    }
+    return p
+  }
+
+  it('FK utan klocka, åk1+ med klocka', () => {
+    expect(blixtTimed('F')).toBe(false)
+    expect(blixtTimed('1')).toBe(true)
+    expect(blixtTimed('4')).toBe(true)
+  })
+
+  it('oklarad blixt låser momentet efter den — klarad öppnar det', () => {
+    const gated = BLIXT_GATE['add-sub-0-10'] // 'addition-0-20'
+    const before = reachAddSub010()
+    const blockedNo = blixtBlockedMoments(before)
+    expect(blockedNo.has(gated)).toBe(true)
+    // Trots att förkunskaperna är klara hålls momentet låst av grinden.
+    const locked = recomputeAvailability(before.skills, [], blockedNo)
+    expect(locked[gated].mastery).toBe('locked')
+    expect(pendingBlixtKind(before)).toBe('add-sub-0-10')
+
+    // Klara blixten → grinden släpper.
+    const after: ChildProfile = { ...before, blixt: { 'add-sub-0-10': { best: 20, lastAt: '', cleared: true } } }
+    const blockedYes = blixtBlockedMoments(after)
+    expect(blockedYes.has(gated)).toBe(false)
+    const open = recomputeAvailability(after.skills, [], blockedYes)
+    expect(open[gated].mastery).toBe('available')
+    expect(pendingBlixtKind(after)).not.toBe('add-sub-0-10')
   })
 })
 
