@@ -30,6 +30,18 @@ describe('uppgiftsgeneratorerna', () => {
             const texts = task.answer.choices.map((c) => c.text)
             expect(new Set(texts).size, `${id} n${level} f${seed}: dubblettval: ${texts.join(' | ')}`).toBe(texts.length)
           }
+
+          // Bild-mot-uppgift: en tvågrupps-tiobasbild måste visa RÄTT räknesätt.
+          // (Buggen: subtraktion visade två grupper med "+" → såg ut som addition.)
+          if (task.visual.kind === 'tiobas' && task.visual.groups.length === 2) {
+            const op = task.visual.op ?? '+'
+            if (/\d − \d/.test(task.prompt)) {
+              expect(op, `${id} n${level} f${seed}: subtraktion men bilden visar addition`).toBe('−')
+            }
+            if (/\d \+ \d/.test(task.prompt)) {
+              expect(op, `${id} n${level} f${seed}: addition men bilden visar minus`).toBe('+')
+            }
+          }
         }
       }
     })

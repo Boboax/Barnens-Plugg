@@ -10,7 +10,7 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
   if (visual.kind === 'ingen') return null
   const inner = (() => {
     switch (visual.kind) {
-      case 'tiobas': return <Tiobas groups={visual.groups} />
+      case 'tiobas': return <Tiobas groups={visual.groups} op={visual.op} />
       case 'tallinje': return <Tallinje min={visual.min} max={visual.max} marks={visual.marks} highlight={visual.highlight} />
       case 'grupper': return <Grupper count={visual.groupCount} per={visual.itemsPerGroup} emoji={visual.emoji} />
       case 'foljd': return <Foljd items={visual.items} />
@@ -34,33 +34,48 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
   )
 }
 
-function Tiobas({ groups }: { groups: { tens: number; ones: number; hundreds?: number }[] }) {
+function Tiobas({ groups, op = '+' }: { groups: { tens: number; ones: number; hundreds?: number }[]; op?: '+' | '−' }) {
   return (
     <div style={{ display: 'flex', gap: 22, justifyContent: 'center', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-      {groups.map((g, gi) => (
-        <div key={gi} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-          {gi > 0 && <span style={{ fontSize: 24, fontWeight: 900, color: 'var(--muted)', alignSelf: 'center' }}>+</span>}
-          {Array.from({ length: g.hundreds ?? 0 }).map((_, i) => (
-            <div key={`h${i}`} style={{
-              width: 34, height: 34, borderRadius: 5, background: 'var(--sun)',
-              backgroundImage: 'repeating-linear-gradient(0deg, transparent 0 6px, rgba(255,255,255,.5) 6px 7px), repeating-linear-gradient(90deg, transparent 0 6px, rgba(255,255,255,.5) 6px 7px)',
-            }} />
-          ))}
-          <div style={{ display: 'flex', gap: 4 }}>
-            {Array.from({ length: g.tens }).map((_, i) => (
-              <div key={`t${i}`} style={{
-                width: 13, height: 78, borderRadius: 4, background: 'var(--primary)',
-                backgroundImage: 'repeating-linear-gradient(180deg, transparent 0 6.8px, rgba(255,255,255,.5) 6.8px 7.8px)',
-              }} />
-            ))}
+      {groups.map((g, gi) => {
+        // Vid subtraktion ritas den andra gruppen (det som tas bort) överstruken
+        // och nedtonad, så bilden matchar "a − b" och inte ser ut som addition.
+        const removed = op === '−' && gi > 0
+        return (
+          <div key={gi} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            {gi > 0 && <span style={{ fontSize: 24, fontWeight: 900, color: 'var(--muted)', alignSelf: 'center' }}>{op}</span>}
+            <div style={{ position: 'relative', display: 'flex', gap: 8, alignItems: 'flex-end', opacity: removed ? 0.5 : 1 }}>
+              {Array.from({ length: g.hundreds ?? 0 }).map((_, i) => (
+                <div key={`h${i}`} style={{
+                  width: 34, height: 34, borderRadius: 5, background: 'var(--sun)',
+                  backgroundImage: 'repeating-linear-gradient(0deg, transparent 0 6px, rgba(255,255,255,.5) 6px 7px), repeating-linear-gradient(90deg, transparent 0 6px, rgba(255,255,255,.5) 6px 7px)',
+                }} />
+              ))}
+              <div style={{ display: 'flex', gap: 4 }}>
+                {Array.from({ length: g.tens }).map((_, i) => (
+                  <div key={`t${i}`} style={{
+                    width: 13, height: 78, borderRadius: 4, background: 'var(--primary)',
+                    backgroundImage: 'repeating-linear-gradient(180deg, transparent 0 6.8px, rgba(255,255,255,.5) 6.8px 7.8px)',
+                  }} />
+                ))}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 13px)', gap: 4 }}>
+                {Array.from({ length: g.ones }).map((_, i) => (
+                  <div key={`o${i}`} style={{ width: 13, height: 13, borderRadius: 4, background: 'var(--coral)' }} />
+                ))}
+              </div>
+              {/* Överstrykning: tydligt "borttaget" vid subtraktion. */}
+              {removed && (
+                <span aria-hidden="true" style={{
+                  position: 'absolute', left: -5, right: -5, top: '50%',
+                  height: 4, borderRadius: 2, background: 'var(--coral)',
+                  transform: 'translateY(-50%) rotate(-10deg)', boxShadow: '0 0 0 1.5px rgba(255,255,255,.7)',
+                }} />
+              )}
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 13px)', gap: 4 }}>
-            {Array.from({ length: g.ones }).map((_, i) => (
-              <div key={`o${i}`} style={{ width: 13, height: 13, borderRadius: 4, background: 'var(--coral)' }} />
-            ))}
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

@@ -152,13 +152,24 @@ const THINGS: [string, string, string][] = [
 export const pickThing = (rng: Rng): [string, string, string] => rng.pick(THINGS)
 
 /** Tiobas-visualisering av en term (för CRA-stödet på låga nivåer). */
-export const tiobas = (...numbers: number[]): TaskVisual => ({
-  kind: 'tiobas',
-  groups: numbers.map((n) => ({
+const tiobasGroups = (numbers: number[]): { hundreds: number; tens: number; ones: number }[] =>
+  numbers.map((n) => ({
     hundreds: Math.floor(n / 100),
     tens: Math.floor((n % 100) / 10),
     ones: n % 10,
-  })),
+  }))
+
+export const tiobas = (...numbers: number[]): TaskVisual => ({
+  kind: 'tiobas',
+  groups: tiobasGroups(numbers),
+})
+
+/** Tiobas med räknesätt: '−' ritar andra gruppen överstruken (tas bort), så
+    bilden matchar en subtraktion i stället för att se ut som en addition. */
+export const tiobasOp = (op: '+' | '−', ...numbers: number[]): TaskVisual => ({
+  kind: 'tiobas',
+  op,
+  groups: tiobasGroups(numbers),
 })
 
 /** Skala ett intervall efter nivå: nivå 1 → [lo], nivå 10 → [hi]. */

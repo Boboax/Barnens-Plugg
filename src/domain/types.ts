@@ -97,7 +97,9 @@ export type MisconceptionTag =
 
 /** Visuellt stöd enligt CRA-principen (konkret → representation → abstrakt). */
 export type TaskVisual =
-  | { kind: 'tiobas'; groups: { tens: number; ones: number; hundreds?: number }[] }
+  // op: räknesättet grupperna visar (default '+'). '−' ritar den andra gruppen
+  // överstruken (tas bort) så bilden matchar en subtraktion, inte en addition.
+  | { kind: 'tiobas'; groups: { tens: number; ones: number; hundreds?: number }[]; op?: '+' | '−' }
   | { kind: 'tallinje'; min: number; max: number; marks?: number[]; highlight?: number }
   | { kind: 'grupper'; groupCount: number; itemsPerGroup: number; emoji: string }
   | { kind: 'foljd'; items: string[] } // mönsterföljd (objekt-nycklar) + '?' på slutet

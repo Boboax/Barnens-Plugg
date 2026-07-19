@@ -1,7 +1,7 @@
 import type { DifficultyLevel, TaskGenerator } from '../domain/types'
 import { createRng } from './rng'
 import {
-  choiceTask, lerpInt, numericTask, pickName, pickThing, pickTwoNames, tiobas, uniqueDistractors,
+  choiceTask, lerpInt, numericTask, pickName, pickThing, pickTwoNames, tiobas, tiobasOp, uniqueDistractors,
 } from './helpers'
 
 /* ============================================================
@@ -259,7 +259,7 @@ function makeAddSub(momentId: string, cfg: AddSubCfg): TaskGenerator {
         prompt: isAdd ? `${a} + ${b} = ?` : `${a} − ${b} = ?`,
         spokenPrompt: isAdd ? `Vad är ${a} plus ${b}?` : `Vad är ${a} minus ${b}?`,
         value,
-        visual: level <= cfg.visualUpTo ? tiobas(a, b) : { kind: 'ingen' },
+        visual: level <= cfg.visualUpTo ? tiobasOp(isAdd ? '+' : '−', a, b) : { kind: 'ingen' },
         explanation: isAdd
           ? (a % 10) + (b % 10) >= 10
             ? `Gå via tian: ${a} + ${10 - (a % 10)} = ${a + 10 - (a % 10)}, sedan ${b - (10 - (a % 10))} till = ${value}.`
