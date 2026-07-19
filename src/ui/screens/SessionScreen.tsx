@@ -9,6 +9,7 @@ import type { ScratchPadHandle } from '../components/ScratchPad'
 import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
 import { ChatPanel } from '../components/ChatPanel'
+import { SoundToggle } from '../components/SoundToggle'
 import { Icon, HeroImg } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { PiVisar } from '../components/PiVisar'
@@ -214,6 +215,7 @@ export function SessionScreen() {
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
         <button className="chip" onClick={() => store.go('home')}>✕ Avsluta</button>
+        <SoundToggle />
         <div className="pbar" style={{ flex: 1 }}>
           <i style={{ width: `${(index / slots.length) * 100}%` }} />
         </div>

@@ -75,7 +75,7 @@ export function ProfileSelect() {
         </>
       )}
 
-      <span style={{ position: 'fixed', left: 18, bottom: 'calc(16px + env(safe-area-inset-bottom))', zIndex: 2 }}><SoundToggle /></span>
+      <span style={{ position: 'fixed', left: 18, bottom: 'calc(16px + env(safe-area-inset-bottom))', zIndex: 2 }}><SoundToggle openUp /></span>
       <span style={{
         position: 'fixed', bottom: 'calc(8px + env(safe-area-inset-bottom))', left: '50%', transform: 'translateX(-50%)', zIndex: 2,
         fontSize: 11, fontWeight: 700, color: '#EAd9BE', opacity: 0.85, textShadow: '0 1px 2px rgba(0,0,0,.6)',
