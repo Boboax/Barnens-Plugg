@@ -9,6 +9,7 @@ import {
   applyAnswer, applyBossResult, applyReviewResult, applyStarResult, newSkillState, recomputeAvailability,
 } from '../engine/progress'
 import { applyDiagnosisResult, diagnosisPassesForAge } from '../engine/diagnosis'
+import { blixtTarget, blixtMaxTier } from '../engine/blixt'
 import { activeDayCount, masteredCount } from '../engine/rewards'
 import { resetNamePool, setNamePool } from '../generators/helpers'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
@@ -210,8 +211,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => {
         const prev = c.blixt?.[kind]
-        if (prev && prev.best >= correct) return { ...c, blixt: { ...c.blixt, [kind]: { ...prev, lastAt: nowISO() } } }
-        return { ...c, blixt: { ...c.blixt, [kind]: { best: correct, lastAt: nowISO() } } }
+        const maxTier = blixtMaxTier(kind)
+        const prevTier = Math.min(maxTier, Math.max(0, prev?.tier ?? 0))
+        // Nådde barnet minutmålet? → trappan stiger ett steg (svårare nästa gång).
+        // Inte en grind: framsteget påverkar bara nästa blixtrundas svårighet.
+        const reachedTarget = correct >= blixtTarget(kind, household.blixtTargets)
+        const tier = reachedTarget ? Math.min(maxTier, prevTier + 1) : prevTier
+        const best = Math.max(prev?.best ?? 0, correct)
+        return { ...c, blixt: { ...c.blixt, [kind]: { best, lastAt: nowISO(), tier } } }
       })
     },
     setBlixtTarget: (kind, target) => {

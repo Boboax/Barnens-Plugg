@@ -172,6 +172,9 @@ interface AddSubCfg {
   visualUpTo: number
   /** Andel textuppgifter från nivå 6. */
   storyFrom?: number
+  /** Räknesätt: 'add' = bara addition, 'sub' = bara subtraktion, annars blandat.
+      Låter oss dela stigen i ren addition → ren subtraktion → blandat. */
+  op?: 'add' | 'sub'
 }
 
 const rangeFor = (level: DifficultyLevel, r: AddSubCfg['ranges']): number =>
@@ -184,7 +187,8 @@ function makeAddSub(momentId: string, cfg: AddSubCfg): TaskGenerator {
     generate: (level, seed) => {
       const rng = createRng(seed)
       const max = rangeFor(level, cfg.ranges)
-      const isAdd = rng.chance(0.5)
+      // Ren addition/subtraktion om cfg.op satts, annars blandat (50/50).
+      const isAdd = cfg.op === 'add' ? true : cfg.op === 'sub' ? false : rng.chance(0.5)
 
       // Dra termer tills övergångskravet uppfylls.
       let a = 0, b = 0
@@ -273,7 +277,14 @@ function makeAddSub(momentId: string, cfg: AddSubCfg): TaskGenerator {
   }
 }
 
+// Memoreringsordningen (Albert, FK/åk1): ren addition → ren subtraktion →
+// blandat, först 0–10, sedan 0–20. Storyuppgifter hålls borta (storyFrom högt)
+// så de rena flyt-noderna handlar om faktakunskap, inte läsförståelse.
+const addition010 = makeAddSub('addition-0-10', { ranges: [6, 8, 10, 10], visualUpTo: 5, op: 'add', storyFrom: 99 })
+const subtraktion010 = makeAddSub('subtraktion-0-10', { ranges: [6, 8, 10, 10], visualUpTo: 5, op: 'sub', storyFrom: 99 })
 const addSub010 = makeAddSub('add-sub-0-10', { ranges: [6, 8, 10, 10], visualUpTo: 5 })
+const addition020 = makeAddSub('addition-0-20', { ranges: [12, 15, 20, 20], carry: false, visualUpTo: 4, op: 'add', storyFrom: 99 })
+const subtraktion020 = makeAddSub('subtraktion-0-20', { ranges: [12, 15, 20, 20], carry: false, visualUpTo: 4, op: 'sub', storyFrom: 99 })
 const addSub020 = makeAddSub('add-sub-0-20', { ranges: [12, 15, 20, 20], carry: false, visualUpTo: 4 })
 const tiotalsovergang = makeAddSub('tiotalsovergang-20', { ranges: [14, 16, 18, 20], carry: true, visualUpTo: 5 })
 const addSub0100 = makeAddSub('add-sub-0-100', { ranges: [40, 60, 100, 100], carry: false, visualUpTo: 4 })
@@ -483,7 +494,9 @@ const overslagsrakning = g('overslagsrakning', (level, seed, rng) => {
 
 export const TALENS_DAL_GENERATORS: TaskGenerator[] = [
   antal010, talrad020, delaUppTal, talkamrater10,
-  addSub010, addSub020, tiotalsovergang, positionssystem100,
+  addition010, subtraktion010, addSub010,
+  addition020, subtraktion020, addSub020,
+  tiotalsovergang, positionssystem100,
   addSub0100, vaxling0100, addSub01000, storaTal, negativaTal,
   rimlighet, kontrollMotsatt, overslagsrakning,
 ]

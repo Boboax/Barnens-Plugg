@@ -6,7 +6,7 @@ import { hasGenerator } from '../../generators'
 import { currentMomentId, bossPendingWorldId, worldMomentsComplete } from '../../engine/progress'
 import { dueForReview } from '../../engine/spaced-repetition'
 import { rewardProgress } from '../../engine/rewards'
-import { blixtTarget, unlockedBlixtTests } from '../../engine/blixt'
+import { blixtTarget, unlockedBlixtTests, blixtLevel, blixtTier, blixtMaxTier } from '../../engine/blixt'
 import { sfx } from '../../sound'
 import { Avatar } from '../components/Avatar'
 import { Icon, type IconName, BelongIcon, isBelongIcon } from '../components/Icon'
@@ -564,6 +564,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
               const record = child.blixt?.[test.kind]
               const target = blixtTarget(test.kind, store.household.blixtTargets)
               const hitTarget = (record?.best ?? 0) >= target
+              const level = blixtLevel(test.kind, child)
+              const atTop = blixtTier(test.kind, child) >= blixtMaxTier(test.kind)
               return (
                 <button
                   key={test.kind}
@@ -574,7 +576,13 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     fontFamily: 'inherit', color: 'var(--ink)', textAlign: 'left', gap: 8,
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="blixt" size={15} /> {test.title}</span>
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="blixt" size={15} /> {test.title}</span>
+                    {/* Svårighetstrappan: börjar lätt, stiger när minutmålet nås. */}
+                    <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--muted)' }}>
+                      Nivå {level}{atTop ? ' · toppnivå! ⭐' : ' · blir svårare när du klarar målet'}
+                    </span>
+                  </span>
                   <span style={{ fontSize: 11.5, color: hitTarget ? 'var(--mint)' : 'var(--muted)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
                     {record ? <><Icon name="pokal" size={13} /> {record.best}</> : 'nytt!'} {hitTarget ? '· mål nått' : `· mål ${target}`}
                   </span>

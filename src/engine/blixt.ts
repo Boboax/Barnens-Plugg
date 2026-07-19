@@ -1,7 +1,6 @@
 import type { BlixtKind, ChildProfile, DifficultyLevel, Task } from '../domain/types'
 import { generateTask } from '../generators'
 import { createRng, freshSeed } from '../generators/rng'
-import { practiceLevel } from './rating'
 
 /* ============================================================
    Blixtpass — flytträning i skolans minuttest-format.
@@ -29,13 +28,15 @@ export interface BlixtConfig {
   sources: { generatorId: string; minLevel: DifficultyLevel; maxLevel: DifficultyLevel }[]
 }
 
+// Nivåspannen börjar LÅGT (lätt i början) och toppen ger rum för trappan att
+// stiga varje gång barnet når målet. Håller sig i det rena sifferspannet.
 export const BLIXT_TESTS: BlixtConfig[] = [
   {
     kind: 'add-sub-0-10',
     title: 'Plus & minus 0–10',
     emoji: '⚡',
     unlockMomentId: 'add-sub-0-10',
-    sources: [{ generatorId: 'gen.add-sub-0-10', minLevel: 3, maxLevel: 5 }],
+    sources: [{ generatorId: 'gen.add-sub-0-10', minLevel: 2, maxLevel: 6 }],
   },
   {
     kind: 'add-sub-0-20',
@@ -43,8 +44,8 @@ export const BLIXT_TESTS: BlixtConfig[] = [
     emoji: '🌩',
     unlockMomentId: 'add-sub-0-20',
     sources: [
-      { generatorId: 'gen.add-sub-0-20', minLevel: 3, maxLevel: 5 },
-      { generatorId: 'gen.tiotalsovergang-20', minLevel: 3, maxLevel: 5 },
+      { generatorId: 'gen.add-sub-0-20', minLevel: 2, maxLevel: 6 },
+      { generatorId: 'gen.tiotalsovergang-20', minLevel: 3, maxLevel: 6 },
     ],
   },
   {
@@ -52,9 +53,24 @@ export const BLIXT_TESTS: BlixtConfig[] = [
     title: 'Tabellerna',
     emoji: '✨',
     unlockMomentId: 'mult-intro',
-    sources: [{ generatorId: 'gen.tabeller-alla', minLevel: 2, maxLevel: 6 }],
+    sources: [{ generatorId: 'gen.tabeller-alla', minLevel: 2, maxLevel: 7 }],
   },
 ]
+
+/** Hur många steg trappan kan stiga för ett test (0 = redan på toppen). */
+export const blixtMaxTier = (kind: BlixtKind): number =>
+  Math.max(...blixtConfig(kind).sources.map((s) => s.maxLevel - s.minLevel))
+
+/** Aktuell trappnivå (0-baserad) för barnet — stiger när minutmålet nås. */
+export const blixtTier = (kind: BlixtKind, profile: ChildProfile): number =>
+  Math.min(blixtMaxTier(kind), Math.max(0, profile.blixt?.[kind]?.tier ?? 0))
+
+/** Ungefärlig svårighetsnivå (1–10) barnet spelar just nu — för UI-visning. */
+export const blixtLevel = (kind: BlixtKind, profile: ChildProfile): DifficultyLevel => {
+  const tier = blixtTier(kind, profile)
+  const s = blixtConfig(kind).sources[0]
+  return Math.min(s.maxLevel, s.minLevel + tier) as DifficultyLevel
+}
 
 export const blixtConfig = (kind: BlixtKind): BlixtConfig => {
   const cfg = BLIXT_TESTS.find((t) => t.kind === kind)
@@ -79,8 +95,10 @@ export function blixtTask(kind: BlixtKind, profile: ChildProfile): Task {
   const cfg = blixtConfig(kind)
   const rng = createRng(freshSeed())
   const source = rng.pick(cfg.sources)
-  const rating = profile.skills[cfg.unlockMomentId]?.rating ?? 300
-  const level = Math.min(source.maxLevel, Math.max(source.minLevel, practiceLevel(rating))) as DifficultyLevel
+  // Svårigheten följer TRAPPAN (antal gånger målet nåtts), inte nodratingen —
+  // så rundorna börjar lätta och blir successivt svårare för alla barn.
+  const tier = blixtTier(kind, profile)
+  const level = Math.min(source.maxLevel, source.minLevel + tier) as DifficultyLevel
   // Blixtpass kräver rena sifferuppgifter — generera om ifall en variant
   // med längre text slinker igenom (händer inte i spannet, men bältet+hängslen).
   for (let i = 0; i < 5; i++) {

@@ -100,6 +100,41 @@ export function repairDiagnosisBossReady(
   return recomputeAvailability(next, conqueredWorlds)
 }
 
+/**
+ * Engångsmigrering när "Plus och minus" delades i ren addition → ren
+ * subtraktion → blandat. Barn som REDAN behärskar en blandad nod har visat
+ * båda räknesätten, så de nya rena noderna markeras klara direkt — annars
+ * skulle motorn skicka dem bakåt till addition igen. Idempotent.
+ */
+const SPLIT_BACKFILL: { mixed: string; pure: string[] }[] = [
+  { mixed: 'add-sub-0-10', pure: ['addition-0-10', 'subtraktion-0-10'] },
+  { mixed: 'add-sub-0-20', pure: ['addition-0-20', 'subtraktion-0-20'] },
+]
+
+export function backfillSplitAddSub(
+  skills: Record<string, SkillState>,
+  now: string,
+): Record<string, SkillState> {
+  let changed = false
+  const next: Record<string, SkillState> = { ...skills }
+  for (const { mixed, pure } of SPLIT_BACKFILL) {
+    const m = skills[mixed]
+    if (!m || !isDone(m)) continue
+    for (const id of pure) {
+      const s = next[id]
+      if (s && isDone(s)) continue
+      next[id] = {
+        ...(s ?? newSkillState(id)),
+        mastery: 'mastered',
+        rating: Math.max(s?.rating ?? 0, 640),
+        review: s?.review ?? scheduleFirstReview(now),
+      }
+      changed = true
+    }
+  }
+  return changed ? next : skills
+}
+
 const MISCONCEPTION_MEMORY = 10
 
 /**

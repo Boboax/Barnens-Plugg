@@ -53,6 +53,23 @@ describe('uppgiftsgeneratorerna', () => {
     expect(a).toEqual(b)
   })
 
+  it('rena add/sub-noder ger BARA sitt räknesätt (memoreringsordningen)', () => {
+    for (const seed of SEEDS) {
+      for (const level of [1, 2, 3, 4, 5] as DifficultyLevel[]) {
+        for (const id of ['gen.addition-0-10', 'gen.addition-0-20']) {
+          const p = generateTask(id, level, seed).prompt
+          expect(p, `${id} f${seed}: ska vara addition`).toContain('+')
+          expect(p, `${id} f${seed}: ska inte innehålla minus`).not.toContain('−')
+        }
+        for (const id of ['gen.subtraktion-0-10', 'gen.subtraktion-0-20']) {
+          const p = generateTask(id, level, seed).prompt
+          expect(p, `${id} f${seed}: ska vara subtraktion`).toContain('−')
+          expect(p, `${id} f${seed}: ska inte innehålla plus`).not.toContain('+')
+        }
+      }
+    }
+  })
+
   it('missuppfattningskartan pekar aldrig på rätt svar', () => {
     for (const id of allGeneratorIds()) {
       for (const seed of SEEDS.slice(0, 10)) {

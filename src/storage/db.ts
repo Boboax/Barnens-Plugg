@@ -1,6 +1,6 @@
 import type { Household } from '../domain/types'
 import { PROFILE_SCHEMA_VERSION } from '../domain/types'
-import { repairDiagnosisBossReady } from '../engine/progress'
+import { repairDiagnosisBossReady, backfillSplitAddSub } from '../engine/progress'
 
 /* ============================================================
    Lagring: IndexedDB med localStorage som reservutväg.
@@ -92,10 +92,10 @@ export function migrate(data: Household): Household {
     ...data,
     children: (Array.isArray(data.children) ? data.children : []).map((c) =>
       c && c.skills
-        // repairDiagnosisBossReady räknar om tillgänglighet med bossgrinden, så
-        // nedströms världar låses bakom bossen även i profiler placerade innan
-        // grinden fanns (t.ex. barn som redan klarat en värld utan bosstrid).
-        ? { ...c, skills: repairDiagnosisBossReady(c.skills, now, c.conqueredWorlds ?? []) }
+        // backfillSplitAddSub: markera nya rena add/sub-noder klara för barn som
+        // redan klarat den blandade noden. repairDiagnosisBossReady räknar sedan
+        // om tillgänglighet med bossgrinden (låser nedströms världar bakom bossen).
+        ? { ...c, skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, c.conqueredWorlds ?? []) }
         : c,
     ),
     rewards: Array.isArray(data.rewards) ? data.rewards : [],

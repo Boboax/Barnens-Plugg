@@ -10,7 +10,8 @@ import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
 import { composeCheckTasks, composeWorldBossTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
 import { rewardProgress } from './rewards'
-import { BLIXT_TESTS, blixtTask, blixtUnlocked } from './blixt'
+import { BLIXT_TESTS, blixtTask, blixtUnlocked, blixtLevel, blixtTier, blixtMaxTier } from './blixt'
+import { backfillSplitAddSub } from './progress'
 
 const makeProfile = (overrides: Partial<ChildProfile> = {}): ChildProfile => {
   const skills: Record<string, SkillState> = {}
@@ -268,6 +269,34 @@ describe('blixtpass', () => {
         expect(task.prompt.length, `${test.kind}: ${task.prompt}`).toBeLessThanOrEqual(24)
       }
     }
+  })
+
+  it('svårigheten stiger med trappan (lätt först, tak vid maxtier)', () => {
+    const easy = makeProfile({ blixt: { 'add-sub-0-10': { best: 20, lastAt: '', tier: 0 } } })
+    const hard = makeProfile({ blixt: { 'add-sub-0-10': { best: 30, lastAt: '', tier: 99 } } })
+    expect(blixtLevel('add-sub-0-10', easy)).toBeLessThan(blixtLevel('add-sub-0-10', hard))
+    // Trappan klämmer till maxtier — ingen ändlös upptrappning.
+    expect(blixtTier('add-sub-0-10', hard)).toBe(blixtMaxTier('add-sub-0-10'))
+  })
+})
+
+describe('delad add/sub-migrering', () => {
+  it('klarad blandad nod markerar de rena noderna klara (skickar inte barnet bakåt)', () => {
+    const skills: Record<string, SkillState> = {
+      'add-sub-0-10': { ...newSkillState('add-sub-0-10'), mastery: 'mastered' },
+    }
+    const out = backfillSplitAddSub(skills, '2026-01-01')
+    expect(out['addition-0-10'].mastery).toBe('mastered')
+    expect(out['subtraktion-0-10'].mastery).toBe('mastered')
+    expect(out['addition-0-10'].review).toBeDefined()
+  })
+
+  it('rör inte rena noder om den blandade inte är klar', () => {
+    const skills: Record<string, SkillState> = {
+      'add-sub-0-10': { ...newSkillState('add-sub-0-10'), mastery: 'in-progress' },
+    }
+    const out = backfillSplitAddSub(skills, '2026-01-01')
+    expect(out['addition-0-10']).toBeUndefined()
   })
 })
 
