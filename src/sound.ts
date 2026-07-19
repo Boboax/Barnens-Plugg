@@ -22,6 +22,25 @@ let stepTimer: number | null = null
 const LS_KEY = 'barnens-plugg-ljud'
 let muted = typeof localStorage !== 'undefined' && localStorage.getItem(LS_KEY) === 'av'
 
+/* ---------- Volymnivåer (0–1), justerbara av barnen ----------
+   Musik (mp3-låtarna) och effekter styrs var för sig så man kan dämpa den ena
+   utan den andra. Sparas mellan sessioner. 0,5 = nuvarande balans; interna
+   maxtaken håller "full" behagligt (inte öronbedövande). */
+const LS_MUSIC = 'barnens-plugg-musikvol'
+const LS_SFX = 'barnens-plugg-ljudvol'
+const MUSIC_MAX = 1.0 // mp3-låtarnas volym vid full reglage
+const CHIP_MAX = 0.11 // chiptune-musikbussen vid full
+const SFX_MAX = 0.32 // effektbussen vid full
+const clamp01 = (v: number): number => Math.min(1, Math.max(0, v))
+const readVol = (key: string, fallback: number): number => {
+  try {
+    const v = parseFloat(localStorage.getItem(key) ?? '')
+    return Number.isFinite(v) ? clamp01(v) : fallback
+  } catch { return fallback }
+}
+let musicVolume = readVol(LS_MUSIC, 0.5)
+let sfxVolume = readVol(LS_SFX, 0.5)
+
 function ensure(): AudioContext | null {
   if (typeof window === 'undefined') return null
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
@@ -32,10 +51,10 @@ function ensure(): AudioContext | null {
     master.gain.value = muted ? 0 : 1
     master.connect(ctx.destination)
     musicBus = ctx.createGain()
-    musicBus.gain.value = 0.055
+    musicBus.gain.value = musicVolume * CHIP_MAX
     musicBus.connect(master)
     sfxBus = ctx.createGain()
-    sfxBus.gain.value = 0.16
+    sfxBus.gain.value = sfxVolume * SFX_MAX
     sfxBus.connect(master)
   }
   if (ctx.state === 'suspended') void ctx.resume()
@@ -87,7 +106,7 @@ let trkTheme: HTMLAudioElement | null = null
 const trkBoss: (HTMLAudioElement | null)[] = [null, null]
 
 function mkTrack(url: string, loop: boolean): HTMLAudioElement {
-  const a = new Audio(url); a.loop = loop; a.preload = 'auto'; a.volume = 0.5; return a
+  const a = new Audio(url); a.loop = loop; a.preload = 'auto'; a.volume = musicVolume * MUSIC_MAX; return a
 }
 let retryCleanup: (() => void) | null = null
 function gesturePlay(a: HTMLAudioElement): void {
@@ -164,6 +183,26 @@ export function setMusicScene(scene: MusicScene): void {
 
 /** Pausar musiken utan att glömma scenen (t.ex. när Pi somnar). */
 export function pauseMusic(): void { mCurrent?.pause() }
+
+/* ---------- Volymreglage (barnvänliga) ---------- */
+
+export const getMusicVolume = (): number => musicVolume
+export const getSfxVolume = (): number => sfxVolume
+
+/** Sätt musikvolymen (0–1). Gäller mp3-låtarna och chiptune-bussen direkt. */
+export function setMusicVolume(v: number): void {
+  musicVolume = clamp01(v)
+  try { localStorage.setItem(LS_MUSIC, String(musicVolume)) } catch { /* privat läge */ }
+  for (const t of [trkStart, trkTheme, trkBoss[0], trkBoss[1]]) if (t) t.volume = musicVolume * MUSIC_MAX
+  if (musicBus) musicBus.gain.value = musicVolume * CHIP_MAX
+}
+
+/** Sätt effektvolymen (0–1). Gäller alla ljudeffekter direkt. */
+export function setSfxVolume(v: number): void {
+  sfxVolume = clamp01(v)
+  try { localStorage.setItem(LS_SFX, String(sfxVolume)) } catch { /* privat läge */ }
+  if (sfxBus) sfxBus.gain.value = sfxVolume * SFX_MAX
+}
 
 /* ---------- App-livscykel: tysta ljudet när appen göms/stängs ----------
    På iOS fortsätter en HTMLAudioElement spela även när PWA:n läggs i
