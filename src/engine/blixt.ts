@@ -1,4 +1,5 @@
-import type { BlixtKind, ChildProfile, DifficultyLevel, Task } from '../domain/types'
+import type { BlixtKind, ChildProfile, DifficultyLevel, SchoolYear, Task } from '../domain/types'
+import { momentById } from '../domain/curriculum'
 import { generateTask } from '../generators'
 import { createRng, freshSeed } from '../generators/rng'
 
@@ -17,6 +18,52 @@ import { createRng, freshSeed } from '../generators/rng'
 
 export const BLIXT_SECONDS = 60
 export const BLIXT_DEFAULT_TARGET = 20
+
+// FK kör UTAN synlig klocka: en fast liten mängd frågor, "gör så snabbt du
+// kan". Tiden mäts ändå i det tysta (för föräldern). Från åk 1 tickar klockan.
+export const BLIXT_UNTIMED_COUNT = 15
+export const BLIXT_UNTIMED_PASS = 12 // ~80 % rätt = klarad
+
+/** Tidssatt blixt (synlig klocka) från åk 1; FK kör utan tidspress. */
+export const blixtTimed = (schoolYear: SchoolYear): boolean => schoolYear !== 'F'
+
+/* Flyt-grind: varje blixttest måste KLARAS (nå målet) innan momentet det
+   grindar öppnas. Obegränsade omförsök, aldrig straff. Forskningsgrund:
+   mastery learning + automatisering; se docs/PEDAGOGIK.md. */
+export const BLIXT_GATE: Record<BlixtKind, string> = {
+  'add-sub-0-10': 'addition-0-20',
+  'add-sub-0-20': 'tiotalsovergang-20',
+  tabeller: 'mult-div-samband',
+}
+const BLIXT_ORDER: BlixtKind[] = ['add-sub-0-10', 'add-sub-0-20', 'tabeller']
+
+/** Har barnet klarat blixten minst en gång (grinden öppen)? */
+export const blixtCleared = (kind: BlixtKind, profile: ChildProfile): boolean =>
+  profile.blixt?.[kind]?.cleared === true
+
+/** Moment som är låsta av en ännu oklarad flyt-grind. */
+export function blixtBlockedMoments(profile: ChildProfile): Set<string> {
+  const blocked = new Set<string>()
+  for (const kind of BLIXT_ORDER) {
+    if (!blixtCleared(kind, profile)) blocked.add(BLIXT_GATE[kind])
+  }
+  return blocked
+}
+
+/** Vilken flyt-grind blockerar just nu (barnet har nått den men inte klarat)?
+    Styr "nästa steg" på hemskärmen. undefined = ingen grind väntar. */
+export function pendingBlixtKind(profile: ChildProfile): BlixtKind | undefined {
+  const done = (id: string): boolean => {
+    const m = profile.skills[id]?.mastery
+    return m === 'mastered' || m === 'star'
+  }
+  for (const kind of BLIXT_ORDER) {
+    if (blixtCleared(kind, profile)) continue
+    // Grinden väntar när momentet den grindar är redo så när som på blixten.
+    if (momentById(BLIXT_GATE[kind]).prerequisites.every(done)) return kind
+  }
+  return undefined
+}
 
 export interface BlixtConfig {
   kind: BlixtKind
@@ -52,7 +99,8 @@ export const BLIXT_TESTS: BlixtConfig[] = [
     kind: 'tabeller',
     title: 'Tabellerna',
     emoji: '✨',
-    unlockMomentId: 'mult-intro',
+    // Låses upp när ALLA tabeller lärts in — då grindar den vägen vidare.
+    unlockMomentId: 'tabeller-alla',
     sources: [{ generatorId: 'gen.tabeller-alla', minLevel: 2, maxLevel: 7 }],
   },
 ]

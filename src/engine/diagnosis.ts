@@ -3,6 +3,7 @@ import { MOMENTS_ORDERED, momentById } from '../domain/curriculum'
 import { generateTask, hasGenerator } from '../generators'
 import { freshSeed } from '../generators/rng'
 import { newSkillState, recomputeAvailability } from './progress'
+import { blixtBlockedMoments } from './blixt'
 import { scheduleFirstReview } from './spaced-repetition'
 
 /* ============================================================
@@ -164,5 +165,5 @@ export function applyDiagnosisResult(profile: ChildProfile, now: string): Record
   // Bossgrinden gäller även efter diagnos: världar som placeringen "klarade"
   // erövras inte automatiskt — barnet möter deras bossar bakåt först (medvetet
   // val: bossen är i slutet av varje värld). conqueredWorlds är normalt tom här.
-  return recomputeAvailability(skills, profile.conqueredWorlds ?? [])
+  return recomputeAvailability(skills, profile.conqueredWorlds ?? [], blixtBlockedMoments(profile))
 }

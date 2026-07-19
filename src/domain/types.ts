@@ -302,6 +302,12 @@ export interface BlixtRecord {
   /** Svårighetstrappa: börjar på 0 (lätt) och stiger ett steg varje gång barnet
       når minutmålet — så blixtrundorna blir successivt svårare. Aldrig en grind. */
   tier?: number
+  /** Klarad minst en gång (nått målet). Öppnar flyt-grinden till nästa moment;
+      återställs aldrig — man kan jaga rekord vidare utan att låsas igen. */
+  cleared?: boolean
+  /** Snabbaste tiden (ms) barnet klarat rundan på — mäts även när klockan är
+      dold (FK), så föräldern kan se flytet. Barnet ser den aldrig. */
+  bestTimeMs?: number
 }
 
 // ---------- Chattlogg (fas 5, men loggformatet är del av grundmodellen) ----------

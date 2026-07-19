@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Task } from '../../domain/types'
-import { BLIXT_SECONDS, blixtConfig, blixtTarget, blixtTask } from '../../engine/blixt'
+import {
+  BLIXT_SECONDS, BLIXT_UNTIMED_COUNT, BLIXT_UNTIMED_PASS,
+  blixtConfig, blixtTarget, blixtTask, blixtTimed,
+} from '../../engine/blixt'
 import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
 import { Keypad } from '../components/Keypad'
@@ -9,11 +12,12 @@ import { Icon } from '../components/Icon'
 import { useStore } from '../store'
 
 /* ============================================================
-   Blixtpasset — skolans minuttest som tävling mot sig själv.
+   Blixtpasset — flyt-träning, nu en KRAV-grind (måste klaras för
+   att gå vidare), men aldrig straffande: obegränsade omförsök.
 
-   60 sekunder, så många rätt som möjligt. Fel svar kostar inget
-   (räknas bara inte). Skolans mål visas som en ribba på vägen,
-   rekordet är det man jagar. Snabbt flöde: svara → nästa direkt.
+   Från åk 1: skolans minuttest (60 s, synlig klocka).
+   FK: ingen synlig klocka — en liten mängd frågor, "gör så snabbt
+   du kan". Tiden mäts i det tysta (för föräldern), barnet ser den ej.
    ============================================================ */
 
 type Phase = 'intro' | 'running' | 'done'
@@ -30,40 +34,36 @@ export function BlixtScreen() {
   const [attempted, setAttempted] = useState(0)
   const [flash, setFlash] = useState<'ratt' | 'fel' | null>(null)
   const taskStartedAt = useRef(Date.now())
+  const roundStartedAt = useRef(Date.now())
   const resultSaved = useRef(false)
-  // Rekordet FÖRE sprinten — profilen uppdateras när resultatet sparas,
-  // så jämförelsen måste utgå från det gamla värdet.
-  const bestBefore = useRef(0)
+  const clearedBefore = useRef(false)
 
-  // Nedräkningen.
+  // Tidssatt för åk 1+; FK kör utan klocka (fast antal frågor).
+  const timed = child ? blixtTimed(child.schoolYear) : true
+
+  // Nedräkning (bara i tidssatt läge).
   useEffect(() => {
-    if (phase !== 'running') return
+    if (phase !== 'running' || !timed) return
     const interval = window.setInterval(() => {
       setSecondsLeft((s) => {
-        if (s <= 1) {
-          window.clearInterval(interval)
-          setPhase('done')
-          return 0
-        }
-        if (s <= 6) sfx.tick() // sista sekunderna tickar
+        if (s <= 1) { window.clearInterval(interval); setPhase('done'); return 0 }
+        if (s <= 6) sfx.tick()
         return s - 1
       })
     }, 1000)
     return () => window.clearInterval(interval)
-  }, [phase])
+  }, [phase, timed])
 
-  // Spara resultatet exakt en gång när tiden är slut — och fira!
+  // Spara resultatet exakt en gång när rundan är slut — och fira om klarat.
   useEffect(() => {
     if (phase === 'done' && kind && !resultSaved.current) {
       resultSaved.current = true
-      store.recordBlixtResult(kind, correct)
-      const target = blixtTarget(kind, store.household.blixtTargets)
-      if (correct > bestBefore.current || correct >= target) {
-        sfx.rekord()
-        fireConfetti({ count: 110 })
-      } else {
-        sfx.ratt()
-      }
+      const cleared = timed
+        ? correct >= blixtTarget(kind, store.household.blixtTargets)
+        : correct >= BLIXT_UNTIMED_PASS
+      const elapsedMs = Date.now() - roundStartedAt.current
+      store.recordBlixtResult(kind, correct, cleared, timed ? undefined : elapsedMs)
+      if (cleared) { sfx.rekord(); fireConfetti({ count: 110 }) } else { sfx.ratt() }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
@@ -72,9 +72,10 @@ export function BlixtScreen() {
   const cfg = blixtConfig(kind)
   const target = blixtTarget(kind, store.household.blixtTargets)
   const previousBest = child.blixt?.[kind]?.best ?? 0
+  const alreadyCleared = child.blixt?.[kind]?.cleared ?? false
 
   const start = (): void => {
-    bestBefore.current = child.blixt?.[kind]?.best ?? 0
+    clearedBefore.current = child.blixt?.[kind]?.cleared ?? false
     resultSaved.current = false
     sfx.whoosh()
     setPhase('running')
@@ -84,6 +85,7 @@ export function BlixtScreen() {
     setValue('')
     setTask(blixtTask(kind, child))
     taskStartedAt.current = Date.now()
+    roundStartedAt.current = Date.now()
   }
 
   const submit = (): void => {
@@ -91,11 +93,14 @@ export function BlixtScreen() {
     const given = Number(value.replace('−', '-').replace(',', '.'))
     const isCorrect = Math.abs(given - task.answer.value) < 1e-9
     store.recordAnswer(task, isCorrect, Date.now() - taskStartedAt.current, 'blixt', given)
+    const nextAttempted = attempted + 1
     setCorrect((n) => n + (isCorrect ? 1 : 0))
-    setAttempted((n) => n + 1)
+    setAttempted(nextAttempted)
     setFlash(isCorrect ? 'ratt' : 'fel')
     window.setTimeout(() => setFlash(null), 250)
     setValue('')
+    // FK: rundan tar slut efter ett fast antal frågor (ingen klocka).
+    if (!timed && nextAttempted >= BLIXT_UNTIMED_COUNT) { setPhase('done'); return }
     setTask(blixtTask(kind, child))
     taskStartedAt.current = Date.now()
   }
@@ -106,11 +111,14 @@ export function BlixtScreen() {
         <Icon name="blixt" size={54} />
         <h2 style={h2}>Blixtpass: {cfg.title}</h2>
         <p style={pStyle}>
-          En minut — så många rätt du hinner! Fel kostar ingenting, de räknas bara inte.
+          {timed
+            ? 'En minut — så många rätt du hinner! Fel kostar ingenting, de räknas bara inte.'
+            : `Gör så snabbt du kan! ${BLIXT_UNTIMED_COUNT} frågor — klara ${BLIXT_UNTIMED_PASS} rätt så öppnas vägen vidare. Ingen klocka, fel gör inget.`}
         </p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
           <span className="chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="pokal" size={14} /> Ditt rekord: {previousBest || '–'}</span>
-          <span className="chip">Skolans mål: {target}</span>
+          <span className="chip">{timed ? `Mål: ${target}` : `Klara: ${BLIXT_UNTIMED_PASS} av ${BLIXT_UNTIMED_COUNT}`}</span>
+          {alreadyCleared && <span className="chip" style={{ color: 'var(--mint)' }}>✓ redan klarad</span>}
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn btn-quiet" onClick={() => store.go('home')}>← Tillbaka</button>
@@ -121,42 +129,49 @@ export function BlixtScreen() {
   }
 
   if (phase === 'done') {
-    const newRecord = correct > bestBefore.current
-    const hitTarget = correct >= target
+    const cleared = timed ? correct >= target : correct >= BLIXT_UNTIMED_PASS
+    const newlyOpened = cleared && !clearedBefore.current
     return (
       <Center>
         <Pi mood="hejar" size={100} />
         <h2 style={h2}>
-          {correct} rätt på en minut{newRecord ? ' — NYTT REKORD!' : '!'}
+          {timed
+            ? `${correct} rätt på en minut${correct > previousBest ? ' — NYTT REKORD!' : '!'}`
+            : `${correct} av ${attempted} rätt!`}
         </h2>
         <p style={pStyle}>
-          {hitTarget
-            ? `Du klarade skolans mål (${target})!`
-            : `${target - correct} kvar till skolans mål (${target}) — du är på väg!`}
-          {attempted > correct ? ` (${attempted - correct} fel räknades inte — helt okej!)` : ''}
+          {cleared
+            ? newlyOpened
+              ? 'Grymt — du klarade flyt-provet! Vägen vidare är öppen. ✓'
+              : 'Klarat igen — snyggt flyt! Vill du slå ditt rekord?'
+            : timed
+              ? `${Math.max(0, target - correct)} kvar till målet (${target}). Träna lite till och försök igen — du är på väg!`
+              : `Nästan! Klara ${BLIXT_UNTIMED_PASS} rätt så öppnas vägen. Försök igen när du vill — det gör inget att det tar tid.`}
         </p>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn btn-quiet" onClick={() => store.go('home')}>Till kartan</button>
-          <button className="btn btn-primary" onClick={start}>En gång till!</button>
+          <button className="btn btn-primary" onClick={start}>{cleared ? 'En gång till!' : 'Försök igen!'}</button>
         </div>
       </Center>
     )
   }
 
-  const progress = secondsLeft / BLIXT_SECONDS
+  const progress = timed ? secondsLeft / BLIXT_SECONDS : attempted / BLIXT_UNTIMED_COUNT
 
   return (
     <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'calc(12px + env(safe-area-inset-top)) 16px 16px', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', maxWidth: 620 }}>
         <Icon name="blixt" size={20} />
         <div className="pbar" style={{ flex: 1, height: 14 }}>
-          <i style={{ width: `${progress * 100}%`, background: secondsLeft <= 10 ? 'var(--coral)' : 'var(--sun)', transition: 'width 1s linear' }} />
+          <i style={{ width: `${progress * 100}%`, background: timed && secondsLeft <= 10 ? 'var(--coral)' : 'var(--sun)', transition: timed ? 'width 1s linear' : 'width .2s' }} />
         </div>
-        <span style={{ fontWeight: 900, fontSize: 20, fontVariantNumeric: 'tabular-nums', minWidth: 44, textAlign: 'right' }}>{secondsLeft}s</span>
+        <span style={{ fontWeight: 900, fontSize: 20, fontVariantNumeric: 'tabular-nums', minWidth: 44, textAlign: 'right' }}>
+          {timed ? `${secondsLeft}s` : `${attempted}/${BLIXT_UNTIMED_COUNT}`}
+        </span>
       </div>
       <div style={{ display: 'flex', gap: 14, fontWeight: 800, fontSize: 14, color: 'var(--muted)' }}>
         <span>{correct} rätt</span>
-        <span>mål {target}</span>
+        <span>{timed ? `mål ${target}` : `klara ${BLIXT_UNTIMED_PASS}`}</span>
         {previousBest > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="pokal" size={13} /> rekord {previousBest}</span>}
       </div>
 
@@ -167,7 +182,7 @@ export function BlixtScreen() {
           border: `3px dashed ${flash === 'ratt' ? 'var(--mint)' : flash === 'fel' ? 'var(--coral)' : 'var(--primary)'}`,
           borderRadius: 16, padding: '4px 20px', fontSize: 38, fontWeight: 900,
           color: 'var(--primary)', background: 'var(--card)', transition: 'border-color 0.15s',
-        }}>{value || '\u00A0'}</div>
+        }}>{value || ' '}</div>
         <Keypad value={value} onChange={setValue} onSubmit={submit} size="stor" />
       </div>
     </div>
@@ -182,8 +197,6 @@ function Center({ children }: { children: React.ReactNode }) {
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: 14, padding: 30,
-      // Mjuk gyllene glöd i toppen så skärmen inte känns platt (matchar
-      // diagnos-korten) — blixten är en varm, positiv rekordjakt.
       background: 'radial-gradient(ellipse 120% 60% at 50% 8%, #FFEFC9 0%, var(--bg) 58%)',
     }}>{children}</div>
   )

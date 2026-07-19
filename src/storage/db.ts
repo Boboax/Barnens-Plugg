@@ -1,6 +1,7 @@
 import type { Household } from '../domain/types'
 import { PROFILE_SCHEMA_VERSION } from '../domain/types'
 import { repairDiagnosisBossReady, backfillSplitAddSub } from '../engine/progress'
+import { blixtBlockedMoments } from '../engine/blixt'
 
 /* ============================================================
    Lagring: IndexedDB med localStorage som reservutväg.
@@ -95,7 +96,7 @@ export function migrate(data: Household): Household {
         // backfillSplitAddSub: markera nya rena add/sub-noder klara för barn som
         // redan klarat den blandade noden. repairDiagnosisBossReady räknar sedan
         // om tillgänglighet med bossgrinden (låser nedströms världar bakom bossen).
-        ? { ...c, skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, c.conqueredWorlds ?? []) }
+        ? { ...c, skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, c.conqueredWorlds ?? [], blixtBlockedMoments(c)) }
         : c,
     ),
     rewards: Array.isArray(data.rewards) ? data.rewards : [],

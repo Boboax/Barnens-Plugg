@@ -6,7 +6,7 @@ import { hasGenerator } from '../../generators'
 import { currentMomentId, bossPendingWorldId, worldMomentsComplete } from '../../engine/progress'
 import { dueForReview } from '../../engine/spaced-repetition'
 import { rewardProgress } from '../../engine/rewards'
-import { blixtTarget, unlockedBlixtTests, blixtLevel, blixtTier, blixtMaxTier, type BlixtConfig } from '../../engine/blixt'
+import { blixtTarget, unlockedBlixtTests, blixtLevel, blixtTier, blixtMaxTier, blixtConfig, blixtCleared, pendingBlixtKind, type BlixtConfig } from '../../engine/blixt'
 import { sfx } from '../../sound'
 import { Avatar } from '../components/Avatar'
 import { Icon, type IconName, BelongIcon, isBelongIcon } from '../components/Icon'
@@ -103,18 +103,23 @@ function HomeInner({ child }: { child: ChildProfile }) {
   // BOSSEN nästa steg, inte ett nytt moment. Styr "Du är här", vy och knapp.
   const pendingBossWorldId = useMemo(() => bossPendingWorldId(child), [child])
   const pendingBossWorld = pendingBossWorldId ? worldById(pendingBossWorldId) : undefined
+  // Väntar en flyt-grind (blixt som måste klaras innan nästa moment)?
+  const pendingBlixt = useMemo(() => pendingBlixtKind(child), [child])
   const currentMoment = currentId ? momentById(currentId) : undefined
-  const currentWorld = currentMoment ? worldById(currentMoment.worldId)
-    : pendingBossWorld
   const currentSkill = currentId ? child.skills[currentId] : undefined
   // Har barnet FAKTISKT tränat på det rekommenderade momentet? (styr knapptexten)
   // attempts, inte mastery: diagnosen sätter frontmomentet till in-progress utan
   // att barnet spelat, så vi vill inte säga "Fortsätt" redan dag ett.
   const hasStarted = (currentSkill?.attempts ?? 0) > 0
-  // "Du är här" och startvyn: bossvärlden om en boss väntar, annars aktuellt moment.
-  const focusWorldId = pendingBossWorldId ?? currentMoment?.worldId ?? WORLDS[0].id
-  // Boss väntar OCH inget moment kvar att träna → gula knappen tar till bossen.
+  // Boss/blixt är nästa steg först när inget moment finns kvar att träna.
   const bossIsNextStep = !!pendingBossWorldId && !currentId
+  const blixtIsNextStep = !!pendingBlixt && !currentId && !bossIsNextStep
+  const blixtWorldId = blixtIsNextStep && pendingBlixt
+    ? momentById(blixtConfig(pendingBlixt).unlockMomentId).worldId : undefined
+  const currentWorld = currentMoment ? worldById(currentMoment.worldId)
+    : pendingBossWorld ?? (blixtWorldId ? worldById(blixtWorldId) : undefined)
+  // "Du är här" och startvyn: bossvärld > flyt-grindens värld > aktuellt moment.
+  const focusWorldId = pendingBossWorldId ?? blixtWorldId ?? currentMoment?.worldId ?? WORLDS[0].id
   const [worldId, setWorldId] = useState(focusWorldId)
   const world = worldById(worldId)
   const theme = worldTheme(worldId)
@@ -156,9 +161,10 @@ function HomeInner({ child }: { child: ChildProfile }) {
   const startTraining = (): void => {
     if (secondsLeft <= 0) return store.go('time-up')
     sfx.whoosh()
-    // Väntar en boss och inget moment kvar att träna → gula knappen tar till
-    // bossen (enda vägen vidare). Annars vanligt pass (motorn väljer momentet).
+    // Inget moment kvar att träna → gula knappen tar till nästa grind:
+    // världsboss eller flyt-blixt. Annars vanligt pass (motorn väljer momentet).
     if (bossIsNextStep && pendingBossWorldId) store.startWorldBoss(pendingBossWorldId)
+    else if (blixtIsNextStep && pendingBlixt) store.startBlixt(pendingBlixt)
     else store.startSession()
   }
 
@@ -324,11 +330,14 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     const cfg = item.cfg
                     const level = blixtLevel(cfg.kind, child)
                     const rec = child.blixt?.[cfg.kind]
+                    const cleared = blixtCleared(cfg.kind, child)
+                    const isPending = pendingBlixt === cfg.kind && blixtIsNextStep
                     const short = cfg.kind === 'tabeller' ? 'tabeller' : cfg.kind === 'add-sub-0-20' ? '0–20' : '0–10'
-                    const bsize = 58
+                    const bsize = isPending ? 70 : 58
                     return (
                       <button
                         key={`blixt-${cfg.kind}`}
+                        ref={isPending ? scrollToCurrent : undefined}
                         onClick={() => { if (secondsLeft <= 0) return store.go('time-up'); store.startBlixt(cfg.kind) }}
                         aria-label={`Blixtpass ${cfg.title}`}
                         style={{
@@ -336,27 +345,37 @@ function HomeInner({ child }: { child: ChildProfile }) {
                           transform: 'translate(-50%, -50%)', width: bsize, height: bsize, fontFamily: 'inherit',
                         }}
                       >
-                        <span className="map-node pulse-glow" style={{
+                        <span className={`map-node${isPending ? ' pulse-glow' : ''}`} style={{
                           position: 'relative', width: bsize, height: bsize, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          filter: isPending ? undefined : 'drop-shadow(0 3px 4px rgba(0,0,0,.45))',
                         }}>
                           <span style={{
-                            width: 35, height: 35, borderRadius: '50%', overflow: 'hidden',
-                            background: 'radial-gradient(circle at 34% 28%, rgba(255,255,255,.6), rgba(255,255,255,0) 58%), var(--sun)',
+                            width: Math.round(bsize * 0.6), height: Math.round(bsize * 0.6), borderRadius: '50%', overflow: 'hidden',
+                            background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.6), rgba(255,255,255,0) 58%), ${cleared ? 'var(--mint)' : 'var(--sun)'}`,
                             boxShadow: 'inset 0 -2px 5px rgba(0,0,0,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
-                            <Icon name="blixt" size={26} />
+                            <Icon name="blixt" size={Math.round(bsize * 0.44)} />
                           </span>
                           <img src={`${import.meta.env.BASE_URL}art/tex/nodering.webp`} alt="" aria-hidden="true"
                             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
+                          {cleared && (
+                            <svg viewBox="0 0 24 24" width={18} height={18} aria-hidden="true"
+                              style={{ position: 'absolute', top: 0, right: 0, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.4))' }}>
+                              <circle cx="12" cy="12" r="11" fill="var(--mint)" stroke="#fff" strokeWidth="2" />
+                              <path d="M7,12.5 L10.5,16 L17,8.5" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
                         </span>
                         <span style={{
                           position: 'absolute', top: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
                           width: COL_W - 8, textAlign: 'center', lineHeight: 1.15, pointerEvents: 'none',
                           textShadow: dark ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)' : '0 1px 3px rgba(20,18,30,.9), 0 0 8px rgba(20,18,30,.7)',
                         }}>
-                          <span style={{ display: 'block', fontWeight: 800, fontSize: 12.5, color: 'var(--sun-ink)' }}>Blixt {short}</span>
+                          <span style={{ display: 'block', fontWeight: 800, fontSize: 12.5, color: cleared ? 'var(--mint)' : 'var(--sun-ink)' }}>Blixt {short}</span>
                           <span style={{ display: 'block', fontWeight: 600, fontSize: 11, color: 'var(--muted)' }}>
-                            nivå {level}{rec ? ` · rek ${rec.best}` : ' · ny!'}
+                            {cleared ? `klarad ✓${rec ? ` · rek ${rec.best}` : ''}`
+                              : isPending ? 'klara för att gå vidare!'
+                              : `nivå ${level}`}
                           </span>
                         </span>
                       </button>
@@ -543,10 +562,12 @@ function HomeInner({ child }: { child: ChildProfile }) {
             background: 'linear-gradient(rgba(246,236,212,.96), rgba(230,213,176,.96)), var(--tex-parchment, none) center / cover',
             border: '2px solid #7A6544', borderRadius: 12, padding: '8px 10px', color: '#3E3016',
           }}>
-            <Pi mood={bossIsNextStep ? 'hejar' : 'glad'} size={34} />
+            <Pi mood={bossIsNextStep || blixtIsNextStep ? 'hejar' : 'glad'} size={34} />
             <span style={{ fontSize: 12.5, fontWeight: 700, lineHeight: 1.35 }}>
               {bossIsNextStep && pendingBossWorld
                 ? <>Alla moment i <b>{pendingBossWorld.name}</b> är klara! Nu vaknar <b>{pendingBossWorld.boss.name}</b>. Tryck så tar jag dig till bossstriden!</>
+                : blixtIsNextStep && pendingBlixt
+                ? <>Dags för <b>blixtpasset {blixtConfig(pendingBlixt).title}</b>! Visa ditt flyt så öppnas vägen vidare. Tryck så kör vi!</>
                 : currentMoment
                 ? <>{hasStarted ? 'Vi fortsätter med' : 'Nästa'}: <b>{currentMoment.title}</b>{currentWorld ? <> i {currentWorld.name}</> : null}. Tryck på knappen så tar jag dig dit!</>
                 : <>Tryck på knappen så börjar vi träna tillsammans!</>}
@@ -554,7 +575,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
           </div>
 
           <button className="btn btn-primary" style={{ width: '100%', marginTop: 10 }} onClick={startTraining}>
-            {bossIsNextStep && pendingBossWorld ? `Möt ${pendingBossWorld.boss.name}! ⚔` : hasStarted ? 'Fortsätt passet ▶' : 'Starta passet ▶'}
+            {bossIsNextStep && pendingBossWorld ? `Möt ${pendingBossWorld.boss.name}! ⚔`
+              : blixtIsNextStep ? 'Kör blixtpasset! ⚡'
+              : hasStarted ? 'Fortsätt passet ▶' : 'Starta passet ▶'}
           </button>
         </div>
 
