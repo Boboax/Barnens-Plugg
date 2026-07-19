@@ -30,7 +30,9 @@ const antal010 = g('antal-0-10', (level, seed, rng) => {
       generatorId: id, level, seed,
       prompt: `Först ${a} ${plural}, sedan ${b} till. Hur många ${plural} är det tillsammans?`,
       value: a + b,
-      visual: { kind: 'grupper', groupCount: 1, itemsPerGroup: a + b, emoji },
+      // Ingen bild: en grupp med a+b objekt lät barnet räkna prickar i stället
+      // för att addera — bilden avslöjade facit. Stjärnnivå = utan stöd (CRA).
+      visual: { kind: 'ingen' },
       explanation: `Räkna alla: ${a} och ${b} blir ${a + b}.`,
       misconceptions: { [a + b - 1]: 'en-fel', [a + b + 1]: 'en-fel' },
     })
@@ -355,6 +357,7 @@ const storaTal = g('stora-tal', (level, seed, rng) => {
     return numericTask({
       generatorId: id, level, seed,
       prompt: `Vad är ${a.toLocaleString('sv-SE')} + ${step.toLocaleString('sv-SE')}?`,
+      spokenPrompt: `Vad är ${a} plus ${step}?`,
       value: a + step,
       explanation: `Bara siffran på ${step === 100 ? 'hundratals' : step === 1000 ? 'tusentals' : 'tiotusentals'}platsen ändras.`,
       misconceptions: { [a + step / 10]: 'positionsfel', [a + step * 10]: 'positionsfel' },
@@ -409,18 +412,22 @@ const rimlighet = g('rimlighet', (level, seed, rng) => {
   const max = lerpInt(level, 50, 900)
   const a = rng.int(max / 4, max / 2)
   const b = rng.int(max / 4, max / 2)
-  const sum = a + b
   const round = (n: number): number => Math.round(n / 10) * 10
-  const correct = round(sum)
+  // Rätt svar = SAMMA metod som förklaringen lär ut (avrunda varje term, addera
+  // sen). round(a+b) kunde skilja sig (15+15: metoden ger 40, round(30)=30) —
+  // då motsade uppgiften sin egen förklaring och barnets korrekta överslag
+  // fanns inte bland alternativen.
+  const correct = round(a) + round(b)
   const distractors = uniqueDistractors(correct, [
-    [round(sum / 2), null],
-    [round(sum * 2), null],
-    [round(sum) + 100, 'positionsfel'],
-    [round(sum / 10), 'positionsfel'],
+    [round((a + b) / 2), null],
+    [round((a + b) * 2), null],
+    [correct + 100, 'positionsfel'],
+    [Math.max(10, Math.round(correct / 10)), 'positionsfel'],
   ])
   return choiceTask({
     generatorId: id, level, seed, rng,
     prompt: `Ungefär hur mycket är ${a} + ${b}?`,
+    spokenPrompt: `Ungefär hur mycket är ${a} plus ${b}?`,
     correct: String(correct),
     distractors,
     explanation: `Avrunda först: ${a} ≈ ${round(a)} och ${b} ≈ ${round(b)}. Då blir det ungefär ${correct}. Så vet du om ditt riktiga svar är rimligt!`,
@@ -438,10 +445,13 @@ const kontrollMotsatt = g('kontroll-motsatt', (level, seed, rng) => {
   if (level >= 6 && rng.chance(0.5)) {
     // Stämmer påståendet? Fel med klassisk växlingsmiss ibland.
     const wrong = rng.chance(0.5)
-    const claimed = wrong ? shown + rng.pick([10, -10, 1, -1] as const) : shown
+    // Håll det påstådda svaret ≥ 0 — "har räknat a − b = −5" förvirrar i åk 3.
+    const offsets = ([10, -10, 1, -1] as const).filter((o) => shown + o >= 0)
+    const claimed = wrong ? shown + rng.pick(offsets) : shown
     return choiceTask({
       generatorId: id, level, seed, rng,
       prompt: `${pickName(rng)} har räknat ${a} − ${b} = ${claimed}. Kontrollera med addition: stämmer det?`,
+      spokenPrompt: `Någon har räknat att ${a} minus ${b} är ${claimed}. Kontrollera med addition: stämmer det?`,
       correct: wrong ? 'Nej' : 'Ja',
       distractors: [[wrong ? 'Ja' : 'Nej', null]],
       explanation: `Kontrollen: ${claimed} + ${b} = ${claimed + b}. ${claimed + b === a ? `Det blir ${a} — svaret stämmer.` : `Det blir ${claimed + b}, inte ${a} — svaret var fel. Rätt svar är ${shown}.`}`,
@@ -450,6 +460,7 @@ const kontrollMotsatt = g('kontroll-motsatt', (level, seed, rng) => {
   return choiceTask({
     generatorId: id, level, seed, rng,
     prompt: `Du har räknat ${a} − ${b} = ${shown}. Vilken kontroll visar om det stämmer?`,
+    spokenPrompt: `Du har räknat att ${a} minus ${b} är ${shown}. Vilken kontroll visar om det stämmer?`,
     correct: `${shown} + ${b}`,
     distractors: [
       [`${shown} − ${b}`, 'fel-raknesatt'],
@@ -486,6 +497,7 @@ const overslagsrakning = g('overslagsrakning', (level, seed, rng) => {
   return choiceTask({
     generatorId: id, level, seed, rng,
     prompt: `Överslag: ungefär vad är ${Math.max(a, b)} ${isAdd ? '+' : '−'} ${Math.min(a, b)}?`,
+    spokenPrompt: `Överslag: ungefär vad är ${Math.max(a, b)} ${isAdd ? 'plus' : 'minus'} ${Math.min(a, b)}?`,
     correct: String(correct),
     distractors,
     explanation: `Avrunda till närmaste hundratal: ${Math.max(roundedA, roundedB)} ${isAdd ? '+' : '−'} ${Math.min(roundedA, roundedB)} = ${correct}.`,

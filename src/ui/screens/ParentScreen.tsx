@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ChildProfile, SchoolYear } from '../../domain/types'
 import { areaName, weeklyReport } from '../../engine/report'
 import { rewardProgress } from '../../engine/rewards'
-import { BLIXT_TESTS, blixtTarget } from '../../engine/blixt'
+import { BLIXT_TESTS, blixtTarget, blixtTimed, BLIXT_UNTIMED_COUNT, BLIXT_UNTIMED_PASS } from '../../engine/blixt'
 import { pingProvider } from '../../chat/providers'
 import { CLOUD_VOICE, cloudTtsAvailable, kickVoiceList, preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
 import { daysSinceBackup, exportHousehold, importHousehold } from '../../storage/backup'
@@ -182,14 +182,25 @@ function ChildReport({ child }: { child: ChildProfile }) {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
               {BLIXT_TESTS.filter((t) => child.blixt?.[t.kind]).map((t) => {
                 const record = child.blixt![t.kind]!
-                const target = blixtTarget(t.kind, store.household.blixtTargets)
+                // FK kör utan klocka (fast antal frågor, klargräns 12/15) — då är
+                // "/min" och skolmålet 20 missvisande. Visa i stället klarstatus +
+                // den TYST uppmätta bästa tiden (barnet ser den aldrig).
+                const untimed = !blixtTimed(child.schoolYear)
+                const target = untimed ? BLIXT_UNTIMED_PASS : blixtTarget(t.kind, store.household.blixtTargets)
+                const hit = record.cleared || record.best >= target
+                const fmtTime = (ms: number): string => {
+                  const s = Math.round(ms / 1000)
+                  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+                }
                 return (
                   <span key={t.kind} style={{
                     fontSize: 12, fontWeight: 700, borderRadius: 99, padding: '3px 10px',
-                    background: record.best >= target ? '#E4F4EC' : '#F4F3EF',
-                    color: record.best >= target ? '#1F7A50' : '#2A2F3A',
+                    background: hit ? '#E4F4EC' : '#F4F3EF',
+                    color: hit ? '#1F7A50' : '#2A2F3A',
                   }}>
-                    {t.emoji} {t.title}: {record.best}/min {record.best >= target ? '· skolmålet nått 🎯' : `(mål ${target})`}
+                    {t.emoji} {t.title}: {untimed
+                      ? `bäst ${record.best}/${BLIXT_UNTIMED_COUNT}${record.bestTimeMs ? ` · snabbast ${fmtTime(record.bestTimeMs)}` : ''} ${hit ? '· klarad ✓' : `(klara ${BLIXT_UNTIMED_PASS})`}`
+                      : `${record.best}/min ${hit ? '· skolmålet nått 🎯' : `(mål ${target})`}`}
                   </span>
                 )
               })}
@@ -783,7 +794,9 @@ function SafetyTab() {
         <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
           Räknarnas rike följer Lgr22:s centrala innehåll för matematik F–åk 6. Uppgifterna genereras av appens egen kod
           (aldrig AI), svårigheten anpassas efter varje barn, och repetition schemaläggs med växande intervall.
-          Ingen data lämnar enheten.
+          All data bor lokalt på enheten. Undantag: när AI-chatten Pi är PÅ skickas barnets förnamn, ålder,
+          uppgiftstexten, det barnet skriver och eventuella kladdbilder till den valda AI-leverantören — inget annat,
+          och aldrig framsteg, tider eller belöningar.
         </p>
         <p style={{ margin: '10px 0 0', fontSize: 12.5, fontWeight: 700, color: '#8B8FA0' }}>
           Version {__APP_VERSION__} · byggd {__BUILD_TIME__} UTC

@@ -14,6 +14,13 @@ import { useStore } from './store'
 
 /** Skärmar där aktiv träningstid tickar mot dagens gräns. */
 const TIMED_SCREENS = new Set(['session', 'check', 'boss', 'star', 'blixt', 'diagnosis'])
+/**
+ * Rundor som får SPELAS KLART även om dagstiden tar slut mitt i — att slitas
+ * ut mitt i bossens klimax (och tappa striden) är den mest frustrerande
+ * stunden som finns. Tiden fortsätter ticka; låsningen slår till när barnet
+ * är tillbaka på en annan skärm, och inget nytt går att starta med 0 kvar.
+ */
+const GRACE_SCREENS = new Set(['check', 'boss', 'star', 'blixt'])
 const TICK_SECONDS = 5
 /**
  * Aktivitetsbaserad tid: klockan räknar bara när barnet faktiskt gör något.
@@ -89,7 +96,8 @@ export function App() {
   }, [screen, activeChild?.id])
 
   useEffect(() => {
-    if (activeChild && TIMED_SCREENS.has(screen) && store.secondsLeftToday(activeChild) <= 0) {
+    if (activeChild && TIMED_SCREENS.has(screen) && !GRACE_SCREENS.has(screen)
+      && store.secondsLeftToday(activeChild) <= 0) {
       store.go('time-up')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

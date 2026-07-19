@@ -49,6 +49,9 @@ function BossFigure({ boss, state }: { boss: Boss; state: 'idle' | 'traffad' | '
   )
 }
 
+/* Pis varierade hejarop under kunskapskollen — samma rad varje gång blev platt. */
+const PI_CHECK_CHEERS = ['Bra jobbat!', 'En stjärna till!', 'Du är på gång!', 'Pi ser att du tänker!', 'Wow, snyggt!', 'Så nära målet nu!']
+
 export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   const store = useStore()
   const child = store.activeChild
@@ -70,7 +73,18 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   const [introDone, setIntroDone] = useState(false)
 
   const worldId = kind === 'boss' ? worldBossId : (momentId ? momentById(momentId).worldId : undefined)
-  if (!child || !worldId || tasks.length === 0) return null
+  if (!child) return null
+  // Aldrig en tom skärm utan utväg — om uppgifterna inte kunde byggas
+  // (trasigt tillstånd) ska barnet alltid kunna gå tillbaka till kartan.
+  if (!worldId || tasks.length === 0) {
+    return (
+      <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 30 }}>
+        <Pi mood="funderar" size={90} />
+        <p style={{ fontWeight: 800, color: 'var(--ink)', margin: 0 }}>Hoppsan — här fanns inget att spela just nu.</p>
+        <button className="btn btn-primary" onClick={() => store.go('home')}>Till kartan ▶</button>
+      </div>
+    )
+  }
   const world = worldById(worldId)
   const boss = world.boss
   const moment: Moment | undefined = kind !== 'boss' && momentId ? momentById(momentId) : undefined
@@ -86,7 +100,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   const won = correct >= needed
 
   const handleComplete = (result: TaskResult): void => {
-    store.recordAnswer(tasks[index], result.correct, result.elapsedMs, kind === 'star' ? 'stjarna' : 'boss', result.given, result.scratchPng)
+    store.recordAnswer(tasks[index], result.correct, result.elapsedMs, kind === 'star' ? 'stjarna' : kind === 'check' ? 'koll' : 'boss', result.given, result.scratchPng)
     const nextCorrect = correct + (result.correct ? 1 : 0)
     setCorrect(nextCorrect)
     setFlash(result.correct ? 'hit' : 'miss')
@@ -112,8 +126,9 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
         : <EndCard title="Nästan!" text={`${correct} av ${total} rätt — du behövde ${needed}. Träna momentet lite till, så fixar du det nästa gång!`} onDone={() => store.go('home')} buttonText="Tillbaka och träna" />
     }
     if (kind === 'boss') {
+      // Världsbossen är spelets KLIMAX — grand-läget skiljer den från vardagsfirandet.
       return won
-        ? <EndCard title={`${boss.name} är besegrad!`} text={`"${boss.defeatLine}" — ${world.name} är erövrad! Nästa äventyr väntar.`} onDone={() => store.go('home')} celebrate />
+        ? <EndCard title={`${boss.name} är besegrad!`} text={`"${boss.defeatLine}"`} onDone={() => store.go('home')} celebrate grand grandBanner={`⚔ ${world.name.toUpperCase()} ÄR ERÖVRAD ⚔`} grandSub="En ny värld har öppnat sig. Nästa äventyr väntar!" />
         : <EndCard title={`${boss.name} står emot … än!`} text={`${correct} av ${total} rätt — du behövde ${needed}. Träna dina moment lite till och kom tillbaka starkare!`} onDone={() => store.go('home')} buttonText="Tillbaka till kartan" />
     }
     return won
@@ -128,7 +143,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   return (
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column',
-      padding: 'calc(10px + env(safe-area-inset-top)) 16px 16px',
+      padding: 'calc(10px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))',
       background: `url(${bgImg}) center / cover no-repeat, ${theme.sky}`,
       position: 'relative', overflow: 'hidden',
       ...({ '--ink': '#F6EFDF', '--muted': '#E6DAC0', '--sun-ink': '#FFE39A' } as React.CSSProperties),
@@ -187,8 +202,14 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <div className="card" style={{ fontSize: 12.5, fontWeight: 800, textAlign: 'center', padding: '8px 12px', color: '#3A302A' }}>
             {friendly
-              ? (flash === 'hit' ? <><Icon name="stjarna" size={15} style={{ marginRight: 5 }} />Bra jobbat!</> : flash === 'miss' ? 'Nästan — fortsätt!' : 'Visa vad du lärt dig!')
-              : (flash === 'hit' ? <><Icon name="skold" size={15} style={{ marginRight: 5 }} />En sköld knäcktes!</> : flash === 'miss' ? '"Hihi! Inte den här gången!"' : `"${boss.taunt}"`)}
+              ? (flash === 'hit'
+                  ? <><Icon name="stjarna" size={15} style={{ marginRight: 5 }} />{PI_CHECK_CHEERS[correct % PI_CHECK_CHEERS.length]}</>
+                  : flash === 'miss' ? 'Nästan — fortsätt!' : 'Visa vad du lärt dig!')
+              // Bossen får personlighet: replikerna roteras efter knäckta sköldar,
+              // så striden känns levande i stället för en enda fast rad.
+              : (flash === 'hit'
+                  ? <><Icon name="skold" size={15} style={{ marginRight: 5 }} />{correct > 0 && boss.taunts?.length ? `"${boss.taunts[(correct - 1) % boss.taunts.length]}"` : 'En sköld knäcktes!'}</>
+                  : flash === 'miss' ? '"Hihi! Inte den här gången!"' : `"${boss.taunt}"`)}
           </div>
           <div className={friendly ? undefined : 'boss-enter'} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {flash === 'hit' && !friendly && (

@@ -12,8 +12,11 @@ import { migrate } from './db'
 export function exportHousehold(household: Household): void {
   // API-nyckeln följer ALDRIG med i exporten — den bor bara på enheten
   // och matas in på nytt i föräldraläget om profilen flyttas.
-  const { chat, ...rest } = household
+  // PIN-hashen strippas också: en osaltad hash av 4–6 siffror knäcks på
+  // millisekunder offline. Efter import sätter föräldern ny PIN.
+  const { chat, parentPinHash, ...rest } = household
   void chat
+  void parentPinHash
   const stamped: Household = { ...rest, lastBackupAt: new Date().toISOString() }
   const blob = new Blob([JSON.stringify(stamped, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)

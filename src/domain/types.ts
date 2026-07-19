@@ -72,6 +72,9 @@ export interface Boss {
   taunt: string
   /** Vad bossen säger när den besegras (växer alltid till något snällt). */
   defeatLine: string
+  /** Extra repliker som roteras under striden (efter knäckta sköldar) —
+      bossen får personlighet i stället för en enda fast rad. Valfria. */
+  taunts?: string[]
 }
 
 // ---------- Uppgifter ----------
@@ -192,7 +195,9 @@ export interface AnswerRecord {
   misconception?: MisconceptionTag
   /** Klassning: slarvfel = hög rating + snabbt fel; kunskapslucka annars. */
   errorKind?: 'slarv' | 'kunskap'
-  context: 'ovning' | 'boss' | 'diagnos' | 'repetition' | 'blixt' | 'stjarna'
+  // 'koll' = nodens kunskapskoll; 'boss' = världsbossen. (Äldre sparade svar
+  // använder 'boss' för båda — rapporten räknar därför bägge som nodklarering.)
+  context: 'ovning' | 'boss' | 'koll' | 'diagnos' | 'repetition' | 'blixt' | 'stjarna'
   /** Kladdytan som liten PNG-dataURL, sparas för de senaste svaren. */
   scratchPng?: string
 }
@@ -239,6 +244,8 @@ export interface Reward {
   baseline: { momentsMastered: number; activeDays: number }
   earnedAt?: string
   redeemedAt?: string
+  /** När barnet fått sitt firande för uppnådd belöning (visas EN gång). */
+  celebratedAt?: string
 }
 
 // ---------- Barnprofil ----------
@@ -269,6 +276,9 @@ export interface ChildProfile {
   chatEnabled: boolean
 
   streak: { days: number; lastActiveDate: string }
+  /** Högsta streak-milstolpe (3/7/14/30 …) som redan firats — så firandet
+      visas en gång per milstolpe, inte varje dag. Optionellt = bakåtkomp. */
+  streakCelebrated?: number
 
   /** Blixtpass-rekord (flyt): bästa antal rätt på en minut per testtyp. */
   blixt?: Partial<Record<BlixtKind, BlixtRecord>>

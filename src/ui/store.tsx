@@ -78,6 +78,8 @@ interface StoreValue {
   finishStar(momentId: string, won: boolean): void
   /** Markera att barnet sett Pis diamantnivå-förklaring (visas en gång). */
   markStarIntroSeen(): void
+  markStreakCelebrated(days: number): void
+  markRewardCelebrated(rewardId: string): void
   /** Markera att barnet sett Pis kart-/nodförklaring (visas en gång). */
   markMapIntroSeen(): void
   finishReview(momentId: string, passed: boolean): void
@@ -323,6 +325,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       patchChild(activeChildId, (c) => ({
         ...c,
         skills: { ...c.skills, [momentId]: applyStarResult(c.skills[momentId] ?? newSkillState(momentId), won) },
+      }))
+    },
+
+    markStreakCelebrated: (days) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => ((c.streakCelebrated ?? 0) >= days ? c : { ...c, streakCelebrated: days }))
+    },
+
+    markRewardCelebrated: (rewardId) => {
+      setHousehold((h) => ({
+        ...h,
+        rewards: h.rewards.map((r) => (r.id === rewardId && !r.celebratedAt ? { ...r, celebratedAt: nowISO() } : r)),
       }))
     },
 

@@ -64,12 +64,16 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
   const [coachLine, setCoachLine] = useState('')
   const startedAt = useRef(Date.now())
   const scratchRef = useRef<ScratchPadHandle>()
+  // Ref-vakt: state (`answered`) hinner inte uppdateras mellan två tryck i
+  // samma frame — ivrig dubbelknackning kunde registrera dubbla svar.
+  const finishedRef = useRef(false)
 
   // Ny uppgift → nollställ.
   useEffect(() => {
     setValue('')
     setPhase('svara')
     setAnswered(false)
+    finishedRef.current = false
     setLastResult(undefined)
     setCoachLine('')
     startedAt.current = Date.now()
@@ -82,7 +86,8 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
   const needsDecimal = task.answer.kind === 'numeric' && !Number.isInteger(task.answer.value)
 
   const finish = (correct: boolean, given: number | string): void => {
-    if (answered) return
+    if (answered || finishedRef.current) return
+    finishedRef.current = true
     setAnswered(true)
     const result: TaskResult = {
       correct,

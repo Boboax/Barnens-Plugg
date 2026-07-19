@@ -62,7 +62,11 @@ export function Keypad({ value, onChange, onSubmit, allowNegative, allowDecimal,
         {allowNegative ? '−' : allowDecimal ? ',' : '⌫'}
       </button>
       <button className="keycap" style={keyStyle} onClick={() => press('0')} disabled={disabled}>0</button>
-      {(allowNegative || allowDecimal) ? (
+      {/* Behöver uppgiften BÅDE minus och komma får kommat tredje platsen —
+          tidigare vann minus och kommat försvann helt (svaret gick ej mata in). */}
+      {allowNegative && allowDecimal ? (
+        <button className="keycap" style={{ ...keyStyle, color: '#7A6338' }} onClick={() => press(',')} disabled={disabled}>,</button>
+      ) : (allowNegative || allowDecimal) ? (
         <button className="keycap" style={{ ...keyStyle, color: '#7A6338' }} onClick={() => press('⌫')} disabled={disabled}>⌫</button>
       ) : (
         <button
@@ -73,12 +77,17 @@ export function Keypad({ value, onChange, onSubmit, allowNegative, allowDecimal,
         >✓</button>
       )}
       {(allowNegative || allowDecimal) && (
-        <button
-          className="keycap"
-          style={{ ...gemStyle, gridColumn: 'span 3' }}
-          onClick={onSubmit}
-          disabled={disabled || value === '' || value === '−'}
-        >Svara ✓</button>
+        <>
+          {allowNegative && allowDecimal && (
+            <button className="keycap" style={{ ...keyStyle, color: '#7A6338' }} onClick={() => press('⌫')} disabled={disabled}>⌫</button>
+          )}
+          <button
+            className="keycap"
+            style={{ ...gemStyle, gridColumn: allowNegative && allowDecimal ? 'span 2' : 'span 3' }}
+            onClick={onSubmit}
+            disabled={disabled || value === '' || value === '−'}
+          >Svara ✓</button>
+        </>
       )}
     </div>
   )
