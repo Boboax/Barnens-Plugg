@@ -6,7 +6,7 @@ import { hasGenerator } from '../../generators'
 import { currentMomentId, bossPendingWorldId, worldMomentsComplete } from '../../engine/progress'
 import { dueForReview } from '../../engine/spaced-repetition'
 import { rewardProgress } from '../../engine/rewards'
-import { blixtTarget, unlockedBlixtTests, blixtLevel, blixtTier, blixtMaxTier } from '../../engine/blixt'
+import { blixtTarget, unlockedBlixtTests, blixtLevel, blixtTier, blixtMaxTier, type BlixtConfig } from '../../engine/blixt'
 import { sfx } from '../../sound'
 import { Avatar } from '../components/Avatar'
 import { Icon, type IconName, BelongIcon, isBelongIcon } from '../components/Icon'
@@ -27,6 +27,11 @@ import { todayISO, useStore } from '../store'
 
 /** 'now' = motorns aktiva moment (Pi står här); 'oppen' = upplåst och valbart. */
 type NodeState = 'done' | 'star' | 'now' | 'oppen' | 'redo' | 'locked' | 'coming'
+
+/** Stigen består av momentnoder + inflätade (upplåsta) blixtnoder. */
+type PathItem =
+  | { type: 'moment'; moment: Moment; state: NodeState }
+  | { type: 'blixt'; cfg: BlixtConfig }
 
 function nodeState(moment: Moment, skill: SkillState | undefined, isCurrent: boolean): NodeState {
   if (!hasGenerator(moment.generatorId)) return 'coming'
@@ -261,10 +266,18 @@ function HomeInner({ child }: { child: ChildProfile }) {
         <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', display: 'flex', alignItems: 'center', position: 'relative', zIndex: 2 }}>
           {(() => {
             const BOSS_END_W = 156 // extra bredd i slutet där världsbossen lurar
-            const nodesW = moments.length * COL_W
+            // Stigen = momentnoder MED upplåsta blixtnoder inflätade efter sitt
+            // upplåsningsmoment. Blixt är valfria (aldrig grind) men syns på vägen.
+            const worldBlixt = unlockedBlixtTests(child).filter((b) => momentById(b.unlockMomentId).worldId === worldId)
+            const pathItems: PathItem[] = []
+            for (const m of moments) {
+              pathItems.push({ type: 'moment', moment: m, state: nodeState(m, child.skills[m.id], m.id === currentId) })
+              for (const b of worldBlixt) if (b.unlockMomentId === m.id) pathItems.push({ type: 'blixt', cfg: b })
+            }
+            const nodesW = pathItems.length * COL_W
             const canvasW = nodesW + BOSS_END_W
-            const states = moments.map((m) => nodeState(m, child.skills[m.id], m.id === currentId))
-            const lastOpen = states.reduce((acc, s, i) => (s !== 'locked' && s !== 'coming' ? i : acc), 0)
+            const isOpen = (it: PathItem): boolean => it.type === 'blixt' || (it.state !== 'locked' && it.state !== 'coming')
+            const lastOpen = pathItems.reduce((acc, it, i) => (isOpen(it) ? i : acc), 0)
             const dark = theme.horizon === 'grotta'
             // Världsbossen "lurar" i slutet tills alla moment är klara → besegrad.
             const genTotal = moments.filter((m) => hasGenerator(m.generatorId)).length
@@ -276,10 +289,10 @@ function HomeInner({ child }: { child: ChildProfile }) {
             // Världsbossen får utmanas när alla moment är klara; besegrad när erövrad.
             const conquered = child.conqueredWorlds?.includes(worldId) ?? false
             const bossReady = worldComplete && !conquered
-            const li = moments.length - 1
+            const li = pathItems.length - 1
             const [bx, by] = [nodesW + BOSS_END_W / 2, MAP_H / 2]
             // Slutsträckan fram till bossen (guld om världen är klar, annars blek).
-            const bossLeg = moments.length > 0
+            const bossLeg = pathItems.length > 0
               ? `M${nodeCx(li)},${nodeCy(li)} Q${(nodeCx(li) + bx) / 2 + 20},${(nodeCy(li) + by) / 2} ${bx},${by}`
               : ''
             return (
@@ -292,21 +305,64 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   aria-hidden="true"
                   style={{ position: 'absolute', left: 0, top: 0, zIndex: 0, pointerEvents: 'none' }}
                 >
-                  <path d={windingPath(moments.length)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
+                  <path d={windingPath(pathItems.length)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
                     strokeLinecap="round" opacity={0.3} />
-                  <path d={windingPath(moments.length)} stroke={theme.pathColor} strokeWidth={7} fill="none"
+                  <path d={windingPath(pathItems.length)} stroke={theme.pathColor} strokeWidth={7} fill="none"
                     strokeLinecap="round" strokeDasharray="0.1 18" opacity={0.25} />
-                  <path d={windingPath(moments.length, lastOpen)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
+                  <path d={windingPath(pathItems.length, lastOpen)} stroke={theme.pathUnder} strokeWidth={20} fill="none"
                     strokeLinecap="round" opacity={0.55} />
-                  <path d={windingPath(moments.length, lastOpen)} stroke={theme.pathColor} strokeWidth={8.5} fill="none"
+                  <path d={windingPath(pathItems.length, lastOpen)} stroke={theme.pathColor} strokeWidth={8.5} fill="none"
                     strokeLinecap="round" strokeDasharray="0.1 16" />
                   {/* Sista sträckan ut till världsbossen. */}
                   {bossLeg && <path d={bossLeg} stroke={theme.pathUnder} strokeWidth={20} fill="none" strokeLinecap="round" opacity={worldComplete ? 0.55 : 0.3} />}
                   {bossLeg && <path d={bossLeg} stroke={worldComplete ? theme.pathColor : '#E05436'} strokeWidth={worldComplete ? 8.5 : 6} fill="none" strokeLinecap="round" strokeDasharray="0.1 16" opacity={worldComplete ? 1 : 0.5} />}
                 </svg>
 
-                {moments.map((moment, i) => {
-                  const state = states[i]
+                {pathItems.map((item, i) => {
+                  // Blixtnod: valfri flyt-runda på stigen (aldrig grind).
+                  if (item.type === 'blixt') {
+                    const cfg = item.cfg
+                    const level = blixtLevel(cfg.kind, child)
+                    const rec = child.blixt?.[cfg.kind]
+                    const short = cfg.kind === 'tabeller' ? 'tabeller' : cfg.kind === 'add-sub-0-20' ? '0–20' : '0–10'
+                    const bsize = 58
+                    return (
+                      <button
+                        key={`blixt-${cfg.kind}`}
+                        onClick={() => { if (secondsLeft <= 0) return store.go('time-up'); store.startBlixt(cfg.kind) }}
+                        aria-label={`Blixtpass ${cfg.title}`}
+                        style={{
+                          position: 'absolute', zIndex: 2, left: nodeCx(i), top: nodeCy(i),
+                          transform: 'translate(-50%, -50%)', width: bsize, height: bsize, fontFamily: 'inherit',
+                        }}
+                      >
+                        <span className="map-node pulse-glow" style={{
+                          position: 'relative', width: bsize, height: bsize, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <span style={{
+                            width: 35, height: 35, borderRadius: '50%', overflow: 'hidden',
+                            background: 'radial-gradient(circle at 34% 28%, rgba(255,255,255,.6), rgba(255,255,255,0) 58%), var(--sun)',
+                            boxShadow: 'inset 0 -2px 5px rgba(0,0,0,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <Icon name="blixt" size={26} />
+                          </span>
+                          <img src={`${import.meta.env.BASE_URL}art/tex/nodering.webp`} alt="" aria-hidden="true"
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
+                        </span>
+                        <span style={{
+                          position: 'absolute', top: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
+                          width: COL_W - 8, textAlign: 'center', lineHeight: 1.15, pointerEvents: 'none',
+                          textShadow: dark ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)' : '0 1px 3px rgba(20,18,30,.9), 0 0 8px rgba(20,18,30,.7)',
+                        }}>
+                          <span style={{ display: 'block', fontWeight: 800, fontSize: 12.5, color: 'var(--sun-ink)' }}>Blixt {short}</span>
+                          <span style={{ display: 'block', fontWeight: 600, fontSize: 11, color: 'var(--muted)' }}>
+                            nivå {level}{rec ? ` · rek ${rec.best}` : ' · ny!'}
+                          </span>
+                        </span>
+                      </button>
+                    )
+                  }
+                  const { moment, state } = item
                   const isStar = state === 'star'
                   const dim = state === 'locked' || state === 'coming'
                   const clickable = state === 'now' || state === 'oppen' || state === 'redo' || state === 'done' || isStar
