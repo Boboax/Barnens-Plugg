@@ -21,11 +21,16 @@ const medelvarde = g('medelvarde', (level, seed, rng) => {
   const id = 'gen.medelvarde'
   const count = level <= 4 ? 3 : level <= 7 ? 4 : 5
   const mean = rng.int(3, lerpInt(level, 10, 25))
-  // Bygg tal som garanterat har heltalsmedelvärde.
+  // Bygg tal som garanterat har heltalsmedelvärde. Utjämningstalet (−sum)
+  // måste ge ett värde ≥ 1: annars kunde "poängen" bli negativa nonsenstal
+  // (t.ex. "fick 6, 6, −3 poäng") — därför begränsas varje offset så att
+  // summan aldrig överstiger mean − 1.
   const offsets: number[] = []
   let sum = 0
   for (let i = 0; i < count - 1; i++) {
-    const o = rng.int(-Math.min(2, mean - 1), 3)
+    const hi = Math.min(3, mean - 1 - sum)
+    const lo = -Math.min(2, mean - 1)
+    const o = rng.int(Math.min(lo, hi), Math.max(lo, hi))
     offsets.push(o)
     sum += o
   }

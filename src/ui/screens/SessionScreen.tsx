@@ -202,7 +202,7 @@ export function SessionScreen() {
       // env(safe-area-inset-top): annars hamnar Avsluta-raden under iOS-klockan
       // i hemskärmsläge (viewport-fit=cover). Bakgrunden fyller ändå kant till kant.
       minHeight: '100%', display: 'flex', flexDirection: 'column',
-      padding: 'calc(10px + env(safe-area-inset-top)) 16px 16px',
+      padding: 'calc(10px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))',
       position: 'relative', overflow: 'hidden',
       background: `url(${worldBg}) center / cover no-repeat, ${theme.sky}`,
     }}>

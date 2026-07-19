@@ -72,7 +72,12 @@ const divIntro = g('div-intro', (level, seed, rng) => {
       prompt: `${name} delar ${total} ${plural} lika mellan sig själv och ${parts} kompisar. Hur många får var och en?`,
       value: each,
       explanation: `Det är ${persons} personer som delar (glöm inte ${name}!): ${total} / ${persons} = ${each}.`,
-      misconceptions: { [total / parts === Math.floor(total / parts) ? total / parts : each + 1]: 'fel-raknesatt', [each + 1]: 'en-fel', [each - 1]: 'en-fel' },
+      // Kärnmissen (delade med kompisarna, glömde sig själv) taggas bara när
+      // den ger ett heltal — annars krockade reserven med en-fel-nyckeln.
+      misconceptions: {
+        ...(total % parts === 0 && total / parts !== each ? { [total / parts]: 'fel-raknesatt' as const } : {}),
+        [each + 1]: 'en-fel', [each - 1]: 'en-fel',
+      },
     })
   }
   const total = parts * each
@@ -80,7 +85,9 @@ const divIntro = g('div-intro', (level, seed, rng) => {
     generatorId: id, level, seed,
     prompt: `${name} delar ${total} ${plural} lika i ${parts} högar. Hur många i varje hög?`,
     value: each,
-    visual: level <= 5 ? { kind: 'grupper', groupCount: parts, itemsPerGroup: each, emoji } : { kind: 'ingen' },
+    // EN odelad hög att dela upp — att rita färdiga högar visade facit direkt.
+    // Fler än 12 objekt blir plottrigt → inget stöd då.
+    visual: level <= 5 && total <= 12 ? { kind: 'grupper', groupCount: 1, itemsPerGroup: total, emoji } : { kind: 'ingen' },
     explanation: `${total} / ${parts} = ${each} — kolla: ${parts} × ${each} = ${total}.`,
     misconceptions: { [total - parts]: 'fel-raknesatt', [each + 1]: 'en-fel', [each - 1]: 'en-fel' },
   })
@@ -131,6 +138,7 @@ const multDivSamband = g('mult-div-samband', (level, seed, rng) => {
     return numericTask({
       generatorId: id, level, seed,
       prompt: `Du vet att ${a} × ${b} = ${product}. Vad är ${product} / ${a}?`,
+      spokenPrompt: `Du vet att ${a} gånger ${b} är ${product}. Vad är ${product} delat med ${a}?`,
       value: b,
       explanation: `Multiplikation och division hör ihop: ${a} × ${b} = ${product} betyder att ${product} / ${a} = ${b}.`,
       misconceptions: { [a]: 'fel-raknesatt', [product - a]: 'fel-raknesatt' },
@@ -213,6 +221,7 @@ const multDivStora = g('mult-div-stora', (level, seed, rng) => {
       return numericTask({
         generatorId: id, level, seed,
         prompt: `${a * p} / ${p} = ?`,
+        spokenPrompt: `Vad är ${a * p} delat med ${p}?`,
         value: a,
         explanation: `Att dela med ${p} flyttar siffrorna ${String(p).length - 1} steg åt höger: ${a}.`,
         misconceptions: { [a * 10]: 'nolla-multiplikation', [Math.floor(a / 10)]: 'nolla-multiplikation' },
@@ -221,6 +230,7 @@ const multDivStora = g('mult-div-stora', (level, seed, rng) => {
     return numericTask({
       generatorId: id, level, seed,
       prompt: `${a} × ${p} = ?`,
+      spokenPrompt: `Vad är ${a} gånger ${p}?`,
       value: a * p,
       explanation: `Att multiplicera med ${p} lägger till ${String(p).length - 1} nollor: ${a * p}.`,
       misconceptions: { [a * p * 10]: 'nolla-multiplikation', [(a * p) / 10]: 'nolla-multiplikation' },
@@ -247,7 +257,10 @@ const problemFlersteg = g('problemlosning-flerstegs', (level, seed, rng) => {
   if (kind === 'kop') {
     const antal = rng.int(3, 8)
     const pris = rng.int(8, lerpInt(level, 20, 60))
-    const betalt = Math.ceil((antal * pris) / 100) * 100
+    const kostnad = antal * pris
+    // Betala alltid MER än kostnaden — jämn hundring på kostnaden gav
+    // "får tillbaka 0 kr", vilket känns som en lurad fråga.
+    const betalt = kostnad % 100 === 0 ? kostnad + 100 : Math.ceil(kostnad / 100) * 100
     const extra = level >= 9 ? ` I affären finns ${rng.int(20, 90)} bullar.` : ''
     return numericTask({
       generatorId: id, level, seed,

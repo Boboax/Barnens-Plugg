@@ -88,8 +88,13 @@ export function BlixtScreen() {
     roundStartedAt.current = Date.now()
   }
 
+  // Ref-vakt mot dubbeltryck: state hinner inte uppdateras mellan två snabba
+  // tryck i samma frame — ivrig dubbelknackning gav annars dubbla svar.
+  const submitting = useRef(false)
   const submit = (): void => {
-    if (!task || task.answer.kind !== 'numeric' || value === '') return
+    if (!task || task.answer.kind !== 'numeric' || value === '' || submitting.current) return
+    submitting.current = true
+    window.setTimeout(() => { submitting.current = false }, 150)
     const given = Number(value.replace('−', '-').replace(',', '.'))
     const isCorrect = Math.abs(given - task.answer.value) < 1e-9
     store.recordAnswer(task, isCorrect, Date.now() - taskStartedAt.current, 'blixt', given)
@@ -159,8 +164,12 @@ export function BlixtScreen() {
   const progress = timed ? secondsLeft / BLIXT_SECONDS : attempted / BLIXT_UNTIMED_COUNT
 
   return (
-    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'calc(12px + env(safe-area-inset-top)) 16px 16px', gap: 10 }}>
+    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', maxWidth: 620 }}>
+        {/* Avbryt måste alltid finnas — FK-läget har ingen klocka som tar slut,
+            så utan den kunde en 6-åring fastna i rundan. Inget straff: rundan
+            räknas bara inte. */}
+        <button className="chip" onClick={() => { sfx.klick(); store.go('home') }}>✕</button>
         <Icon name="blixt" size={20} />
         <div className="pbar" style={{ flex: 1, height: 14 }}>
           <i style={{ width: `${progress * 100}%`, background: timed && secondsLeft <= 10 ? 'var(--coral)' : 'var(--sun)', transition: timed ? 'width 1s linear' : 'width .2s' }} />

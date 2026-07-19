@@ -162,7 +162,9 @@ const omkrets = g('omkrets', (level, seed, rng) => {
       prompt: `En rektangel har omkretsen ${o} cm. Ena sidan är ${w} cm. Hur lång är den andra sidan?`,
       value: h,
       unit: 'cm',
-      visual: { kind: 'rektangel', w, h: 0, unit: 'cm' },
+      // Ingen bild: h=0 ritade en platt linje, och att rita rektangeln med
+      // båda sidorna hade avslöjat svaret. Stjärnnivå klarar sig utan stöd.
+      visual: { kind: 'ingen' },
       explanation: `Två sidor à ${w} cm tar ${2 * w} cm. Kvar: ${o} − ${2 * w} = ${o - 2 * w} cm på två sidor, alltså ${h} cm var.`,
       misconceptions: { [o - w]: 'fel-raknesatt', [o - 2 * w]: 'fel-raknesatt' },
     })

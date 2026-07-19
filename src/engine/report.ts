@@ -1,7 +1,9 @@
 import type { AnswerRecord, ChildProfile, CurriculumArea, MisconceptionTag } from '../domain/types'
 import { momentById } from '../domain/curriculum'
+import { worldById } from '../domain/worlds'
 import { misconceptionInfo } from './misconceptions'
-import { currentMomentId } from './progress'
+import { currentMomentId, bossPendingWorldId } from './progress'
+import { pendingBlixtKind, blixtConfig } from './blixt'
 
 /* ============================================================
    Föräldrarapporten — veckan i klarspråk.
@@ -84,8 +86,9 @@ export function weeklyReport(profile: ChildProfile, now: string): WeeklyReport {
     .map(([area, v]) => ({ area, answers: v.answers, accuracy: v.answers ? v.correct / v.answers : 0 }))
     .sort((a, b) => b.answers - a.answers)
 
-  // Bossar besegrade i veckan: moment med bosstrid i veckan som nu är behärskade.
-  const bossMoments = new Set(week.filter((a) => a.context === 'boss').map((a) => a.momentId))
+  // Noder klarade i veckan: moment med kunskapskoll ('koll'; äldre sparade
+  // svar använde 'boss' även för kollen) som nu är behärskade.
+  const bossMoments = new Set(week.filter((a) => a.context === 'koll' || a.context === 'boss').map((a) => a.momentId))
   const bossesWon = [...bossMoments].filter((id) => {
     const s = profile.skills[id]
     return s?.mastery === 'mastered' || s?.mastery === 'star'
@@ -95,10 +98,16 @@ export function weeklyReport(profile: ChildProfile, now: string): WeeklyReport {
   const notes: string[] = []
   const currentId = currentMomentId(profile)
   const current = currentId ? momentById(currentId) : undefined
+  // Står barnet vid en grind ska föräldern SE det — annars ser det bara ut
+  // som att träningen stannat.
+  const pendingBoss = bossPendingWorldId(profile)
+  const pendingBlixt = pendingBlixtKind(profile)
   if (answers === 0) {
     notes.push('Inga pass den här veckan — kanske dags för en mjuk påminnelse?')
   } else {
     if (current) notes.push(`Tränar just nu på "${current.title}" (${areaName(current.area)}).`)
+    else if (pendingBoss) notes.push(`Redo för världsbossen i ${worldById(pendingBoss).name} — nästa steg är att besegra ${worldById(pendingBoss).boss.name}.`)
+    else if (pendingBlixt) notes.push(`Flyt-grind: behöver klara blixtpasset "${blixtConfig(pendingBlixt).title}" för att komma vidare (obegränsade försök).`)
     const acc = correct / answers
     if (acc >= 0.85) notes.push('Hög träffsäkerhet — nivån trappas upp automatiskt.')
     else if (acc < 0.55) notes.push('Det har varit tufft den här veckan — motorn har sänkt nivån så det ska kännas lättare.')

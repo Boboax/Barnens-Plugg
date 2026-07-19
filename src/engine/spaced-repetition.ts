@@ -31,6 +31,21 @@ export function scheduleFirstReview(now: string): NonNullable<SkillState['review
   }
 }
 
+/**
+ * Som scheduleFirstReview men med SPRIDNING — när diagnosen markerar många
+ * moment behärskade samtidigt får de annars alla samma repetitionsdag, och
+ * uppvärmningen dominerar passen i veckor. Offseten (deterministisk, per
+ * momentindex) sprider ut dem över ~3–14 dagar.
+ */
+export function scheduleFirstReviewSpread(now: string, index: number): NonNullable<SkillState['review']> {
+  const spread = REVIEW_INTERVALS_DAYS[0] + (index % 12)
+  return {
+    nextReviewAt: addDays(now, spread),
+    intervalDays: REVIEW_INTERVALS_DAYS[0],
+    passes: 0,
+  }
+}
+
 /** Uppdatera schemat efter en klarad repetition. */
 export function scheduleNextReview(
   review: NonNullable<SkillState['review']>,

@@ -70,7 +70,18 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   const [introDone, setIntroDone] = useState(false)
 
   const worldId = kind === 'boss' ? worldBossId : (momentId ? momentById(momentId).worldId : undefined)
-  if (!child || !worldId || tasks.length === 0) return null
+  if (!child) return null
+  // Aldrig en tom skärm utan utväg — om uppgifterna inte kunde byggas
+  // (trasigt tillstånd) ska barnet alltid kunna gå tillbaka till kartan.
+  if (!worldId || tasks.length === 0) {
+    return (
+      <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 30 }}>
+        <Pi mood="funderar" size={90} />
+        <p style={{ fontWeight: 800, color: 'var(--ink)', margin: 0 }}>Hoppsan — här fanns inget att spela just nu.</p>
+        <button className="btn btn-primary" onClick={() => store.go('home')}>Till kartan ▶</button>
+      </div>
+    )
+  }
   const world = worldById(worldId)
   const boss = world.boss
   const moment: Moment | undefined = kind !== 'boss' && momentId ? momentById(momentId) : undefined
@@ -86,7 +97,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   const won = correct >= needed
 
   const handleComplete = (result: TaskResult): void => {
-    store.recordAnswer(tasks[index], result.correct, result.elapsedMs, kind === 'star' ? 'stjarna' : 'boss', result.given, result.scratchPng)
+    store.recordAnswer(tasks[index], result.correct, result.elapsedMs, kind === 'star' ? 'stjarna' : kind === 'check' ? 'koll' : 'boss', result.given, result.scratchPng)
     const nextCorrect = correct + (result.correct ? 1 : 0)
     setCorrect(nextCorrect)
     setFlash(result.correct ? 'hit' : 'miss')
@@ -128,7 +139,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   return (
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column',
-      padding: 'calc(10px + env(safe-area-inset-top)) 16px 16px',
+      padding: 'calc(10px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))',
       background: `url(${bgImg}) center / cover no-repeat, ${theme.sky}`,
       position: 'relative', overflow: 'hidden',
       ...({ '--ink': '#F6EFDF', '--muted': '#E6DAC0', '--sun-ink': '#FFE39A' } as React.CSSProperties),

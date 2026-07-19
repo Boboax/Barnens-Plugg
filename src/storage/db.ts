@@ -89,16 +89,30 @@ export function migrate(data: Household): Household {
   // 'boss-ready' (→ hela kartan blev bossar). Körs vid varje inläsning/import
   // och är idempotent.
   const now = new Date().toISOString().slice(0, 10)
+  // Beskär tidsbokföringen till senaste 60 dagarna (rapporten behöver 7) —
+  // annars växer usageSeconds/extraSeconds obegränsat, en post per aktiv dag.
+  const pruneDays = (rec: Record<string, number> | undefined): Record<string, number> | undefined => {
+    if (!rec) return rec
+    const cutoff = new Date(now)
+    cutoff.setDate(cutoff.getDate() - 60)
+    const lim = cutoff.toISOString().slice(0, 10)
+    return Object.fromEntries(Object.entries(rec).filter(([d]) => d >= lim))
+  }
   const base: Household = {
     ...data,
-    children: (Array.isArray(data.children) ? data.children : []).map((c) =>
-      c && c.skills
+    // Trasiga/null-barn (handredigerad fil) filtreras bort — annars kraschar
+    // UI:t på children.map(child.name) direkt efter import.
+    children: (Array.isArray(data.children) ? data.children : [])
+      .filter((c) => c && typeof c === 'object' && c.skills && typeof c.name === 'string')
+      .map((c) => ({
+        ...c,
         // backfillSplitAddSub: markera nya rena add/sub-noder klara för barn som
         // redan klarat den blandade noden. repairDiagnosisBossReady räknar sedan
-        // om tillgänglighet med bossgrinden (låser nedströms världar bakom bossen).
-        ? { ...c, skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, c.conqueredWorlds ?? [], blixtBlockedMoments(c)) }
-        : c,
-    ),
+        // om tillgänglighet med boss- och flyt-grindarna.
+        skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, c.conqueredWorlds ?? [], blixtBlockedMoments(c)),
+        usageSeconds: pruneDays(c.usageSeconds) ?? {},
+        extraSeconds: pruneDays(c.extraSeconds),
+      })),
     rewards: Array.isArray(data.rewards) ? data.rewards : [],
     chatLog: Array.isArray(data.chatLog) ? data.chatLog : [],
   }

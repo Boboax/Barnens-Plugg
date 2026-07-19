@@ -4,7 +4,7 @@ import { generateTask, hasGenerator } from '../generators'
 import { freshSeed } from '../generators/rng'
 import { newSkillState, recomputeAvailability } from './progress'
 import { blixtBlockedMoments } from './blixt'
-import { scheduleFirstReview } from './spaced-repetition'
+import { scheduleFirstReviewSpread } from './spaced-repetition'
 
 /* ============================================================
    Startdiagnosen — "Vi lär känna varandra".
@@ -154,7 +154,9 @@ export function applyDiagnosisResult(profile: ChildProfile, now: string): Record
   backbone.forEach((momentId, i) => {
     const base = skills[momentId] ?? newSkillState(momentId)
     if (i < frontier) {
-      skills[momentId] = { ...base, mastery: 'mastered', rating: 700, review: scheduleFirstReview(now) }
+      // Sprid repetitionsdatumen (annars blir ALLA due samma dag → uppvärmning
+      // dominerar passen i veckor efter en högt placerad diagnos).
+      skills[momentId] = { ...base, mastery: 'mastered', rating: 700, review: scheduleFirstReviewSpread(now, i) }
     } else if (i === frontier) {
       // Nivå ~5 direkt: allt före sitter, så frontmomentet ska kännas som en
       // riktig utmaning — inte mjukstart med klossbilder (rating 550 ⇒ nivå 5).

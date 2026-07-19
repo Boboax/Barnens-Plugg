@@ -192,7 +192,9 @@ export interface AnswerRecord {
   misconception?: MisconceptionTag
   /** Klassning: slarvfel = hög rating + snabbt fel; kunskapslucka annars. */
   errorKind?: 'slarv' | 'kunskap'
-  context: 'ovning' | 'boss' | 'diagnos' | 'repetition' | 'blixt' | 'stjarna'
+  // 'koll' = nodens kunskapskoll; 'boss' = världsbossen. (Äldre sparade svar
+  // använder 'boss' för båda — rapporten räknar därför bägge som nodklarering.)
+  context: 'ovning' | 'boss' | 'koll' | 'diagnos' | 'repetition' | 'blixt' | 'stjarna'
   /** Kladdytan som liten PNG-dataURL, sparas för de senaste svaren. */
   scratchPng?: string
 }

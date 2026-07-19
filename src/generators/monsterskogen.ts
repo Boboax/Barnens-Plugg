@@ -68,7 +68,9 @@ const talfoljder1 = g('talfoljder-1', (level, seed, rng) => {
     explanation: step > 0
       ? `Talen ökar med ${step} varje gång: ${seq[3]} + ${step} = ${start + step * 4}.`
       : `Talen minskar med ${-step} varje gång: ${seq[3]} − ${-step} = ${start + step * 4}.`,
-    misconceptions: { [seq[3] + 1]: 'en-fel', [seq[3] - 1]: 'en-fel' },
+    // "En fel" = ±1 från RÄTT svar (start + step·4), inte från sista talet i
+    // följden — annars taggades godtyckliga värden när step ≠ 1.
+    misconceptions: { [start + step * 4 + 1]: 'en-fel', [start + step * 4 - 1]: 'en-fel', [seq[3]]: 'fel-raknesatt' },
   })
 })
 
@@ -184,6 +186,7 @@ const monsterRegler = g('monster-regler', (level, seed, rng) => {
   return numericTask({
     generatorId: id, level, seed,
     prompt: `${seq.join(', ')}, __ — vad kommer sen?`,
+    spokenPrompt: `Talföljden är ${seq.join(', ')}. Vad kommer sen?`,
     value: start + 4 * step,
     explanation: `Regeln är +${step}: ${seq[3]} + ${step} = ${start + 4 * step}.`,
     misconceptions: { [seq[3] + step + 1]: 'en-fel', [seq[3] + step - 1]: 'en-fel' },
@@ -217,6 +220,7 @@ const enklaEkvationer = g('enkla-ekvationer', (level, seed, rng) => {
     return numericTask({
       generatorId: id, level, seed,
       prompt: `${k}x + ${m} = ${k * x + m} — vad är x?`,
+      spokenPrompt: `${k} gånger x plus ${m} är ${k * x + m}. Vad är x?`,
       value: x,
       explanation: `Ta bort ${m} från båda sidor: ${k}x = ${k * x}. Dela med ${k}: x = ${x}.`,
       misconceptions: { [k * x]: 'fel-raknesatt' },

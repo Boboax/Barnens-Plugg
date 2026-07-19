@@ -6,7 +6,7 @@ import { hasGenerator } from '../../generators'
 import { currentMomentId, bossPendingWorldId, worldMomentsComplete } from '../../engine/progress'
 import { dueForReview } from '../../engine/spaced-repetition'
 import { rewardProgress } from '../../engine/rewards'
-import { blixtTarget, unlockedBlixtTests, blixtLevel, blixtTier, blixtMaxTier, blixtConfig, blixtCleared, pendingBlixtKind, type BlixtConfig } from '../../engine/blixt'
+import { blixtTarget, unlockedBlixtTests, blixtLevel, blixtTier, blixtMaxTier, blixtConfig, blixtCleared, pendingBlixtKind, BLIXT_GATE, type BlixtConfig } from '../../engine/blixt'
 import { sfx } from '../../sound'
 import { Avatar } from '../components/Avatar'
 import { Icon, type IconName, BelongIcon, isBelongIcon } from '../components/Icon'
@@ -113,7 +113,15 @@ function HomeInner({ child }: { child: ChildProfile }) {
   const hasStarted = (currentSkill?.attempts ?? 0) > 0
   // Boss/blixt är nästa steg först när inget moment finns kvar att träna.
   const bossIsNextStep = !!pendingBossWorldId && !currentId
-  const blixtIsNextStep = !!pendingBlixt && !currentId && !bossIsNextStep
+  // Flyt-grinden gäller ÄVEN BAKÅT (samma beslut som bossen): en "försenad"
+  // grind — momentet bakom den redan behärskat (diagnos/migrering) men blixten
+  // aldrig klarad — går före vidare träning. Snabbt för barn med flyt
+  // (1-minutstest, obegränsade försök) och håller memoreringskravet ärligt.
+  const blixtOverdue = !!pendingBlixt && (() => {
+    const m = child.skills[BLIXT_GATE[pendingBlixt]]?.mastery
+    return m === 'mastered' || m === 'star'
+  })()
+  const blixtIsNextStep = !!pendingBlixt && !bossIsNextStep && (!currentId || blixtOverdue)
   const blixtWorldId = blixtIsNextStep && pendingBlixt
     ? momentById(blixtConfig(pendingBlixt).unlockMomentId).worldId : undefined
   const currentWorld = currentMoment ? worldById(currentMoment.worldId)
@@ -284,7 +292,6 @@ function HomeInner({ child }: { child: ChildProfile }) {
             const canvasW = nodesW + BOSS_END_W
             const isOpen = (it: PathItem): boolean => it.type === 'blixt' || (it.state !== 'locked' && it.state !== 'coming')
             const lastOpen = pathItems.reduce((acc, it, i) => (isOpen(it) ? i : acc), 0)
-            const dark = theme.horizon === 'grotta'
             // Världsbossen "lurar" i slutet tills alla moment är klara → besegrad.
             const genTotal = moments.filter((m) => hasGenerator(m.generatorId)).length
             const worldDone = moments.filter((m) => {
@@ -369,7 +376,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
                         <span style={{
                           position: 'absolute', top: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
                           width: COL_W - 8, textAlign: 'center', lineHeight: 1.15, pointerEvents: 'none',
-                          textShadow: dark ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)' : '0 1px 3px rgba(20,18,30,.9), 0 0 8px rgba(20,18,30,.7)',
+                          background: 'rgba(20,16,28,.62)', borderRadius: 9, padding: '3px 6px',
+                          boxShadow: '0 1px 4px rgba(0,0,0,.3)',
+                          textShadow: '0 1px 2px rgba(0,0,0,.8)',
                         }}>
                           <span style={{ display: 'block', fontWeight: 800, fontSize: 12.5, color: cleared ? 'var(--mint)' : 'var(--sun-ink)' }}>Blixt {short}</span>
                           <span style={{ display: 'block', fontWeight: 600, fontSize: 11, color: 'var(--muted)' }}>
@@ -455,13 +464,15 @@ function HomeInner({ child }: { child: ChildProfile }) {
                           </span>
                         )}
                       </span>
-                      {/* Bildtext under noden — absolut, påverkar inte ringens läge. */}
+                      {/* Bildtext under noden — absolut, påverkar inte ringens läge.
+                          Egen mörk pill (kontrastregeln): textskugga ensam räckte inte
+                          över soliga partier av världsmålningen i starkt iPad-ljus. */}
                       <span style={{
                         position: 'absolute', top: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
                         width: COL_W - 8, textAlign: 'center', lineHeight: 1.15, pointerEvents: 'none',
-                        textShadow: dark
-                          ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)'
-                          : '0 1px 3px rgba(20,18,30,.9), 0 0 8px rgba(20,18,30,.7)',
+                        background: 'rgba(20,16,28,.62)', borderRadius: 9, padding: '3px 6px',
+                        boxShadow: '0 1px 4px rgba(0,0,0,.3)',
+                        textShadow: '0 1px 2px rgba(0,0,0,.8)',
                       }}>
                         <span style={{ display: 'block', fontWeight: 800, fontSize: 13, color: state === 'now' || state === 'oppen' || state === 'redo' ? 'var(--sun-ink)' : 'var(--ink)' }}>
                           {moment.title}
@@ -511,7 +522,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
                     />
                     <span style={{
                       textAlign: 'center', lineHeight: 1.12,
-                      textShadow: dark ? '0 1px 3px rgba(20,18,40,.95), 0 0 8px rgba(20,18,40,.8)' : '0 1px 3px rgba(20,18,30,.9), 0 0 8px rgba(20,18,30,.7)',
+                      background: 'rgba(20,16,28,.62)', borderRadius: 9, padding: '3px 8px',
+                      boxShadow: '0 1px 4px rgba(0,0,0,.3)', textShadow: '0 1px 2px rgba(0,0,0,.8)',
                     }}>
                       <span style={{ display: 'block', fontWeight: 800, fontSize: 12.5, color: conquered ? 'var(--mint)' : 'var(--sun-ink)' }}>
                         {world.boss.name}
@@ -552,7 +564,14 @@ function HomeInner({ child }: { child: ChildProfile }) {
         <div className="panel">
           <div style={{ fontWeight: 900, fontSize: 15, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7 }}><Icon name="bok" size={20} /> Dagens pass · ca 15 min</div>
           <Row label="Uppvärmning: repetition" tag={due > 0 ? `${due} moment` : 'kort'} tagColor="rep" />
-          <Row label={currentMoment ? currentMoment.title : 'Fritt läge'} tag={hasStarted ? 'pågår' : 'nytt'} tagColor="new" />
+          {/* När en grind väntar är NÄSTA STEG blixten/bossen — inte "Fritt läge". */}
+          <Row
+            label={blixtIsNextStep && pendingBlixt ? `⚡ Blixtpass: ${blixtConfig(pendingBlixt).title}`
+              : bossIsNextStep && pendingBossWorld ? `⚔ Världsboss: ${pendingBossWorld.boss.name}`
+              : currentMoment ? currentMoment.title : 'Fritt läge'}
+            tag={blixtIsNextStep || bossIsNextStep ? 'nästa steg' : hasStarted ? 'pågår' : 'nytt'}
+            tagColor="new"
+          />
           <Row label="Blandade uppgifter" tag="mix" tagColor="rep" />
 
           {/* Pi pekar tydligt ut nästa steg — barnet ska aldrig behöva undra
@@ -704,6 +723,7 @@ function MapIntro({ onDone }: { onDone(): void }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, textAlign: 'left', fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>
           <Legend icon="penna" bg="#FFDF94">Tryck på en nod och <b>träna</b> momentet.</Legend>
           <Legend icon="kristall" bg="var(--mint)">Klara <b>Pis vänliga koll</b> så blir noden <b>klar</b> ✓.</Legend>
+          <Legend icon="blixt" bg="var(--sun)">Vissa vägar öppnas när du klarar ett <b>blixtpass</b> ⚡ — försök hur många gånger du vill!</Legend>
           <Legend icon="svards" bg="var(--boss)">När <b>alla</b> noder i världen är klara <b>vaknar världsbossen</b>.</Legend>
           <Legend icon="las" bg="#D8D4C8"><b>Besegra bossen</b> så öppnas <b>nästa värld</b>!</Legend>
         </div>
