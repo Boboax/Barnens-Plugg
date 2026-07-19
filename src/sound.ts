@@ -323,6 +323,23 @@ export const sfx = {
     const notes = [0, 4, 7, 12, 12, 16]
     notes.forEach((n, i) => tone(freq(C5, n), { at: t + i * 0.11, dur: i >= 4 ? 0.4 : 0.14, gain: 0.9 }))
   },
+  /** STOR fanfar — världsboss besegrad (klimax ska LÅTA som klimax). */
+  fanfarStor(): void {
+    const c = ensure(); if (!c) return
+    const t = c.currentTime
+    // Längre stigande fras + avslutande treklang som ringer ut.
+    const run = [0, 4, 7, 12, 16, 19, 24]
+    run.forEach((n, i) => tone(freq(C5, n), { at: t + i * 0.13, dur: 0.18, gain: 0.9 }))
+    ;[12, 16, 19].forEach((n) => tone(freq(C5, n), { at: t + run.length * 0.13 + 0.05, dur: 1.1, gain: 0.85 }))
+    tone(freq(C5, -12), { at: t + run.length * 0.13 + 0.05, dur: 1.2, type: 'sine', gain: 1.0 })
+  },
+  /** Streak-milstolpe — lågan växer! */
+  streak(): void {
+    const c = ensure(); if (!c) return
+    const t = c.currentTime
+    ;[0, 5, 9, 12].forEach((n, i) => tone(freq(C5, n), { at: t + i * 0.09, dur: 0.2, gain: 0.85 }))
+    tone(freq(C5, 17), { at: t + 4 * 0.09, dur: 0.5, gain: 0.9, slideTo: freq(C5, 24) })
+  },
   /** Nytt rekord / stjärnnivå. */
   rekord(): void {
     const c = ensure(); if (!c) return

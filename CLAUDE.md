@@ -16,9 +16,12 @@ uttryckligen förstått avvägningen (dokumenterad i `docs/PEDAGOGIK.md`).
    kunskapskoll har ingen klocka. Sköldarna är bossens — fel svar bestraffas
    aldrig. Blixtpassen speglar skolans minuttest och är en KRAV-grind för flyt
    (momentet efter öppnas först när blixten klarats) — MEN med obegränsade
-   omförsök och aldrig "underkänt". Tidspress doseras efter ålder: FK utan
-   synlig klocka ("gör så snabbt du kan", tiden mäts i det tysta), åk1+ med
-   klocka. Medvetet val med föräldern (juli 2026, se `docs/PEDAGOGIK.md`).
+   omförsök och aldrig "underkänt". Grinden gäller ÄVEN BAKÅT (som bossen):
+   diagnos-/migreringsplacerade barn måste klara sina blixtar innan de
+   fortsätter framåt (`blixtOverdue` i Home). Tidspress doseras efter ålder:
+   FK utan synlig klocka ("gör så snabbt du kan", tiden mäts i det tysta),
+   åk1+ med klocka. Medvetet val med föräldern (juli 2026, se
+   `docs/PEDAGOGIK.md`).
 3. **Belöningar kopplas till behärskade moment och träningsvana — aldrig till
    poäng, hastighet eller jämförelse mellan syskonen.** Syskon ser aldrig
    varandras framsteg (bara föräldravyn gör det).

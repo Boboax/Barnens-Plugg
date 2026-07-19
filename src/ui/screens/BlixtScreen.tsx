@@ -37,6 +37,8 @@ export function BlixtScreen() {
   const roundStartedAt = useRef(Date.now())
   const resultSaved = useRef(false)
   const clearedBefore = useRef(false)
+  // Rekordet FÖRE rundan — profilen uppdateras när resultatet sparas.
+  const bestBefore = useRef(0)
 
   // Tidssatt för åk 1+; FK kör utan klocka (fast antal frågor).
   const timed = child ? blixtTimed(child.schoolYear) : true
@@ -62,8 +64,14 @@ export function BlixtScreen() {
         ? correct >= blixtTarget(kind, store.household.blixtTargets)
         : correct >= BLIXT_UNTIMED_PASS
       const elapsedMs = Date.now() - roundStartedAt.current
+      const newRecord = correct > bestBefore.current
       store.recordBlixtResult(kind, correct, cleared, timed ? undefined : elapsedMs)
-      if (cleared) { sfx.rekord(); fireConfetti({ count: 110 }) } else { sfx.ratt() }
+      // Personligt rekord firas ALLTID — även under målet (självförbättring,
+      // aldrig jämförelse). Förr fick "NYTT REKORD!" ett ledset ljud när målet
+      // missades — text och ljud krockade.
+      if (cleared) { sfx.rekord(); fireConfetti({ count: 110 }) }
+      else if (newRecord && correct > 0) { sfx.rekord(); fireConfetti({ count: 70, power: 0.85 }) }
+      else { sfx.ratt() }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
@@ -76,6 +84,7 @@ export function BlixtScreen() {
 
   const start = (): void => {
     clearedBefore.current = child.blixt?.[kind]?.cleared ?? false
+    bestBefore.current = child.blixt?.[kind]?.best ?? 0
     resultSaved.current = false
     sfx.whoosh()
     setPhase('running')
@@ -141,7 +150,8 @@ export function BlixtScreen() {
         <Pi mood="hejar" size={100} />
         <h2 style={h2}>
           {timed
-            ? `${correct} rätt på en minut${correct > previousBest ? ' — NYTT REKORD!' : '!'}`
+            // Jämför mot rekordet FÖRE rundan — profilen är redan uppdaterad här.
+            ? `${correct} rätt på en minut${correct > bestBefore.current ? ' — NYTT REKORD!' : '!'}`
             : `${correct} av ${attempted} rätt!`}
         </h2>
         <p style={pStyle}>

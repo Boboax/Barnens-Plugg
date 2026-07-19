@@ -17,6 +17,7 @@ export const WORLDS: World[] = [
       emoji: '🧌',
       taunt: 'Grrr! Ingen räknar sig över MIN bro!',
       defeatLine: 'Hmpf … du kan ju växla bättre än jag. Bron är din!',
+      taunts: ['Grrr … du växlar ju som en riktig bankir!', 'Nej! Mina tior … mina fina tior!'],
     },
     chapters: [
       'Pi landar i Talens dal, där talen växer på träden.',
@@ -36,6 +37,7 @@ export const WORLDS: World[] = [
       emoji: '🐉',
       taunt: 'Mina tabeller kan ingen! Sju gånger åtta, snabbt!',
       defeatLine: 'Femtiosex … rätt igen! Du kan tabellerna bättre än en drake.',
+      taunts: ['Sssju gånger åtta också?! Vem har lärt dig det?!', 'Mina gånger-skatter … en hög i taget försvinner de!'],
     },
     chapters: [
       'I Multiplikationsskogen växer kottarna i lika stora högar.',
@@ -55,6 +57,7 @@ export const WORLDS: World[] = [
       emoji: '🐻',
       taunt: 'MIN kaka! Jag delar aldrig rättvist!',
       defeatLine: 'Okej, okej … du delar rättvisare än jag. Ta en tredjedel. Eller två.',
+      taunts: ['Hallå! Det där var MIN tredjedel!', 'Rättvist, orättvist … nu blev jag förvirrad!'],
     },
     chapters: [
       'Bråkberget är fullt av kakor, pizzor och skatter som måste delas rättvist.',
@@ -74,6 +77,7 @@ export const WORLDS: World[] = [
       emoji: '🐍',
       taunt: 'Ssssäg mitt nässsta steg — om du kan!',
       defeatLine: 'Sss … du såg mönstret. Ormen ringlar åt sidan.',
+      taunts: ['Ssss … du ser mönstren INNAN jag visar dem?!', 'Mitt nässsta drag … du gissade det igen!'],
     },
     chapters: [
       'I Mönsterskogen går stigarna i mönster: röd, blå, röd, blå …',
@@ -93,6 +97,7 @@ export const WORLDS: World[] = [
       emoji: '🗿',
       taunt: 'Ingen passerar utan att kunna mina hörn och kanter!',
       defeatLine: 'Rätt igen … du kan formerna bättre än berget självt.',
+      taunts: ['Hörn och kanter … du kan dem bättre än jag trodde!', 'Ingen har räknat mina sidor så snabbt på tusen år!'],
     },
     chapters: [
       'Formernas berg är byggt av trianglar, kvadrater och cirklar.',
@@ -112,6 +117,7 @@ export const WORLDS: World[] = [
       emoji: '🐙',
       taunt: 'Åtta armar, åtta diagram — vad säger de? Ingen aning? Hihi!',
       defeatLine: 'Du läste alla mina diagram … jag plottrar iväg nu.',
+      taunts: ['Mina diagram! Du läser dem trots bläcket!', 'Åtta armar och ändå hinner jag inte plottra fort nog!'],
     },
     chapters: [
       'På Diagramöarna sorterar papegojorna allt i tabeller.',
@@ -131,6 +137,7 @@ export const WORLDS: World[] = [
       emoji: '👻',
       taunt: 'Buuu! Femtio procent av mig är osynligt — hur mycket ser du?',
       defeatLine: 'Hundra procent besegrad! Spöket tonar bort med ett fniss.',
+      taunts: ['Femtio procent rädd, hundra procent imponerad …', 'Buuu?! Nej, du blir ju inte ens skrämd av procent!'],
     },
     chapters: [
       'I Sambandsgrottan ekar allt dubbelt — och ibland hälften.',

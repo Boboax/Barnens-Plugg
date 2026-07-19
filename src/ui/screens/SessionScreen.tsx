@@ -142,6 +142,12 @@ export function SessionScreen() {
   if (done) {
     const ratio = correctCount / slots.length
     const strong = ratio >= 0.8
+    // Felfritt pass (minst 6 uppgifter) firas särskilt — noggrannhet, inte fart.
+    const flawless = correctCount === slots.length && slots.length >= 6
+    // Mjuk återkomstkrok: lågan växer imorgon (vana — aldrig fart/jämförelse).
+    const streakHook = strong && child.streak.days >= 1
+      ? ` Kom tillbaka imorgon så växer din låga till ${child.streak.days + 1}! 🔥`
+      : ''
     const trainedId = slots.find((s) => s.kind === 'nytt')?.momentId
     const trained = trainedId ? child.skills[trainedId] : undefined
     const trainedMoment = trainedId ? momentById(trainedId) : undefined
@@ -178,8 +184,8 @@ export function SessionScreen() {
     }
     return (
       <EndCard
-        title={strong ? 'Superjobbat!' : 'Bra kämpat!'}
-        text={`${correctCount} av ${slots.length} rätt. ${nextStep}`}
+        title={flawless ? 'Felfritt! ⭐' : strong ? 'Superjobbat!' : 'Bra kämpat!'}
+        text={`${correctCount} av ${slots.length} rätt${flawless ? ' — varenda en!' : '.'} ${nextStep}${streakHook}`}
         onDone={() => store.go('home')}
         celebrate={strong}
       />
@@ -275,8 +281,11 @@ export function SessionScreen() {
   )
 }
 
-export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', celebrate = false }: {
+export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', celebrate = false, grand = false, grandBanner, grandSub }: {
   title: string; text: string; onDone(): void; buttonText?: string; celebrate?: boolean
+  /** grand = spelets KLIMAX (världsboss): större fanfar, guldband, tredje
+      konfettivåg — klimax ska kännas skilt från en bra vardagsdag. */
+  grand?: boolean; grandBanner?: string; grandSub?: string
 }) {
   const store = useStore()
   const hero = store.activeChild?.hero
@@ -284,9 +293,14 @@ export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', c
   // En andra, lättare våg strax efter så segern känns rejält episk.
   useEffect(() => {
     if (!celebrate) return
-    sfx.fanfar()
-    fireConfetti({ power: 1.15 })
-    const t = window.setTimeout(() => fireConfetti({ count: 90, power: 0.9 }), 650)
+    if (grand) sfx.fanfarStor()
+    else sfx.fanfar()
+    fireConfetti({ power: grand ? 1.4 : 1.15 })
+    const t = window.setTimeout(() => fireConfetti({ count: grand ? 130 : 90, power: 0.9 }), 650)
+    const t2 = grand ? window.setTimeout(() => fireConfetti({ count: 110, power: 1.1 }), 1400) : undefined
+    if (t2 !== undefined) {
+      return () => { window.clearTimeout(t); window.clearTimeout(t2) }
+    }
     return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -340,11 +354,20 @@ export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', c
               <Pi mood="hejar" size={70} />
             </div>
           : <div className="bounce-in"><Pi mood="hejar" size={110} /></div>}
+        {/* Guldbandet: bara vid grand (världsboss) — "VÄRLD ERÖVRAD". */}
+        {grand && grandBanner && (
+          <div className="pop-big display" style={{
+            fontSize: 16, fontWeight: 900, letterSpacing: 2, padding: '7px 18px', borderRadius: 10,
+            background: 'linear-gradient(180deg, #FFE7A8, #F3C24A)', color: '#3A2E14',
+            border: '2px solid #A97C2E', boxShadow: '0 3px 12px rgba(0,0,0,.5), 0 0 24px rgba(255,201,77,.5)',
+          }}>{grandBanner}</div>
+        )}
         <h2 className={`pop-big${celebrate ? ' display' : ''}`} style={{
-          fontSize: celebrate ? 30 : 26, fontWeight: 900, margin: 0, animationDelay: '0.15s',
+          fontSize: grand ? 34 : celebrate ? 30 : 26, fontWeight: 900, margin: 0, animationDelay: '0.15s',
           ...(celebrate ? { color: '#FFE7A8', textShadow: '0 2px 4px rgba(45,26,4,.9), 0 0 16px rgba(255,201,77,.5)' } : {}),
         }}>{title}</h2>
-        <p style={{ color: 'var(--muted)', fontWeight: 700, maxWidth: 440, margin: 0 }}>{text}</p>
+        <p style={{ color: 'var(--muted)', fontWeight: 700, maxWidth: 440, margin: 0, ...(grand ? { fontSize: 16, fontStyle: 'italic' } : {}) }}>{text}</p>
+        {grand && grandSub && <p style={{ color: 'var(--ink)', fontWeight: 800, maxWidth: 440, margin: 0 }}>{grandSub}</p>}
         <button className="btn btn-primary" onClick={onDone} style={{ marginTop: 4 }}>{buttonText}</button>
       </div>
     </div>

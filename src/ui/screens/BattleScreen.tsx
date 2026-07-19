@@ -49,6 +49,9 @@ function BossFigure({ boss, state }: { boss: Boss; state: 'idle' | 'traffad' | '
   )
 }
 
+/* Pis varierade hejarop under kunskapskollen — samma rad varje gång blev platt. */
+const PI_CHECK_CHEERS = ['Bra jobbat!', 'En stjärna till!', 'Du är på gång!', 'Pi ser att du tänker!', 'Wow, snyggt!', 'Så nära målet nu!']
+
 export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   const store = useStore()
   const child = store.activeChild
@@ -123,8 +126,9 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
         : <EndCard title="Nästan!" text={`${correct} av ${total} rätt — du behövde ${needed}. Träna momentet lite till, så fixar du det nästa gång!`} onDone={() => store.go('home')} buttonText="Tillbaka och träna" />
     }
     if (kind === 'boss') {
+      // Världsbossen är spelets KLIMAX — grand-läget skiljer den från vardagsfirandet.
       return won
-        ? <EndCard title={`${boss.name} är besegrad!`} text={`"${boss.defeatLine}" — ${world.name} är erövrad! Nästa äventyr väntar.`} onDone={() => store.go('home')} celebrate />
+        ? <EndCard title={`${boss.name} är besegrad!`} text={`"${boss.defeatLine}"`} onDone={() => store.go('home')} celebrate grand grandBanner={`⚔ ${world.name.toUpperCase()} ÄR ERÖVRAD ⚔`} grandSub="En ny värld har öppnat sig. Nästa äventyr väntar!" />
         : <EndCard title={`${boss.name} står emot … än!`} text={`${correct} av ${total} rätt — du behövde ${needed}. Träna dina moment lite till och kom tillbaka starkare!`} onDone={() => store.go('home')} buttonText="Tillbaka till kartan" />
     }
     return won
@@ -198,8 +202,14 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <div className="card" style={{ fontSize: 12.5, fontWeight: 800, textAlign: 'center', padding: '8px 12px', color: '#3A302A' }}>
             {friendly
-              ? (flash === 'hit' ? <><Icon name="stjarna" size={15} style={{ marginRight: 5 }} />Bra jobbat!</> : flash === 'miss' ? 'Nästan — fortsätt!' : 'Visa vad du lärt dig!')
-              : (flash === 'hit' ? <><Icon name="skold" size={15} style={{ marginRight: 5 }} />En sköld knäcktes!</> : flash === 'miss' ? '"Hihi! Inte den här gången!"' : `"${boss.taunt}"`)}
+              ? (flash === 'hit'
+                  ? <><Icon name="stjarna" size={15} style={{ marginRight: 5 }} />{PI_CHECK_CHEERS[correct % PI_CHECK_CHEERS.length]}</>
+                  : flash === 'miss' ? 'Nästan — fortsätt!' : 'Visa vad du lärt dig!')
+              // Bossen får personlighet: replikerna roteras efter knäckta sköldar,
+              // så striden känns levande i stället för en enda fast rad.
+              : (flash === 'hit'
+                  ? <><Icon name="skold" size={15} style={{ marginRight: 5 }} />{correct > 0 && boss.taunts?.length ? `"${boss.taunts[(correct - 1) % boss.taunts.length]}"` : 'En sköld knäcktes!'}</>
+                  : flash === 'miss' ? '"Hihi! Inte den här gången!"' : `"${boss.taunt}"`)}
           </div>
           <div className={friendly ? undefined : 'boss-enter'} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {flash === 'hit' && !friendly && (
