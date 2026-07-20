@@ -206,6 +206,19 @@ function HomeInner({ child }: { child: ChildProfile }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streakMilestone])
 
+  // Frysdags-skylt: visas en gång när en frysdag förbrukats (räddade kedjan)
+  // eller tjänats. recordAnswer sätter flaggan; vi visar den och nollställer.
+  const [freezeToast, setFreezeToast] = useState<'used' | 'earned' | null>(null)
+  useEffect(() => {
+    if (!child.pendingStreakToast) return
+    setFreezeToast(child.pendingStreakToast)
+    if (child.pendingStreakToast === 'used') { sfx.ratt(); fireConfetti({ count: 60, power: 0.8 }) }
+    store.clearStreakToast()
+    const t = window.setTimeout(() => setFreezeToast(null), 5000)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [child.pendingStreakToast])
+
   // Scrolla kartan till barnets aktuella nod vid första visningen.
   const hasScrolled = useRef(false)
   const scrollToCurrent = (el: HTMLButtonElement | null): void => {
@@ -275,9 +288,15 @@ function HomeInner({ child }: { child: ChildProfile }) {
             {inRealm ? 'Matteriket' : world.name}
           </span>
         </span>
-        {/* Lågan VÄXER med streaken (habit-belöning) och glöder från 7 dagar. */}
+        {/* Lågan VÄXER med streaken (habit-belöning) och glöder från 7 dagar.
+            Lagrade frysdagar visas som ❄ intill — skyddshjärtan för lågan. */}
         <span className="chip" style={child.streak.days >= 7 ? { boxShadow: '0 0 10px rgba(255,150,40,.7)' } : undefined}>
           <Icon name="eld" size={Math.min(24, 15 + child.streak.days)} /> {child.streak.days} {child.streak.days === 1 ? 'dag' : 'dagar'} i rad
+          {(child.streak.freezes ?? 0) > 0 && (
+            <span aria-label={`${child.streak.freezes} frysdagar`} title="Frysdagar räddar lågan om du missar en dag" style={{ marginLeft: 6, fontSize: 13, letterSpacing: 1 }}>
+              {'❄'.repeat(child.streak.freezes ?? 0)}
+            </span>
+          )}
         </span>
         {/* Milstolpe-skylt: visas några sekunder när en ny milstolpe firas. */}
         {streakParty !== null && (
@@ -287,6 +306,19 @@ function HomeInner({ child }: { child: ChildProfile }) {
             border: '2px solid #A97C2E', borderRadius: 12, padding: '8px 14px',
             fontWeight: 900, fontSize: 14, boxShadow: '0 4px 14px rgba(0,0,0,.4)',
           }}>🔥 {streakParty} dagar i rad — din låga växer!</div>
+        )}
+        {/* Frysdags-skylt: kedjan räddad, eller ny frysdag tjänad. */}
+        {freezeToast !== null && (
+          <div className="pop-big display" style={{
+            position: 'absolute', top: streakParty !== null ? 'calc(100% + 52px)' : 'calc(100% + 8px)', right: 14, zIndex: 30,
+            background: 'linear-gradient(180deg, #E8F4FF, #B9DCF5)', color: '#1E3A52',
+            border: '2px solid #6FA8D6', borderRadius: 12, padding: '8px 14px', maxWidth: 260,
+            fontWeight: 900, fontSize: 13.5, lineHeight: 1.3, boxShadow: '0 4px 14px rgba(0,0,0,.4)',
+          }}>
+            {freezeToast === 'used'
+              ? 'Din frysdag räddade lågan! ❄🔥'
+              : 'Du fick en frysdag! ❄ Den räddar lågan om du missar en dag.'}
+          </div>
         )}
       </div>
 

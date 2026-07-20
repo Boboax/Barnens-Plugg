@@ -10,7 +10,7 @@ import {
 } from '../engine/progress'
 import { applyDiagnosisResult, diagnosisPassesForAge } from '../engine/diagnosis'
 import { blixtMaxTier, blixtBlockedMoments } from '../engine/blixt'
-import { activeDayCount, masteredCount } from '../engine/rewards'
+import { activeDayCount, masteredCount, updateStreak } from '../engine/rewards'
 import { resetNamePool, setNamePool } from '../generators/helpers'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { hashPin, verifyPin } from '../storage/pin'
@@ -84,6 +84,8 @@ interface StoreValue {
   markMapIntroSeen(): void
   /** Markera att barnet "anlänt" till en värld (ankomstkortet visat). */
   markWorldSeen(worldId: string): void
+  /** Nollställ den transienta frysdags-skylten efter att Home visat den. */
+  clearStreakToast(): void
   finishReview(momentId: string, passed: boolean): void
   recordDiagnosisProbe(momentId: string, level: number, correct: boolean): void
   finishDiagnosisPass(converged: boolean): void
@@ -277,15 +279,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
         if (answers.length > ANSWER_HISTORY_LIMIT) answers = answers.slice(-ANSWER_HISTORY_LIMIT)
 
-        // Streak: första svaret en ny dag förlänger (eller nollställer) kedjan.
-        const today = todayISO()
-        let streak = c.streak
-        if (streak.lastActiveDate !== today) {
-          const yesterday = new Date()
-          yesterday.setDate(yesterday.getDate() - 1)
-          const wasYesterday = streak.lastActiveDate === yesterday.toISOString().slice(0, 10)
-          streak = { days: wasYesterday ? streak.days + 1 : 1, lastActiveDate: today }
-        }
+        // Streak: dagens första svar förlänger kedjan (eller räddas av en
+        // frysdag / nollställs). Ren logik i updateStreak — se engine/rewards.
+        const { streak: nextStreak, usedFreeze, earnedFreeze } = updateStreak(c.streak, todayISO())
+        const streak = nextStreak
+        // Transient skylt som Home visar en gång (förbrukad väger tyngst).
+        const pendingStreakToast = usedFreeze ? 'used' as const
+          : earnedFreeze ? 'earned' as const
+          : c.pendingStreakToast
 
         // Orubblig princip: blixtpass och diagnos påverkar ALDRIG rating,
         // framsteg eller bossupplåsning. De loggas (för föräldravyn) och
@@ -295,8 +296,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const skills = context === 'blixt' || context === 'diagnos'
           ? c.skills
           : recomputeAvailability({ ...c.skills, [momentId]: nextSkill }, c.conqueredWorlds ?? [], blixtBlockedMoments(c))
-        return { ...c, skills, answers, streak }
+        return { ...c, skills, answers, streak, pendingStreakToast }
       })
+    },
+
+    clearStreakToast: () => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => (c.pendingStreakToast ? { ...c, pendingStreakToast: undefined } : c))
     },
 
     finishCheck: (momentId, won) => {

@@ -143,8 +143,10 @@ publikt för Pages på gratisplanen.
    symmetri, vinklar, skala, stapeldiagram, koordinatsystem, grafer,
    tvåstegsekvationer). Kräver nya `TaskVisual`-typer + omsorg om matematisk
    korrekthet — medelsvår modell räcker om mönstren följs.
-4. Streak-frysdag, tidssatta prov som tillval för äldsta barnet (åk 5),
-   PDF-export av veckorapporten, animerade tallinjehopp.
+4. ~~Streak-frysdag~~ **BYGGD** (skyddshjärta: max 2 lagrade frysdagar,
+   tjänas var sjunde dag, räddar kedjan om EXAKT en dag missas —
+   `updateStreak` i `engine/rewards.ts`). Kvar: tidssatta prov som tillval för
+   äldsta barnet (åk 5), PDF-export av veckorapporten, animerade tallinjehopp.
 
 ## Ton och kvalitetsribba
 

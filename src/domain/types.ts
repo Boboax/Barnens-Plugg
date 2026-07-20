@@ -275,10 +275,16 @@ export interface ChildProfile {
   /** AI-chatt på/av för detta barn (fas 5). */
   chatEnabled: boolean
 
-  streak: { days: number; lastActiveDate: string }
+  /** Träningskedjan. `freezes` = lagrade frysdagar ("skyddshjärtan", max 2) som
+      räddar kedjan om EXAKT en dag missas; optionellt = bakåtkompatibelt. */
+  streak: { days: number; lastActiveDate: string; freezes?: number }
   /** Högsta streak-milstolpe (3/7/14/30 …) som redan firats — så firandet
       visas en gång per milstolpe, inte varje dag. Optionellt = bakåtkomp. */
   streakCelebrated?: number
+  /** Transient: en frysdags-händelse som Home ska visa en gång ('used' =
+      förbrukad och räddade kedjan, 'earned' = ny frysdag tjänad). Nollställs av
+      Home efter att skylten visats. Optionellt = bakåtkompatibelt. */
+  pendingStreakToast?: 'used' | 'earned'
 
   /** Blixtpass-rekord (flyt): bästa antal rätt på en minut per testtyp. */
   blixt?: Partial<Record<BlixtKind, BlixtRecord>>

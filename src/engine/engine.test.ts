@@ -9,7 +9,7 @@ import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAva
 import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
 import { composeCheckTasks, composeWorldBossTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
-import { rewardProgress } from './rewards'
+import { rewardProgress, updateStreak } from './rewards'
 import { BLIXT_TESTS, blixtTask, blixtUnlocked, blixtLevel, blixtTier, blixtMaxTier, blixtTimed, BLIXT_GATE, blixtBlockedMoments, pendingBlixtKind } from './blixt'
 import { backfillSplitAddSub, backfillSeenWorlds } from './progress'
 
@@ -358,6 +358,55 @@ describe('seenWorlds-migrering (fog of war)', () => {
       [firstMomentOf(w0)]: { ...newSkillState(firstMomentOf(w0)), mastery: 'available' },
     }
     expect(backfillSeenWorlds(skills, [], undefined)).toEqual([])
+  })
+})
+
+describe('streak-frysdag (skyddshjärta)', () => {
+  const S = (days: number, lastActiveDate: string, freezes?: number) => ({ days, lastActiveDate, freezes })
+
+  it('igår (gap 1) → dagen läggs på som vanligt', () => {
+    const r = updateStreak(S(4, '2026-07-19'), '2026-07-20')
+    expect(r.streak.days).toBe(5)
+    expect(r.usedFreeze).toBe(false)
+  })
+
+  it('exakt EN missad dag med frysdag → förbrukar frysdagen, kedjan räddad', () => {
+    const r = updateStreak(S(5, '2026-07-18', 1), '2026-07-20')
+    expect(r.streak.days).toBe(6)
+    expect(r.usedFreeze).toBe(true)
+    expect(r.streak.freezes).toBe(0)
+  })
+
+  it('en missad dag UTAN frysdag → nollställs till 1', () => {
+    const r = updateStreak(S(5, '2026-07-18', 0), '2026-07-20')
+    expect(r.streak.days).toBe(1)
+    expect(r.usedFreeze).toBe(false)
+  })
+
+  it('mer än en missad dag (gap 3) → nollställs även med frysdag', () => {
+    const r = updateStreak(S(9, '2026-07-17', 2), '2026-07-20')
+    expect(r.streak.days).toBe(1)
+    expect(r.usedFreeze).toBe(false)
+    expect(r.streak.freezes).toBe(2) // frysdagen förbrukas inte i onödan
+  })
+
+  it('samma dag igen → oförändrat', () => {
+    const r = updateStreak(S(3, '2026-07-20', 1), '2026-07-20')
+    expect(r.streak.days).toBe(3)
+    expect(r.usedFreeze).toBe(false)
+    expect(r.earnedFreeze).toBe(false)
+  })
+
+  it('når multipel av 7 → tjänar en frysdag (max 2)', () => {
+    const r = updateStreak(S(6, '2026-07-19', 0), '2026-07-20')
+    expect(r.streak.days).toBe(7)
+    expect(r.earnedFreeze).toBe(true)
+    expect(r.streak.freezes).toBe(1)
+    // Redan 2 lagrade → tjänar inte fler vid nästa multipel.
+    const capped = updateStreak(S(13, '2026-07-19', 2), '2026-07-20')
+    expect(capped.streak.days).toBe(14)
+    expect(capped.earnedFreeze).toBe(false)
+    expect(capped.streak.freezes).toBe(2)
   })
 })
 
