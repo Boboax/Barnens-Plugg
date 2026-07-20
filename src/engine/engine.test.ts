@@ -11,7 +11,7 @@ import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear
 import { composeCheckTasks, composeWorldBossTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
 import { rewardProgress } from './rewards'
 import { BLIXT_TESTS, blixtTask, blixtUnlocked, blixtLevel, blixtTier, blixtMaxTier, blixtTimed, BLIXT_GATE, blixtBlockedMoments, pendingBlixtKind } from './blixt'
-import { backfillSplitAddSub } from './progress'
+import { backfillSplitAddSub, backfillSeenWorlds } from './progress'
 
 const makeProfile = (overrides: Partial<ChildProfile> = {}): ChildProfile => {
   const skills: Record<string, SkillState> = {}
@@ -332,6 +332,32 @@ describe('delad add/sub-migrering', () => {
     }
     const out = backfillSplitAddSub(skills, '2026-01-01')
     expect(out['addition-0-10']).toBeUndefined()
+  })
+})
+
+describe('seenWorlds-migrering (fog of war)', () => {
+  const w0 = WORLDS[0].id
+  const w1 = WORLDS[1].id
+  const firstMomentOf = (wid: string): string => momentsInWorld(wid)[0].id
+
+  it('fyller seenWorlds för världar med framsteg och erövrade världar', () => {
+    const skills: Record<string, SkillState> = {
+      [firstMomentOf(w0)]: { ...newSkillState(firstMomentOf(w0)), mastery: 'in-progress' },
+    }
+    const seen = backfillSeenWorlds(skills, [w1], undefined)
+    expect(seen).toContain(w0) // har framsteg
+    expect(seen).toContain(w1) // erövrad
+  })
+
+  it('idempotent: rör inte ett redan satt seenWorlds', () => {
+    expect(backfillSeenWorlds({}, [], ['redan-satt'])).toEqual(['redan-satt'])
+  })
+
+  it('nytt barn utan framsteg får tomt seenWorlds (ankomstkort till värld 1 väntar)', () => {
+    const skills: Record<string, SkillState> = {
+      [firstMomentOf(w0)]: { ...newSkillState(firstMomentOf(w0)), mastery: 'available' },
+    }
+    expect(backfillSeenWorlds(skills, [], undefined)).toEqual([])
   })
 })
 

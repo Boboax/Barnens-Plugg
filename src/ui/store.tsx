@@ -82,6 +82,8 @@ interface StoreValue {
   markRewardCelebrated(rewardId: string): void
   /** Markera att barnet sett Pis kart-/nodförklaring (visas en gång). */
   markMapIntroSeen(): void
+  /** Markera att barnet "anlänt" till en värld (ankomstkortet visat). */
+  markWorldSeen(worldId: string): void
   finishReview(momentId: string, passed: boolean): void
   recordDiagnosisProbe(momentId: string, level: number, correct: boolean): void
   finishDiagnosisPass(converged: boolean): void
@@ -348,6 +350,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     markMapIntroSeen: () => {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => (c.seenMapIntro ? c : { ...c, seenMapIntro: true }))
+    },
+
+    markWorldSeen: (worldId) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) =>
+        c.seenWorlds?.includes(worldId) ? c : { ...c, seenWorlds: [...(c.seenWorlds ?? []), worldId] })
     },
 
     redoDiagnosis: (id) => patchChild(id, (c) => {

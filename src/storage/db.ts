@@ -1,6 +1,6 @@
 import type { Household } from '../domain/types'
 import { PROFILE_SCHEMA_VERSION } from '../domain/types'
-import { repairDiagnosisBossReady, backfillSplitAddSub } from '../engine/progress'
+import { repairDiagnosisBossReady, backfillSplitAddSub, backfillSeenWorlds } from '../engine/progress'
 import { blixtBlockedMoments } from '../engine/blixt'
 
 /* ============================================================
@@ -110,6 +110,9 @@ export function migrate(data: Household): Household {
         // redan klarat den blandade noden. repairDiagnosisBossReady räknar sedan
         // om tillgänglighet med boss- och flyt-grindarna.
         skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, c.conqueredWorlds ?? [], blixtBlockedMoments(c)),
+        // Fyll seenWorlds för barn som redan spelat (annars ankomstkort för
+        // gamla världar). Idempotent — redan satt lämnas orört.
+        seenWorlds: backfillSeenWorlds(c.skills, c.conqueredWorlds, c.seenWorlds),
         usageSeconds: pruneDays(c.usageSeconds) ?? {},
         extraSeconds: pruneDays(c.extraSeconds),
       })),
