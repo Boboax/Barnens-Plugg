@@ -85,6 +85,22 @@ describe('uppgiftsgeneratorerna', () => {
     }
   })
 
+  it('procent-intro: begripligt för de lägre nivåerna (heltal ≤ n6, bild ≤ n4)', () => {
+    // Edward fastnade på procent: appen gav stora tal utan bild redan från start.
+    // CRA-trappan garanterar heltalssvar t.o.m. nivå 6 och en bild t.o.m. nivå 4.
+    for (const seed of SEEDS) {
+      for (const level of [1, 2, 3, 4, 5, 6] as DifficultyLevel[]) {
+        const task = generateTask('gen.procent-intro', level, seed)
+        if (task.answer.kind === 'numeric') {
+          expect(Number.isInteger(task.answer.value), `n${level} f${seed}: heltalssvar väntat, fick ${task.answer.value}`).toBe(true)
+        }
+        if (level <= 4) {
+          expect(task.visual.kind, `n${level} f${seed}: bild krävs på nivå ≤ 4`).not.toBe('ingen')
+        }
+      }
+    }
+  })
+
   it('missuppfattningskartan pekar aldrig på rätt svar', () => {
     for (const id of allGeneratorIds()) {
       for (const seed of SEEDS.slice(0, 10)) {
