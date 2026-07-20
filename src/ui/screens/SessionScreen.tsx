@@ -85,6 +85,8 @@ export function SessionScreen() {
   const reviewsFinished = useRef(new Set<string>())
 
   if (!child) return null
+  // FK (~6 år) läser inte flytande → korta, varma slutkort. Åk 1+ som förut.
+  const isFK = child.schoolYear === 'F'
 
   if (slots.length === 0 || !task) {
     return (
@@ -161,8 +163,10 @@ export function SessionScreen() {
       return (
         <EndCard
           title="Superjobbat!"
-          text={`${correctCount} av ${slots.length} rätt! Nu vill Pi se vad du kan — klarar du kollen blir ${trainedMoment.title} klart. ✓`}
-          buttonText="Visa vad du kan för Pi ▶"
+          text={isFK
+            ? `${correctCount} av ${slots.length} rätt! ⭐ Visa Pi vad du kan!`
+            : `${correctCount} av ${slots.length} rätt! Nu vill Pi se vad du kan — klarar du kollen blir ${trainedMoment.title} klart. ✓`}
+          buttonText={isFK ? 'Visa Pi! ▶' : 'Visa vad du kan för Pi ▶'}
           onDone={() => store.startBattle(trainedId, 'check')}
           celebrate
         />
@@ -172,20 +176,31 @@ export function SessionScreen() {
     let nextStep = ''
     if (trainedMoment && trained) {
       if (alreadyDone) {
-        nextStep = `${trainedMoment.title} är klart! Vill du testa diamantnivån trycker du på noden på kartan.`
+        nextStep = isFK
+          ? 'Klart! ✓ Bra jobbat!'
+          : `${trainedMoment.title} är klart! Vill du testa diamantnivån trycker du på noden på kartan.`
       } else if (store.sessionFocused) {
         // Fokuserad träning men inte stark nog än → mer träning, sedan Pis koll.
-        nextStep = `Träna ${trainedMoment.title} lite till, så visar du snart Pi vad du kan!`
+        nextStep = isFK
+          ? 'Träna lite till! 💪'
+          : `Träna ${trainedMoment.title} lite till, så visar du snart Pi vad du kan!`
       } else {
-        nextStep = 'Bra jobbat! Tryck på en nod på kartan när du vill visa Pi vad du kan.'
+        nextStep = isFK
+          ? 'Bra jobbat! 🌟'
+          : 'Bra jobbat! Tryck på en nod på kartan när du vill visa Pi vad du kan.'
       }
     } else {
-      nextStep = strong ? 'Du är på väg att bemästra det här!' : 'Varje försök gör dig starkare — imorgon tar vi det igen!'
+      nextStep = isFK
+        ? (strong ? 'Grymt! 🌟' : 'Bra kämpat! 💪')
+        : (strong ? 'Du är på väg att bemästra det här!' : 'Varje försök gör dig starkare — imorgon tar vi det igen!')
     }
     return (
       <EndCard
         title={flawless ? 'Felfritt! ⭐' : strong ? 'Superjobbat!' : 'Bra kämpat!'}
-        text={`${correctCount} av ${slots.length} rätt${flawless ? ' — varenda en!' : '.'} ${nextStep}${streakHook}`}
+        // FK: kort och varmt utan den längre streak-meningen.
+        text={isFK
+          ? `${correctCount} av ${slots.length} rätt! ${nextStep}`
+          : `${correctCount} av ${slots.length} rätt${flawless ? ' — varenda en!' : '.'} ${nextStep}${streakHook}`}
         onDone={() => store.go('home')}
         celebrate={strong}
       />
