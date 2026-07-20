@@ -1,6 +1,7 @@
-# Spec: nästa fyra steg (beslutade med föräldern, juli 2026)
+# Spec: nästa steg (beslutade med föräldern, juli 2026)
 
-Byggs i ordning, ett steg = en commit + deploy. Läs `CLAUDE.md` FÖRST — de
+Byggs i ordning — **steg 0 FÖRST (Edward är blockerad på procent nu)**,
+sedan 1–4. Ett steg = en commit + deploy. Läs `CLAUDE.md` FÖRST — de
 orubbliga principerna och fallgroparna gäller varje rad här. Särskilt:
 
 - Optionella profilfält, aldrig brytande schemaändringar.
@@ -14,6 +15,51 @@ orubbliga principerna och fallgroparna gäller varje rad här. Särskilt:
   `localStorage 'barnens-plugg-household'` i `addInitScript`).
 - Deploy: push branch → merge `--no-ff` till `main` → rapportera versionen
   (`1.0.<commit-antal>`).
+
+---
+
+## Steg 0: Procent-intro görs begripligt (Edward, åk 5 — GÖRS FÖRST)
+
+**Problem (föräldrarapport):** procent är för svårt. Orsaken syns i
+`src/generators/brakberget.ts` (`procent-intro`): redan nivå 1–3 ger
+"Vad är 50 % av 76?" — stora tal, INGEN bild (`visual` saknas → 'ingen'),
+ingen `spokenPrompt` (TTS läser "%" fel), rea-textuppgifter kan dyka upp
+från start (40 % chans oavsett nivå), och ingen uppgift lär ut vad procent
+BETYDER. Bygg om generatorn med en riktig CRA-trappa:
+
+- **Nivå 1–2 — begreppet (flerval + bild):**
+  - "Hur många procent är HELA?" (svar 100; distraktorer 50/10/1 taggade
+    `fel-raknesatt`).
+  - "Vad betyder 50 %?" → rätt: "Hälften"; distraktorer "En fjärdedel",
+    "Allting", "Tio stycken". Samma mönster för 25 % ("En fjärdedel") och
+    100 % ("Allting").
+  - Bild: `{ kind: 'brak', parts: 2, filled: 1 }` för 50 %, `parts: 4,
+    filled: 1` för 25 % osv. — barnet SER andelen. För "procent =
+    hundradelar": `{ kind: 'tiobas', groups: [{ hundreds: 1, tens: 0,
+    ones: 0 }] }` (hundraplattan = 100 rutor) fungerar som bild.
+  - Förklaringarna ska LÄRA begreppet: "Procent betyder hundradelar.
+    50 % är 50 av 100 rutor — precis hälften."
+- **Nivå 3–4 — 50 % och 25 % av SNÄLLA tal:** bas = jämnt/4-delbart tal
+  ≤ 40 (t.ex. `rng.int(2, 10) * 4`). Alltid bild (`brak`). Förklaring via
+  hälften/fjärdedelen ("50 % är hälften: 24 / 2 = 12"), aldrig
+  ×/100-formeln här.
+- **Nivå 5–6 — 10 % och 75 %:** 10 % av hela tiotal ≤ 100 ("dela med 10");
+  75 % via "hälften + hälften av hälften" eller 3/4-bild. Rea-berättelsen
+  får dyka upp TIDIGAST här (`rea`-grenen villkoras `level >= 5`), med
+  snälla tal. Heltalssvar garanterat t.o.m. nivå 6.
+- **Nivå 7–10 — som idag:** blandade procentsatser (5/20/30/90), x,5-svar
+  tillåtna, ingen bild; lägg till 10 %-tricket i förklaringen ("ta 10 %
+  först: 30 kr, sedan × 3 = 90 kr" för 30 %).
+- **Alla grenar får `spokenPrompt`** där "%"/"×" ingår ("50 procent av 24").
+- **Missuppfattningar:** behåll dagens + tagga "svarar med procenttalet"
+  (`[pct]`) och "hälften i stället för fjärdedel" (`[base/2]` när pct=25).
+- "Pi visar först" använder generatorns låga nivåer + förklaringar
+  automatiskt — bättre förklaringar där = bättre introduktion gratis.
+- **Test:** utöka fuzz-testet med en riktad kontroll: `procent-intro`
+  nivå ≤ 6 ger alltid heltalssvar och (nivå ≤ 4) alltid en bild ≠ 'ingen'.
+- **För Edward direkt:** när detta deployats, be honom trycka på
+  procent-noden (fokuserad träning) — motorn har sannolikt sänkt hans
+  rating där, så han börjar automatiskt på de nya begreppsnivåerna.
 
 ---
 
