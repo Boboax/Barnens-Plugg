@@ -11,6 +11,57 @@ import { momentsInTermHalf } from '../domain/curriculum'
    kvitterar.
    ============================================================ */
 
+/* ============================================================
+   Träningskedjan (streak) med frysdagar.
+
+   En "frysdag" (skyddshjärta) räddar kedjan om barnet missar EXAKT en dag —
+   en enstaka lucka ska inte knäcka en månadslång vana. Frysdagar tjänas för
+   uthållighet (var sjunde dag), aldrig köps eller kopplas till fart. Ren
+   funktion → enkel att enhetstesta och helt fristående från webbläsaren.
+   ============================================================ */
+
+const dayGap = (from: string, to: string): number =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000)
+
+/** Uppdatera kedjan vid dagens FÖRSTA aktivitet. `today` = ISO-datum (YYYY-MM-DD). */
+export function updateStreak(
+  streak: ChildProfile['streak'],
+  today: string,
+): { streak: ChildProfile['streak']; usedFreeze: boolean; earnedFreeze: boolean } {
+  // Samma dag igen → oförändrat (kedjan räknas en gång per dag).
+  if (streak.lastActiveDate === today) return { streak, usedFreeze: false, earnedFreeze: false }
+
+  let freezes = streak.freezes ?? 0
+  let days: number
+  let usedFreeze = false
+
+  if (!streak.lastActiveDate) {
+    days = 1 // allra första aktiva dagen
+  } else {
+    const gap = dayGap(streak.lastActiveDate, today)
+    if (gap <= 1) {
+      // Igår (gap 1) — eller ett bakåtställt datum (gap ≤ 0): fortsätt kedjan.
+      days = streak.days + 1
+    } else if (gap === 2 && freezes > 0) {
+      // Exakt EN missad dag och en frysdag finns → förbruka den, kedjan räddad.
+      freezes -= 1
+      usedFreeze = true
+      days = streak.days + 1
+    } else {
+      days = 1 // för långt gap (eller ingen frysdag) → börja om
+    }
+  }
+
+  // Tjäna en frysdag när kedjan når en ny multipel av 7 (7, 14, 21 …), max 2.
+  let earnedFreeze = false
+  if (days > 0 && days % 7 === 0 && freezes < 2) {
+    freezes += 1
+    earnedFreeze = true
+  }
+
+  return { streak: { days, lastActiveDate: today, freezes }, usedFreeze, earnedFreeze }
+}
+
 export const masteredCount = (profile: ChildProfile): number =>
   Object.values(profile.skills).filter((s) => s.mastery === 'mastered' || s.mastery === 'star').length
 
