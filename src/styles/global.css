@@ -280,6 +280,17 @@ button:active > .map-node { transform: scale(0.96) translateY(2px); }
 }
 .float-soft { animation: float-soft 2.6s ease-in-out infinite; }
 
+/* Långsamt drivande dimma över de olåsta trakterna på rikeskartan. Behåller
+   centreringen (translate -50%) och lägger till en mjuk drift + andning så
+   slöjan lever som riktig dimma. Varieras per blobb via duration/delay inline.
+   prefers-reduced-motion nollar rörelsen globalt (håller 0%-läget = centrerat). */
+@keyframes mist-drift {
+  0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+  50%  { transform: translate(-50%, -50%) translate(3.5%, -2.5%) scale(1.08); }
+  100% { transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+}
+.mist-blob { animation: mist-drift ease-in-out infinite; will-change: transform; }
+
 @keyframes pulse-ring {
   0% { box-shadow: 0 0 0 4px #fff, 0 0 0 8px rgba(255,201,77,.45), 0 4px 0 rgba(0,0,0,.15); }
   50% { box-shadow: 0 0 0 4px #fff, 0 0 0 16px rgba(255,201,77,.18), 0 4px 0 rgba(0,0,0,.15); }
