@@ -340,6 +340,13 @@ export const sfx = {
     ;[0, 5, 9, 12].forEach((n, i) => tone(freq(C5, n), { at: t + i * 0.09, dur: 0.2, gain: 0.85 }))
     tone(freq(C5, 17), { at: t + 4 * 0.09, dur: 0.5, gain: 0.9, slideTo: freq(C5, 24) })
   },
+  /** Ny värld avslöjas — Pi anländer. Ljus, stigande "vägen öppnas"-fanfar. */
+  varldUpp(): void {
+    const c = ensure(); if (!c) return
+    const t = c.currentTime
+    ;[0, 4, 7, 12, 16].forEach((n, i) => tone(freq(C5, n), { at: t + i * 0.11, dur: 0.22, gain: 0.85 }))
+    ;[12, 19].forEach((n) => tone(freq(C5, n), { at: t + 5 * 0.11 + 0.03, dur: 0.7, gain: 0.85 }))
+  },
   /** Nytt rekord / stjärnnivå. */
   rekord(): void {
     const c = ensure(); if (!c) return

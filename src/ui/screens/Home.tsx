@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ChildProfile, Moment, SkillState } from '../../domain/types'
+import type { ChildProfile, Moment, SkillState, World } from '../../domain/types'
 import { momentsInWorld, momentById } from '../../domain/curriculum'
 import { WORLDS, worldById } from '../../domain/worlds'
 import { hasGenerator } from '../../generators'
@@ -16,6 +16,7 @@ import { RealmMap } from '../components/RealmMap'
 import { Ambience } from '../components/Ambience'
 import { SoundToggle } from '../components/SoundToggle'
 import { worldTheme } from '../worldThemes'
+import { speak, stopSpeaking, ttsAvailable } from '../../tts'
 import { todayISO, useStore } from '../store'
 
 /* ============================================================
@@ -145,6 +146,13 @@ function HomeInner({ child }: { child: ChildProfile }) {
   // att bossen är slagen — precis buggen på fotot).
   const worldConquered = child.conqueredWorlds?.includes(worldId) ?? false
   const worldAllMomentsDone = worldMomentsComplete(child.skills, worldId)
+  // "Pi anländer": första gången barnet går in i en ÖPPEN värld (första världen
+  // eller föregående erövrad) som ännu inte "setts" → ett ankomstkort med
+  // världens första kapiteltext. Migreringen har fyllt seenWorlds för barn med
+  // gammalt framsteg, så bara genuint nya världar utlöser kortet.
+  const worldIdx = WORLDS.findIndex((w) => w.id === worldId)
+  const worldIsOpen = worldIdx <= 0 || (child.conqueredWorlds?.includes(WORLDS[worldIdx - 1].id) ?? false)
+  const worldSeen = child.seenWorlds?.includes(worldId) ?? false
   const lastChapter = world.chapters.length - 1
   const chapter = worldConquered
     ? world.chapters[lastChapter]
@@ -424,6 +432,11 @@ function HomeInner({ child }: { child: ChildProfile }) {
                   const { moment, state } = item
                   const isStar = state === 'star'
                   const dim = state === 'locked' || state === 'coming'
+                  // Dis-nod (fog of war): en låst/kommande nod som ligger mer än
+                  // två steg bortom sista öppna noden ligger i dimma — framtiden
+                  // är "vad finns där borta?", inte en lång lista att bäva för.
+                  // De närmaste 2 stegen och världsbossen visas alltid tydligt.
+                  const isFog = dim && i > lastOpen + 2
                   const clickable = state === 'now' || state === 'oppen' || state === 'redo' || state === 'done' || isStar
                   const onClick = (): void => {
                     if (secondsLeft <= 0) return store.go('time-up')
@@ -472,8 +485,12 @@ function HomeInner({ child }: { child: ChildProfile }) {
                           boxShadow: 'inset 0 -2px 5px rgba(0,0,0,.3)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
-                          <Icon name={STATE_ICON[state]} size={iconSize}
-                            style={dim ? { filter: 'grayscale(.5) drop-shadow(0 1px 1px rgba(0,0,0,.3))' } : undefined} />
+                          {isFog ? (
+                            <span style={{ fontFamily: 'var(--font)', fontWeight: 900, fontSize: Math.round(medallion * 0.62), color: '#6E6656', lineHeight: 1 }}>?</span>
+                          ) : (
+                            <Icon name={STATE_ICON[state]} size={iconSize}
+                              style={dim ? { filter: 'grayscale(.5) drop-shadow(0 1px 1px rgba(0,0,0,.3))' } : undefined} />
+                          )}
                         </span>
                         {/* Snidad mässingsring ovanpå (hålet är genomskinligt). */}
                         <img src={`${import.meta.env.BASE_URL}art/tex/nodering.webp`} alt="" aria-hidden="true"
@@ -506,18 +523,20 @@ function HomeInner({ child }: { child: ChildProfile }) {
                         textShadow: '0 1px 2px rgba(0,0,0,.8)',
                       }}>
                         <span style={{ display: 'block', fontWeight: 800, fontSize: 13, color: state === 'now' || state === 'oppen' || state === 'redo' ? 'var(--sun-ink)' : 'var(--ink)' }}>
-                          {moment.title}
+                          {isFog ? '???' : moment.title}
                         </span>
-                        <span style={{ display: 'block', fontWeight: 600, fontSize: 11, color: 'var(--muted)' }}>
-                          {state === 'coming' ? 'kommer snart'
-                            : state === 'redo' ? 'visa vad du kan!'
-                            : state === 'done' ? 'prova diamanten!'
-                            : isStar ? 'stjärnnivå klarad!'
-                            : state === 'locked' ? 'låst'
-                            : state === 'now' ? 'börja här!'
-                            : state === 'oppen' ? 'tryck för att träna!'
-                            : ''}
-                        </span>
+                        {!isFog && (
+                          <span style={{ display: 'block', fontWeight: 600, fontSize: 11, color: 'var(--muted)' }}>
+                            {state === 'coming' ? 'kommer snart'
+                              : state === 'redo' ? 'visa vad du kan!'
+                              : state === 'done' ? 'prova diamanten!'
+                              : isStar ? 'stjärnnivå klarad!'
+                              : state === 'locked' ? 'låst'
+                              : state === 'now' ? 'börja här!'
+                              : state === 'oppen' ? 'tryck för att träna!'
+                              : ''}
+                          </span>
+                        )}
                       </span>
                     </button>
                   )
@@ -735,6 +754,11 @@ function HomeInner({ child }: { child: ChildProfile }) {
       </div>
       {/* Pi förklarar hur noderna fungerar — en gång per barn. */}
       {!child.seenMapIntro && <MapIntro onDone={() => store.markMapIntroSeen()} />}
+      {/* Pi anländer till en ny värld — ankomstkort med första kapiteltexten.
+          Node-introt går först, sedan ankomsten (mutuellt uteslutande gate). */}
+      {child.seenMapIntro && view === 'varld' && worldIsOpen && !worldSeen && (
+        <WorldArrival world={world} onDone={() => store.markWorldSeen(worldId)} />
+      )}
       {/* Uppnådd belöning firas i helskärm — en gång per belöning. */}
       {rewardToCelebrate && (
         <RewardParty
@@ -767,6 +791,40 @@ function MapIntro({ onDone }: { onDone(): void }) {
           <Legend icon="las" bg="#D8D4C8"><b>Besegra bossen</b> så öppnas <b>nästa värld</b>!</Legend>
         </div>
         <button className="btn btn-primary" onClick={onDone} style={{ marginTop: 4 }}>Jag fattar! ▶</button>
+      </div>
+    </div>
+  )
+}
+
+/* "Pi anländer till en ny värld" — ankomstkort första gången barnet går in i
+   en öppen värld. Världens namn i display-typsnitt, Pi som hejar, första
+   kapiteltexten med uppläsning, och en knapp som markerar världen som sedd.
+   Firas en gång per värld (markWorldSeen). */
+function WorldArrival({ world, onDone }: { world: World; onDone(): void }) {
+  const text = world.chapters[0]
+  useEffect(() => {
+    sfx.varldUpp()
+    fireConfetti({ power: 1 })
+    // Stäng eventuell uppläsning om kortet lämnas innan den hunnit klart.
+    return () => stopSpeaking()
+  }, [])
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 62, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 20, background: 'rgba(15,12,20,.8)',
+    }}>
+      <div className="card bounce-in" style={{ maxWidth: 460, width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12, padding: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'center' }}><Pi mood="hejar" size={88} /></div>
+        <h2 className="display" style={{ fontSize: 25, fontWeight: 900, margin: 0, color: 'var(--ink)' }}>{world.name}</h2>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 14.5, color: 'var(--ink)', lineHeight: 1.5, textAlign: 'left' }}>{text}</p>
+          {ttsAvailable() && (
+            <button className="chip" onClick={() => speak(text)} aria-label="Läs upp berättelsen" style={{ flexShrink: 0 }}>
+              <Icon name="ljud" size={17} />
+            </button>
+          )}
+        </div>
+        <button className="btn btn-primary" onClick={onDone} style={{ marginTop: 4 }}>Nu utforskar vi! ▶</button>
       </div>
     </div>
   )

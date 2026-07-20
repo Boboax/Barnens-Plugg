@@ -298,6 +298,12 @@ export interface ChildProfile {
   /** Världar där barnet besegrat världsbossen (klimaxstriden i slutet).
       Optionellt = bakåtkompatibelt. Kosmetiskt/firande — gatear inte nästa värld. */
   conqueredWorlds?: string[]
+
+  /** Världar barnet "anlänt" till — ankomstkortet (Pi anländer) har visats.
+      Optionellt = bakåtkompatibelt; migreringen fyller i det för alla världar
+      där barnet redan har framsteg, så befintliga barn slipper gamla ankomster.
+      Styr även dimman på rikeskartan (öppen-men-osedd värld avslöjas). */
+  seenWorlds?: string[]
 }
 
 /** Målade hjältefigurer (public/art/hero/*). Nyckeln bor lokalt per barn. */

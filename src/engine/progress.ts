@@ -140,6 +140,30 @@ export function backfillSplitAddSub(
   return changed ? next : skills
 }
 
+/** Migrering (idempotent): fyll `seenWorlds` för befintliga barn så de inte
+    plötsligt får "Pi anländer"-kort för världar de redan spelat i. En värld
+    räknas som redan sedd om barnet har NÅGOT framsteg där (ett moment som
+    lämnat 'locked'/'available') eller redan erövrat den. Ett redan satt
+    seenWorlds lämnas orört (nya barn börjar tomt → får ankomsten till värld 1). */
+export function backfillSeenWorlds(
+  skills: Record<string, SkillState>,
+  conqueredWorlds: string[] | undefined,
+  seenWorlds: string[] | undefined,
+): string[] {
+  if (seenWorlds) return seenWorlds
+  const conquered = new Set(conqueredWorlds ?? [])
+  const seen: string[] = []
+  for (const w of WORLDS) {
+    const hasProgress = MOMENTS.some((m) => {
+      if (m.worldId !== w.id) return false
+      const s = skills[m.id]
+      return s !== undefined && s.mastery !== 'locked' && s.mastery !== 'available'
+    })
+    if (hasProgress || conquered.has(w.id)) seen.push(w.id)
+  }
+  return seen
+}
+
 const MISCONCEPTION_MEMORY = 10
 
 /**

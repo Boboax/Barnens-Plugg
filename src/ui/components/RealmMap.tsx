@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChildProfile } from '../../domain/types'
 import { momentsInWorld } from '../../domain/curriculum'
 import { WORLDS } from '../../domain/worlds'
@@ -155,8 +155,40 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
   // Hur långt barnet nått i resvägen (för den upplysta "hittills"-stigen).
   const currentIdx = Math.max(0, WORLDS.findIndex((w) => w.id === currentWorldId))
 
+  /* Dimma ("fog of war"): oupptäckta delar av riket ligger i moln. En värld är
+     ÖPPEN = första världen eller föregående värld erövrad (samma begrepp som
+     bossgrinden — inga nya motorbegrepp). Första icke-öppna världen visas i
+     lätt dis (medaljong + namn syns, men framsteg döljs), världarna bortom den
+     i tjock dimma med ???. Erövran är sekventiell, så de öppna världarna bildar
+     ett sammanhängande förled och det finns som mest EN "nästa". */
+  const conqueredSet = new Set(child.conqueredWorlds ?? [])
+  const worldOpen = (i: number): boolean => i === 0 || conqueredSet.has(WORLDS[i - 1].id)
+  const firstClosedIdx = WORLDS.findIndex((_, i) => !worldOpen(i))
+  const visibilityOf = (worldId: string): 'open' | 'next' | 'beyond' => {
+    if (firstClosedIdx === -1) return 'open'
+    const i = WORLDS.findIndex((w) => w.id === worldId)
+    return i < firstClosedIdx ? 'open' : i === firstClosedIdx ? 'next' : 'beyond'
+  }
+
+  /* Avslöjandet: en värld som är ÖPPEN men ännu inte "sedd" (barnet har inte
+     anlänt) tonar fram ur dimman en gång — molnen glider isär. Vid
+     prefers-reduced-motion hoppar vi direkt till klart läge. seenWorlds sätts
+     sedan av ankomstkortet i Home när barnet går in i världen. */
+  const seenSet = new Set(child.seenWorlds ?? [])
+  const [revealed, setRevealed] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  useEffect(() => {
+    if (revealed) return
+    // Dubbel rAF: låt den dimmiga första bilden målas innan övergången startar.
+    let raf2 = 0
+    const raf1 = requestAnimationFrame(() => { raf2 = requestAnimationFrame(() => setRevealed(true)) })
+    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2) }
+  }, [revealed])
+
   const pick = (region: Region): void => {
     if (zooming.current) return
+    // Stängda världar går inte att zooma in i (ingen väg dit ännu).
+    if (visibilityOf(region.worldId) !== 'open') return
     zooming.current = true
     sfx.whoosh()
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -306,6 +338,13 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
             const pos = artOk ? region.art : region.svg
             // På målningen är hela riket dramatiskt mörkt — ljus text överallt.
             const dark = artOk || region.worldId === 'sambandsgrottan'
+            const vis = visibilityOf(region.worldId)
+            const isRevealing = vis === 'open' && !seenSet.has(region.worldId)
+            // Dimman ligger på stängda världar — och kvarstår på en avslöjande
+            // värld tills övergången spelats, då tonar den bort.
+            const fogged = vis !== 'open' || (isRevealing && !revealed)
+            const fogFilter = vis === 'beyond' ? 'grayscale(.9) brightness(.6)' : 'grayscale(.55) brightness(.8)'
+            const clickable = vis === 'open'
             return (
               <span key={region.worldId}>
                 {!artOk && (
@@ -320,12 +359,21 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                 )}
                 <button
                   onClick={() => pick(region)}
-                  aria-label={`${world.name} — ${progress.done} av ${progress.total} moment klarade`}
+                  disabled={!clickable}
+                  aria-label={
+                    vis === 'beyond' ? 'Outforskad värld — dold i dimma'
+                    : vis === 'next' ? `${world.name} — ännu inte öppen`
+                    : `${world.name} — ${progress.done} av ${progress.total} moment klarade`
+                  }
                   style={{
                     position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%, -50%)',
                     // Nuvarande region (med Pi) lyfts över grannmärkena.
                     zIndex: isHere ? 5 : 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                    fontFamily: 'inherit',
+                    fontFamily: 'inherit', cursor: clickable ? 'pointer' : 'default',
+                    // Dis-filtret på hela märket (medaljong + banderoll); avslöjande
+                    // värld tonar från dis → klart via transitionen.
+                    filter: fogged ? fogFilter : undefined,
+                    transition: isRevealing ? 'filter 1.2s ease' : undefined,
                   }}
                 >
                   <span
@@ -351,6 +399,12 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                     {/* Ornamenterad mässingsring ovanpå (genomskinligt hål + utsida). */}
                     <img src={ringUrl} alt="" aria-hidden="true"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
+                    {/* Molnemblem på den djupt dimmiga (outforskade) världen. */}
+                    {vis === 'beyond' && (
+                      <span aria-hidden="true" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                        <CloudSvg width={44} opacity={0.95} />
+                      </span>
+                    )}
                     {complete && (
                       <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true"
                         style={{ position: 'absolute', top: 2, right: 2, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.4))' }}>
@@ -384,15 +438,59 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                     borderRadius: 7, padding: '3px 9px',
                     boxShadow: artOk ? '0 2px 5px rgba(0,0,0,.4)' : '0 1px 4px rgba(0,0,0,.2)',
                   }}>
-                    {world.name}
+                    {vis === 'beyond' ? '???' : world.name}
                     <span style={{ display: 'block', fontWeight: 700, fontSize: 10.5, fontFamily: 'var(--font)', color: artOk ? '#6E6046' : dark ? '#CFC8E4' : 'var(--muted)' }}>
-                      {progress.total === 0 ? 'kommer snart'
+                      {vis === 'beyond' ? ' '
+                        : vis === 'next' ? '? / ? moment'
+                        : progress.total === 0 ? 'kommer snart'
                         : complete ? 'allt klart! ✓'
                         : bossWaiting ? 'möt bossen! ⚔'
                         : `${progress.done} / ${progress.total} moment klarade`}
                     </span>
                   </span>
                 </button>
+              </span>
+            )
+          })}
+
+          {/* Molnlager: drivande moln över de djupt dimmiga (outforskade)
+              regionerna, och avslöjandemoln som glider isär när en öppen-men-
+              osedd värld tonar fram. pointer-events av → fångar aldrig tryck. */}
+          {REGIONS.map((region) => {
+            const vis = visibilityOf(region.worldId)
+            const isRevealing = vis === 'open' && !seenSet.has(region.worldId)
+            if (vis !== 'beyond' && !isRevealing) return null
+            const pos = artOk ? region.art : region.svg
+            const base: React.CSSProperties = {
+              position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`,
+              transform: 'translate(-50%, -50%)', pointerEvents: 'none',
+            }
+            if (isRevealing) {
+              // Två moln glider isär (vänster/höger) och tonar bort — engångs.
+              return (
+                <span key={`fog-${region.worldId}`} aria-hidden="true" style={{ ...base, zIndex: 4 }}>
+                  <span style={{
+                    position: 'absolute', left: 0, top: 0,
+                    transform: `translate(-50%, -50%) translateX(${revealed ? -72 : -6}px)`,
+                    opacity: revealed ? 0 : 0.95, transition: 'transform 1.2s ease, opacity 1.2s ease',
+                  }}><CloudSvg width={64} /></span>
+                  <span style={{
+                    position: 'absolute', left: 0, top: 0,
+                    transform: `translate(-50%, -50%) translateX(${revealed ? 72 : 6}px)`,
+                    opacity: revealed ? 0 : 0.9, transition: 'transform 1.2s ease, opacity 1.2s ease',
+                  }}><CloudSvg width={52} opacity={0.85} /></span>
+                </span>
+              )
+            }
+            // Outforskad värld: två moln som bobbar mjukt över regionen.
+            return (
+              <span key={`fog-${region.worldId}`} aria-hidden="true" style={{ ...base, zIndex: 3 }}>
+                <span className="float-soft" style={{ position: 'absolute', left: -26, top: -20 }}>
+                  <CloudSvg width={70} opacity={0.9} />
+                </span>
+                <span className="float-soft" style={{ position: 'absolute', left: 12, top: 8, animationDelay: '-2.2s' }}>
+                  <CloudSvg width={54} opacity={0.8} />
+                </span>
               </span>
             )
           })}
