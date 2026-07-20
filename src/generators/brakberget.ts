@@ -1,4 +1,4 @@
-import type { DifficultyLevel, TaskGenerator } from '../domain/types'
+import type { DifficultyLevel, MisconceptionTag, TaskGenerator } from '../domain/types'
 import { createRng, type Rng } from './rng'
 import { choiceTask, lerpInt, numericTask, sv } from './helpers'
 
@@ -178,31 +178,122 @@ const brakRakna = g('brak-rakna', (level, seed, rng) => {
 
 // ---------- Procent börjar (åk 5) ----------
 
+/* Procent byggs upp enligt CRA (konkret → representation → abstrakt), för att
+   Edward (åk 5) fastnade på procent: appen hoppade rakt in i "50 % av 76" utan
+   bild och utan att först lära ut vad procent BETYDER. Trappan nu:
+   1–2 begreppet (flerval + bild), 3–4 hälften/fjärdedel av snälla tal (bild),
+   5–6 tiondel/tre fjärdedelar (rea tidigast här), 7–10 blandat med 10 %-tricket.
+   Heltalssvar är garanterat t.o.m. nivå 6; bild finns alltid t.o.m. nivå 4. */
 const procentIntro = g('procent-intro', (level, seed, rng) => {
   const id = 'gen.procent-intro'
-  const pct = level <= 3 ? rng.pick([50, 100] as const) : level <= 6 ? rng.pick([10, 25, 50, 75] as const) : rng.pick([5, 10, 20, 25, 30, 75, 90] as const)
-  const base = rng.int(2, 20) * (pct % 25 === 0 ? 4 : 10)
+
+  // Nivå 1–2 — BEGREPPET: vad procent betyder, som flerval med en bild att SE.
+  if (level <= 2) {
+    if (rng.chance(0.5)) {
+      return choiceTask({
+        generatorId: id, level, seed, rng,
+        prompt: 'Hur många procent är HELA (allt tillsammans)?',
+        spokenPrompt: 'Hur många procent är hela, allt tillsammans?',
+        correct: '100 %',
+        // Hundraplattan = 100 rutor = hela = 100 %.
+        visual: { kind: 'tiobas', groups: [{ hundreds: 1, tens: 0, ones: 0 }] },
+        distractors: [['50 %', 'fel-raknesatt'], ['10 %', 'fel-raknesatt'], ['1 %', 'fel-raknesatt']],
+        explanation: 'Procent betyder hundradelar. Hela är 100 av 100 rutor — alltså 100 %.',
+      })
+    }
+    const meaning = rng.pick([
+      { pct: 50, correct: 'Hälften', parts: 2, filled: 1, why: '50 % är 50 av 100 rutor — precis hälften.' },
+      { pct: 25, correct: 'En fjärdedel', parts: 4, filled: 1, why: '25 % är 25 av 100 rutor — en fjärdedel.' },
+      { pct: 100, correct: 'Allting', parts: 4, filled: 4, why: '100 % är alla 100 rutor — hela alltihop.' },
+    ] as const)
+    const options: [string, MisconceptionTag | null][] = [
+      ['Hälften', null], ['En fjärdedel', null], ['Allting', null], ['Tio stycken', null],
+    ]
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      prompt: `Vad betyder ${meaning.pct} %?`,
+      spokenPrompt: `Vad betyder ${meaning.pct} procent?`,
+      correct: meaning.correct,
+      distractors: options.filter(([t]) => t !== meaning.correct),
+      visual: { kind: 'brak', parts: meaning.parts, filled: meaning.filled },
+      explanation: `Procent betyder hundradelar. ${meaning.why}`,
+    })
+  }
+
+  // Nivå 3–4 — 50 % och 25 % av SNÄLLA tal. Alltid en bråkbild; förklaringen
+  // går via hälften/fjärdedelen (inte ×/100 — det kommer först längre upp).
+  if (level <= 4) {
+    const pct = rng.pick([50, 25] as const)
+    const base = rng.int(2, 10) * 4 // jämnt OCH 4-delbart (8–40) → heltalssvar för både 50 % och 25 %
+    const value = (base * pct) / 100
+    const misconceptions: Record<number, MisconceptionTag> = { [pct]: 'fel-raknesatt' }
+    if (pct === 25) misconceptions[base / 2] = 'fel-raknesatt' // tog hälften i stället för fjärdedelen
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `Vad är ${pct} % av ${base}?`,
+      spokenPrompt: `Vad är ${pct} procent av ${base}?`,
+      value,
+      visual: { kind: 'brak', parts: pct === 50 ? 2 : 4, filled: 1 },
+      explanation: pct === 50
+        ? `50 % är hälften: ${base} / 2 = ${sv(value)}.`
+        : `25 % är en fjärdedel: ${base} / 4 = ${sv(value)}.`,
+      misconceptions,
+    })
+  }
+
+  // Nivå 5–6 — 10 % (dela med 10) och 75 % (tre fjärdedelar). Rea-berättelsen
+  // får dyka upp TIDIGAST här, med snälla tal. Heltalssvar garanterat.
+  if (level <= 6) {
+    const pct = rng.pick([10, 75] as const)
+    const base = pct === 10 ? rng.int(2, 10) * 10 : rng.int(2, 10) * 4 // heltalssvar garanterat
+    const value = (base * pct) / 100
+    const explanation = pct === 10
+      ? `10 % betyder dela med 10: ${base} / 10 = ${sv(value)}.`
+      : `75 % är tre fjärdedelar. En fjärdedel av ${base} är ${sv(base / 4)}, tre av dem: 3 × ${sv(base / 4)} = ${sv(value)}.`
+    if (rng.chance(0.4)) {
+      return numericTask({
+        generatorId: id, level, seed,
+        prompt: `En tröja kostar ${base} kr. Det är ${pct} % rea. Hur mycket billigare blir den?`,
+        spokenPrompt: `En tröja kostar ${base} kronor. Det är ${pct} procent rea. Hur mycket billigare blir den?`,
+        value, unit: 'kr',
+        explanation,
+        misconceptions: { [pct]: 'fel-raknesatt', [base - value]: 'fel-raknesatt' },
+      })
+    }
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `Vad är ${pct} % av ${base}?`,
+      spokenPrompt: `Vad är ${pct} procent av ${base}?`,
+      value,
+      visual: pct === 10 ? { kind: 'brak', parts: 10, filled: 1 } : { kind: 'brak', parts: 4, filled: 3 },
+      explanation,
+      misconceptions: { [pct]: 'fel-raknesatt' },
+    })
+  }
+
+  // Nivå 7–10 — som stjärnnivå: blandade procentsatser, x,5-svar tillåtna, ingen
+  // bild. Förklaringen lär ut 10 %-tricket (ta 10 % först, gånga upp).
+  const pct = rng.pick([5, 20, 30, 90] as const)
+  const base = rng.int(2, 20) * 10
   const value = (base * pct) / 100
-  const rea = rng.chance(0.4)
-  if (rea) {
+  const tenth = base / 10
+  const factor = pct / 10 // 5 → 0,5 · 20 → 2 · 30 → 3 · 90 → 9 gånger tiondelen
+  if (rng.chance(0.4)) {
     return numericTask({
       generatorId: id, level, seed,
       prompt: `En tröja kostar ${base} kr. Det är ${pct} % rea. Hur mycket billigare blir den?`,
-      value,
-      unit: 'kr',
-      explanation: `${pct} % betyder ${pct} hundradelar: ${base} × ${pct}/100 = ${sv(value)} kr.`,
-      misconceptions: { [base - pct]: 'fel-raknesatt', [base - value]: 'fel-raknesatt' },
+      spokenPrompt: `En tröja kostar ${base} kronor. Det är ${pct} procent rea. Hur mycket billigare blir den?`,
+      value, unit: 'kr',
+      explanation: `Ta 10 % först: ${sv(tenth)} kr. ${pct} % är ${sv(factor)} × 10 %, alltså ${sv(factor)} × ${sv(tenth)} = ${sv(value)} kr.`,
+      misconceptions: { [pct]: 'fel-raknesatt', [base - value]: 'fel-raknesatt' },
     })
   }
   return numericTask({
     generatorId: id, level, seed,
     prompt: `Vad är ${pct} % av ${base}?`,
+    spokenPrompt: `Vad är ${pct} procent av ${base}?`,
     value,
-    explanation: pct === 50
-      ? `50 % är hälften: ${base} / 2 = ${sv(value)}.`
-      : pct === 25
-        ? `25 % är en fjärdedel: ${base} / 4 = ${sv(value)}.`
-        : `${pct} % = ${pct}/100. ${base} × ${pct}/100 = ${sv(value)}.`,
+    explanation: `Ta 10 % först: ${base} / 10 = ${sv(tenth)}. ${pct} % är ${sv(factor)} × 10 %, alltså ${sv(factor)} × ${sv(tenth)} = ${sv(value)}.`,
     misconceptions: { [pct]: 'fel-raknesatt', [base - pct]: 'fel-raknesatt' },
   })
 })
