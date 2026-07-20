@@ -153,6 +153,28 @@ function HomeInner({ child }: { child: ChildProfile }) {
   const worldIdx = WORLDS.findIndex((w) => w.id === worldId)
   const worldIsOpen = worldIdx <= 0 || (child.conqueredWorlds?.includes(WORLDS[worldIdx - 1].id) ?? false)
   const worldSeen = child.seenWorlds?.includes(worldId) ?? false
+
+  // FK (förskoleklass, ~6 år) läser inte flytande: kortare guidetext + stora
+  // uppläsningsknappar. Åk 1+ behåller sina fylligare texter.
+  const isFK = child.schoolYear === 'F'
+  // Pi-guidebubblans text i två former: full (uppläsning + åk1+) och kort (FK).
+  const guideFull = bossIsNextStep && pendingBossWorld
+    ? `Alla moment i ${pendingBossWorld.name} är klara! Nu vaknar ${pendingBossWorld.boss.name}. Tryck så tar jag dig till bossstriden!`
+    : blixtIsNextStep && pendingBlixt
+    ? `Dags för blixtpasset ${blixtConfig(pendingBlixt).title}! Visa ditt flyt så öppnas vägen vidare. Tryck så kör vi!`
+    : currentMoment
+    ? `${hasStarted ? 'Vi fortsätter med' : 'Nästa'}: ${currentMoment.title}${currentWorld ? ` i ${currentWorld.name}` : ''}. Tryck på knappen så tar jag dig dit!`
+    : 'Tryck på knappen så börjar vi träna tillsammans!'
+  const guideShort = bossIsNextStep && pendingBossWorld
+    ? `Möt bossen! ⚔ Tryck här!`
+    : blixtIsNextStep
+    ? `Dags för blixten! ⚡ Tryck här!`
+    : currentMoment
+    ? `Nästa: ${currentMoment.title}! 🚩 Tryck här!`
+    : `Tryck här så börjar vi! ▶`
+  const guideSpoken = isFK ? guideShort : guideFull
+  // Avbryt uppläsning när skärmen lämnas (mönster: TaskRunner).
+  useEffect(() => () => stopSpeaking(), [])
   const lastChapter = world.chapters.length - 1
   const chapter = worldConquered
     ? world.chapters[lastChapter]
@@ -309,7 +331,15 @@ function HomeInner({ child }: { child: ChildProfile }) {
           padding: '8px 14px', fontSize: 13.5, fontWeight: 700, color: '#3E3016', lineHeight: 1.45,
           position: 'relative', zIndex: 3, display: 'flex', alignItems: 'center', gap: 8,
           boxShadow: '0 3px 10px rgba(0,0,0,.35)',
-        }}><Icon name="rulle" size={18} style={{ flexShrink: 0 }} /> {chapter}</div>
+        }}>
+          <Icon name="rulle" size={18} style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1, minWidth: 0 }}>{chapter}</span>
+          {ttsAvailable() && (
+            <button className="chip" onClick={() => speak(chapter)} aria-label="Läs upp berättelsen" style={{ flexShrink: 0 }}>
+              <Icon name="ljud" size={17} />
+            </button>
+          )}
+        </div>
 
         {/* Vägen — HORISONTELL resa: scrolla i sidled, nod med bildtext under.
             Ritytan har EXAKT bredden moments*COL_W i px, och stig-SVG:n renderas
@@ -632,8 +662,10 @@ function HomeInner({ child }: { child: ChildProfile }) {
             border: '2px solid #7A6544', borderRadius: 12, padding: '8px 10px', color: '#3E3016',
           }}>
             <Pi mood={bossIsNextStep || blixtIsNextStep ? 'hejar' : 'glad'} size={34} />
-            <span style={{ fontSize: 12.5, fontWeight: 700, lineHeight: 1.35 }}>
-              {bossIsNextStep && pendingBossWorld
+            <span style={{ flex: 1, fontSize: isFK ? 14 : 12.5, fontWeight: 700, lineHeight: 1.35 }}>
+              {isFK
+                ? guideShort
+                : bossIsNextStep && pendingBossWorld
                 ? <>Alla moment i <b>{pendingBossWorld.name}</b> är klara! Nu vaknar <b>{pendingBossWorld.boss.name}</b>. Tryck så tar jag dig till bossstriden!</>
                 : blixtIsNextStep && pendingBlixt
                 ? <>Dags för <b>blixtpasset {blixtConfig(pendingBlixt).title}</b>! Visa ditt flyt så öppnas vägen vidare. Tryck så kör vi!</>
@@ -641,6 +673,11 @@ function HomeInner({ child }: { child: ChildProfile }) {
                 ? <>{hasStarted ? 'Vi fortsätter med' : 'Nästa'}: <b>{currentMoment.title}</b>{currentWorld ? <> i {currentWorld.name}</> : null}. Tryck på knappen så tar jag dig dit!</>
                 : <>Tryck på knappen så börjar vi träna tillsammans!</>}
             </span>
+            {ttsAvailable() && (
+              <button className="chip" onClick={() => speak(guideSpoken)} aria-label="Läs upp" style={{ flexShrink: 0 }}>
+                <Icon name="ljud" size={isFK ? 20 : 17} />
+              </button>
+            )}
           </div>
 
           <button className="btn btn-primary" style={{ width: '100%', marginTop: 10 }} onClick={startTraining}>
@@ -775,6 +812,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
    bossen → noden blir klar → nästa öppnas. Så barnet förstår hur man tar
    sig vidare. */
 function MapIntro({ onDone }: { onDone(): void }) {
+  // Uppläsning för den som inte läser flytande (tap-to-hear, aldrig autoplay).
+  const spoken = 'Så funkar äventyret! Tryck på en nod och träna. Klara Pis vänliga koll så blir noden klar. Vissa vägar öppnas när du klarar ett blixtpass. När alla noder i världen är klara vaknar världsbossen. Besegra bossen så öppnas nästa värld!'
+  useEffect(() => () => stopSpeaking(), [])
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -782,7 +822,14 @@ function MapIntro({ onDone }: { onDone(): void }) {
     }}>
       <div className="card bounce-in" style={{ maxWidth: 440, width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12, padding: '22px' }}>
         <div style={{ display: 'flex', justifyContent: 'center' }}><Pi mood="glad" size={84} /></div>
-        <h2 className="display" style={{ fontSize: 22, fontWeight: 900, margin: 0, color: 'var(--ink)' }}>Så funkar äventyret!</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <h2 className="display" style={{ fontSize: 22, fontWeight: 900, margin: 0, color: 'var(--ink)' }}>Så funkar äventyret!</h2>
+          {ttsAvailable() && (
+            <button className="chip" onClick={() => speak(spoken)} aria-label="Läs upp" style={{ flexShrink: 0 }}>
+              <Icon name="ljud" size={18} />
+            </button>
+          )}
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, textAlign: 'left', fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>
           <Legend icon="penna" bg="#FFDF94">Tryck på en nod och <b>träna</b> momentet.</Legend>
           <Legend icon="kristall" bg="var(--mint)">Klara <b>Pis vänliga koll</b> så blir noden <b>klar</b> ✓.</Legend>

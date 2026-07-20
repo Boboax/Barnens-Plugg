@@ -9,6 +9,7 @@ import { Pi } from './Pi'
 import { Keypad } from './Keypad'
 import { ScratchPad, type ScratchPadHandle } from './ScratchPad'
 import { TaskVisualView } from './TaskVisualView'
+import { useStore } from '../store'
 
 /* ============================================================
    Uppgiftslöparen — visar en uppgift, tar emot svaret och
@@ -57,6 +58,9 @@ const PI_ENCOURAGE = ['Bra kämpat! Nu lär vi oss.', 'Nästan — vi tar det ti
 const pick = (pool: string[]): string => pool[Math.floor(Math.random() * pool.length)]
 
 export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle, firstTask = false }: TaskRunnerProps) {
+  // FK (~6 år) läser inte flytande → stor, tydlig uppläsningsknapp med etikett.
+  const { activeChild } = useStore()
+  const fk = activeChild?.schoolYear === 'F'
   const [value, setValue] = useState('')
   const [phase, setPhase] = useState<'svara' | 'feedback'>('svara')
   const [answered, setAnswered] = useState(false)
@@ -142,12 +146,22 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
             boxShadow: '0 2px 8px rgba(45,30,10,.32)',
           }}>{task.prompt}</p>
           {ttsAvailable() && (
-            <button
-              className="chip"
-              onClick={() => speak(task.spokenPrompt ?? task.prompt)}
-              aria-label="Läs upp uppgiften"
-              style={{ flexShrink: 0 }}
-            ><Icon name="ljud" size={17} /></button>
+            fk ? (
+              // Stor tryckyta + synlig etikett för den som inte läser flytande.
+              <button
+                className="chip"
+                onClick={() => speak(task.spokenPrompt ?? task.prompt)}
+                aria-label="Läs upp uppgiften"
+                style={{ flexShrink: 0, minHeight: 44, padding: '0 14px', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: 15 }}
+              ><Icon name="ljud" size={24} /> Lyssna</button>
+            ) : (
+              <button
+                className="chip"
+                onClick={() => speak(task.spokenPrompt ?? task.prompt)}
+                aria-label="Läs upp uppgiften"
+                style={{ flexShrink: 0 }}
+              ><Icon name="ljud" size={17} /></button>
+            )
           )}
         </div>
 
