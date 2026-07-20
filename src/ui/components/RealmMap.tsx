@@ -460,11 +460,17 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
             const isRevealing = vis === 'open' && !seenSet.has(region.worldId)
             if (vis === 'open' && !isRevealing) return null
             const pos = artOk ? region.art : region.svg
-            // Täthet per blobb — de TVÅ blobbarna överlappar, så den effektiva
-            // opaciteten i mitten blir högre än så här. Håll den nere så
-            // medaljongerna fortfarande SKÖNJS som skuggor genom diset (inte
-            // helt vitt). Bortom = tätare, nästa = tunnare, avslöjande tonar → 0.
-            const mist = isRevealing ? (revealed ? 0 : 0.62) : vis === 'beyond' ? 0.6 : 0.38
+            // Slöjan tunnas ut mot frontlinjen: nästa värld anas tydligast,
+            // världen efter något tätare, tre steg bort tätare än så — och
+            // världar 4+ steg bort döljs HELT (opak dimma). dist = 0 → nästa värld.
+            // (De TVÅ blobbarna överlappar, så effektiv opacitet i mitten blir
+            // högre än per-blobb-värdet nedan — därför skönjs de närmare formerna.)
+            const dist = WORLDS.findIndex((w) => w.id === region.worldId) - firstClosedIdx
+            const mist = isRevealing ? (revealed ? 0 : 0.5)
+              : dist <= 0 ? 0.3
+              : dist === 1 ? 0.42
+              : dist === 2 ? 0.58
+              : 0.97
             const fadeTransition = isRevealing ? 'opacity 1.3s ease' : undefined
             // Två blobbar med olika storlek/takt → oregelbunden, mjuk dimma.
             const puffs = [
