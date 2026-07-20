@@ -399,10 +399,12 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                     {/* Ornamenterad mässingsring ovanpå (genomskinligt hål + utsida). */}
                     <img src={ringUrl} alt="" aria-hidden="true"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
-                    {/* Molnemblem på den djupt dimmiga (outforskade) världen. */}
+                    {/* Molnemblem som HELT täcker medaljongens kart-miniatyr på
+                        den outforskade världen (annars skiner terrängen igenom i
+                        en liten cirkel trots dimbanken runtom). */}
                     {vis === 'beyond' && (
-                      <span aria-hidden="true" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                        <CloudSvg width={44} opacity={0.95} />
+                      <span aria-hidden="true" style={{ position: 'absolute', inset: -4, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                        <CloudSvg width={56} opacity={1} />
                       </span>
                     )}
                     {complete && (
@@ -453,47 +455,54 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
             )
           })}
 
-          {/* Molnlager: drivande moln över de djupt dimmiga (outforskade)
-              regionerna, och avslöjandemoln som glider isär när en öppen-men-
-              osedd värld tonar fram. pointer-events av → fångar aldrig tryck. */}
+          {/* Dimbanken: TÄT dimma som döljer SJÄLVA KARTAN i de olåsta trakterna
+              — man ska bara skönja terrängen genom molnen, inte se den. En stor
+              dimblobb per outforskad region (blobbarna överlappar → en samman-
+              hängande fog-bank), plus drivande moln. En öppen-men-osedd värld
+              börjar tätt och tonar bort (molnen skingras). Ligger UNDER region-
+              knapparna (z2) så ???-märket ändå syns svagt genom diset; ovanpå
+              kartmålningen (z0/1) så terrängen försvinner. pointer-events av. */}
+          {/* Klippt till kartans yta (overflow hidden + samma rundade hörn som
+              målningen) så diset aldrig rinner ut på stenväggen runt kartan. */}
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 10, zIndex: 1, pointerEvents: 'none' }}>
           {REGIONS.map((region) => {
             const vis = visibilityOf(region.worldId)
             const isRevealing = vis === 'open' && !seenSet.has(region.worldId)
-            if (vis !== 'beyond' && !isRevealing) return null
+            if (vis === 'open' && !isRevealing) return null
             const pos = artOk ? region.art : region.svg
-            const base: React.CSSProperties = {
-              position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`,
-              transform: 'translate(-50%, -50%)', pointerEvents: 'none',
-            }
-            if (isRevealing) {
-              // Två moln glider isär (vänster/höger) och tonar bort — engångs.
-              return (
-                <span key={`fog-${region.worldId}`} aria-hidden="true" style={{ ...base, zIndex: 4 }}>
-                  <span style={{
-                    position: 'absolute', left: 0, top: 0,
-                    transform: `translate(-50%, -50%) translateX(${revealed ? -72 : -6}px)`,
-                    opacity: revealed ? 0 : 0.95, transition: 'transform 1.2s ease, opacity 1.2s ease',
-                  }}><CloudSvg width={64} /></span>
-                  <span style={{
-                    position: 'absolute', left: 0, top: 0,
-                    transform: `translate(-50%, -50%) translateX(${revealed ? 72 : 6}px)`,
-                    opacity: revealed ? 0 : 0.9, transition: 'transform 1.2s ease, opacity 1.2s ease',
-                  }}><CloudSvg width={52} opacity={0.85} /></span>
-                </span>
-              )
-            }
-            // Outforskad värld: två moln som bobbar mjukt över regionen.
+            // Täthet: bortom = nästan ogenomskinligt; nästa = tunnare slöja;
+            // avslöjande värld börjar tätt (0.94) och tonar till 0.
+            const mist = isRevealing ? (revealed ? 0 : 0.94) : vis === 'beyond' ? 0.94 : 0.6
+            const fadeTransition = isRevealing ? 'opacity 1.2s ease' : undefined
             return (
-              <span key={`fog-${region.worldId}`} aria-hidden="true" style={{ ...base, zIndex: 3 }}>
-                <span className="float-soft" style={{ position: 'absolute', left: -26, top: -20 }}>
-                  <CloudSvg width={70} opacity={0.9} />
-                </span>
-                <span className="float-soft" style={{ position: 'absolute', left: 12, top: 8, animationDelay: '-2.2s' }}>
-                  <CloudSvg width={54} opacity={0.8} />
-                </span>
+              <span key={`fog-${region.worldId}`} style={{
+                position: 'absolute', inset: 0, opacity: 1, transition: fadeTransition,
+              }}>
+                {/* Tät dimblobb som suddar ut kartan under. Blur + radiell
+                    gradient: nästan ogenomskinlig kärna, kant som tonar ut. */}
+                <span style={{
+                  position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%, -50%)',
+                  width: '58%', aspectRatio: '1', borderRadius: '50%', filter: 'blur(7px)',
+                  background: `radial-gradient(circle, rgba(233,237,245,${mist}) 0%, rgba(226,231,242,${mist}) 30%, rgba(221,227,240,${mist * 0.7}) 52%, rgba(221,227,240,0) 74%)`,
+                  transition: fadeTransition,
+                }} />
+                {/* Drivande moln ovanpå diset ger rörelse och tyngd. */}
+                {isRevealing ? (
+                  <>
+                    <span style={{ position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`, transform: `translate(-50%, -50%) translateX(${revealed ? -80 : -8}px)`, opacity: revealed ? 0 : 0.96, transition: 'transform 1.2s ease, opacity 1.2s ease' }}><CloudSvg width={72} /></span>
+                    <span style={{ position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`, transform: `translate(-50%, -50%) translateX(${revealed ? 80 : 8}px)`, opacity: revealed ? 0 : 0.9, transition: 'transform 1.2s ease, opacity 1.2s ease' }}><CloudSvg width={58} opacity={0.85} /></span>
+                  </>
+                ) : (
+                  <>
+                    <span className="float-soft" style={{ position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-90%, -140%)' }}><CloudSvg width={vis === 'beyond' ? 80 : 60} opacity={vis === 'beyond' ? 0.95 : 0.7} /></span>
+                    <span className="float-soft" style={{ position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-10%, -10%)', animationDelay: '-2.2s' }}><CloudSvg width={vis === 'beyond' ? 66 : 48} opacity={vis === 'beyond' ? 0.9 : 0.6} /></span>
+                    <span className="float-soft" style={{ position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-60%, 30%)', animationDelay: '-4s' }}><CloudSvg width={vis === 'beyond' ? 58 : 44} opacity={vis === 'beyond' ? 0.85 : 0.55} /></span>
+                  </>
+                )}
               </span>
             )
           })}
+          </div>
         </div>
       </div>
     </div>
