@@ -53,6 +53,21 @@ describe('uppgiftsgeneratorerna', () => {
     expect(a).toEqual(b)
   })
 
+  it('textuppgifter motsäger sig aldrig: samma namn "har" aldrig två olika antal', () => {
+    // Buggen (foto från Edward): "Vera har 7 bullar … Vera har 19 bullar" —
+    // den överflödiga informationen drog samma namn som huvudpersonen.
+    const NAME_HAR = /(\p{L}+) har (\d+)/gu
+    for (const id of allGeneratorIds()) {
+      for (const level of [8, 9, 10] as DifficultyLevel[]) {
+        for (const seed of SEEDS) {
+          const prompt = generateTask(id, level, seed).prompt
+          const owners = [...prompt.matchAll(NAME_HAR)].map((m) => m[1])
+          expect(new Set(owners).size, `${id} n${level} f${seed}: "${prompt}"`).toBe(owners.length)
+        }
+      }
+    }
+  })
+
   it('rena add/sub-noder ger BARA sitt räknesätt (memoreringsordningen)', () => {
     for (const seed of SEEDS) {
       for (const level of [1, 2, 3, 4, 5] as DifficultyLevel[]) {

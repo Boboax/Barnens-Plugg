@@ -230,9 +230,12 @@ function makeAddSub(momentId: string, cfg: AddSubCfg): TaskGenerator {
       // Textuppgift på högre nivåer — med överflödig information på stjärnnivån.
       const story = level >= (cfg.storyFrom ?? 6) && rng.chance(level >= 8 ? 0.7 : 0.4)
       if (story) {
-        const name = pickName(rng)
+        // Den överflödiga informationen måste handla om en ANNAN person —
+        // pickName två gånger kunde dra samma namn ("Vera har 7 bullar …
+        // Vera har 19 bullar") och göra uppgiften självmotsägande.
+        const [name, other] = pickTwoNames(rng)
         const [, plural, emoji] = pickThing(rng)
-        const extra = level >= 9 ? ` ${pickName(rng)} har ${rng.int(2, 20)} ${plural}.` : ''
+        const extra = level >= 9 ? ` ${other} har ${rng.int(2, 20)} ${plural}.` : ''
         const prompt = isAdd
           ? `${name} har ${a} ${plural} och får ${b} till.${extra} Hur många ${plural} har ${name} nu?`
           : `${name} har ${a} ${plural} och ger bort ${b}.${extra} Hur många ${plural} har ${name} kvar?`
