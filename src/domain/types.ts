@@ -110,6 +110,12 @@ export type TaskVisual =
   | { kind: 'klocka'; hours: number; minutes: number }
   | { kind: 'form'; shape: 'cirkel' | 'triangel' | 'kvadrat' | 'rektangel' | 'femhorning' | 'sexhorning' }
   | { kind: 'rektangel'; w: number; h: number; unit: string }
+  // Stapeldiagram (statistik). pictogram: true ritar varje kategori som en rad
+  // upprepade objekt-ikoner (bildtabell, åk 1). showValues visar värdesiffran
+  // ovanför stapeln (bara som stöd på de lägsta nivåerna). yStep = skalsteg.
+  | { kind: 'stapel'; categories: { label: string; value: number; icon?: string }[]; yStep?: number; pictogram?: boolean; showValues?: boolean }
+  // Linjediagram: punkter (kategorier på x, värde på y) förbundna med en linje.
+  | { kind: 'linje'; points: { label: string; value: number }[]; unit?: string }
   | { kind: 'ingen' }
 
 /** Ett svarsalternativ i flervalsuppgift. */

@@ -101,6 +101,43 @@ describe('uppgiftsgeneratorerna', () => {
     }
   })
 
+  it('diagram-etapp A: heltal ≥ 0, unika etiketter, bild finns (nivå ≤ 3)', () => {
+    // Statistikmomenten (docs/SPEC-GEOMETRI.md etapp A): avläsningsvärden och
+    // skillnads-/summasvar ska alltid vara heltal ≥ 0, kategorietiketterna
+    // unika, och de lägsta nivåerna alltid ha en bild att läsa av.
+    const ids = ['gen.sortera-tabeller', 'gen.stapeldiagram', 'gen.diagram-lasa']
+    for (const id of ids) {
+      for (const level of LEVELS) {
+        for (const seed of SEEDS) {
+          const task = generateTask(id, level, seed)
+          if (task.answer.kind === 'numeric') {
+            expect(Number.isInteger(task.answer.value), `${id} n${level} f${seed}: heltalssvar`).toBe(true)
+            expect(task.answer.value, `${id} n${level} f${seed}: svar ≥ 0`).toBeGreaterThanOrEqual(0)
+          }
+          if (task.visual.kind === 'stapel') {
+            const labels = task.visual.categories.map((c) => c.label)
+            expect(new Set(labels).size, `${id} n${level} f${seed}: unika kategorier`).toBe(labels.length)
+            task.visual.categories.forEach((c) =>
+              expect(Number.isInteger(c.value) && c.value >= 0, `${id} n${level} f${seed}: stapelvärde`).toBe(true))
+            // Piktogram på de lägsta nivåerna: räknebart med finger (≤ 8).
+            if (task.visual.pictogram && level <= 3) {
+              task.visual.categories.forEach((c) =>
+                expect(c.value, `${id} n${level} f${seed}: piktogramrad ≤ 8`).toBeLessThanOrEqual(8))
+            }
+          }
+          if (task.visual.kind === 'linje') {
+            task.visual.points.forEach((p) =>
+              expect(Number.isInteger(p.value) && p.value >= 0, `${id} n${level} f${seed}: linjevärde`).toBe(true))
+          }
+          // Nivå ≤ 3 ska alltid ha en bild att läsa av.
+          if (level <= 3) {
+            expect(task.visual.kind, `${id} n${level} f${seed}: bild krävs`).not.toBe('ingen')
+          }
+        }
+      }
+    }
+  })
+
   it('missuppfattningskartan pekar aldrig på rätt svar', () => {
     for (const id of allGeneratorIds()) {
       for (const seed of SEEDS.slice(0, 10)) {

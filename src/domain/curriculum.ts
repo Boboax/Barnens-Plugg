@@ -341,19 +341,19 @@ export const MOMENTS: Moment[] = [
 
   // ================= DIAGRAMÖARNA — sannolikhet & statistik =================
   def({
-    id: 'sortera-tabeller', world: 'diagramoarna', area: 'sannolikhet', term: t('1', 'VT', 2),
+    id: 'sortera-tabeller', world: 'diagramoarna', area: 'sannolikhet', term: t('1', 'VT', 2), gen: true,
     prereq: ['antal-0-10'],
     title: 'Sortera och räkna',
     description: 'Enkla tabeller — sortera och sammanställa.',
   }),
   def({
-    id: 'stapeldiagram', world: 'diagramoarna', area: 'sannolikhet', term: t('2', 'VT', 2),
+    id: 'stapeldiagram', world: 'diagramoarna', area: 'sannolikhet', term: t('2', 'VT', 2), gen: true,
     prereq: ['sortera-tabeller'],
     title: 'Stapeldiagram',
     description: 'Läsa av och rita staplar.',
   }),
   def({
-    id: 'diagram-lasa', world: 'diagramoarna', area: 'sannolikhet', term: t('4', 'VT', 1),
+    id: 'diagram-lasa', world: 'diagramoarna', area: 'sannolikhet', term: t('4', 'VT', 1), gen: true,
     prereq: ['stapeldiagram'],
     title: 'Läsa diagram',
     description: 'Linje- och cirkeldiagram — vad säger de egentligen?',
