@@ -20,6 +20,7 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
       case 'rektangel': return <Rektangel w={visual.w} h={visual.h} unit={visual.unit} />
       case 'stapel': return <Stapel categories={visual.categories} yStep={visual.yStep} pictogram={visual.pictogram} showValues={visual.showValues} />
       case 'linje': return <Linje points={visual.points} unit={visual.unit} />
+      case 'koordinat': return <Koordinat min={visual.min} max={visual.max} points={visual.points} lines={visual.lines} xLabel={visual.xLabel} yLabel={visual.yLabel} />
     }
   })()
   // Ljus "kortyta" runt bilden med ÅTERSTÄLLDA färgvariabler: annars ärver
@@ -343,6 +344,83 @@ function Linje({ points, unit }: { points: { label: string; value: number }[]; u
         <g key={i}>
           <circle cx={xOf(i)} cy={yOf(p.value)} r={5} fill="var(--coral)" stroke="#fff" strokeWidth={2} />
           <text x={xOf(i)} y={padT + chartH + 16} fontSize={11.5} fontWeight={800} fill="var(--ink)" textAnchor="middle">{p.label}</text>
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+/* Klipp en (oändlig) linje till rutnätsrutan [min,max]² (Liang–Barsky). Så en
+   graf kan ritas rakt genom hela rutnätet utan att spilla ut i etikettmarginalen. */
+function clipToBox(x0: number, y0: number, x1: number, y1: number, min: number, max: number): [number, number, number, number] | null {
+  const dx = x1 - x0, dy = y1 - y0
+  const p = [-dx, dx, -dy, dy]
+  const q = [x0 - min, max - x0, y0 - min, max - y0]
+  let t0 = 0, t1 = 1
+  for (let i = 0; i < 4; i++) {
+    if (p[i] === 0) { if (q[i] < 0) return null }
+    else {
+      const r = q[i] / p[i]
+      if (p[i] < 0) { if (r > t1) return null; if (r > t0) t0 = r }
+      else { if (r < t0) return null; if (r < t1) t1 = r }
+    }
+  }
+  return [x0 + t0 * dx, y0 + t0 * dy, x0 + t1 * dx, y0 + t1 * dy]
+}
+
+/* Koordinatsystem: kvadratiskt rutnät med markerat origo, axelpilar och siffror
+   på varje heltalssteg. Punkter ritas som fyllda cirklar med bokstavsetikett
+   INTILL (aldrig ovanpå). Linjer (grafer) klipps till rutnätet. */
+function Koordinat({ min, max, points, lines, xLabel, yLabel }: {
+  min: number; max: number
+  points: { x: number; y: number; label?: string }[]
+  lines?: { points: { x: number; y: number }[]; label?: string }[]
+  xLabel?: string; yLabel?: string
+}) {
+  const range = max - min
+  const cell = range <= 6 ? 34 : range <= 10 ? 28 : 22
+  const pad = 26
+  const size = pad * 2 + range * cell
+  const sx = (x: number): number => pad + (x - min) * cell
+  const sy = (y: number): number => pad + (max - y) * cell
+  const step = range <= 10 ? 1 : 2
+  const ints: number[] = []
+  for (let i = Math.ceil(min / step) * step; i <= max; i += step) ints.push(i)
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} width={Math.min(size, 360)} style={{ maxWidth: '100%' }} aria-hidden="true">
+      {/* Rutnät. */}
+      {ints.map((i) => <line key={`gx${i}`} x1={sx(i)} y1={sy(max)} x2={sx(i)} y2={sy(min)} stroke="var(--line)" strokeWidth={1} opacity={0.5} />)}
+      {ints.map((i) => <line key={`gy${i}`} x1={sx(min)} y1={sy(i)} x2={sx(max)} y2={sy(i)} stroke="var(--line)" strokeWidth={1} opacity={0.5} />)}
+      {/* Axlar + pilar. */}
+      <line x1={sx(min)} y1={sy(0)} x2={sx(max)} y2={sy(0)} stroke="var(--ink)" strokeWidth={2} />
+      <line x1={sx(0)} y1={sy(min)} x2={sx(0)} y2={sy(max)} stroke="var(--ink)" strokeWidth={2} />
+      <polygon points={`${sx(max) + 9},${sy(0)} ${sx(max) + 1},${sy(0) - 4.5} ${sx(max) + 1},${sy(0) + 4.5}`} fill="var(--ink)" />
+      <polygon points={`${sx(0)},${sy(max) - 9} ${sx(0) - 4.5},${sy(max) - 1} ${sx(0) + 4.5},${sy(max) - 1}`} fill="var(--ink)" />
+      {/* Siffror på axlarna (0 vid origo). */}
+      {ints.filter((i) => i !== 0).map((i) => <text key={`nx${i}`} x={sx(i)} y={sy(0) + 14} fontSize={10.5} fontWeight={700} fill="var(--muted)" textAnchor="middle">{i}</text>)}
+      {ints.filter((i) => i !== 0).map((i) => <text key={`ny${i}`} x={sx(0) - 6} y={sy(i) + 4} fontSize={10.5} fontWeight={700} fill="var(--muted)" textAnchor="end">{i}</text>)}
+      <text x={sx(0) - 6} y={sy(0) + 14} fontSize={10.5} fontWeight={700} fill="var(--muted)" textAnchor="end">0</text>
+      {xLabel && <text x={sx(max) + 2} y={sy(0) + 19} fontSize={11} fontWeight={800} fill="var(--ink)" textAnchor="end">{xLabel}</text>}
+      {yLabel && <text x={sx(0) + 6} y={sy(max) + 1} fontSize={11} fontWeight={800} fill="var(--ink)" textAnchor="start">{yLabel}</text>}
+      {/* Linjer (grafer): förläng riktningen och klipp till rutnätet. */}
+      {(lines ?? []).map((ln, li) => {
+        const a = ln.points[0], b = ln.points[ln.points.length - 1]
+        const dx = b.x - a.x, dy = b.y - a.y
+        const clip = clipToBox(a.x - dx * 60, a.y - dy * 60, a.x + dx * 60, a.y + dy * 60, min, max)
+        if (!clip) return null
+        const col = CHART_COLORS[li % CHART_COLORS.length]
+        return (
+          <g key={li}>
+            <line x1={sx(clip[0])} y1={sy(clip[1])} x2={sx(clip[2])} y2={sy(clip[3])} stroke={col} strokeWidth={3} strokeLinecap="round" />
+            {ln.label && <text x={sx(b.x) + 7} y={sy(b.y) - 5} fontSize={12.5} fontWeight={900} fill={col}>{ln.label}</text>}
+          </g>
+        )
+      })}
+      {/* Punkter med etikett intill. */}
+      {points.map((p, i) => (
+        <g key={i}>
+          <circle cx={sx(p.x)} cy={sy(p.y)} r={5} fill="var(--coral)" stroke="#fff" strokeWidth={2} />
+          {p.label && <text x={sx(p.x) + 7} y={sy(p.y) - 6} fontSize={13} fontWeight={900} fill="var(--ink)">{p.label}</text>}
         </g>
       ))}
     </svg>

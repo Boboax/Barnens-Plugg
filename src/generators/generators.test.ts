@@ -138,6 +138,34 @@ describe('uppgiftsgeneratorerna', () => {
     }
   })
 
+  it('koordinat-etapp B: punkter i rutnätet, gitterpunkter, swap ≠ rätt svar', () => {
+    // Sambandsgrottan (docs/SPEC-GEOMETRI.md etapp B): alla koordinatpunkter
+    // ligger på heltalsgitter inom min..max, numeriska avläsningar är heltal,
+    // och en positionsfel-distraktor (x/y-swap) sammanfaller aldrig med rätt svar.
+    for (const id of ['gen.koordinatsystem', 'gen.grafer']) {
+      for (const level of LEVELS) {
+        for (const seed of SEEDS) {
+          const task = generateTask(id, level, seed)
+          if (task.visual.kind === 'koordinat') {
+            const { min, max } = task.visual
+            task.visual.points.forEach((p) => {
+              expect(Number.isInteger(p.x) && Number.isInteger(p.y), `${id} n${level} f${seed}: heltalsgitter`).toBe(true)
+              expect(p.x >= min && p.x <= max && p.y >= min && p.y <= max, `${id} n${level} f${seed}: punkt inom rutnät`).toBe(true)
+            })
+          }
+          if (task.answer.kind === 'numeric') {
+            expect(Number.isInteger(task.answer.value), `${id} n${level} f${seed}: heltalssvar`).toBe(true)
+          } else {
+            const correct = task.answer.choices.find((c) => c.correct)!.text
+            // Ingen distraktor (positionsfel eller annan) får vara lika med rätt svar.
+            task.answer.choices.filter((c) => !c.correct).forEach((c) =>
+              expect(c.text, `${id} n${level} f${seed}: distraktor = rätt svar`).not.toBe(correct))
+          }
+        }
+      }
+    }
+  })
+
   it('missuppfattningskartan pekar aldrig på rätt svar', () => {
     for (const id of allGeneratorIds()) {
       for (const seed of SEEDS.slice(0, 10)) {
