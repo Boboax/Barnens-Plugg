@@ -122,6 +122,15 @@ export type TaskVisual =
       points: { x: number; y: number; label?: string }[];
       lines?: { points: { x: number; y: number }[]; label?: string }[];
       xLabel?: string; yLabel?: string }
+  // En vinkel: två strålar från ett hörn + gradbåge (rät vinkel = kvadratmarkering).
+  // rot = slumpad rotation (grader) så "rät" inte alltid pekar uppåt.
+  | { kind: 'vinkel'; degrees: number; rot?: number }
+  // 3D-kropp ritad med enkla skuggade SVG-former.
+  | { kind: 'kropp'; body: 'klot' | 'kub' | 'cylinder' | 'kon' | 'pyramid' | 'ratblock' }
+  // Figur med RITAD spegellinje (streckad genom centrum). Korrektheten avgörs
+  // av generatorns facittabell — bilden visar bara linjen barnet ska bedöma.
+  | { kind: 'spegel'; shape: 'cirkel' | 'kvadrat' | 'rektangel' | 'triangel' | 'hjarta';
+      axis: 'lodrat' | 'vagrat' | 'diagonal' }
   | { kind: 'ingen' }
 
 /** Ett svarsalternativ i flervalsuppgift. */

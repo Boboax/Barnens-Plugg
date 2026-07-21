@@ -139,13 +139,13 @@ publikt för Pages på gratisplanen.
    Framtida uppgradering: serverless-proxy som ny `ChatProvider`
    (se `docs/GUARDRAILS.md`, lager 1). Rör ALDRIG lager 0: chatten får
    aldrig ges förmågor som påverkar tid/framsteg/belöningar/rättning.
-3. **Geometri-/diagramvisualer:** de tio "kommer snart"-momenten (3D-kroppar,
-   symmetri, vinklar, skala, tabeller, stapeldiagram, läsa diagram,
-   koordinatsystem, grafer, tvåstegsekvationer). **Spec klar:**
-   `docs/SPEC-GEOMETRI.md` — byggs etapp A→D (visualtyper, nivåtrappor,
-   missuppfattningar och facittabeller är färdigdesignade; medelsvår modell
-   räcker om specen följs). Facittabellerna (spegellinjer, kroppars
-   ytor/hörn/kanter) SKA enhetstestas, aldrig ändras på känn.
+3. ~~Geometri-/diagramvisualer~~ **BYGGD** (alla tio moment enligt
+   `docs/SPEC-GEOMETRI.md`, etapp A–D): tabeller, stapel-/linje-/cirkeldiagram,
+   koordinatsystem, grafer, 3D-kroppar, symmetri, vinklar, skala,
+   tvåstegsekvationer. Nya visualtyper i `TaskVisualView.tsx`: stapel, linje,
+   koordinat, vinkel, kropp, spegel. Facittabellerna (`BODY_FACTS`/`MIRROR_FACTS`
+   i `generators/formernas-berg.ts`) är enhetstestade och får ALDRIG ändras på
+   känn — rektangelns diagonal är avsiktligt ingen spegellinje.
 4. ~~Streak-frysdag~~ **BYGGD** (skyddshjärta: max 2 lagrade frysdagar,
    tjänas var sjunde dag, räddar kedjan om EXAKT en dag missas —
    `updateStreak` i `engine/rewards.ts`). Kvar: tidssatta prov som tillval för
