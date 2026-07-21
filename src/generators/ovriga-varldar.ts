@@ -139,6 +139,250 @@ const proportionalitet = g('proportionalitet', (level, seed, rng) => {
   })
 })
 
+// ---------- Diagramöarna: tabeller & diagram (docs/SPEC-GEOMETRI.md, etapp A) ----------
+
+/** Saker att sortera i bildtabeller: [plural-etikett, objekt-ikon]. Ikonerna
+    finns i OBJEKT_ICONS så piktogrammet kan rita dem. */
+const TABELL_SAKER: [string, string][] = [
+  ['äpplen', 'apple'], ['kulor', 'kula'], ['kottar', 'kotte'], ['bollar', 'boll'],
+  ['snäckor', 'snacka'], ['bullar', 'bulle'], ['päron', 'paron'], ['citroner', 'citron'],
+]
+
+/** n distinkta heltalsvärden 1..max → "flest/skillnad" blir alltid entydigt. */
+const distinctValues = (rng: Rng, n: number, max: number): number[] =>
+  rng.shuffle(Array.from({ length: max }, (_, i) => i + 1)).slice(0, n)
+
+// Sortera och räkna (åk 1 VT) — bildtabell (piktogram).
+const sorteraTabeller = g('sortera-tabeller', (level, seed, rng) => {
+  const id = 'gen.sortera-tabeller'
+  const n = level <= 3 ? rng.int(2, 3) : 4
+  // Piktogramrader ≤ 8 på de lägsta nivåerna (räknebart med finger).
+  const maxVal = level <= 3 ? 6 : 10
+  const saker = rng.shuffle(TABELL_SAKER).slice(0, n)
+  const values = distinctValues(rng, n, maxVal)
+  const cats = saker.map(([label, icon], i) => ({ label, icon, value: values[i] }))
+  const visual = { kind: 'stapel' as const, pictogram: true, categories: cats }
+  const byVal = [...cats].sort((a, b) => b.value - a.value)
+  const hi = byVal[0], lo = byVal[byVal.length - 1]
+
+  if (level <= 3) {
+    if (rng.chance(0.5)) {
+      const c = rng.pick(cats)
+      return numericTask({
+        generatorId: id, level, seed, visual,
+        prompt: `Hur många ${c.label} finns det?`,
+        value: c.value,
+        explanation: `Räkna bilderna i raden för ${c.label}: det är ${c.value}.`,
+        misconceptions: { [c.value + 1]: 'en-fel', [c.value - 1]: 'en-fel' },
+      })
+    }
+    return choiceTask({
+      generatorId: id, level, seed, rng, visual,
+      prompt: 'Vilken sak finns det flest av?',
+      correct: hi.label,
+      distractors: byVal.slice(1).map((c) => [c.label, null] as [string, null]),
+      explanation: `${hi.label} har den längsta raden — ${hi.value} stycken. Det är flest.`,
+    })
+  }
+
+  if (level <= 7) {
+    if (rng.chance(0.5)) {
+      return numericTask({
+        generatorId: id, level, seed, visual,
+        prompt: `Hur många fler ${hi.label} än ${lo.label} finns det?`,
+        value: hi.value - lo.value,
+        explanation: `${hi.label}: ${hi.value}, ${lo.label}: ${lo.value}. Skillnaden är ${hi.value} − ${lo.value} = ${hi.value - lo.value}.`,
+        misconceptions: { [hi.value + lo.value]: 'fel-raknesatt' },
+      })
+    }
+    const sum = cats.reduce((s, c) => s + c.value, 0)
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: 'Hur många saker finns det sammanlagt?',
+      value: sum,
+      explanation: `Lägg ihop alla rader: ${cats.map((c) => c.value).join(' + ')} = ${sum}.`,
+      misconceptions: { [sum - 1]: 'en-fel', [sum + 1]: 'en-fel' },
+    })
+  }
+
+  // Nivå 8–10: överflödig info respektive tvåsteg ("räkna upp till lika många").
+  if (rng.chance(0.5)) {
+    const bocker = rng.int(2, 9)
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: `På hyllan står också ${bocker} böcker. Hur många fler ${hi.label} än ${lo.label} finns det?`,
+      value: hi.value - lo.value,
+      explanation: `Böckerna hör inte till tabellen — titta bara på raderna: ${hi.value} − ${lo.value} = ${hi.value - lo.value}.`,
+      misconceptions: { [hi.value + lo.value]: 'fel-raknesatt', [hi.value - lo.value + bocker]: 'fel-raknesatt' },
+    })
+  }
+  return numericTask({
+    generatorId: id, level, seed, visual,
+    prompt: `Hur många fler ${lo.label} måste vi lägga till för att det ska bli lika många som ${hi.label}?`,
+    value: hi.value - lo.value,
+    explanation: `${lo.label} måste komma upp i ${hi.value}: ${hi.value} − ${lo.value} = ${hi.value - lo.value}.`,
+    misconceptions: { [hi.value + lo.value]: 'fel-raknesatt' },
+  })
+})
+
+/** Röstas det om i stapeldiagrammen — korta, konkreta etiketter. */
+const STAPEL_SAKER = ['katt', 'hund', 'häst', 'fågel', 'fisk', 'kanin', 'groda', 'anka']
+
+// Stapeldiagram (åk 2 VT).
+const stapeldiagram = g('stapeldiagram', (level, seed, rng) => {
+  const id = 'gen.stapeldiagram'
+  const n = level <= 3 ? 3 : 4
+  const yStep = level <= 3 ? 1 : level <= 7 ? rng.pick([1, 2] as const) : rng.pick([2, 5] as const)
+  const maxVal = level <= 3 ? 8 : level <= 7 ? 12 : 20
+  const labels = rng.shuffle(STAPEL_SAKER).slice(0, n)
+  const values = distinctValues(rng, n, maxVal)
+  const cats = labels.map((label, i) => ({ label, value: values[i] }))
+  // Värdesiffran som stöd bara på allra lägsta nivån; annars försvinner avläsningen.
+  const visual = { kind: 'stapel' as const, categories: cats, yStep, showValues: level <= 2 }
+  const byVal = [...cats].sort((a, b) => b.value - a.value)
+  const hi = byVal[0], lo = byVal[byVal.length - 1]
+
+  if (level <= 3) {
+    const c = rng.pick(cats)
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: `Hur många röstade på ${c.label}?`,
+      value: c.value,
+      explanation: `Följ ${c.label}-stapelns topp med fingret till skalan: ${c.value}.`,
+      // Avläsningsfel: ett streck fel, eller ett skalsteg fel.
+      misconceptions: { [c.value + 1]: 'en-fel', [c.value - 1]: 'en-fel', [c.value + yStep]: 'en-fel', [c.value - yStep]: 'en-fel' },
+    })
+  }
+  if (level <= 7) {
+    if (rng.chance(0.5)) {
+      return numericTask({
+        generatorId: id, level, seed, visual,
+        prompt: `Hur många fler röstade på ${hi.label} än på ${lo.label}?`,
+        value: hi.value - lo.value,
+        explanation: `${hi.label}: ${hi.value}, ${lo.label}: ${lo.value}. Skillnaden är ${hi.value - lo.value}.`,
+        misconceptions: { [hi.value + lo.value]: 'fel-raknesatt' },
+      })
+    }
+    const sum = cats.reduce((s, c) => s + c.value, 0)
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: 'Hur många barn röstade sammanlagt?',
+      value: sum,
+      explanation: `Lägg ihop alla staplar: ${cats.map((c) => c.value).join(' + ')} = ${sum}.`,
+      misconceptions: { [sum - yStep]: 'en-fel' },
+    })
+  }
+  // Nivå 8–10: två staplar tillsammans, respektive överflödig totalsiffra.
+  if (rng.chance(0.5)) {
+    const a = byVal[byVal.length - 1], b = byVal[byVal.length - 2]
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: `Hur många röstade på ${a.label} och ${b.label} tillsammans?`,
+      value: a.value + b.value,
+      explanation: `${a.label}: ${a.value}, ${b.label}: ${b.value}. Tillsammans ${a.value} + ${b.value} = ${a.value + b.value}.`,
+      misconceptions: { [Math.abs(a.value - b.value)]: 'fel-raknesatt' },
+    })
+  }
+  const sum = cats.reduce((s, c) => s + c.value, 0)
+  return numericTask({
+    generatorId: id, level, seed, visual,
+    prompt: `Klassen hade ${sum} röster totalt. Hur många fler röstade på ${hi.label} än på ${lo.label}?`,
+    value: hi.value - lo.value,
+    explanation: `Totalen behövs inte — läs de två staplarna: ${hi.value} − ${lo.value} = ${hi.value - lo.value}.`,
+    misconceptions: { [hi.value + lo.value]: 'fel-raknesatt' },
+  })
+})
+
+const MANADER = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun']
+
+// Läsa diagram (åk 4 VT) — linjediagram, samt cirkeldiagram (via brak).
+const diagramLasa = g('diagram-lasa', (level, seed, rng) => {
+  const id = 'gen.diagram-lasa'
+
+  // Cirkeldiagram-gren (bara nivå 4–7): cirkeln ÄR diagrammet. Knyter an till
+  // procent-/bråktrappan — "hälften/fjärdedel av N".
+  if (level >= 4 && level <= 7 && rng.chance(0.4)) {
+    const [d, ord] = rng.pick([[2, 'Hälften'], [4, 'En fjärdedel'], [10, 'En tiondel']] as const)
+    const base = rng.int(2, 6) * d // delbart → heltalssvar
+    const val = rng.pick(['fotboll', 'pyssel', 'dans', 'schack'])
+    return numericTask({
+      generatorId: id, level, seed,
+      visual: { kind: 'brak', parts: d, filled: 1 },
+      prompt: `Cirkeldiagrammet visar klassens val. ${ord} av ${base} elever valde ${val}. Hur många är det?`,
+      value: base / d,
+      explanation: `${ord} betyder 1 av ${d} lika delar: ${base} / ${d} = ${base / d}.`,
+      misconceptions: { [base]: 'fel-raknesatt' },
+    })
+  }
+
+  // Linjediagram-gren.
+  const n = rng.int(4, 5)
+  const labels = MANADER.slice(0, n)
+  const scen = rng.pick([
+    { what: 'temperaturen', unit: '°C', read: 'Vad var temperaturen' },
+    { what: 'plantans höjd', unit: 'cm', read: 'Hur hög var plantan' },
+  ] as const)
+  let values: number[]
+  if (level >= 8) {
+    // Konstruera distinkta förändringar → den brantaste ökningen är ENTYDIG.
+    const deltas = rng.shuffle([1, 2, 3, 4, 5, -1, -2]).slice(0, n - 1)
+    values = [6]
+    for (const dl of deltas) values.push(values[values.length - 1] + dl)
+  } else {
+    values = distinctValues(rng, n, 20)
+  }
+  const points = labels.map((label, i) => ({ label, value: values[i] }))
+  const visual = { kind: 'linje' as const, points, unit: scen.unit }
+  const byVal = [...points].sort((a, b) => b.value - a.value)
+
+  if (level <= 3) {
+    if (rng.chance(0.5)) {
+      return choiceTask({
+        generatorId: id, level, seed, rng, visual,
+        prompt: `Vilken månad var ${scen.what} högst?`,
+        correct: byVal[0].label,
+        distractors: byVal.slice(1).map((p) => [p.label, null] as [string, null]),
+        explanation: `Den högsta punkten är i ${byVal[0].label} (${byVal[0].value} ${scen.unit}).`,
+      })
+    }
+    const p = rng.pick(points)
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: `${scen.read} i ${p.label}?`,
+      value: p.value,
+      explanation: `Följ ${p.label} upp till punkten och läs av: ${p.value} ${scen.unit}.`,
+      misconceptions: { [p.value + 1]: 'en-fel', [p.value - 1]: 'en-fel' },
+    })
+  }
+  if (level <= 7) {
+    // Förändring mellan två månader (tidsordning → entydig skillnad).
+    const i = rng.int(0, n - 2)
+    const j = i + rng.int(1, n - 1 - i)
+    const a = points[i], b = points[j]
+    const diff = Math.abs(b.value - a.value)
+    const grew = b.value >= a.value
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: `Hur mycket ${grew ? 'ökade' : 'minskade'} ${scen.what} mellan ${a.label} och ${b.label}?`,
+      value: diff,
+      explanation: `${a.label}: ${a.value}, ${b.label}: ${b.value}. Skillnaden är ${diff} ${scen.unit}.`,
+      misconceptions: { [a.value + b.value]: 'fel-raknesatt' },
+    })
+  }
+  // Nivå 8–10: mellan vilka två (grann-)månader ökade det MEST? (entydigt, se ovan)
+  const incs = points.slice(1).map((p, i) => ({ from: points[i].label, to: p.label, inc: p.value - points[i].value }))
+  const best = [...incs].sort((a, b) => b.inc - a.inc)[0]
+  const seg = (x: { from: string; to: string }): string => `${x.from}–${x.to}`
+  return choiceTask({
+    generatorId: id, level, seed, rng, visual,
+    prompt: `Mellan vilka två månader ökade ${scen.what} mest?`,
+    correct: seg(best),
+    distractors: incs.filter((x) => x !== best).map((x) => [seg(x), null] as [string, null]),
+    explanation: `Den brantaste uppförsbacken är mellan ${best.from} och ${best.to} (ökar ${best.inc} ${scen.unit}).`,
+  })
+})
+
 export const OVRIGA_GENERATORS: TaskGenerator[] = [
   medelvarde, sannolikhet, dubbeltHalften, proportionalitet,
+  sorteraTabeller, stapeldiagram, diagramLasa,
 ]

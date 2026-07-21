@@ -18,6 +18,8 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
       case 'klocka': return <Klocka hours={visual.hours} minutes={visual.minutes} />
       case 'form': return <Form shape={visual.shape} />
       case 'rektangel': return <Rektangel w={visual.w} h={visual.h} unit={visual.unit} />
+      case 'stapel': return <Stapel categories={visual.categories} yStep={visual.yStep} pictogram={visual.pictogram} showValues={visual.showValues} />
+      case 'linje': return <Linje points={visual.points} unit={visual.unit} />
     }
   })()
   // Ljus "kortyta" runt bilden med ÅTERSTÄLLDA färgvariabler: annars ärver
@@ -242,6 +244,107 @@ function Form({ shape }: { shape: 'cirkel' | 'triangel' | 'kvadrat' | 'rektangel
       {shape === 'triangel' && <polygon points="80,18 148,138 12,138" fill={fill} stroke={stroke} strokeWidth={5} strokeLinejoin="round" />}
       {shape === 'femhorning' && <polygon points={polygon(5)} fill={fill} stroke={stroke} strokeWidth={5} strokeLinejoin="round" />}
       {shape === 'sexhorning' && <polygon points={polygon(6)} fill={fill} stroke={stroke} strokeWidth={5} strokeLinejoin="round" />}
+    </svg>
+  )
+}
+
+/* Diagramfärger: distinkta men betydelsen bärs ALLTID av etiketten under
+   (färgblindhet — aldrig "den röda stapeln" i uppgiftstexten). */
+const CHART_COLORS = ['var(--primary)', 'var(--coral)', 'var(--mint)', 'var(--sun)', '#9B7BD4', '#4FB0C6']
+/** Snällt skalmax: minsta multipel av step som rymmer maxvärdet (aldrig 0). */
+const niceMax = (maxV: number, step: number): number => Math.max(step, Math.ceil(maxV / step) * step)
+
+/* Stapeldiagram ELLER piktogram (bildtabell). Höjden är EXAKT proportionell mot
+   värdet; värdesiffran ritas bara när showValues (stöd på lägsta nivåerna) —
+   annars försvinner själva avläsningsövningen. */
+function Stapel({ categories, yStep = 1, pictogram = false, showValues = false }: {
+  categories: { label: string; value: number; icon?: string }[]; yStep?: number; pictogram?: boolean; showValues?: boolean
+}) {
+  if (pictogram) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7, padding: '2px 4px' }}>
+        {categories.map((c, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 82, textAlign: 'right', fontWeight: 800, fontSize: 13, color: 'var(--ink)', flexShrink: 0 }}>{c.label}</span>
+            <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+              {Array.from({ length: c.value }).map((_, k) => (
+                c.icon && isObjektIcon(c.icon)
+                  ? <ObjektIcon key={k} name={c.icon} size={22} />
+                  : <span key={k} style={{ width: 18, height: 18, borderRadius: 5, background: CHART_COLORS[i % CHART_COLORS.length] }} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  const chartH = 150, barW = 40, gap = 26, padL = 32, padB = 40, padT = 18
+  const maxTick = niceMax(Math.max(...categories.map((c) => c.value), 1), yStep)
+  const w = padL + categories.length * (barW + gap) + 12
+  const h = padT + chartH + padB
+  const yOf = (v: number): number => padT + chartH - (v / maxTick) * chartH
+  const ticks: number[] = []
+  for (let t = 0; t <= maxTick; t += yStep) ticks.push(t)
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: Math.min(w * 1.9, 520), maxWidth: '100%' }} aria-hidden="true">
+      {ticks.map((t) => (
+        <g key={t}>
+          <line x1={padL} y1={yOf(t)} x2={w - 8} y2={yOf(t)} stroke="var(--line)" strokeWidth={1} opacity={0.55} />
+          <text x={padL - 6} y={yOf(t) + 4} fontSize={11} fontWeight={700} fill="var(--muted)" textAnchor="end">{t}</text>
+        </g>
+      ))}
+      <line x1={padL} y1={padT} x2={padL} y2={padT + chartH} stroke="var(--ink)" strokeWidth={2} />
+      <line x1={padL} y1={padT + chartH} x2={w - 8} y2={padT + chartH} stroke="var(--ink)" strokeWidth={2} />
+      {categories.map((c, i) => {
+        const x = padL + 16 + i * (barW + gap)
+        const bh = (c.value / maxTick) * chartH
+        return (
+          <g key={i}>
+            <rect x={x} y={padT + chartH - bh} width={barW} height={bh} rx={4}
+              fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="var(--ink)" strokeWidth={1.2} />
+            {showValues && (
+              <text x={x + barW / 2} y={padT + chartH - bh - 5} fontSize={12.5} fontWeight={800} fill="var(--ink)" textAnchor="middle">{c.value}</text>
+            )}
+            <text x={x + barW / 2} y={padT + chartH + 16} fontSize={11.5} fontWeight={800} fill="var(--ink)" textAnchor="middle">{c.label}</text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+/* Linjediagram: kategorier jämnt fördelade på x, värde på y, punkter förbundna
+   med en linje. Rutnät + siffror på y-axeln så barnet kan följa toppen ner. */
+function Linje({ points, unit }: { points: { label: string; value: number }[]; unit?: string }) {
+  const chartH = 140, colW = 72, padL = 34, padB = 38, padT = 18
+  const maxV = Math.max(...points.map((p) => p.value), 1)
+  const step = maxV <= 10 ? 2 : maxV <= 20 ? 5 : 10
+  const maxTick = niceMax(maxV, step)
+  const w = padL + points.length * colW + 10
+  const h = padT + chartH + padB
+  const xOf = (i: number): number => padL + colW * (i + 0.5)
+  const yOf = (v: number): number => padT + chartH - (v / maxTick) * chartH
+  const ticks: number[] = []
+  for (let t = 0; t <= maxTick; t += step) ticks.push(t)
+  const poly = points.map((p, i) => `${xOf(i)},${yOf(p.value)}`).join(' ')
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: Math.min(w * 1.9, 520), maxWidth: '100%' }} aria-hidden="true">
+      {ticks.map((t) => (
+        <g key={t}>
+          <line x1={padL} y1={yOf(t)} x2={w - 8} y2={yOf(t)} stroke="var(--line)" strokeWidth={1} opacity={0.55} />
+          <text x={padL - 6} y={yOf(t) + 4} fontSize={11} fontWeight={700} fill="var(--muted)" textAnchor="end">{t}</text>
+        </g>
+      ))}
+      <line x1={padL} y1={padT} x2={padL} y2={padT + chartH} stroke="var(--ink)" strokeWidth={2} />
+      <line x1={padL} y1={padT + chartH} x2={w - 8} y2={padT + chartH} stroke="var(--ink)" strokeWidth={2} />
+      {unit && <text x={padL - 6} y={padT - 6} fontSize={10.5} fontWeight={700} fill="var(--muted)" textAnchor="end">{unit}</text>}
+      <polyline points={poly} fill="none" stroke="var(--primary)" strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
+      {points.map((p, i) => (
+        <g key={i}>
+          <circle cx={xOf(i)} cy={yOf(p.value)} r={5} fill="var(--coral)" stroke="#fff" strokeWidth={2} />
+          <text x={xOf(i)} y={padT + chartH + 16} fontSize={11.5} fontWeight={800} fill="var(--ink)" textAnchor="middle">{p.label}</text>
+        </g>
+      ))}
     </svg>
   )
 }
