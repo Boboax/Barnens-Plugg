@@ -116,6 +116,12 @@ export type TaskVisual =
   | { kind: 'stapel'; categories: { label: string; value: number; icon?: string }[]; yStep?: number; pictogram?: boolean; showValues?: boolean }
   // Linjediagram: punkter (kategorier på x, värde på y) förbundna med en linje.
   | { kind: 'linje'; points: { label: string; value: number }[]; unit?: string }
+  // Koordinatsystem: kvadratiskt rutnät min..max, namngivna punkter, och
+  // valfria räta linjer (grafer). xLabel/yLabel = axelbenämningar (t.ex. kg/kr).
+  | { kind: 'koordinat'; min: number; max: number;
+      points: { x: number; y: number; label?: string }[];
+      lines?: { points: { x: number; y: number }[]; label?: string }[];
+      xLabel?: string; yLabel?: string }
   | { kind: 'ingen' }
 
 /** Ett svarsalternativ i flervalsuppgift. */

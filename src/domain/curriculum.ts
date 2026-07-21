@@ -385,13 +385,13 @@ export const MOMENTS: Moment[] = [
     description: 'Kostar 2 bullar 10 kr — vad kostar 6?',
   }),
   def({
-    id: 'koordinatsystem', world: 'sambandsgrottan', area: 'samband', term: t('5', 'VT', 2),
+    id: 'koordinatsystem', world: 'sambandsgrottan', area: 'samband', term: t('5', 'VT', 2), gen: true,
     prereq: ['negativa-tal'],
     title: 'Koordinatsystem',
     description: 'Punkter med adress: (3, 4).',
   }),
   def({
-    id: 'grafer', world: 'sambandsgrottan', area: 'samband', term: t('6', 'VT', 2),
+    id: 'grafer', world: 'sambandsgrottan', area: 'samband', term: t('6', 'VT', 2), gen: true,
     prereq: ['koordinatsystem', 'proportionalitet'],
     title: 'Grafer',
     description: 'Proportionella samband som linjer i koordinatsystemet.',

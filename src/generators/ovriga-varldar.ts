@@ -382,7 +382,195 @@ const diagramLasa = g('diagram-lasa', (level, seed, rng) => {
   })
 })
 
+// ---------- Sambandsgrottan: koordinater & grafer (SPEC-GEOMETRI.md, etapp B) ----------
+
+/** Formatera tal med matematiskt minustecken; koordinatpar och uppläsning. */
+const fmtN = (n: number): string => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
+const coord = (x: number, y: number): string => `(${fmtN(x)}, ${fmtN(y)})`
+const spN = (n: number): string => (n < 0 ? `minus ${Math.abs(n)}` : `${n}`)
+const coordSpoken = (x: number, y: number): string => `punkten ${spN(x)}, ${spN(y)}`
+const LETTERS = ['A', 'B', 'C', 'D']
+
+// Koordinatsystem (åk 5 VT). x/y-förväxlingen är hela poängen → alltid en
+// positionsfel-distraktor där koordinaterna bytt plats.
+const koordinatsystem = g('koordinatsystem', (level, seed, rng) => {
+  const id = 'gen.koordinatsystem'
+  const negative = level >= 6
+  const min = negative ? -5 : 0
+  const max = negative ? 5 : level <= 3 ? 5 : 10
+  const lo = negative ? -5 : 1
+
+  // Nivå 8–10: rektangelns fjärde hörn respektive spegling i en axel.
+  if (level >= 8) {
+    if (rng.chance(0.5)) {
+      const x0 = rng.int(min, max - 2), x1 = x0 + rng.int(2, max - x0)
+      const y0 = rng.int(min, max - 2), y1 = y0 + rng.int(2, max - y0)
+      const shown = [{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x0, y: y1 }].map((c, i) => ({ ...c, label: LETTERS[i] }))
+      return choiceTask({
+        generatorId: id, level, seed, rng,
+        visual: { kind: 'koordinat', min, max, points: shown },
+        prompt: `Tre hörn av en rektangel ligger på ${coord(x0, y0)}, ${coord(x1, y0)} och ${coord(x0, y1)}. Var ligger det fjärde hörnet?`,
+        spokenPrompt: `Tre hörn av en rektangel ligger på ${coordSpoken(x0, y0)}, ${coordSpoken(x1, y0)} och ${coordSpoken(x0, y1)}. Var ligger det fjärde hörnet?`,
+        correct: coord(x1, y1),
+        distractors: [[coord(y1, x1), 'positionsfel'], [coord(x1, y0), null], [coord(x0, y1), null]],
+        explanation: `Det fjärde hörnet har samma x som ${coord(x1, y0)} och samma y som ${coord(x0, y1)}: ${coord(x1, y1)}.`,
+      })
+    }
+    const p = { x: rng.int(1, 4), y: rng.int(1, 4) }
+    const inX = rng.chance(0.5)
+    const res = inX ? { x: p.x, y: -p.y } : { x: -p.x, y: p.y }
+    const wrongAxis = inX ? { x: -p.x, y: p.y } : { x: p.x, y: -p.y }
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      visual: { kind: 'koordinat', min: -5, max: 5, points: [{ ...p, label: 'P' }] },
+      prompt: `Punkten ${coord(p.x, p.y)} speglas i ${inX ? 'x' : 'y'}-axeln. Var hamnar den?`,
+      spokenPrompt: `${coordSpoken(p.x, p.y)} speglas i ${inX ? 'x' : 'y'}-axeln. Var hamnar den?`,
+      correct: coord(res.x, res.y),
+      distractors: [[coord(wrongAxis.x, wrongAxis.y), 'positionsfel'], [coord(-p.x, -p.y), null], [coord(p.x, p.y), null]],
+      explanation: `Spegling i ${inX ? 'x' : 'y'}-axeln byter tecken på ${inX ? 'y' : 'x'}: ${coord(p.x, p.y)} → ${coord(res.x, res.y)}.`,
+    })
+  }
+
+  // Målpunkt med x ≠ y så swap-distraktorn skiljer sig från rätt svar.
+  let tx = rng.int(lo, max), ty = rng.int(lo, max)
+  let guard = 0
+  while (tx === ty && guard++ < 40) ty = rng.int(lo, max)
+  if (tx === ty) tx = ty < max ? ty + 1 : ty - 1
+  // Fyra distinkta namngivna punkter, inkl. målet (tx,ty) och swappen (ty,tx).
+  const key = (p: { x: number; y: number }): string => `${p.x},${p.y}`
+  const chosen = [{ x: tx, y: ty }, { x: ty, y: tx }]
+  const seen = new Set(chosen.map(key))
+  let g2 = 0
+  while (chosen.length < 4 && g2++ < 200) {
+    const c = { x: rng.int(min, max), y: rng.int(min, max) }
+    if ((c.x === 0 && c.y === 0) || seen.has(key(c))) continue
+    seen.add(key(c)); chosen.push(c)
+  }
+  const pts = rng.shuffle(chosen).map((p, i) => ({ ...p, label: LETTERS[i] }))
+  const labelAt = (x: number, y: number): string => pts.find((p) => p.x === x && p.y === y)!.label
+  const visual = { kind: 'koordinat' as const, min, max, points: pts }
+  const variant = rng.pick(level <= 3 ? ['vilken', 'koord'] as const : ['vilken', 'koord', 'vilka'] as const)
+
+  if (variant === 'vilken') {
+    return choiceTask({
+      generatorId: id, level, seed, rng, visual,
+      prompt: `Vilken punkt ligger på ${coord(tx, ty)}?`,
+      spokenPrompt: `Vilken punkt ligger på ${coordSpoken(tx, ty)}?`,
+      correct: labelAt(tx, ty),
+      distractors: pts.filter((p) => !(p.x === tx && p.y === ty)).map((p) => [p.label, p.x === ty && p.y === tx ? 'positionsfel' : null]),
+      explanation: `Gå först ${fmtN(tx)} åt sidan (x), sedan ${fmtN(ty)} uppåt (y) — som att gå in i ett rum innan man klättrar på stegen. Där ligger ${labelAt(tx, ty)}.`,
+    })
+  }
+  if (variant === 'koord') {
+    const L = rng.pick(pts)
+    const askX = rng.chance(0.5)
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: `Vad är ${askX ? 'x' : 'y'}-koordinaten för punkt ${L.label}?`,
+      value: askX ? L.x : L.y,
+      explanation: askX
+        ? `Punkt ${L.label} ligger ${fmtN(L.x)} steg åt sidan — x = ${fmtN(L.x)}.`
+        : `Punkt ${L.label} ligger ${fmtN(L.y)} steg upp — y = ${fmtN(L.y)}.`,
+      // Att svara med den ANDRA koordinaten = x/y-förväxling.
+      misconceptions: { [askX ? L.y : L.x]: 'positionsfel' },
+    })
+  }
+  const L = rng.pick(pts)
+  const others = pts.filter((p) => p !== L)
+  return choiceTask({
+    generatorId: id, level, seed, rng, visual,
+    prompt: `Vilka koordinater har punkt ${L.label}?`,
+    correct: coord(L.x, L.y),
+    distractors: [[coord(L.y, L.x), L.x !== L.y ? 'positionsfel' : null], ...others.slice(0, 2).map((p) => [coord(p.x, p.y), null] as [string, null])],
+    explanation: `Gå ${fmtN(L.x)} åt sidan (x) och ${fmtN(L.y)} uppåt (y): ${coord(L.x, L.y)}.`,
+  })
+})
+
+// Grafer (åk 6 VT): proportionella samband som räta linjer genom origo. Alla
+// avläsningar landar på HELA gitterpunkter. Kvadratiskt rutnät 0..10.
+const grafer = g('grafer', (level, seed, rng) => {
+  const id = 'gen.grafer'
+  const GRID = 10
+  const [thing, unit] = rng.pick([['äpplen', 'kg'], ['bananer', 'kg'], ['godis', 'hg'], ['bär', 'kg']] as const)
+  const showDots = level <= 5
+
+  // Nivå 8–10: två affärer (en med startavgift) — jämför / hitta brytpunkten.
+  if (level >= 8) {
+    const [kA, kB] = rng.pick([[2, 1], [3, 1], [3, 2]] as const)
+    const xStar = rng.int(2, 3)
+    const feeB = (kA - kB) * xStar // → linjerna korsas vid heltalet xStar
+    const lineA = { points: [{ x: 0, y: 0 }, { x: 3, y: kA * 3 }], label: 'A' }
+    const lineB = { points: [{ x: 0, y: feeB }, { x: 3, y: feeB + kB * 3 }], label: 'B' }
+    const visual = { kind: 'koordinat' as const, min: 0, max: GRID, points: [], lines: [lineA, lineB], xLabel: unit, yLabel: 'kr' }
+    if (rng.chance(0.5)) {
+      // Billigast vid q kg (q ≠ brytpunkten så det finns en tydlig vinnare).
+      let q = rng.int(1, 4)
+      if (q === xStar) q = xStar + 1
+      const costA = kA * q, costB = feeB + kB * q
+      const cheaper = costA < costB ? 'Affär A' : 'Affär B'
+      return choiceTask({
+        generatorId: id, level, seed, rng, visual,
+        prompt: `Linjerna visar priset i två affärer. Vilken affär är billigast om du köper ${q} ${unit} ${thing}?`,
+        correct: cheaper,
+        distractors: [[cheaper === 'Affär A' ? 'Affär B' : 'Affär A', 'fel-raknesatt']],
+        explanation: `Vid ${q} ${unit}: Affär A ${costA} kr, Affär B ${costB} kr. ${cheaper} är billigast.`,
+      })
+    }
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: `Affär A säljer utan startavgift, affär B har en startavgift. Vid hur många ${unit} kostar ${thing} lika mycket i båda?`,
+      value: xStar, unit,
+      explanation: `Där linjerna korsas kostar de lika mycket — läs av x: ${xStar} ${unit}.`,
+      misconceptions: { [feeB]: 'fel-raknesatt' },
+    })
+  }
+
+  const k = rng.pick([1, 2, 3] as const)
+  const xEnd = Math.floor(GRID / k)
+  const line = { points: [{ x: 0, y: 0 }, { x: xEnd, y: k * xEnd }] }
+  const dots = showDots ? [{ x: 1, y: k }, { x: xEnd, y: k * xEnd }] : []
+  const visual = { kind: 'koordinat' as const, min: 0, max: GRID, points: dots, lines: [line], xLabel: unit, yLabel: 'kr' }
+
+  if (level <= 3) {
+    const q = rng.int(2, xEnd)
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: `Grafen visar priset på ${thing}. Vad kostar ${q} ${unit}?`,
+      value: k * q, unit,
+      explanation: `Följ upp från ${q} ${unit} till linjen och läs av: ${q} × ${k} = ${k * q} kr.`,
+      misconceptions: { [q + k]: 'fel-raknesatt', [k * q + 1]: 'en-fel', [k * q - 1]: 'en-fel' },
+    })
+  }
+  if (level <= 7) {
+    if (rng.chance(0.5)) {
+      const q = rng.int(2, xEnd)
+      return numericTask({
+        generatorId: id, level, seed, visual,
+        prompt: `Grafen visar priset på ${thing}. Hur många ${unit} får du för ${k * q} kr?`,
+        value: q, unit,
+        explanation: `Följ in från ${k * q} kr till linjen och ner: ${k * q} / ${k} = ${q} ${unit}.`,
+        misconceptions: { [k * q]: 'fel-raknesatt' },
+      })
+    }
+    return numericTask({
+      generatorId: id, level, seed, visual,
+      prompt: `Grafen visar priset på ${thing}. Vad kostar 1 ${unit}?`,
+      value: k, unit,
+      explanation: `Läs av linjen vid 1 ${unit}: ${k} kr. (Priset stiger ${k} kr för varje ${unit}.)`,
+      misconceptions: { [k + 1]: 'en-fel', [k - 1]: 'en-fel' },
+    })
+  }
+  // (nivå 8–10 hanteras ovan)
+  return numericTask({
+    generatorId: id, level, seed, visual,
+    prompt: `Grafen visar priset på ${thing}. Vad kostar 1 ${unit}?`,
+    value: k, unit, explanation: `Läs av linjen vid 1 ${unit}: ${k} kr.`,
+    misconceptions: { [k + 1]: 'en-fel' },
+  })
+})
+
 export const OVRIGA_GENERATORS: TaskGenerator[] = [
   medelvarde, sannolikhet, dubbeltHalften, proportionalitet,
   sorteraTabeller, stapeldiagram, diagramLasa,
+  koordinatsystem, grafer,
 ]
