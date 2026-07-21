@@ -3,6 +3,7 @@ import type { DifficultyLevel } from '../domain/types'
 import { allGeneratorIds, generateTask } from './index'
 import { pickName, pickTwoNames, resetNamePool, setNamePool } from './helpers'
 import { createRng } from './rng'
+import { BODY_FACTS, MIRROR_FACTS } from './formernas-berg'
 
 /**
  * Fuzz-test av samtliga generatorer: alla nivåer, många frön.
@@ -160,6 +161,46 @@ describe('uppgiftsgeneratorerna', () => {
             // Ingen distraktor (positionsfel eller annan) får vara lika med rätt svar.
             task.answer.choices.filter((c) => !c.correct).forEach((c) =>
               expect(c.text, `${id} n${level} f${seed}: distraktor = rätt svar`).not.toBe(correct))
+          }
+        }
+      }
+    }
+  })
+
+  it('etapp C: facittabellerna för kroppar och spegellinjer stämmer', () => {
+    // FACIT (docs/SPEC-GEOMETRI.md) — får aldrig ändras på känn.
+    expect(BODY_FACTS.kub).toMatchObject({ ytor: 6, horn: 8, kanter: 12 })
+    expect(BODY_FACTS.ratblock).toMatchObject({ ytor: 6, horn: 8, kanter: 12 })
+    expect(BODY_FACTS.pyramid).toMatchObject({ ytor: 5, horn: 5, kanter: 8 })
+    expect(BODY_FACTS.cylinder.ytor).toBe(3)
+    expect(BODY_FACTS.kon.ytor).toBe(2)
+    expect(BODY_FACTS.klot.ytor).toBe(1)
+    // Rullbarhet: runda kroppar rullar, polyedrar inte.
+    for (const b of Object.values(BODY_FACTS)) expect(b.rullar).toBe(!b.polyeder)
+    // Spegellinjer: rektangelns diagonal är AVSIKTLIGT falsk; kvadratens sann.
+    expect(MIRROR_FACTS.rektangel.diagonal).toBe(false)
+    expect(MIRROR_FACTS.kvadrat.diagonal).toBe(true)
+    expect(MIRROR_FACTS.rektangel.count).toBe(2)
+    expect(MIRROR_FACTS.kvadrat.count).toBe(4)
+    expect(MIRROR_FACTS.triangel.count).toBe(3)
+    expect(MIRROR_FACTS.hjarta.count).toBe(1)
+    for (const f of Object.values(MIRROR_FACTS)) expect(f.lodrat).toBe(true) // alla har lodrät
+  })
+
+  it('etapp C+D: vinkel/skala/ekvation ger giltiga svar', () => {
+    for (const seed of SEEDS) {
+      for (const level of LEVELS) {
+        for (const id of ['gen.vinklar', 'gen.skala', 'gen.ekvationer-tva-steg']) {
+          const task = generateTask(id, level, seed)
+          if (task.answer.kind !== 'numeric') continue
+          if (id === 'gen.vinklar') {
+            expect(task.answer.value > 0 && task.answer.value <= 180, `${id} n${level} f${seed}: vinkel (0,180]`).toBe(true)
+          }
+          if (id === 'gen.ekvationer-tva-steg') {
+            expect(Number.isInteger(task.answer.value) && task.answer.value > 0, `${id} n${level} f${seed}: positivt heltal`).toBe(true)
+          }
+          if (id === 'gen.skala' && level <= 7) {
+            expect(Number.isInteger(task.answer.value), `${id} n${level} f${seed}: heltalssvar ≤ n7`).toBe(true)
           }
         }
       }

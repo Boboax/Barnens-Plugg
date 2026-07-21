@@ -209,6 +209,330 @@ const area = g('area', (level, seed, rng) => {
   })
 })
 
+// ---------- Geometri, etapp C (docs/SPEC-GEOMETRI.md): kroppar, symmetri, vinklar ----------
+
+/* FACIT — kropparnas egenskaper. TABELLEN ÄR SANNINGEN; enhetstestas, ändras
+   aldrig på känn. (Kanter/hörn för runda kroppar följer svensk skolkonvention.) */
+export const BODY_FACTS = {
+  klot: { name: 'Klot', art: 'ett', ytor: 1, horn: 0, kanter: 0, rullar: true, polyeder: false },
+  kub: { name: 'Kub', art: 'en', ytor: 6, horn: 8, kanter: 12, rullar: false, polyeder: true },
+  ratblock: { name: 'Rätblock', art: 'ett', ytor: 6, horn: 8, kanter: 12, rullar: false, polyeder: true },
+  cylinder: { name: 'Cylinder', art: 'en', ytor: 3, horn: 0, kanter: 2, rullar: true, polyeder: false },
+  kon: { name: 'Kon', art: 'en', ytor: 2, horn: 1, kanter: 1, rullar: true, polyeder: false },
+  pyramid: { name: 'Pyramid', art: 'en', ytor: 5, horn: 5, kanter: 8, rullar: false, polyeder: true },
+} as const
+type BodyKey = keyof typeof BODY_FACTS
+
+/* FACIT — spegellinjer. Rektangelns diagonal är AVSIKTLIGT falsk (den klassiska
+   missuppfattningen). count = totalt antal spegellinjer (−1 = oändligt, cirkel). */
+export const MIRROR_FACTS = {
+  cirkel: { lodrat: true, vagrat: true, diagonal: true, count: -1 },
+  kvadrat: { lodrat: true, vagrat: true, diagonal: true, count: 4 },
+  rektangel: { lodrat: true, vagrat: true, diagonal: false, count: 2 },
+  triangel: { lodrat: true, vagrat: false, diagonal: false, count: 3 },
+  hjarta: { lodrat: true, vagrat: false, diagonal: false, count: 1 },
+} as const
+type ShapeKey = keyof typeof MIRROR_FACTS
+
+// Kroppar (åk 1 HT) — 7-åringar: korta ord, flerval + bild.
+const former3d = g('former-3d', (level, seed, rng) => {
+  const id = 'gen.former-3d'
+  const basic: BodyKey[] = ['klot', 'kub', 'cylinder', 'kon']
+  const all: BodyKey[] = ['klot', 'kub', 'cylinder', 'kon', 'pyramid', 'ratblock']
+  const pool = level <= 3 ? basic : all
+  const nameOf = (k: BodyKey): string => BODY_FACTS[k].name
+  // "en kub" / "ett klot" — rätt genus per kropp.
+  const enOf = (k: BodyKey): string => `${BODY_FACTS[k].art} ${BODY_FACTS[k].name.toLowerCase()}`
+  const nameChoices = (correct: BodyKey): [string, null][] =>
+    rng.shuffle(pool.filter((k) => k !== correct)).slice(0, 3).map((k) => [nameOf(k), null])
+
+  // Nivå 8–10: gåtor med korta meningar (åk 1-språk även på stjärnan).
+  if (level >= 8) {
+    const riddle = rng.pick([
+      { q: 'Jag har 6 lika stora sidoytor. Vad är jag?', a: 'kub' as BodyKey, distr: ['Rätblock', 'Kub-fälla'] },
+      { q: 'Jag kan rulla och har en spets. Vad är jag?', a: 'kon' as BodyKey, distr: [] },
+      { q: 'Jag är rund överallt och kan rulla åt alla håll. Vad är jag?', a: 'klot' as BodyKey, distr: [] },
+    ])
+    const distr: [string, null][] = riddle.a === 'kub'
+      ? [['Rätblock', null], ...nameChoices('kub').filter(([n]) => n !== 'Rätblock').slice(0, 2)]
+      : nameChoices(riddle.a)
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      prompt: riddle.q, correct: nameOf(riddle.a), distractors: distr,
+      explanation: riddle.a === 'kub'
+        ? 'En kub har 6 lika stora kvadrat-ytor. Ett rätblock har också 6 ytor, men de är inte lika stora.'
+        : `Det är ${enOf(riddle.a)}.`,
+    })
+  }
+
+  const which = rng.pick(level <= 3 ? ['namn', 'vardag'] as const : ['namn', 'rulla', 'antal'] as const)
+  if (which === 'namn') {
+    const k = rng.pick(pool)
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      visual: { kind: 'kropp', body: k },
+      prompt: 'Vad heter formen?', correct: nameOf(k), distractors: nameChoices(k),
+      explanation: `Det är ${enOf(k)}.`,
+    })
+  }
+  if (which === 'vardag') {
+    const VARDAG: [string, BodyKey][] = [['en boll', 'klot'], ['en tärning', 'kub'], ['en konservburk', 'cylinder'], ['en glasstrut', 'kon']]
+    const [obj, k] = rng.pick(VARDAG)
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      prompt: `Vilken form är ${obj}?`, correct: nameOf(k), distractors: nameChoices(k),
+      explanation: `${obj[0].toUpperCase()}${obj.slice(1)} har formen av ${enOf(k)}.`,
+    })
+  }
+  if (which === 'rulla') {
+    const k = rng.pick(pool)
+    const rullar = BODY_FACTS[k].rullar
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      visual: { kind: 'kropp', body: k },
+      prompt: `Kan ${enOf(k)} rulla?`, correct: rullar ? 'Ja' : 'Nej',
+      distractors: [[rullar ? 'Nej' : 'Ja', null]],
+      explanation: rullar ? `${enOf(k)[0].toUpperCase()}${enOf(k).slice(1)} är rund någonstans — den kan rulla.` : `${enOf(k)[0].toUpperCase()}${enOf(k).slice(1)} har bara platta sidor — den kan inte rulla.`,
+    })
+  }
+  // 'antal': hörn/kanter bara för polyedrar (entydigt); ytor för alla.
+  const k = rng.pick(pool)
+  const facts = BODY_FACTS[k]
+  const prop = facts.polyeder ? rng.pick(['ytor', 'horn', 'kanter'] as const) : 'ytor'
+  const label = prop === 'ytor' ? 'sidoytor' : prop === 'horn' ? 'hörn' : 'kanter'
+  return numericTask({
+    generatorId: id, level, seed,
+    visual: { kind: 'kropp', body: k },
+    prompt: `Hur många ${label} har en ${nameOf(k).toLowerCase()}?`,
+    value: facts[prop],
+    explanation: `En ${nameOf(k).toLowerCase()} har ${facts[prop]} ${label}.`,
+    misconceptions: { [facts[prop] + 1]: 'en-fel', [facts[prop] - 1]: 'en-fel' },
+  })
+})
+
+// Symmetri (åk 3 VT).
+const symmetri = g('symmetri', (level, seed, rng) => {
+  const id = 'gen.symmetri'
+  const axisName = { lodrat: 'lodrät', vagrat: 'vågrät', diagonal: 'diagonal' } as const
+
+  if (level <= 3) {
+    // Ja/Nej: är den ritade linjen en spegellinje? Väg in rektangel+diagonal ofta.
+    const shape: ShapeKey = rng.chance(0.4) ? 'rektangel' : rng.pick(['cirkel', 'kvadrat', 'rektangel', 'triangel', 'hjarta'])
+    const axis = shape === 'rektangel' && rng.chance(0.5) ? 'diagonal' : rng.pick(['lodrat', 'vagrat', 'diagonal'] as const)
+    const ok = MIRROR_FACTS[shape][axis]
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      visual: { kind: 'spegel', shape, axis },
+      prompt: 'Är den streckade linjen en spegellinje?',
+      correct: ok ? 'Ja' : 'Nej', distractors: [[ok ? 'Nej' : 'Ja', null]],
+      explanation: ok
+        ? `Ja — viker man figuren längs den ${axisName[axis]}a linjen passar halvorna precis på varandra.`
+        : `Nej — viker man längs den ${axisName[axis]}a linjen hamnar halvorna snett. Det är ingen spegellinje.`,
+    })
+  }
+  if (level <= 7) {
+    if (rng.chance(0.5)) {
+      // Hur många spegellinjer? Bara former som 'form'-bilden kan visa UTAN att
+      // rita ut en specifik linje (aldrig cirkel — oändligt; ingen hint-linje).
+      const shape = rng.pick(['kvadrat', 'rektangel', 'triangel'] as const)
+      return numericTask({
+        generatorId: id, level, seed, visual: { kind: 'form', shape },
+        prompt: `Hur många spegellinjer har figuren?`,
+        value: MIRROR_FACTS[shape].count,
+        explanation: `En ${shape === 'triangel' ? 'liksidig triangel' : shape} har ${MIRROR_FACTS[shape].count} spegellinjer.`,
+        misconceptions: { [MIRROR_FACTS[shape].count + 1]: 'en-fel', [MIRROR_FACTS[shape].count - 1]: 'en-fel' },
+      })
+    }
+    // Bokstäver med lodrät spegellinje (utan bild).
+    const YES = ['A', 'H', 'M', 'O', 'T', 'U', 'V']
+    const NO = ['F', 'G', 'J', 'L', 'P', 'R']
+    const correct = rng.pick(YES)
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      prompt: 'Vilken bokstav har en lodrät spegellinje?',
+      correct, distractors: rng.shuffle(NO).slice(0, 3).map((c) => [c, null] as [string, null]),
+      explanation: `${correct} är likadan på båda sidor om en lodrät linje genom mitten.`,
+    })
+  }
+  // Nivå 8–10: fler spegellinjer än rektangeln, respektive kvadratens sanna diagonal.
+  if (rng.chance(0.5)) {
+    const more = rng.pick(['kvadrat', 'triangel'] as const) // 4 resp 3 > rektangelns 2
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      prompt: 'Vilken figur har FLER spegellinjer än en rektangel?',
+      correct: more === 'kvadrat' ? 'Kvadrat' : 'Triangel',
+      distractors: [['Rektangel', 'fel-raknesatt'], ['Hjärta', null]],
+      explanation: `En rektangel har 2 spegellinjer. En ${more === 'kvadrat' ? 'kvadrat har 4' : 'liksidig triangel har 3'} — fler.`,
+    })
+  }
+  return choiceTask({
+    generatorId: id, level, seed, rng,
+    visual: { kind: 'spegel', shape: 'kvadrat', axis: 'diagonal' },
+    prompt: 'Är den streckade linjen en spegellinje?',
+    correct: 'Ja', distractors: [['Nej', null]],
+    explanation: 'Ja — kvadratens diagonal ÄR en spegellinje (till skillnad från rektangelns diagonal, som inte är det).',
+  })
+})
+
+/** Klassa en vinkel efter storlek (svensk konvention). */
+const angleKind = (d: number): string => (d === 90 ? 'Rät' : d === 180 ? 'Rak' : d < 90 ? 'Spetsig' : 'Trubbig')
+const degSpoken = (s: string): string => s.replace(/(\d+)\s*°/g, '$1 grader')
+
+// Vinklar (åk 6 HT).
+const vinklar = g('vinklar', (level, seed, rng) => {
+  const id = 'gen.vinklar'
+  const rot = rng.int(0, 11) * 30 // slumpad rotation → "rät" pekar inte alltid uppåt
+
+  if (level <= 3) {
+    const d = rng.pick([30, 45, 60, 90, 120, 135, 150] as const)
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      visual: { kind: 'vinkel', degrees: d, rot },
+      prompt: 'Är vinkeln rät, spetsig eller trubbig?',
+      correct: angleKind(d),
+      distractors: (['Spetsig', 'Rät', 'Trubbig'] as const).filter((k) => k !== angleKind(d)).map((k) => [k, null] as [string, null]),
+      explanation: `En rät vinkel är 90°, som hörnet på ett papper. Den här är ${angleKind(d).toLowerCase()}.`,
+    })
+  }
+  if (level <= 7) {
+    const kind = rng.pick(['halv', 'tva-rata', 'rak-linje'] as const)
+    if (kind === 'halv') {
+      return numericTask({
+        generatorId: id, level, seed, visual: { kind: 'vinkel', degrees: 45, rot },
+        prompt: 'Vinkeln är en halv rät vinkel. Hur många grader är den?',
+        value: 45, unit: '°',
+        explanation: 'En rät vinkel är 90°. Hälften av det är 45°.',
+        misconceptions: { 90: 'fel-raknesatt' },
+      })
+    }
+    if (kind === 'tva-rata') {
+      return numericTask({
+        generatorId: id, level, seed,
+        prompt: 'Hur många grader är två räta vinklar tillsammans?',
+        value: 180, unit: '°',
+        explanation: 'Två räta vinklar: 90° + 90° = 180°. Det är en rak linje.',
+        misconceptions: { 90: 'fel-raknesatt' },
+      })
+    }
+    const a = rng.pick([30, 40, 50, 60, 70, 110, 120, 130] as const)
+    return numericTask({
+      generatorId: id, level, seed, visual: { kind: 'vinkel', degrees: a, rot },
+      prompt: `Två vinklar sitter ihop på en rak linje. Den ena är ${a}°. Hur stor är den andra?`,
+      spokenPrompt: degSpoken(`Två vinklar sitter ihop på en rak linje. Den ena är ${a}°. Hur stor är den andra?`),
+      value: 180 - a, unit: '°',
+      explanation: `En rak linje är 180°. Den andra vinkeln är 180° − ${a}° = ${180 - a}°.`,
+      misconceptions: { [a]: 'fel-raknesatt', [90 - a > 0 ? 90 - a : a + 90]: 'en-fel' },
+    })
+  }
+  // Nivå 8–10: triangelns (och på högsta nivån fyrhörningens) vinkelsumma.
+  if (level >= 10 && rng.chance(0.5)) {
+    // Fyrhörning: 360. Konstruera så fjärde ∈ [40,140].
+    const a = rng.int(60, 100), b = rng.int(60, 100), c = rng.int(60, 100)
+    const d = 360 - a - b - c
+    if (d >= 40 && d <= 140) {
+      return numericTask({
+        generatorId: id, level, seed,
+        prompt: `En fyrhörning har vinklarna ${a}°, ${b}° och ${c}°. Hur stor är den fjärde?`,
+        spokenPrompt: degSpoken(`En fyrhörning har vinklarna ${a}°, ${b}° och ${c}°. Hur stor är den fjärde?`),
+        value: d, unit: '°',
+        explanation: `Vinklarna i en fyrhörning är tillsammans 360°. Den fjärde är 360° − ${a}° − ${b}° − ${c}° = ${d}°.`,
+        misconceptions: { [a + b + c]: 'fel-raknesatt' },
+      })
+    }
+  }
+  // Triangel: 180, svar ∈ [20,120].
+  const a = rng.int(30, 90), b = rng.int(30, 90)
+  const third = 180 - a - b
+  const [aa, bb] = third >= 20 && third <= 120 ? [a, b] : [60, 70]
+  return numericTask({
+    generatorId: id, level, seed,
+    prompt: `En triangel har vinklarna ${aa}° och ${bb}°. Hur stor är den tredje?`,
+    spokenPrompt: degSpoken(`En triangel har vinklarna ${aa}° och ${bb}°. Hur stor är den tredje?`),
+    value: 180 - aa - bb, unit: '°',
+    explanation: `Vinklarna i en triangel är tillsammans 180°. Den tredje är 180° − ${aa}° − ${bb}° = ${180 - aa - bb}°.`,
+    misconceptions: { [aa + bb]: 'fel-raknesatt' },
+  })
+})
+
+// Skala (åk 6 VT, etapp D). Heltalssvar garanterat t.o.m. nivå 7.
+const skala = g('skala', (level, seed, rng) => {
+  const id = 'gen.skala'
+  const skalaSpoken = (s: string): string => s.replace(/1:(\d+)/g, (_, n) => `skala ett till ${n}`)
+
+  if (level <= 3) {
+    // Förstora/förminska en bild med skala 2:1 (dubbelt) eller 1:2 (hälften).
+    const upp = rng.chance(0.5)
+    const w = upp ? rng.int(2, 8) : rng.int(2, 8) * 2 // 1:2 kräver jämnt tal
+    const h = Math.max(2, Math.round(w / 2))
+    const value = upp ? w * 2 : w / 2
+    return numericTask({
+      generatorId: id, level, seed, unit: 'cm',
+      visual: { kind: 'rektangel', w, h, unit: 'cm' },
+      prompt: `Bilden är ${w} cm bred. I skala ${upp ? '2:1' : '1:2'} — hur bred blir den?`,
+      spokenPrompt: skalaSpoken(`Bilden är ${w} cm bred. I ${upp ? '2:1' : '1:2'} — hur bred blir den?`),
+      value,
+      explanation: upp
+        ? `Skala 2:1 gör bilden dubbelt så stor: ${w} × 2 = ${value} cm.`
+        : `Skala 1:2 gör bilden hälften så stor: ${w} / 2 = ${value} cm.`,
+      misconceptions: { [upp ? w : w]: 'fel-raknesatt', [upp ? w + 2 : w - 2]: 'fel-raknesatt' },
+    })
+  }
+  if (level <= 7) {
+    const scale = rng.pick([100, 1000] as const) // ger heltal både i cm och meter
+    const inMeters = level >= 6
+    const reverse = level >= 6 && rng.chance(0.4)
+    if (reverse) {
+      // Verkligheten → ritningen (gångra-i-stället-för-dela = fel-raknesatt).
+      const mapCm = rng.int(2, 8)
+      const realM = (mapCm * scale) / 100
+      return numericTask({
+        generatorId: id, level, seed, unit: 'cm',
+        prompt: `En väg är ${realM} m i verkligheten. Kartan har skala 1:${scale}. Hur många cm är vägen på kartan?`,
+        spokenPrompt: skalaSpoken(`En väg är ${realM} meter i verkligheten. Kartan har skala 1:${scale}. Hur många cm är vägen på kartan?`),
+        value: mapCm,
+        explanation: `Verkligheten delas med ${scale}: ${realM} m = ${realM * 100} cm, och ${realM * 100} / ${scale} = ${mapCm} cm.`,
+        misconceptions: { [realM * 100 * scale]: 'fel-raknesatt', [realM * 100]: 'enhet-fel' },
+      })
+    }
+    const mapCm = rng.int(2, 9)
+    const realCm = mapCm * scale
+    const value = inMeters ? realCm / 100 : realCm
+    return numericTask({
+      generatorId: id, level, seed, unit: inMeters ? 'm' : 'cm',
+      prompt: `Kartan har skala 1:${scale}. En väg är ${mapCm} cm på kartan. Hur lång är den i verkligheten (${inMeters ? 'meter' : 'cm'})?`,
+      spokenPrompt: skalaSpoken(`Kartan har skala 1:${scale}. En väg är ${mapCm} cm på kartan. Hur lång är den i verkligheten, i ${inMeters ? 'meter' : 'centimeter'}?`),
+      value,
+      explanation: inMeters
+        ? `1 cm på kartan är ${scale} cm i verkligheten: ${mapCm} × ${scale} = ${realCm} cm = ${value} m.`
+        : `1 cm på kartan är ${scale} cm i verkligheten: ${mapCm} × ${scale} = ${realCm} cm.`,
+      misconceptions: inMeters ? { [realCm]: 'enhet-fel', [mapCm]: 'fel-raknesatt' } : { [mapCm]: 'fel-raknesatt' },
+    })
+  }
+  // Nivå 8–10: jämförelse respektive km-omvandling.
+  if (rng.chance(0.5)) {
+    const s1 = 100, s2 = 1000
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      prompt: `Vilken karta visar MEST verklighet på 1 cm — skala 1:${s1} eller 1:${s2}?`,
+      spokenPrompt: skalaSpoken(`Vilken karta visar mest verklighet på 1 cm — 1:${s1} eller 1:${s2}?`),
+      correct: `1:${s2}`, distractors: [[`1:${s1}`, 'fel-raknesatt']],
+      explanation: `Ju större talet efter kolon, desto mer verklighet ryms på varje cm. 1:${s2} visar ${s2} cm per cm — mer än 1:${s1}.`,
+    })
+  }
+  const scale = 1000
+  const mapCm = rng.int(20, 90) // realCm = mapCm*1000 → jämna hundratal meter
+  const realM = (mapCm * scale) / 100
+  return numericTask({
+    generatorId: id, level, seed, unit: 'm',
+    prompt: `Kartan har skala 1:${scale}. En stig är ${mapCm} cm på kartan. Hur lång är stigen i verkligheten (meter)?`,
+    spokenPrompt: skalaSpoken(`Kartan har skala 1:${scale}. En stig är ${mapCm} cm på kartan. Hur lång är stigen i verkligheten, i meter?`),
+    value: realM,
+    explanation: `${mapCm} × ${scale} = ${mapCm * scale} cm = ${realM} m.`,
+    misconceptions: { [mapCm * scale]: 'enhet-fel' },
+  })
+})
+
 export const FORMERNAS_BERG_GENERATORS: TaskGenerator[] = [
   former2d, klockanHelHalv, klockanKvart, klockanMinuter, matningLangd, omkrets, area,
+  former3d, symmetri, vinklar, skala,
 ]

@@ -21,6 +21,9 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
       case 'stapel': return <Stapel categories={visual.categories} yStep={visual.yStep} pictogram={visual.pictogram} showValues={visual.showValues} />
       case 'linje': return <Linje points={visual.points} unit={visual.unit} />
       case 'koordinat': return <Koordinat min={visual.min} max={visual.max} points={visual.points} lines={visual.lines} xLabel={visual.xLabel} yLabel={visual.yLabel} />
+      case 'vinkel': return <Vinkel degrees={visual.degrees} rot={visual.rot} />
+      case 'kropp': return <Kropp body={visual.body} />
+      case 'spegel': return <Spegel shape={visual.shape} axis={visual.axis} />
     }
   })()
   // Ljus "kortyta" runt bilden med ÅTERSTÄLLDA färgvariabler: annars ärver
@@ -423,6 +426,113 @@ function Koordinat({ min, max, points, lines, xLabel, yLabel }: {
           {p.label && <text x={sx(p.x) + 7} y={sy(p.y) - 6} fontSize={13} fontWeight={900} fill="var(--ink)">{p.label}</text>}
         </g>
       ))}
+    </svg>
+  )
+}
+
+/* En vinkel: två strålar från ett hörn. Öppningen ritas som en gradbåge
+   (polyline längs cirkelbågen — alltid korrekt öppning); en rät vinkel (90°)
+   markeras med kvadratsymbol i hörnet (svensk konvention). rot vrider hela
+   figuren så "rät" inte alltid pekar uppåt. */
+function Vinkel({ degrees, rot = 0 }: { degrees: number; rot?: number }) {
+  const cx = 80, cy = 80, L = 60
+  const rad = (d: number): number => (d * Math.PI) / 180
+  const pt = (deg: number, len: number): [number, number] => [cx + len * Math.cos(rad(deg)), cy - len * Math.sin(rad(deg))]
+  const r1 = pt(rot, L), r2 = pt(rot + degrees, L)
+  const right = degrees === 90
+  const arcPts: string[] = []
+  const seg = Math.max(2, Math.round(degrees / 6))
+  for (let i = 0; i <= seg; i++) arcPts.push(pt(rot + degrees * (i / seg), 24).join(','))
+  // Kvadratmarkering: hörnet mellan de två strålarna på litet avstånd.
+  const a = pt(rot, 17), b = pt(rot + 90, 17)
+  const corner: [number, number] = [a[0] + b[0] - cx, a[1] + b[1] - cy]
+  return (
+    <svg viewBox="0 0 160 160" width={186} style={{ maxWidth: '100%' }} aria-hidden="true">
+      <line x1={cx} y1={cy} x2={r1[0]} y2={r1[1]} stroke="var(--ink)" strokeWidth={3} strokeLinecap="round" />
+      <line x1={cx} y1={cy} x2={r2[0]} y2={r2[1]} stroke="var(--ink)" strokeWidth={3} strokeLinecap="round" />
+      {right
+        ? <polyline points={`${a[0]},${a[1]} ${corner[0]},${corner[1]} ${b[0]},${b[1]}`} fill="none" stroke="var(--primary)" strokeWidth={2.5} />
+        : <polyline points={arcPts.join(' ')} fill="none" stroke="var(--primary)" strokeWidth={2.5} />}
+      <circle cx={cx} cy={cy} r={3} fill="var(--ink)" />
+    </svg>
+  )
+}
+
+/* 3D-kroppar ritade med enkla skuggade SVG-former (tre ljushetsnivåer ger
+   djup). Rätblocket ritas tydligt avlångt så det skiljer sig från kuben. */
+function Kropp({ body }: { body: 'klot' | 'kub' | 'cylinder' | 'kon' | 'pyramid' | 'ratblock' }) {
+  const P = 'var(--primary)'
+  const light = 'color-mix(in srgb, var(--primary) 30%, #fff)'
+  const mid = 'color-mix(in srgb, var(--primary) 55%, #fff)'
+  const dark = 'color-mix(in srgb, var(--primary) 78%, #fff)'
+  return (
+    <svg viewBox="0 0 160 150" width={170} style={{ maxWidth: '100%' }} aria-hidden="true">
+      {body === 'klot' && (
+        <>
+          <circle cx={80} cy={78} r={54} fill={mid} stroke={P} strokeWidth={3} />
+          <ellipse cx={62} cy={58} rx={20} ry={12} fill="rgba(255,255,255,.55)" />
+        </>
+      )}
+      {(body === 'kub' || body === 'ratblock') && (() => {
+        const w = body === 'ratblock' ? 96 : 66
+        const h = 66, d = 26
+        const x0 = 80 - w / 2, y0 = 44
+        return (
+          <>
+            {/* framsida */}
+            <rect x={x0} y={y0} width={w} height={h} fill={mid} stroke={P} strokeWidth={3} />
+            {/* topp */}
+            <polygon points={`${x0},${y0} ${x0 + d},${y0 - d} ${x0 + w + d},${y0 - d} ${x0 + w},${y0}`} fill={light} stroke={P} strokeWidth={3} />
+            {/* höger sida */}
+            <polygon points={`${x0 + w},${y0} ${x0 + w + d},${y0 - d} ${x0 + w + d},${y0 + h - d} ${x0 + w},${y0 + h}`} fill={dark} stroke={P} strokeWidth={3} />
+          </>
+        )
+      })()}
+      {body === 'cylinder' && (
+        <>
+          <rect x={44} y={40} width={72} height={78} fill={mid} stroke={P} strokeWidth={3} />
+          <ellipse cx={80} cy={118} rx={36} ry={13} fill={dark} stroke={P} strokeWidth={3} />
+          <ellipse cx={80} cy={40} rx={36} ry={13} fill={light} stroke={P} strokeWidth={3} />
+        </>
+      )}
+      {body === 'kon' && (
+        <>
+          <ellipse cx={80} cy={116} rx={44} ry={14} fill={dark} stroke={P} strokeWidth={3} />
+          <path d={`M80,30 L124,116 A44,14 0 0 1 36,116 Z`} fill={mid} stroke={P} strokeWidth={3} />
+        </>
+      )}
+      {body === 'pyramid' && (
+        <>
+          <polygon points="80,28 128,120 32,120" fill={mid} stroke={P} strokeWidth={3} strokeLinejoin="round" />
+          <polygon points="80,28 128,120 92,132" fill={dark} stroke={P} strokeWidth={3} strokeLinejoin="round" />
+        </>
+      )}
+    </svg>
+  )
+}
+
+/* Figur med streckad spegellinje genom centrum. Rektangeln ritas avlång (~2:1)
+   så dess falska diagonal blir tydlig. Linjen bedöms av barnet — facit i koden. */
+function Spegel({ shape, axis }: { shape: 'cirkel' | 'kvadrat' | 'rektangel' | 'triangel' | 'hjarta'; axis: 'lodrat' | 'vagrat' | 'diagonal' }) {
+  const fill = 'color-mix(in srgb, var(--primary) 20%, #fff)'
+  const stroke = 'var(--primary)'
+  const C = 80
+  const figure = (() => {
+    switch (shape) {
+      case 'cirkel': return <circle cx={C} cy={C} r={54} fill={fill} stroke={stroke} strokeWidth={4} />
+      case 'kvadrat': return <rect x={26} y={26} width={108} height={108} fill={fill} stroke={stroke} strokeWidth={4} />
+      case 'rektangel': return <rect x={14} y={46} width={132} height={68} fill={fill} stroke={stroke} strokeWidth={4} />
+      case 'triangel': return <polygon points="80,20 140,132 20,132" fill={fill} stroke={stroke} strokeWidth={4} strokeLinejoin="round" />
+      case 'hjarta': return <path d="M80,132 C20,92 34,36 80,60 C126,36 140,92 80,132 Z" fill={fill} stroke={stroke} strokeWidth={4} strokeLinejoin="round" />
+    }
+  })()
+  const line = axis === 'lodrat' ? { x1: C, y1: 14, x2: C, y2: 146 }
+    : axis === 'vagrat' ? { x1: 14, y1: C, x2: 146, y2: C }
+    : { x1: 24, y1: 24, x2: 136, y2: 136 }
+  return (
+    <svg viewBox="0 0 160 160" width={176} style={{ maxWidth: '100%' }} aria-hidden="true">
+      {figure}
+      <line {...line} stroke="var(--coral)" strokeWidth={3} strokeDasharray="7 5" strokeLinecap="round" />
     </svg>
   )
 }

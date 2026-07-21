@@ -238,6 +238,87 @@ const enklaEkvationer = g('enkla-ekvationer', (level, seed, rng) => {
   })
 })
 
+// ---------- Ekvationer i två steg (åk 6, etapp D) ----------
+// Ingen bild — kvaliteten bor i den tvåstegsförklaringen. Svaren konstrueras
+// BAKLÄNGES från x så de alltid är snälla positiva heltal.
+const ekvationerTvaSteg = g('ekvationer-tva-steg', (level, seed, rng) => {
+  const id = 'gen.ekvationer-tva-steg'
+
+  if (level <= 3) {
+    // Bro från förkunskapen: ett steg, små tal.
+    const x = rng.int(2, 9)
+    if (rng.chance(0.5)) {
+      const a = rng.int(2, 9)
+      return numericTask({
+        generatorId: id, level, seed,
+        prompt: `x + ${a} = ${x + a} — vad är x?`,
+        spokenPrompt: `x plus ${a} är ${x + a}. Vad är x?`,
+        value: x,
+        explanation: `Ta bort ${a} från båda sidor: x = ${x + a} − ${a} = ${x}.`,
+        misconceptions: { [x + a]: 'likhetstecken-resultat' },
+      })
+    }
+    const k = rng.int(2, 5)
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `${k}x = ${k * x} — vad är x?`,
+      spokenPrompt: `${k} gånger x är ${k * x}. Vad är x?`,
+      value: x,
+      explanation: `Dela båda sidor med ${k}: x = ${k * x} / ${k} = ${x}.`,
+      misconceptions: { [k * x]: 'likhetstecken-resultat' },
+    })
+  }
+
+  if (level <= 7) {
+    // ax + b = c  eller  ax − b = c. Konstruera från x.
+    const x = rng.int(2, 12)
+    const a = rng.int(2, 5)
+    const plus = rng.chance(0.6)
+    const b = plus ? rng.int(1, 9) : rng.int(1, Math.min(9, a * x - 1))
+    const c = plus ? a * x + b : a * x - b
+    const mis: Record<number, 'likhetstecken-resultat' | 'fel-raknesatt'> = { [a * x]: 'likhetstecken-resultat' }
+    const added = plus ? (c + b) / a : (c - b) / a // om barnet gjorde motsatt räknesätt
+    if (Number.isInteger(added) && added !== x) mis[added] = 'fel-raknesatt'
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `${a}x ${plus ? '+' : '−'} ${b} = ${c} — vad är x?`,
+      spokenPrompt: `${a} gånger x ${plus ? 'plus' : 'minus'} ${b} är ${c}. Vad är x?`,
+      value: x,
+      explanation: plus
+        ? `Ta bort ${b} från båda sidor: ${a}x = ${a * x}. Dela båda sidor med ${a}: x = ${x}.`
+        : `Lägg till ${b} på båda sidor: ${a}x = ${a * x}. Dela båda sidor med ${a}: x = ${x}.`,
+      misconceptions: mis,
+    })
+  }
+
+  // Nivå 8–10: textform, samt (nivå 10) x på båda sidor.
+  if (level >= 10 && rng.chance(0.5)) {
+    const x = rng.int(3, 9)
+    const b1 = rng.int(2, 8)
+    // 2x + b1 = x + (x + b1)  →  x
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `2x + ${b1} = x + ${x + b1} — vad är x?`,
+      spokenPrompt: `2 gånger x plus ${b1} är lika med x plus ${x + b1}. Vad är x?`,
+      value: x,
+      explanation: `Ta bort x från båda sidor: x + ${b1} = ${x + b1}. Ta bort ${b1}: x = ${x}.`,
+      misconceptions: { [x + b1]: 'likhetstecken-resultat' },
+    })
+  }
+  // Textform: startavgift + styckpris.
+  const penna = rng.int(2, 9)
+  const a = rng.int(2, 4)
+  const b = rng.int(2, 6)
+  const c = a * penna + b
+  return numericTask({
+    generatorId: id, level, seed,
+    prompt: `Ali köper ${a} pennor och betalar ${b} kr för en påse. Allt kostar ${c} kr. Vad kostar en penna?`,
+    value: penna, unit: 'kr',
+    explanation: `Pennorna kostar ${c} − ${b} = ${a * penna} kr. En penna: ${a * penna} / ${a} = ${penna} kr.`,
+    misconceptions: { [a * penna]: 'likhetstecken-resultat', [c]: 'fel-raknesatt' },
+  })
+})
+
 export const MONSTERSKOGEN_GENERATORS: TaskGenerator[] = [
-  monsterEnkla, talfoljder1, likhetstecken, oppnaUtsagor, monsterRegler, enklaEkvationer,
+  monsterEnkla, talfoljder1, likhetstecken, oppnaUtsagor, monsterRegler, enklaEkvationer, ekvationerTvaSteg,
 ]

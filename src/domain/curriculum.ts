@@ -266,7 +266,7 @@ export const MOMENTS: Moment[] = [
     description: 'x + 12 = 30 — bokstaven som gömmer ett tal.',
   }),
   def({
-    id: 'ekvationer-tva-steg', world: 'monsterskogen', area: 'algebra', term: t('6', 'VT', 1),
+    id: 'ekvationer-tva-steg', world: 'monsterskogen', area: 'algebra', term: t('6', 'VT', 1), gen: true,
     prereq: ['enkla-ekvationer'],
     title: 'Ekvationer i två steg',
     description: '2x + 3 = 11 — lös steg för steg.',
@@ -279,7 +279,7 @@ export const MOMENTS: Moment[] = [
     description: 'Cirkel, triangel, kvadrat, rektangel — känna igen och namnge.',
   }),
   def({
-    id: 'former-3d', world: 'formernas-berg', area: 'geometri', term: t('1', 'HT', 2),
+    id: 'former-3d', world: 'formernas-berg', area: 'geometri', term: t('1', 'HT', 2), gen: true,
     prereq: ['former-2d'],
     title: 'Kroppar',
     description: 'Klot, kub, cylinder — formerna i tre dimensioner.',
@@ -309,7 +309,7 @@ export const MOMENTS: Moment[] = [
     description: 'Hela klockan, digital och analog, tidsskillnader.',
   }),
   def({
-    id: 'symmetri', world: 'formernas-berg', area: 'geometri', term: t('3', 'VT', 1),
+    id: 'symmetri', world: 'formernas-berg', area: 'geometri', term: t('3', 'VT', 1), gen: true,
     prereq: ['former-2d'],
     title: 'Symmetri',
     description: 'Spegellinjer i former och bilder.',
@@ -327,13 +327,13 @@ export const MOMENTS: Moment[] = [
     description: 'Ytan innanför: rektanglar och trianglar.',
   }),
   def({
-    id: 'vinklar', world: 'formernas-berg', area: 'geometri', term: t('6', 'HT', 2),
+    id: 'vinklar', world: 'formernas-berg', area: 'geometri', term: t('6', 'HT', 2), gen: true,
     prereq: ['area'],
     title: 'Vinklar',
     description: 'Räta, spetsiga och trubbiga vinklar — mäta i grader.',
   }),
   def({
-    id: 'skala', world: 'formernas-berg', area: 'geometri', term: t('6', 'VT', 1),
+    id: 'skala', world: 'formernas-berg', area: 'geometri', term: t('6', 'VT', 1), gen: true,
     prereq: ['area'],
     title: 'Skala',
     description: 'Kartor och ritningar — förminskat och förstorat.',
