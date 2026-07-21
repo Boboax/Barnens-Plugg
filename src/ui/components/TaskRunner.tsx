@@ -55,6 +55,21 @@ const ON_CARD_MUTED = '#6E6656'
    ansträngning och strategi ("bra kämpat"), aldrig "vad smart du är". */
 const PI_CHEERS = ['Rätt!', 'Bra jobbat!', 'Snyggt räknat!', 'Precis rätt!', 'Ja — du fixade det!', 'Starkt jobbat!']
 const PI_ENCOURAGE = ['Bra kämpat! Nu lär vi oss.', 'Nästan — vi tar det tillsammans!', 'Bra försök! Kolla här.', 'Oj, en klurig! Nu tittar vi.']
+/* Pis små skämt — varm, fnissig ton, aldrig ironisk. Visas i stället för ett
+   vanligt tillrop i ~15 % av de rätta svaren (bara i övningsläge) för lite
+   mikrovariation och personlighet. Max ~60 tecken. */
+const PI_JOKES = [
+  'Visste du att jag älskar udda tal? Lite tokiga — som jag!',
+  'Sju är mitt turtal. Åtta blev sur, fråga inte varför.',
+  'Nollan är min kompis. Den ser rund och glad ut!',
+  'Jag räknar får när jag inte kan sova. Igår kom jag till 428.',
+  'Trianglar är bäst. De har alltid en spetsig idé!',
+  'Jag gillar tior — de är så runda och nöjda.',
+  'Minus är bara plus som går baklänges. Klurigt, va?',
+  'En gång åt jag en hel tallinje. Den smakade mest siffror.',
+  'Femman gör high-five med sig själv. Fem fingrar!',
+  'Jag viskar gångertabellen till stjärnorna om kvällen.',
+]
 const pick = (pool: string[]): string => pool[Math.floor(Math.random() * pool.length)]
 
 export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle, firstTask = false }: TaskRunnerProps) {
@@ -102,7 +117,8 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
     setLastResult(result)
     if (mode === 'ovning') {
       setPhase('feedback')
-      setCoachLine(pick(correct ? PI_CHEERS : PI_ENCOURAGE)) // Pis tillrop
+      // Rätt svar: ibland (~15 %) ett litet Pi-skämt i stället för ett tillrop.
+      setCoachLine(correct ? (Math.random() < 0.15 ? pick(PI_JOKES) : pick(PI_CHEERS)) : pick(PI_ENCOURAGE))
       if (correct) sfx.ratt()
       else sfx.fel()
     } else if (mode === 'diagnos') {
