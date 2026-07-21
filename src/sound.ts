@@ -353,6 +353,14 @@ export const sfx = {
     const t = c.currentTime
     ;[0, 7, 12, 19, 24].forEach((n, i) => tone(freq(C5, n), { at: t + i * 0.07, dur: 0.16, gain: 0.85 }))
   },
+  /** Skattkista öppnas — kort, glittrig uppåtstuds. */
+  skatt(): void {
+    const c = ensure(); if (!c) return
+    const t = c.currentTime
+    ;[0, 12, 19, 24].forEach((n, i) => tone(freq(C5, n), { at: t + i * 0.06, dur: 0.13, type: 'triangle', gain: 0.8 }))
+    // Glittrande topp som ringer ut.
+    ;[28, 31].forEach((n, i) => tone(freq(C5, n), { at: t + 0.24 + i * 0.05, dur: 0.3, gain: 0.5 }))
+  },
   /** Combo-pling — stiger med combons längd. */
   combo(steps: number): void {
     tone(freq(C5, 12 + Math.min(steps, 8)), { dur: 0.18, gain: 0.8 })
