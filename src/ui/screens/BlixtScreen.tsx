@@ -194,7 +194,10 @@ export function BlixtScreen() {
         {previousBest > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="pokal" size={13} /> rekord {previousBest}</span>}
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+      {/* width:100% — annars krymper kolumnen till svarsrutans bredd och
+          Keypadens maxWidth (size="stor") nås aldrig (knapparna blir smala
+          pelare). maxWidth håller den lagom bred och centrerad på iPad. */}
+      <div style={{ flex: 1, width: '100%', maxWidth: 560, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
         <p style={{ fontSize: 48, fontWeight: 900, margin: 0, letterSpacing: 1 }}>{task?.prompt.replace(' = ?', ' =')}</p>
         <div style={{
           minWidth: 160, minHeight: 64, display: 'flex', alignItems: 'center', justifyContent: 'center',
