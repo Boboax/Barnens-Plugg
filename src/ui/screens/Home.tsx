@@ -176,8 +176,13 @@ function HomeInner({ child }: { child: ChildProfile }) {
   // Avbryt uppläsning när skärmen lämnas (mönster: TaskRunner).
   useEffect(() => () => stopSpeaking(), [])
   const lastChapter = world.chapters.length - 1
+  // SISTA kapitlet ("… vägen öppnas") får bara visas när världen är erövrad OCH
+  // alla moment klara. Har en erövrad värld fått NYA oklarade noder visar vi
+  // näst sista kapitlet — annars ljuger banderollen om att allt är avklarat.
   const chapter = worldConquered
-    ? world.chapters[lastChapter]
+    ? worldAllMomentsDone
+      ? world.chapters[lastChapter]
+      : world.chapters[Math.max(0, lastChapter - 1)]
     : worldAllMomentsDone
       ? `Alla moment i ${world.name} är klara — ${world.boss.name} vaknar! Dags att möta bossen.`
       : world.chapters[Math.min(masteredInWorld, lastChapter - 1)]
