@@ -40,6 +40,9 @@ interface TaskRunnerProps {
   onScratchHandle?(handle: ScratchPadHandle): void
   /** Visa en liten Pi-nudge ("tryck på ett svar") — sätts bara på första uppgiften. */
   firstTask?: boolean
+  /** Om satt visas "Prata med Pi 💬" i ledtrådssteget (bara barn med chatt på).
+      Chatten öppnas ALDRIG automatiskt — det här är ett frivilligt knapptryck. */
+  onOpenChat?(): void
 }
 
 const parseNumeric = (raw: string): number => Number(raw.replace('−', '-').replace(',', '.'))
@@ -72,13 +75,18 @@ const PI_JOKES = [
 ]
 const pick = (pool: string[]): string => pool[Math.floor(Math.random() * pool.length)]
 
-export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle, firstTask = false }: TaskRunnerProps) {
+export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle, firstTask = false, onOpenChat }: TaskRunnerProps) {
   // FK (~6 år) läser inte flytande → stor, tydlig uppläsningsknapp med etikett.
   const { activeChild } = useStore()
   const fk = activeChild?.schoolYear === 'F'
   const [value, setValue] = useState('')
-  const [phase, setPhase] = useState<'svara' | 'feedback'>('svara')
+  // 'retry' = ledtrådssteget efter första felsvaret (bara övningsläget). Barnet
+  // får hjälp att komma rätt och ETT nytt försök innan facit visas.
+  const [phase, setPhase] = useState<'svara' | 'retry' | 'feedback'>('svara')
   const [answered, setAnswered] = useState(false)
+  const [attempt, setAttempt] = useState(1)
+  const [hintLine, setHintLine] = useState('')
+  const [wrongChoice, setWrongChoice] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<TaskResult>()
   const [coachLine, setCoachLine] = useState('')
   const startedAt = useRef(Date.now())
@@ -87,11 +95,14 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
   // samma frame — ivrig dubbelknackning kunde registrera dubbla svar.
   const finishedRef = useRef(false)
 
-  // Ny uppgift → nollställ.
+  // Ny uppgift → nollställ (inkl. ledtrådsstegets tillstånd).
   useEffect(() => {
     setValue('')
     setPhase('svara')
     setAnswered(false)
+    setAttempt(1)
+    setHintLine('')
+    setWrongChoice(null)
     finishedRef.current = false
     setLastResult(undefined)
     setCoachLine('')
@@ -103,6 +114,20 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
 
   const needsNegative = task.answer.kind === 'numeric' && task.answer.value < 0
   const needsDecimal = task.answer.kind === 'numeric' && !Number.isInteger(task.answer.value)
+  // Tvåvalsfrågor (t.ex. Ja/Nej) får INGET omförsök — andra knappen är per
+  // definition rätt (ren gissning, noll lärande). Går direkt till facit.
+  const twoChoice = task.answer.kind === 'choice' && task.answer.choices.length === 2
+  const retryEligible = mode === 'ovning' && !twoChoice
+
+  /** Ledtråd FÖRE facit: missuppfattningsspecifik om motorn känner igen felet,
+      annars en processledtråd efter uppgiftstyp. Leder mot metoden — aldrig svaret. */
+  const buildHint = (given: number | string): string => {
+    const tag = matchMisconception(task, given)
+    if (tag && tag !== 'okand') return misconceptionInfo(tag).childHint
+    if (task.visual.kind !== 'ingen') return 'Titta på bilden igen — den visar svaret. Räkna en gång till!'
+    if (task.answer.kind === 'choice') return 'Läs alla svaren en gång till innan du väljer.'
+    return 'Räkna en gång till, lugnt och fint. Du klarar det!'
+  }
 
   const finish = (correct: boolean, given: number | string): void => {
     if (answered || finishedRef.current) return
@@ -116,15 +141,40 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
     }
     setLastResult(result)
     if (mode === 'ovning') {
-      setPhase('feedback')
-      // Rätt svar: ibland (~15 %) ett litet Pi-skämt i stället för ett tillrop.
-      setCoachLine(correct ? (Math.random() < 0.15 ? pick(PI_JOKES) : pick(PI_CHEERS)) : pick(PI_ENCOURAGE))
-      if (correct) sfx.ratt()
-      else sfx.fel()
+      if (correct) {
+        setPhase('feedback')
+        // Rätt på omförsöket firas varmt; annars vanligt tillrop (~15 % skämt).
+        setCoachLine(attempt === 2 ? 'Där satt den! 💪' : (Math.random() < 0.15 ? pick(PI_JOKES) : pick(PI_CHEERS)))
+        sfx.ratt()
+      } else if (attempt === 1 && retryEligible) {
+        // Första felsvaret → ledtråd + ETT nytt försök (facit hålls tillbaka).
+        setPhase('retry')
+        setHintLine(buildHint(given))
+        if (typeof given === 'string') setWrongChoice(given) // gråa den valda felknappen
+        sfx.fel()
+      } else {
+        // Andra felsvaret (eller tvåvalsfråga) → facit, som förut.
+        setPhase('feedback')
+        setCoachLine(pick(PI_ENCOURAGE))
+        sfx.fel()
+      }
     } else if (mode === 'diagnos') {
       sfx.klick() // neutral bekräftelse — diagnosen avslöjar aldrig rätt/fel
     }
-    onComplete(result)
+    // ENDAST första försöket bokförs i motorn (rating, missuppfattningar,
+    // repetitionsutvärdering). Omförsöket är ett rent pedagogiskt UI-lager —
+    // orubblig princip 5: framsteg styrs av appkod, opåverkat av omförsöket.
+    if (attempt === 1) onComplete(result)
+  }
+
+  /** "Försök igen!" — tillbaka till svarsläget för ett andra (obokfört) försök. */
+  const goRetry = (): void => {
+    setAttempt(2)
+    setAnswered(false)
+    finishedRef.current = false
+    setValue('')
+    setPhase('svara')
+    stopSpeaking()
   }
 
   const submitNumeric = (): void => {
@@ -192,7 +242,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
               {value || '\u00A0'}
               {task.answer.unit && <span style={{ fontSize: 16, color: ON_CARD_MUTED, marginLeft: 6 }}>{task.answer.unit}</span>}
             </div>
-            {!inFeedback && (
+            {phase === 'svara' && (
               <Keypad
                 value={value}
                 onChange={setValue}
@@ -204,35 +254,68 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
             )}
           </>
         ) : (
-          !inFeedback && (
+          phase === 'svara' && (
             <div style={{
               display: 'grid',
               gridTemplateColumns: task.answer.choices.some((c) => c.text.length > 14) ? '1fr' : 'repeat(2, minmax(130px, 1fr))',
               gap: 10, width: '100%', maxWidth: 480,
             }}>
-              {task.answer.choices.map((choice) => (
-                <button
-                  key={choice.text}
-                  data-testid="choice"
-                  onClick={() => finish(choice.correct, choice.text)}
-                  disabled={answered}
-                  style={{
-                    background: 'var(--card)', border: '2.5px solid var(--line)', borderRadius: 14,
-                    padding: '13px 10px', fontSize: 18, fontWeight: 900, boxShadow: '0 3px 0 var(--line)',
-                    fontFamily: 'inherit', color: ON_CARD_INK,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >{isObjektIcon(choice.text) ? <ObjektIcon name={choice.text} size={44} /> : choice.text}</button>
-              ))}
+              {task.answer.choices.map((choice) => {
+                // Vid omförsök: gråa den felknapp barnet redan valt.
+                const spent = choice.text === wrongChoice
+                return (
+                  <button
+                    key={choice.text}
+                    data-testid="choice"
+                    onClick={() => finish(choice.correct, choice.text)}
+                    disabled={answered || spent}
+                    style={{
+                      background: 'var(--card)', border: '2.5px solid var(--line)', borderRadius: 14,
+                      padding: '13px 10px', fontSize: 18, fontWeight: 900, boxShadow: '0 3px 0 var(--line)',
+                      fontFamily: 'inherit', color: ON_CARD_INK,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: spent ? 0.4 : 1,
+                    }}
+                  >{isObjektIcon(choice.text) ? <ObjektIcon name={choice.text} size={44} /> : choice.text}</button>
+                )
+              })}
             </div>
           )
         )}
 
         {/* Första uppgiften: en liten Pi visar VAR man svarar (försvinner sen). */}
-        {mode === 'ovning' && firstTask && !answered && !inFeedback && (
+        {mode === 'ovning' && firstTask && phase === 'svara' && !answered && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: ON_CARD_INK, fontWeight: 700, fontSize: 13.5 }}>
             <Pi mood="glad" size={40} />
             <span>{task.answer.kind === 'numeric' ? 'Skriv talet och tryck på ✓' : 'Tryck på svaret du tror är rätt!'}</span>
+          </div>
+        )}
+
+        {/* Ledtrådssteget: Pi kliver in AUTOMATISKT med en metodledtråd (aldrig
+            facit) och barnet får ett nytt försök. Uppläsning på tryck, aldrig
+            autoplay. "Prata med Pi" bara för barn med chatten på (frivilligt). */}
+        {phase === 'retry' && (
+          <div className="pop" style={{
+            background: 'color-mix(in srgb, var(--sun) 18%, var(--card))',
+            border: '2px solid var(--sun)', borderRadius: 16, padding: '12px 18px',
+            maxWidth: 520, textAlign: 'center', color: ON_CARD_INK,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, justifyContent: 'center', marginBottom: 8 }}>
+              <Pi mood="funderar" size={44} />
+              <span style={{ fontSize: 15.5, fontWeight: 700, lineHeight: 1.35, textAlign: 'left' }}>{hintLine}</span>
+              {ttsAvailable() && (
+                <button className="chip" onClick={() => speak(hintLine)} aria-label="Läs upp ledtråden"
+                  style={fk ? { flexShrink: 0, minHeight: 44, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 5, fontWeight: 800 } : { flexShrink: 0 }}>
+                  <Icon name="ljud" size={fk ? 22 : 16} />{fk ? ' Lyssna' : ''}
+                </button>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button className="btn btn-primary" onClick={goRetry}>Försök igen! ▶</button>
+              {onOpenChat && (
+                <button className="btn btn-quiet" onClick={onOpenChat}>Prata med Pi 💬</button>
+              )}
+            </div>
           </div>
         )}
 

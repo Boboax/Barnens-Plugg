@@ -30,3 +30,30 @@ Här är kopplingen mellan forskning och implementation.
 - **8–10 (stjärnnivån 💎):** över årskursnivå — flerstegsproblem, öppna utsagor,
   överflödig information, baklängesuppgifter. Låses upp efter besegrad boss.
   Det är stjärnnivån + repetitionsproven som gör att det *sitter ordentligt*.
+
+## Ledtrådstrappan (fel svar → hjälp före facit)
+
+Beslutat med föräldern (juli 2026). När ett barn svarar fel i **övningsläget**
+visas INTE rätt svar direkt. I stället kliver Pi in automatiskt med en
+**metodledtråd** — en pekning mot *hur* man tänker, aldrig svaret — och barnet
+får ett nytt försök. Först om det blir fel igen visas den fulla förklaringen
+och rätt svar ("bottenledtråden").
+
+**Varför:** återkoppling på processnivå ("titta på det här, räkna så här") lär
+ut mer än återkoppling på resultatnivå ("svaret var 12"). Beprövade
+tutorsystem använder ledtrådstrappor med en garanterad bottenledtråd — utan
+den fastnar barn och börjar chansa; med obegränsade försök uppstår
+frustrationsloopar (särskilt i FK). Därför: exakt ETT extra försök, sedan facit.
+
+**Orubbliga avgränsningar:**
+- Bara övningsläget. Prov (boss/kunskapskoll), diagnos och blixt rörs inte.
+- **Endast första försöket bokförs i motorn** (rating, missuppfattningar,
+  repetitionsutvärdering). Omförsöket är ett rent pedagogiskt UI-lager —
+  annars skulle ratingen blåsas upp och adaptiviteten/rapporten ljuga
+  (orubblig princip 5: framsteg styrs av appkod).
+- **Tvåvalsfrågor (Ja/Nej) får inget omförsök** — andra knappen är per
+  definition rätt (ren gissning). De går direkt till facit.
+- Ledtråden är appens EGNA deterministiska text (missuppfattningsspecifik när
+  motorn känner igen felet, annars en processledtråd efter uppgiftstyp) — inte
+  AI-chatten. Barn med chatten på får en frivillig "Prata med Pi 💬"-knapp i
+  ledtrådssteget; chatten öppnas ALDRIG automatiskt (lager 0 orört).
