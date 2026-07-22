@@ -246,22 +246,32 @@ const former3d = g('former-3d', (level, seed, rng) => {
   const nameChoices = (correct: BodyKey): [string, null][] =>
     rng.shuffle(pool.filter((k) => k !== correct)).slice(0, 3).map((k) => [nameOf(k), null])
 
-  // Nivå 8–10: gåtor med korta meningar (åk 1-språk även på stjärnan).
+  // Nivå 8–10: gåtor med korta meningar (åk 1-språk även på stjärnan). Fler
+  // gåtor (cylinder/pyramid/rätblock) så stjärnan inte upprepar samma tre.
+  // `force` = en särskilt lockande felkropp som alltid ska vara med.
   if (level >= 8) {
     const riddle = rng.pick([
-      { q: 'Jag har 6 lika stora sidoytor. Vad är jag?', a: 'kub' as BodyKey, distr: ['Rätblock', 'Kub-fälla'] },
-      { q: 'Jag kan rulla och har en spets. Vad är jag?', a: 'kon' as BodyKey, distr: [] },
-      { q: 'Jag är rund överallt och kan rulla åt alla håll. Vad är jag?', a: 'klot' as BodyKey, distr: [] },
+      { q: 'Jag har 6 lika stora sidoytor. Vad är jag?', a: 'kub' as BodyKey, force: 'ratblock' as BodyKey,
+        why: 'En kub har 6 lika stora kvadrat-ytor. Ett rätblock har också 6 ytor, men de är inte lika stora.' },
+      { q: 'Jag har 6 sidoytor, men alla är inte lika stora. Vad är jag?', a: 'ratblock' as BodyKey, force: 'kub' as BodyKey,
+        why: 'Ett rätblock har 6 ytor med olika storlek. En kub har också 6 ytor, men de är alla lika stora.' },
+      { q: 'Jag kan rulla och har en spets. Vad är jag?', a: 'kon' as BodyKey, force: 'pyramid' as BodyKey,
+        why: 'En kon har en spets och en rund botten — därför kan den rulla. En pyramid har platta ytor och kan inte rulla.' },
+      { q: 'Jag har en spets och en fyrkantig botten. Vad är jag?', a: 'pyramid' as BodyKey, force: 'kon' as BodyKey,
+        why: 'En pyramid har en spets över en fyrkantig botten — bara platta ytor. En kon har en rund botten.' },
+      { q: 'Jag kan rulla och har två platta cirklar. Vad är jag?', a: 'cylinder' as BodyKey, force: 'klot' as BodyKey,
+        why: 'En cylinder har två runda cirkelytor och en rund sida — den rullar på sidan.' },
+      { q: 'Jag är rund överallt och kan rulla åt alla håll. Vad är jag?', a: 'klot' as BodyKey, force: 'cylinder' as BodyKey,
+        why: 'Ett klot är runt åt alla håll. En cylinder rullar bara åt ett håll.' },
     ])
-    const distr: [string, null][] = riddle.a === 'kub'
-      ? [['Rätblock', null], ...nameChoices('kub').filter(([n]) => n !== 'Rätblock').slice(0, 2)]
-      : nameChoices(riddle.a)
+    const distr: [string, null][] = [
+      [nameOf(riddle.force), null],
+      ...nameChoices(riddle.a).filter(([n]) => n !== nameOf(riddle.force)).slice(0, 2),
+    ]
     return choiceTask({
       generatorId: id, level, seed, rng,
       prompt: riddle.q, correct: nameOf(riddle.a), distractors: distr,
-      explanation: riddle.a === 'kub'
-        ? 'En kub har 6 lika stora kvadrat-ytor. Ett rätblock har också 6 ytor, men de är inte lika stora.'
-        : `Det är ${enOf(riddle.a)}.`,
+      explanation: riddle.why,
     })
   }
 
@@ -287,12 +297,19 @@ const former3d = g('former-3d', (level, seed, rng) => {
   if (which === 'rulla') {
     const k = rng.pick(pool)
     const rullar = BODY_FACTS[k].rullar
+    // Kongruens efter genus: "ett klot är runt … det kan rulla" (inte "rund … den").
+    const neutrum = BODY_FACTS[k].art === 'ett'
+    const pron = neutrum ? 'det' : 'den'
+    const rund = neutrum ? 'runt' : 'rund'
+    const Cap = `${enOf(k)[0].toUpperCase()}${enOf(k).slice(1)}`
     return choiceTask({
       generatorId: id, level, seed, rng,
       visual: { kind: 'kropp', body: k },
       prompt: `Kan ${enOf(k)} rulla?`, correct: rullar ? 'Ja' : 'Nej',
       distractors: [[rullar ? 'Nej' : 'Ja', null]],
-      explanation: rullar ? `${enOf(k)[0].toUpperCase()}${enOf(k).slice(1)} är rund någonstans — den kan rulla.` : `${enOf(k)[0].toUpperCase()}${enOf(k).slice(1)} har bara platta sidor — den kan inte rulla.`,
+      explanation: rullar
+        ? `${Cap} är ${rund} någonstans — ${pron} kan rulla.`
+        : `${Cap} har bara platta sidor — ${pron} kan inte rulla.`,
     })
   }
   // 'antal': hörn/kanter bara för polyedrar (entydigt); ytor för alla.
@@ -370,12 +387,18 @@ const symmetri = g('symmetri', (level, seed, rng) => {
       explanation: `En rektangel har 2 spegellinjer. En ${more === 'kvadrat' ? 'kvadrat har 4' : 'liksidig triangel har 3'} — fler.`,
     })
   }
+  // Diagonalfrågan varieras: kvadrat (Ja) ELLER rektangel (Nej — klassiska
+  // fällan). Förr var det alltid kvadrat → exakt samma uppgift varje gång.
+  const diagShape = rng.pick(['kvadrat', 'rektangel'] as const)
+  const diagOk = MIRROR_FACTS[diagShape].diagonal
   return choiceTask({
     generatorId: id, level, seed, rng,
-    visual: { kind: 'spegel', shape: 'kvadrat', axis: 'diagonal' },
+    visual: { kind: 'spegel', shape: diagShape, axis: 'diagonal' },
     prompt: 'Är den streckade linjen en spegellinje?',
-    correct: 'Ja', distractors: [['Nej', null]],
-    explanation: 'Ja — kvadratens diagonal ÄR en spegellinje (till skillnad från rektangelns diagonal, som inte är det).',
+    correct: diagOk ? 'Ja' : 'Nej', distractors: [[diagOk ? 'Nej' : 'Ja', null]],
+    explanation: diagOk
+      ? 'Ja — kvadratens diagonal ÄR en spegellinje: viker man längs den passar halvorna precis på varandra.'
+      : 'Nej — rektangelns diagonal är INTE en spegellinje: halvorna hamnar snett (till skillnad från kvadratens diagonal).',
   })
 })
 
@@ -411,11 +434,19 @@ const vinklar = g('vinklar', (level, seed, rng) => {
       })
     }
     if (kind === 'tva-rata') {
+      // Varieras: förr alltid "två räta vinklar = 180" (parameterlöst, ~1/3 av
+      // nivå 4–7). Nu tre/fyra räta och rät+halv rät också.
+      const combo = rng.pick([
+        { q: 'två räta vinklar', v: 180, e: 'Två räta vinklar: 90° + 90° = 180°. Det är en rak linje.' },
+        { q: 'tre räta vinklar', v: 270, e: 'Tre räta vinklar: 3 × 90° = 270°.' },
+        { q: 'en rät vinkel och en halv rät vinkel', v: 135, e: 'En rät vinkel är 90° och en halv rät är 45°: 90° + 45° = 135°.' },
+        { q: 'fyra räta vinklar', v: 360, e: 'Fyra räta vinklar: 4 × 90° = 360°. Det är ett helt varv.' },
+      ] as const)
       return numericTask({
         generatorId: id, level, seed,
-        prompt: 'Hur många grader är två räta vinklar tillsammans?',
-        value: 180, unit: '°',
-        explanation: 'Två räta vinklar: 90° + 90° = 180°. Det är en rak linje.',
+        prompt: `Hur många grader är ${combo.q} tillsammans?`,
+        value: combo.v, unit: '°',
+        explanation: combo.e,
         misconceptions: { 90: 'fel-raknesatt' },
       })
     }
@@ -462,7 +493,11 @@ const vinklar = g('vinklar', (level, seed, rng) => {
 // Skala (åk 6 VT, etapp D). Heltalssvar garanterat t.o.m. nivå 7.
 const skala = g('skala', (level, seed, rng) => {
   const id = 'gen.skala'
-  const skalaSpoken = (s: string): string => s.replace(/1:(\d+)/g, (_, n) => `skala ett till ${n}`)
+  // Läser upp skalförhållanden: "2:1" → "två till ett" (inte "två kolon ett").
+  // Regexen matchar N:M (inte bara 1:N); "skala" behålls i själva strängen.
+  const ratWord = (n: string): string => (n === '1' ? 'ett' : n === '2' ? 'två' : n)
+  const skalaSpoken = (s: string): string =>
+    s.replace(/(\d+):(\d+)/g, (_, a, b) => `${ratWord(a)} till ${ratWord(b)}`)
 
   if (level <= 3) {
     // Förstora/förminska en bild med skala 2:1 (dubbelt) eller 1:2 (hälften).
@@ -474,7 +509,7 @@ const skala = g('skala', (level, seed, rng) => {
       generatorId: id, level, seed, unit: 'cm',
       visual: { kind: 'rektangel', w, h, unit: 'cm' },
       prompt: `Bilden är ${w} cm bred. I skala ${upp ? '2:1' : '1:2'} — hur bred blir den?`,
-      spokenPrompt: skalaSpoken(`Bilden är ${w} cm bred. I ${upp ? '2:1' : '1:2'} — hur bred blir den?`),
+      spokenPrompt: skalaSpoken(`Bilden är ${w} cm bred. I skala ${upp ? '2:1' : '1:2'} — hur bred blir den?`),
       value,
       explanation: upp
         ? `Skala 2:1 gör bilden dubbelt så stor: ${w} × 2 = ${value} cm.`
@@ -519,7 +554,7 @@ const skala = g('skala', (level, seed, rng) => {
     return choiceTask({
       generatorId: id, level, seed, rng,
       prompt: `Vilken karta visar MEST verklighet på 1 cm — skala 1:${s1} eller 1:${s2}?`,
-      spokenPrompt: skalaSpoken(`Vilken karta visar mest verklighet på 1 cm — 1:${s1} eller 1:${s2}?`),
+      spokenPrompt: skalaSpoken(`Vilken karta visar mest verklighet på 1 cm — skala 1:${s1} eller 1:${s2}?`),
       correct: `1:${s2}`, distractors: [[`1:${s1}`, 'fel-raknesatt']],
       explanation: `Ju större talet efter kolon, desto mer verklighet ryms på varje cm. 1:${s2} visar ${s2} cm per cm — mer än 1:${s1}.`,
     })

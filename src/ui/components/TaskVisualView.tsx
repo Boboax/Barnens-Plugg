@@ -35,7 +35,7 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
       background: 'linear-gradient(180deg, #FBF4E2, #F1E6CB)', border: '2px solid #C9B489',
       borderRadius: 16, padding: '10px 14px', color: '#2E3350',
       boxShadow: '0 2px 6px rgba(60,44,20,.18)',
-      ...({ '--ink': '#2E3350', '--muted': '#6E6656', '--card': '#FBF4E2', '--line': '#C9B489' } as React.CSSProperties),
+      ...({ '--ink': '#2E3350', '--muted': '#6E6656', '--card': '#FBF4E2', '--line': '#C9B489', '--sun-ink': '#7A5A00' } as React.CSSProperties),
     }}>{inner}</div>
   )
 }
@@ -402,10 +402,12 @@ function Koordinat({ min, max, points, lines, xLabel, yLabel }: {
       <polygon points={`${sx(max) + 9},${sy(0)} ${sx(max) + 1},${sy(0) - 4.5} ${sx(max) + 1},${sy(0) + 4.5}`} fill="var(--ink)" />
       <polygon points={`${sx(0)},${sy(max) - 9} ${sx(0) - 4.5},${sy(max) - 1} ${sx(0) + 4.5},${sy(max) - 1}`} fill="var(--ink)" />
       {/* Siffror på axlarna (0 vid origo). */}
-      {ints.filter((i) => i !== 0).map((i) => <text key={`nx${i}`} x={sx(i)} y={sy(0) + 14} fontSize={10.5} fontWeight={700} fill="var(--muted)" textAnchor="middle">{i}</text>)}
+      {/* Sista x-siffran hoppas över när en axelbenämning finns — annars ritas
+          t.ex. "kg" rakt ovanpå "10" (uppmätt överlapp). Etiketten tar då dess plats. */}
+      {ints.filter((i) => i !== 0 && !(xLabel && i === max)).map((i) => <text key={`nx${i}`} x={sx(i)} y={sy(0) + 14} fontSize={10.5} fontWeight={700} fill="var(--muted)" textAnchor="middle">{i}</text>)}
       {ints.filter((i) => i !== 0).map((i) => <text key={`ny${i}`} x={sx(0) - 6} y={sy(i) + 4} fontSize={10.5} fontWeight={700} fill="var(--muted)" textAnchor="end">{i}</text>)}
       <text x={sx(0) - 6} y={sy(0) + 14} fontSize={10.5} fontWeight={700} fill="var(--muted)" textAnchor="end">0</text>
-      {xLabel && <text x={sx(max) + 2} y={sy(0) + 19} fontSize={11} fontWeight={800} fill="var(--ink)" textAnchor="end">{xLabel}</text>}
+      {xLabel && <text x={sx(max) + 4} y={sy(0) + 14} fontSize={11} fontWeight={800} fill="var(--ink)" textAnchor="end">{xLabel}</text>}
       {yLabel && <text x={sx(0) + 6} y={sy(max) + 1} fontSize={11} fontWeight={800} fill="var(--ink)" textAnchor="start">{yLabel}</text>}
       {/* Linjer (grafer): förläng riktningen och klipp till rutnätet. */}
       {(lines ?? []).map((ln, li) => {
@@ -533,9 +535,15 @@ function Spegel({ shape, axis }: { shape: 'cirkel' | 'kvadrat' | 'rektangel' | '
       case 'hjarta': return <path d="M80,132 C20,92 34,36 80,60 C126,36 140,92 80,132 Z" fill={fill} stroke={stroke} strokeWidth={4} strokeLinejoin="round" />
     }
   })()
+  // Diagonalen ska följa figurens FAKTISKA hörn-till-hörn (annars blev
+  // rektangelns klassiska fälla ett för lätt Nej-fall: en 45°-linje som
+  // uppenbart missar hörnen). Kvadratens/rektangelns hörn matchar rect ovan.
+  const diagLine = shape === 'rektangel' ? { x1: 14, y1: 46, x2: 146, y2: 114 }
+    : shape === 'kvadrat' ? { x1: 26, y1: 26, x2: 134, y2: 134 }
+    : { x1: 24, y1: 24, x2: 136, y2: 136 } // cirkel/hjärta/triangel: 45° genom centrum
   const line = axis === 'lodrat' ? { x1: C, y1: 14, x2: C, y2: 146 }
     : axis === 'vagrat' ? { x1: 14, y1: C, x2: 146, y2: C }
-    : { x1: 24, y1: 24, x2: 136, y2: 136 }
+    : diagLine
   return (
     <svg viewBox="0 0 160 160" width={176} style={{ maxWidth: '100%' }} aria-hidden="true">
       {figure}

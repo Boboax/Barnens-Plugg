@@ -336,16 +336,21 @@ const diagramLasa = g('diagram-lasa', (level, seed, rng) => {
   // Skalsteg 2 genomgående → varje punkt landar på en gridlinje (annars kräver
   // avläsningen interpolation, och ±1-distraktorerna matchar inte skalan).
   const STEP = 2
+  // En planta MÅSTE växa (aldrig krympa); temperatur får gå både upp och ner.
+  const vaxer = scen.what === 'plantans höjd'
   let values: number[]
   if (level >= 8) {
-    // Konstruera distinkta (jämna) förändringar → den brantaste ökningen är
-    // ENTYDIG och varje punkt sitter ändå kvar på en gridlinje.
-    const deltas = rng.shuffle([2, 4, 6, -2, -4]).slice(0, n - 1)
+    // Distinkta (jämna) förändringar → den brantaste ökningen är ENTYDIG och
+    // varje punkt sitter kvar på en gridlinje. Plantan: enbart POSITIVA steg.
+    const deltas = rng.shuffle(vaxer ? [2, 4, 6, 8] : [2, 4, 6, -2, -4]).slice(0, n - 1)
     values = [6]
     for (const dl of deltas) values.push(Math.max(0, values[values.length - 1] + dl))
   } else {
     // Distinkta multiplar av 2 (max 16) → entydig topp och entydig skillnad.
     values = distinctMultiples(rng, n, STEP, 16)
+    // Plantan sorteras stigande → frågan "hur mycket minskade plantan?" kan
+    // aldrig uppstå (en planta som krymper är fel modell).
+    if (vaxer) values = [...values].sort((a, b) => a - b)
   }
   const points = labels.map((label, i) => ({ label, value: values[i] }))
   const visual = { kind: 'linje' as const, points, unit: scen.unit, step: STEP }

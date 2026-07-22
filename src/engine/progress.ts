@@ -1,7 +1,7 @@
 import type {
   AnswerRecord, ChildProfile, MasteryState, MisconceptionTag, SkillState, Task,
 } from '../domain/types'
-import { MOMENTS, momentById } from '../domain/curriculum'
+import { MOMENTS, MOMENTS_ORDERED, momentById } from '../domain/curriculum'
 import { WORLDS } from '../domain/worlds'
 import { hasGenerator } from '../generators'
 import { RATING_START, isBossReady, practiceLevel, updateRating } from './rating'
@@ -34,9 +34,12 @@ const isDone = (s: SkillState | undefined): boolean =>
 
 const EMPTY_SET: ReadonlySet<string> = new Set()
 
-/** Generatorförsedda moment i en värld (de som faktiskt går att träna). */
+/** Generatorförsedda moment i en värld (de som faktiskt går att träna), i
+    LÄROPLANSORDNING (termin, inte definitionsordning). Annars rekommenderade
+    "Du är här" ett åk 5-moment före åk 2-momentet i Urtalens dal, där
+    problemmomenten definieras sist i curriculum.ts. */
 function genMomentIdsInWorld(worldId: string): string[] {
-  return MOMENTS.filter((m) => m.worldId === worldId && hasGenerator(m.generatorId)).map((m) => m.id)
+  return MOMENTS_ORDERED.filter((m) => m.worldId === worldId && hasGenerator(m.generatorId)).map((m) => m.id)
 }
 
 /** Är alla (tränbara) moment i en värld behärskade? Tom värld räknas EJ som klar. */
