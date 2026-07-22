@@ -82,6 +82,18 @@ export interface RewardProgress {
 }
 
 export function rewardProgress(reward: Reward, profile: ChildProfile): RewardProgress {
+  const p = computeRewardProgress(reward, profile)
+  // En redan FÖRTJÄNAD belöning kan aldrig av-förtjänas. Framsteget räknas live,
+  // så när nya moment landar i en redan klarad terminshalva skulle en firad
+  // belöning annars backa till "2 av 3" (både i barnvyn och förälderns
+  // kvitteringsknapp). Är earnedAt satt låser vi den till klart.
+  if (reward.earnedAt) {
+    return { ...p, done: p.total || p.done, ratio: 1, earned: true, requirement: 'Klart!' }
+  }
+  return p
+}
+
+function computeRewardProgress(reward: Reward, profile: ChildProfile): RewardProgress {
   if (reward.target.type === 'moments') {
     const done = Math.max(0, Math.min(reward.target.count, masteredCount(profile) - reward.baseline.momentsMastered))
     const left = reward.target.count - done

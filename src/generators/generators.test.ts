@@ -219,7 +219,9 @@ describe('uppgiftsgeneratorerna', () => {
           const task = generateTask(id, level, seed)
           if (task.answer.kind !== 'numeric') continue
           if (id === 'gen.vinklar') {
-            expect(task.answer.value > 0 && task.answer.value <= 180, `${id} n${level} f${seed}: vinkel (0,180]`).toBe(true)
+            // Summafrågor ("tre räta vinklar" = 270°, "fyra räta" = 360°) får gå
+            // över 180° men aldrig över ett helt varv.
+            expect(task.answer.value > 0 && task.answer.value <= 360, `${id} n${level} f${seed}: vinkel (0,360]`).toBe(true)
           }
           if (id === 'gen.ekvationer-tva-steg') {
             expect(Number.isInteger(task.answer.value) && task.answer.value > 0, `${id} n${level} f${seed}: positivt heltal`).toBe(true)

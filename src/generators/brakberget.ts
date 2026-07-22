@@ -271,14 +271,55 @@ const procentIntro = g('procent-intro', (level, seed, rng) => {
     })
   }
 
-  // Nivå 7–10 — som stjärnnivå: blandade procentsatser, x,5-svar tillåtna, ingen
-  // bild. Förklaringen lär ut 10 %-tricket (ta 10 % först, gånga upp).
-  const pct = rng.pick([5, 20, 30, 90] as const)
+  // Nivå 7 — 10 %-tricket med HELA svar (10/20/30/90 % av tiotal). Ingen bild,
+  // men fortfarande garanterat heltalssvar (mjuk övergång till stjärnan).
+  if (level <= 7) {
+    const pct = rng.pick([10, 20, 30, 90] as const)
+    const base = rng.int(2, 20) * 10
+    const value = (base * pct) / 100 // heltal (base ÷ 10 × factor)
+    const tenth = base / 10
+    const factor = pct / 10 // 10 → 1 · 20 → 2 · 30 → 3 · 90 → 9 gånger tiondelen
+    if (rng.chance(0.4)) {
+      return numericTask({
+        generatorId: id, level, seed,
+        prompt: `En tröja kostar ${base} kr. Det är ${pct} % rea. Hur mycket billigare blir den?`,
+        spokenPrompt: `En tröja kostar ${base} kronor. Det är ${pct} procent rea. Hur mycket billigare blir den?`,
+        value, unit: 'kr',
+        explanation: `Ta 10 % först: ${sv(tenth)} kr. ${pct} % är ${sv(factor)} × 10 %, alltså ${sv(factor)} × ${sv(tenth)} = ${sv(value)} kr.`,
+        misconceptions: { [pct]: 'fel-raknesatt', [base - value]: 'fel-raknesatt' },
+      })
+    }
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `Vad är ${pct} % av ${base}?`,
+      spokenPrompt: `Vad är ${pct} procent av ${base}?`,
+      value,
+      explanation: `Ta 10 % först: ${base} / 10 = ${sv(tenth)}. ${pct} % är ${sv(factor)} × 10 %, alltså ${sv(factor)} × ${sv(tenth)} = ${sv(value)}.`,
+      misconceptions: { [pct]: 'fel-raknesatt', [base - pct]: 'fel-raknesatt' },
+    })
+  }
+
+  // Nivå 8–10 — stjärnan: 5 %/15 % med x,5-svar OCH tvåstegsfrågan "vad kostar
+  // tröjan EFTER rean?" (pris − rabatt) som är det verkliga rea-räknandet.
+  const pct = rng.pick([5, 15, 20, 30, 90] as const)
   const base = rng.int(2, 20) * 10
-  const value = (base * pct) / 100
+  const value = (base * pct) / 100 // 5/15 % → x,5 när tiondelen är udda
   const tenth = base / 10
-  const factor = pct / 10 // 5 → 0,5 · 20 → 2 · 30 → 3 · 90 → 9 gånger tiondelen
-  if (rng.chance(0.4)) {
+  const factor = pct / 10 // 5 → 0,5 · 15 → 1,5 · 20 → 2 …
+  const variant = rng.pick(['efter', 'billigare', 'av'] as const)
+  if (variant === 'efter') {
+    const after = base - value
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `En tröja kostar ${base} kr. Det är ${pct} % rea. Vad kostar tröjan efter rean?`,
+      spokenPrompt: `En tröja kostar ${base} kronor. Det är ${pct} procent rea. Vad kostar tröjan efter rean?`,
+      value: after, unit: 'kr',
+      explanation: `Rabatten är ${pct} % av ${base}: ta 10 % (${sv(tenth)} kr) × ${sv(factor)} = ${sv(value)} kr. Efter rean: ${base} − ${sv(value)} = ${sv(after)} kr.`,
+      // Vanligaste felet: svara med RABATTEN i stället för priset efter rean.
+      misconceptions: { [value]: 'fel-raknesatt' },
+    })
+  }
+  if (variant === 'billigare') {
     return numericTask({
       generatorId: id, level, seed,
       prompt: `En tröja kostar ${base} kr. Det är ${pct} % rea. Hur mycket billigare blir den?`,
@@ -294,7 +335,7 @@ const procentIntro = g('procent-intro', (level, seed, rng) => {
     spokenPrompt: `Vad är ${pct} procent av ${base}?`,
     value,
     explanation: `Ta 10 % först: ${base} / 10 = ${sv(tenth)}. ${pct} % är ${sv(factor)} × 10 %, alltså ${sv(factor)} × ${sv(tenth)} = ${sv(value)}.`,
-    misconceptions: { [pct]: 'fel-raknesatt', [base - pct]: 'fel-raknesatt' },
+    misconceptions: { [pct]: 'fel-raknesatt' },
   })
 })
 
