@@ -115,7 +115,8 @@ export type TaskVisual =
   // ovanför stapeln (bara som stöd på de lägsta nivåerna). yStep = skalsteg.
   | { kind: 'stapel'; categories: { label: string; value: number; icon?: string }[]; yStep?: number; pictogram?: boolean; showValues?: boolean }
   // Linjediagram: punkter (kategorier på x, värde på y) förbundna med en linje.
-  | { kind: 'linje'; points: { label: string; value: number }[]; unit?: string }
+  // step = skalsteg; generatorn sätter det så punkterna landar på gridlinjer.
+  | { kind: 'linje'; points: { label: string; value: number }[]; unit?: string; step?: number }
   // Koordinatsystem: kvadratiskt rutnät min..max, namngivna punkter, och
   // valfria räta linjer (grafer). xLabel/yLabel = axelbenämningar (t.ex. kg/kr).
   | { kind: 'koordinat'; min: number; max: number;

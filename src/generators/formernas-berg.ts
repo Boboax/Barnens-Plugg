@@ -300,12 +300,17 @@ const former3d = g('former-3d', (level, seed, rng) => {
   const facts = BODY_FACTS[k]
   const prop = facts.polyeder ? rng.pick(['ytor', 'horn', 'kanter'] as const) : 'ytor'
   const label = prop === 'ytor' ? 'sidoytor' : prop === 'horn' ? 'hörn' : 'kanter'
+  // Klotets enda yta ger "1 sidoyta" (inte "1 sidoytor"); hörn är samma i sing.
+  const singular = prop === 'ytor' ? 'sidoyta' : prop === 'horn' ? 'hörn' : 'kant'
+  const enhet = facts[prop] === 1 ? singular : label
+  const en = enOf(k)
   return numericTask({
     generatorId: id, level, seed,
     visual: { kind: 'kropp', body: k },
-    prompt: `Hur många ${label} har en ${nameOf(k).toLowerCase()}?`,
+    // enOf → rätt genus: "har ett klot" / "har en kub" (inte "en klot").
+    prompt: `Hur många ${label} har ${en}?`,
     value: facts[prop],
-    explanation: `En ${nameOf(k).toLowerCase()} har ${facts[prop]} ${label}.`,
+    explanation: `${en[0].toUpperCase()}${en.slice(1)} har ${facts[prop]} ${enhet}.`,
     misconceptions: { [facts[prop] + 1]: 'en-fel', [facts[prop] - 1]: 'en-fel' },
   })
 })
