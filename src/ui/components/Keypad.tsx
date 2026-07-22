@@ -49,7 +49,7 @@ export function Keypad({ value, onChange, onSubmit, allowNegative, allowDecimal,
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: stor ? 12 : 8, maxWidth: stor ? 460 : 290, width: '100%' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: stor ? 16 : 8, maxWidth: stor ? 520 : 290, width: '100%', margin: '0 auto' }}>
       {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((k) => (
         <button key={k} className="keycap" style={keyStyle} onClick={() => press(k)} disabled={disabled}>{k}</button>
       ))}
