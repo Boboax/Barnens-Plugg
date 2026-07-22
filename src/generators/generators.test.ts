@@ -139,6 +139,31 @@ describe('uppgiftsgeneratorerna', () => {
     }
   })
 
+  it('diagram-etapp A (fix-1 A3/A4): staplar och punkter landar på gridlinjer', () => {
+    // A3/A4: ett värde som inte är en multipel av skalsteget slutar MELLAN två
+    // gridlinjer → avläsningen blir omöjlig (ren gissning). Varje stapel-/
+    // linjevärde måste därför vara en multipel av det skalsteg som ritas.
+    for (const id of ['gen.stapeldiagram', 'gen.diagram-lasa']) {
+      for (const level of LEVELS) {
+        for (const seed of SEEDS) {
+          const task = generateTask(id, level, seed)
+          if (task.visual.kind === 'stapel') {
+            const step = task.visual.yStep ?? 1
+            task.visual.categories.forEach((c) =>
+              expect(c.value % step, `${id} n${level} f${seed}: stapel ${c.value} ∉ gridlinje (steg ${step})`).toBe(0))
+          }
+          if (task.visual.kind === 'linje') {
+            // Renderarens effektiva steg: generatorns fält om satt, annars heuristik.
+            const maxV = Math.max(...task.visual.points.map((p) => p.value), 1)
+            const step = task.visual.step ?? (maxV <= 10 ? 2 : maxV <= 20 ? 5 : 10)
+            task.visual.points.forEach((p) =>
+              expect(p.value % step, `${id} n${level} f${seed}: punkt ${p.value} ∉ gridlinje (steg ${step})`).toBe(0))
+          }
+        }
+      }
+    }
+  })
+
   it('koordinat-etapp B: punkter i rutnätet, gitterpunkter, swap ≠ rätt svar', () => {
     // Sambandsgrottan (docs/SPEC-GEOMETRI.md etapp B): alla koordinatpunkter
     // ligger på heltalsgitter inom min..max, numeriska avläsningar är heltal,

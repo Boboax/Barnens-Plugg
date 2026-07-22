@@ -19,7 +19,7 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
       case 'form': return <Form shape={visual.shape} />
       case 'rektangel': return <Rektangel w={visual.w} h={visual.h} unit={visual.unit} />
       case 'stapel': return <Stapel categories={visual.categories} yStep={visual.yStep} pictogram={visual.pictogram} showValues={visual.showValues} />
-      case 'linje': return <Linje points={visual.points} unit={visual.unit} />
+      case 'linje': return <Linje points={visual.points} unit={visual.unit} step={visual.step} />
       case 'koordinat': return <Koordinat min={visual.min} max={visual.max} points={visual.points} lines={visual.lines} xLabel={visual.xLabel} yLabel={visual.yLabel} />
       case 'vinkel': return <Vinkel degrees={visual.degrees} rot={visual.rot} />
       case 'kropp': return <Kropp body={visual.body} />
@@ -319,10 +319,12 @@ function Stapel({ categories, yStep = 1, pictogram = false, showValues = false }
 
 /* Linjediagram: kategorier jämnt fördelade på x, värde på y, punkter förbundna
    med en linje. Rutnät + siffror på y-axeln så barnet kan följa toppen ner. */
-function Linje({ points, unit }: { points: { label: string; value: number }[]; unit?: string }) {
+function Linje({ points, unit, step: stepProp }: { points: { label: string; value: number }[]; unit?: string; step?: number }) {
   const chartH = 140, colW = 72, padL = 34, padB = 38, padT = 18
   const maxV = Math.max(...points.map((p) => p.value), 1)
-  const step = maxV <= 10 ? 2 : maxV <= 20 ? 5 : 10
+  // Generatorn kan skicka önskat skalsteg så punkterna garanterat sitter på
+  // en gridlinje; annars faller vi tillbaka på en heuristik utifrån maxvärdet.
+  const step = stepProp ?? (maxV <= 10 ? 2 : maxV <= 20 ? 5 : 10)
   const maxTick = niceMax(maxV, step)
   const w = padL + points.length * colW + 10
   const h = padT + chartH + padB
@@ -412,10 +414,15 @@ function Koordinat({ min, max, points, lines, xLabel, yLabel }: {
         const clip = clipToBox(a.x - dx * 60, a.y - dy * 60, a.x + dx * 60, a.y + dy * 60, min, max)
         if (!clip) return null
         const col = CHART_COLORS[li % CHART_COLORS.length]
+        // Etiketten (A/B) placeras en bit in från den KLIPPTA slutpunkten så
+        // två linjer aldrig hamnar ovanpå varandra (t.ex. vid skärningen där de
+        // definierats till samma x) — plus en liten per-linje-förskjutning.
+        const lx = clip[0] + 0.82 * (clip[2] - clip[0])
+        const ly = clip[1] + 0.82 * (clip[3] - clip[1])
         return (
           <g key={li}>
             <line x1={sx(clip[0])} y1={sy(clip[1])} x2={sx(clip[2])} y2={sy(clip[3])} stroke={col} strokeWidth={3} strokeLinecap="round" />
-            {ln.label && <text x={sx(b.x) + 7} y={sy(b.y) - 5} fontSize={12.5} fontWeight={900} fill={col}>{ln.label}</text>}
+            {ln.label && <text x={sx(lx) + 8} y={sy(ly) - 4 - li * 13} fontSize={12.5} fontWeight={900} fill={col}>{ln.label}</text>}
           </g>
         )
       })}

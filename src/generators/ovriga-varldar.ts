@@ -152,6 +152,15 @@ const TABELL_SAKER: [string, string][] = [
 const distinctValues = (rng: Rng, n: number, max: number): number[] =>
   rng.shuffle(Array.from({ length: max }, (_, i) => i + 1)).slice(0, n)
 
+/** n distinkta värden som ALLA är multiplar av step (step, 2·step, … ≤ max).
+    Staplarnas/punkternas toppar måste landa på en gridlinje — annars kräver
+    avläsningen interpolation som skalan inte medger (ren gissning). */
+const distinctMultiples = (rng: Rng, n: number, step: number, max: number): number[] => {
+  const count = Math.floor(max / step)
+  const pool = Array.from({ length: count }, (_, i) => (i + 1) * step)
+  return rng.shuffle(pool).slice(0, n)
+}
+
 // Sortera och räkna (åk 1 VT) — bildtabell (piktogram).
 const sorteraTabeller = g('sortera-tabeller', (level, seed, rng) => {
   const id = 'gen.sortera-tabeller'
@@ -235,7 +244,9 @@ const stapeldiagram = g('stapeldiagram', (level, seed, rng) => {
   const yStep = level <= 3 ? 1 : level <= 7 ? rng.pick([1, 2] as const) : rng.pick([2, 5] as const)
   const maxVal = level <= 3 ? 8 : level <= 7 ? 12 : 20
   const labels = rng.shuffle(STAPEL_SAKER).slice(0, n)
-  const values = distinctValues(rng, n, maxVal)
+  // Värdena MÅSTE vara multiplar av yStep — annars slutar stapeln mellan två
+  // gridlinjer och avläsningen blir omöjlig (visar bara siffra på nivå ≤ 2).
+  const values = distinctMultiples(rng, n, yStep, maxVal)
   const cats = labels.map((label, i) => ({ label, value: values[i] }))
   // Värdesiffran som stöd bara på allra lägsta nivån; annars försvinner avläsningen.
   const visual = { kind: 'stapel' as const, categories: cats, yStep, showValues: level <= 2 }
@@ -322,17 +333,22 @@ const diagramLasa = g('diagram-lasa', (level, seed, rng) => {
     { what: 'temperaturen', unit: '°C', read: 'Vad var temperaturen' },
     { what: 'plantans höjd', unit: 'cm', read: 'Hur hög var plantan' },
   ] as const)
+  // Skalsteg 2 genomgående → varje punkt landar på en gridlinje (annars kräver
+  // avläsningen interpolation, och ±1-distraktorerna matchar inte skalan).
+  const STEP = 2
   let values: number[]
   if (level >= 8) {
-    // Konstruera distinkta förändringar → den brantaste ökningen är ENTYDIG.
-    const deltas = rng.shuffle([1, 2, 3, 4, 5, -1, -2]).slice(0, n - 1)
+    // Konstruera distinkta (jämna) förändringar → den brantaste ökningen är
+    // ENTYDIG och varje punkt sitter ändå kvar på en gridlinje.
+    const deltas = rng.shuffle([2, 4, 6, -2, -4]).slice(0, n - 1)
     values = [6]
-    for (const dl of deltas) values.push(values[values.length - 1] + dl)
+    for (const dl of deltas) values.push(Math.max(0, values[values.length - 1] + dl))
   } else {
-    values = distinctValues(rng, n, 20)
+    // Distinkta multiplar av 2 (max 16) → entydig topp och entydig skillnad.
+    values = distinctMultiples(rng, n, STEP, 16)
   }
   const points = labels.map((label, i) => ({ label, value: values[i] }))
-  const visual = { kind: 'linje' as const, points, unit: scen.unit }
+  const visual = { kind: 'linje' as const, points, unit: scen.unit, step: STEP }
   const byVal = [...points].sort((a, b) => b.value - a.value)
 
   if (level <= 3) {
@@ -536,7 +552,7 @@ const grafer = g('grafer', (level, seed, rng) => {
     return numericTask({
       generatorId: id, level, seed, visual,
       prompt: `Grafen visar priset på ${thing}. Vad kostar ${q} ${unit}?`,
-      value: k * q, unit,
+      value: k * q, unit: 'kr',
       explanation: `Följ upp från ${q} ${unit} till linjen och läs av: ${q} × ${k} = ${k * q} kr.`,
       misconceptions: { [q + k]: 'fel-raknesatt', [k * q + 1]: 'en-fel', [k * q - 1]: 'en-fel' },
     })
@@ -555,7 +571,7 @@ const grafer = g('grafer', (level, seed, rng) => {
     return numericTask({
       generatorId: id, level, seed, visual,
       prompt: `Grafen visar priset på ${thing}. Vad kostar 1 ${unit}?`,
-      value: k, unit,
+      value: k, unit: 'kr',
       explanation: `Läs av linjen vid 1 ${unit}: ${k} kr. (Priset stiger ${k} kr för varje ${unit}.)`,
       misconceptions: { [k + 1]: 'en-fel', [k - 1]: 'en-fel' },
     })
@@ -564,7 +580,7 @@ const grafer = g('grafer', (level, seed, rng) => {
   return numericTask({
     generatorId: id, level, seed, visual,
     prompt: `Grafen visar priset på ${thing}. Vad kostar 1 ${unit}?`,
-    value: k, unit, explanation: `Läs av linjen vid 1 ${unit}: ${k} kr.`,
+    value: k, unit: 'kr', explanation: `Läs av linjen vid 1 ${unit}: ${k} kr.`,
     misconceptions: { [k + 1]: 'en-fel' },
   })
 })
