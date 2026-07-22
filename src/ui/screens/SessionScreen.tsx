@@ -336,6 +336,7 @@ export function SessionScreen() {
         onComplete={handleComplete}
         onNext={advance}
         onScratchHandle={(h) => { scratchHandle.current = h }}
+        onOpenChat={chatAvailable ? () => { sfx.whoosh(); setChatOpen(true) } : undefined}
       />
       )}
       </div>
