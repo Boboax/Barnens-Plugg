@@ -312,14 +312,15 @@ const former3d = g('former-3d', (level, seed, rng) => {
         : `${Cap} har bara platta sidor — ${pron} kan inte rulla.`,
     })
   }
-  // 'antal': hörn/kanter bara för polyedrar (entydigt); ytor för alla.
+  // 'antal': BARA sidoytor på årskursnivån (åk 1). Hörn och kanter går inte att
+  // räkna säkert på en 2D-bild (dolda kanter bakom kroppen) — de sparas till
+  // stjärnnivåns gåtor. Ytor syns däremot alltid.
   const k = rng.pick(pool)
   const facts = BODY_FACTS[k]
-  const prop = facts.polyeder ? rng.pick(['ytor', 'horn', 'kanter'] as const) : 'ytor'
-  const label = prop === 'ytor' ? 'sidoytor' : prop === 'horn' ? 'hörn' : 'kanter'
-  // Klotets enda yta ger "1 sidoyta" (inte "1 sidoytor"); hörn är samma i sing.
-  const singular = prop === 'ytor' ? 'sidoyta' : prop === 'horn' ? 'hörn' : 'kant'
-  const enhet = facts[prop] === 1 ? singular : label
+  const prop = 'ytor' as const
+  // Klotets enda yta ger "1 sidoyta" (inte "1 sidoytor").
+  const enhet = facts[prop] === 1 ? 'sidoyta' : 'sidoytor'
+  const label = 'sidoytor'
   const en = enOf(k)
   return numericTask({
     generatorId: id, level, seed,
@@ -457,7 +458,8 @@ const vinklar = g('vinklar', (level, seed, rng) => {
       spokenPrompt: degSpoken(`Två vinklar sitter ihop på en rak linje. Den ena är ${a}°. Hur stor är den andra?`),
       value: 180 - a, unit: '°',
       explanation: `En rak linje är 180°. Den andra vinkeln är 180° − ${a}° = ${180 - a}°.`,
-      misconceptions: { [a]: 'fel-raknesatt', [90 - a > 0 ? 90 - a : a + 90]: 'en-fel' },
+      // 90−a är en 90/180-förväxling (räknesättsfel), inte ett ±1-fel.
+      misconceptions: { [a]: 'fel-raknesatt', [90 - a > 0 ? 90 - a : a + 90]: 'fel-raknesatt' },
     })
   }
   // Nivå 8–10: triangelns (och på högsta nivån fyrhörningens) vinkelsumma.
@@ -550,7 +552,9 @@ const skala = g('skala', (level, seed, rng) => {
   }
   // Nivå 8–10: jämförelse respektive km-omvandling.
   if (rng.chance(0.5)) {
-    const s1 = 100, s2 = 1000
+    // Slumpa skalparet (förr alltid 1:100 vs 1:1000). s2 > s1 → 1:s2 rätt.
+    const pair = rng.shuffle([50, 100, 200, 500, 1000, 2000]).slice(0, 2)
+    const s1 = Math.min(pair[0], pair[1]), s2 = Math.max(pair[0], pair[1])
     return choiceTask({
       generatorId: id, level, seed, rng,
       prompt: `Vilken karta visar MEST verklighet på 1 cm — skala 1:${s1} eller 1:${s2}?`,

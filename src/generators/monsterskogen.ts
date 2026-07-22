@@ -1,6 +1,6 @@
 import type { DifficultyLevel, TaskGenerator } from '../domain/types'
 import { createRng, type Rng } from './rng'
-import { choiceTask, lerpInt, numericTask } from './helpers'
+import { choiceTask, lerpInt, numericTask, pickName } from './helpers'
 
 /* ============================================================
    Mönsterskogen — mönster, likhetstecknet, öppna utsagor, ekvationer.
@@ -276,7 +276,9 @@ const ekvationerTvaSteg = g('ekvationer-tva-steg', (level, seed, rng) => {
     const plus = rng.chance(0.6)
     const b = plus ? rng.int(1, 9) : rng.int(1, Math.min(9, a * x - 1))
     const c = plus ? a * x + b : a * x - b
-    const mis: Record<number, 'likhetstecken-resultat' | 'fel-raknesatt'> = { [a * x]: 'likhetstecken-resultat' }
+    // a·x är mellanledet: barnet räknade ut ax men GLÖMDE dela med a → räknesätts-
+    // fel. Det är svaret c (talet till höger) som är "likhetstecken = resultat".
+    const mis: Record<number, 'likhetstecken-resultat' | 'fel-raknesatt'> = { [a * x]: 'fel-raknesatt', [c]: 'likhetstecken-resultat' }
     const added = plus ? (c + b) / a : (c - b) / a // om barnet gjorde motsatt räknesätt
     if (Number.isInteger(added) && added !== x) mis[added] = 'fel-raknesatt'
     return numericTask({
@@ -310,9 +312,10 @@ const ekvationerTvaSteg = g('ekvationer-tva-steg', (level, seed, rng) => {
   const a = rng.int(2, 4)
   const b = rng.int(2, 6)
   const c = a * penna + b
+  const namn = pickName(rng) // barnets eget namn vävs in (namnpoolsprincipen)
   return numericTask({
     generatorId: id, level, seed,
-    prompt: `Ali köper ${a} pennor och betalar ${b} kr för en påse. Allt kostar ${c} kr. Vad kostar en penna?`,
+    prompt: `${namn} köper ${a} pennor och betalar ${b} kr för en påse. Allt kostar ${c} kr. Vad kostar en penna?`,
     value: penna, unit: 'kr',
     explanation: `Pennorna kostar ${c} − ${b} = ${a * penna} kr. En penna: ${a * penna} / ${a} = ${penna} kr.`,
     misconceptions: { [a * penna]: 'likhetstecken-resultat', [c]: 'fel-raknesatt' },

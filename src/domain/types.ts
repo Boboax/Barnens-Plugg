@@ -324,7 +324,8 @@ export interface ChildProfile {
   seenMapIntro?: boolean
 
   /** Världar där barnet besegrat världsbossen (klimaxstriden i slutet).
-      Optionellt = bakåtkompatibelt. Kosmetiskt/firande — gatear inte nästa värld. */
+      Optionellt = bakåtkompatibelt. HÅRD grind: nästa värld öppnas först när
+      den förra världens boss finns här (se recomputeAvailability). */
   conqueredWorlds?: string[]
 
   /** Världar barnet "anlänt" till — ankomstkortet (Pi anländer) har visats.

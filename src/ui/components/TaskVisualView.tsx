@@ -270,7 +270,9 @@ function Stapel({ categories, yStep = 1, pictogram = false, showValues = false }
         {categories.map((c, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ width: 82, textAlign: 'right', fontWeight: 800, fontSize: 13, color: 'var(--ink)', flexShrink: 0 }}>{c.label}</span>
-            <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+            {/* Fast 5-kolumnsgrid: fria radbrytningar bröt en 10-rad till 9+1 på
+                smal skärm. Femgrupper är dessutom räknevänliga. */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, auto)', gap: 3, justifyContent: 'start' }}>
               {Array.from({ length: c.value }).map((_, k) => (
                 c.icon && isObjektIcon(c.icon)
                   ? <ObjektIcon key={k} name={c.icon} size={22} />
@@ -392,7 +394,7 @@ function Koordinat({ min, max, points, lines, xLabel, yLabel }: {
   const ints: number[] = []
   for (let i = Math.ceil(min / step) * step; i <= max; i += step) ints.push(i)
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} width={Math.min(size, 360)} style={{ maxWidth: '100%' }} aria-hidden="true">
+    <svg viewBox={`0 0 ${size} ${size}`} width={Math.min(size * 1.25, 420)} style={{ maxWidth: '100%' }} aria-hidden="true">
       {/* Rutnät. */}
       {ints.map((i) => <line key={`gx${i}`} x1={sx(i)} y1={sy(max)} x2={sx(i)} y2={sy(min)} stroke="var(--line)" strokeWidth={1} opacity={0.5} />)}
       {ints.map((i) => <line key={`gy${i}`} x1={sx(min)} y1={sy(i)} x2={sx(max)} y2={sy(i)} stroke="var(--line)" strokeWidth={1} opacity={0.5} />)}

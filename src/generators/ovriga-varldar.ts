@@ -148,6 +148,10 @@ const TABELL_SAKER: [string, string][] = [
   ['snäckor', 'snacka'], ['bullar', 'bulle'], ['päron', 'paron'], ['citroner', 'citron'],
 ]
 
+/** Versaliserar första bokstaven — förklaringar som INLEDS med en etikett
+    (t.ex. "citroner …") ska börja med versal som varje annan mening. */
+const cap = (s: string): string => (s ? `${s[0].toUpperCase()}${s.slice(1)}` : s)
+
 /** n distinkta heltalsvärden 1..max → "flest/skillnad" blir alltid entydigt. */
 const distinctValues = (rng: Rng, n: number, max: number): number[] =>
   rng.shuffle(Array.from({ length: max }, (_, i) => i + 1)).slice(0, n)
@@ -190,7 +194,7 @@ const sorteraTabeller = g('sortera-tabeller', (level, seed, rng) => {
       prompt: 'Vilken sak finns det flest av?',
       correct: hi.label,
       distractors: byVal.slice(1).map((c) => [c.label, null] as [string, null]),
-      explanation: `${hi.label} har den längsta raden — ${hi.value} stycken. Det är flest.`,
+      explanation: `${cap(hi.label)} har den längsta raden — ${hi.value} stycken. Det är flest.`,
     })
   }
 
@@ -200,7 +204,7 @@ const sorteraTabeller = g('sortera-tabeller', (level, seed, rng) => {
         generatorId: id, level, seed, visual,
         prompt: `Hur många fler ${hi.label} än ${lo.label} finns det?`,
         value: hi.value - lo.value,
-        explanation: `${hi.label}: ${hi.value}, ${lo.label}: ${lo.value}. Skillnaden är ${hi.value} − ${lo.value} = ${hi.value - lo.value}.`,
+        explanation: `${cap(hi.label)}: ${hi.value}, ${lo.label}: ${lo.value}. Skillnaden är ${hi.value} − ${lo.value} = ${hi.value - lo.value}.`,
         misconceptions: { [hi.value + lo.value]: 'fel-raknesatt' },
       })
     }
@@ -229,7 +233,7 @@ const sorteraTabeller = g('sortera-tabeller', (level, seed, rng) => {
     generatorId: id, level, seed, visual,
     prompt: `Hur många fler ${lo.label} måste vi lägga till för att det ska bli lika många som ${hi.label}?`,
     value: hi.value - lo.value,
-    explanation: `${lo.label} måste komma upp i ${hi.value}: ${hi.value} − ${lo.value} = ${hi.value - lo.value}.`,
+    explanation: `${cap(lo.label)} måste komma upp i ${hi.value}: ${hi.value} − ${lo.value} = ${hi.value - lo.value}.`,
     misconceptions: { [hi.value + lo.value]: 'fel-raknesatt' },
   })
 })
@@ -270,7 +274,7 @@ const stapeldiagram = g('stapeldiagram', (level, seed, rng) => {
         generatorId: id, level, seed, visual,
         prompt: `Hur många fler röstade på ${hi.label} än på ${lo.label}?`,
         value: hi.value - lo.value,
-        explanation: `${hi.label}: ${hi.value}, ${lo.label}: ${lo.value}. Skillnaden är ${hi.value - lo.value}.`,
+        explanation: `${cap(hi.label)}: ${hi.value}, ${lo.label}: ${lo.value}. Skillnaden är ${hi.value - lo.value}.`,
         misconceptions: { [hi.value + lo.value]: 'fel-raknesatt' },
       })
     }
@@ -330,8 +334,8 @@ const diagramLasa = g('diagram-lasa', (level, seed, rng) => {
   const n = rng.int(4, 5)
   const labels = MANADER.slice(0, n)
   const scen = rng.pick([
-    { what: 'temperaturen', unit: '°C', read: 'Vad var temperaturen' },
-    { what: 'plantans höjd', unit: 'cm', read: 'Hur hög var plantan' },
+    { what: 'temperaturen', unit: '°C', read: 'Vad var temperaturen', high: 'var temperaturen högst' },
+    { what: 'plantans höjd', unit: 'cm', read: 'Hur hög var plantan', high: 'var plantan högst' },
   ] as const)
   // Skalsteg 2 genomgående → varje punkt landar på en gridlinje (annars kräver
   // avläsningen interpolation, och ±1-distraktorerna matchar inte skalan).
@@ -360,7 +364,7 @@ const diagramLasa = g('diagram-lasa', (level, seed, rng) => {
     if (rng.chance(0.5)) {
       return choiceTask({
         generatorId: id, level, seed, rng, visual,
-        prompt: `Vilken månad var ${scen.what} högst?`,
+        prompt: `I vilken månad ${scen.high}?`,
         correct: byVal[0].label,
         distractors: byVal.slice(1).map((p) => [p.label, null] as [string, null]),
         explanation: `Den högsta punkten är i ${byVal[0].label} (${byVal[0].value} ${scen.unit}).`,
@@ -546,7 +550,8 @@ const grafer = g('grafer', (level, seed, rng) => {
     })
   }
 
-  const k = rng.pick([1, 2, 3] as const)
+  // k=1 gav triviala frågor ("Vad kostar 1 kg?" = 1 kr). Behåll 2–3.
+  const k = rng.pick([2, 3] as const)
   const xEnd = Math.floor(GRID / k)
   const line = { points: [{ x: 0, y: 0 }, { x: xEnd, y: k * xEnd }] }
   const dots = showDots ? [{ x: 1, y: k }, { x: xEnd, y: k * xEnd }] : []
