@@ -81,10 +81,15 @@ innan nästa tema ens börjar. En grind PER ÅRSKURS följer spiralen.
   Striden är byggd som världsbossen: frågor från hela årets läroplan,
   sköldar, ingen klocka, fel straffas aldrig, obegränsade omförsök. Vinst
   öppnar nästa årskurs.
-- **Grinden gäller bakåt** (samma beslut som boss- och blixtgrindarna
-  tidigare): ett diagnosplacerat barn med hela F–åk 1 behärskat möter
-  Gryningsvakten och Stigvakten innan resan fortsätter — snabbt för den som
-  kan, och väktarsegrarna ger placeringen legitimitet i barnets ögon.
+- **Grinden gäller bakåt — men bara de närmaste två åren.** Ett
+  diagnosplacerat barn möter väktarna för de senaste åren under sin årskurs
+  (snabbt för den som kan, och segrarna ger placeringen legitimitet), men
+  **fjärranår** — tre år eller mer under barnets årskurs — auto-erövras
+  (`grantedYears`). Mjukats upp på förälderns begäran (juli 2026): en
+  tioåring ska inte behöva bossa förskoleklassen; sju strider i rad innan
+  eget innehåll vore ett hinder, inte ett mål. Luckor i fjärranåren tränas
+  fortfarande (rekommendationen fyller ofullständiga år först) — det är
+  enbart väktarstriden som skänks.
 - **Världsbossarna blev troféer.** De vaknar när en HEL värld är klar (alla
   årskurser) — en sällsynt, frivillig klimax som inte grindar något. Så är
   ett återbesök i en värld aldrig "samma boss igen": världens boss möter man

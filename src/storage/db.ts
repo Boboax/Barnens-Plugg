@@ -1,6 +1,6 @@
 import type { Household } from '../domain/types'
 import { PROFILE_SCHEMA_VERSION } from '../domain/types'
-import { repairDiagnosisBossReady, backfillSplitAddSub, backfillSeenWorlds } from '../engine/progress'
+import { grantedYears, repairDiagnosisBossReady, backfillSplitAddSub, backfillSeenWorlds } from '../engine/progress'
 import { blixtBlockedMoments } from '../engine/blixt'
 
 /* ============================================================
@@ -111,7 +111,7 @@ export function migrate(data: Household): Household {
         // om tillgänglighet med års- och flyt-grindarna (Expeditionsmodellen:
         // conqueredYears saknas i gamla profiler = tom → grinden gäller bakåt
         // och barnet möter Årsväktarna för redan behärskade år).
-        skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, c.conqueredYears ?? [], blixtBlockedMoments(c)),
+        skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, grantedYears(c), blixtBlockedMoments(c)),
         // Fyll seenWorlds för barn som redan spelat (annars ankomstkort för
         // gamla världar). Idempotent — redan satt lämnas orört.
         seenWorlds: backfillSeenWorlds(c.skills, c.conqueredWorlds, c.seenWorlds),

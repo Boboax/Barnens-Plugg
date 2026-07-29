@@ -78,6 +78,26 @@ function yearOpen(year: SchoolYear, conqueredYears: ReadonlySet<SchoolYear>): bo
   return trainableYears().every((y) => YEAR_ORDER.indexOf(y) >= idx || conqueredYears.has(y))
 }
 
+/** Hur många år under barnets årskurs väktarna fortfarande krävs. Årskurser
+    LÄNGRE ner än så är "fjärranår" och auto-erövras. */
+const GUARDIAN_LOOKBACK_YEARS = 2
+
+/**
+ * Erövrade år i praktiken: lagrade väktarsegrar + auto-erövrade FJÄRRANÅR —
+ * årskurser som ligger ≥3 år under barnets aktuella årskurs. En tioåring ska
+ * inte behöva bossa förskoleklassen (mjukats upp på förälderns begäran, juli
+ * 2026); de närmaste två åren bakåt väktas fortfarande, så bakåtgrinden
+ * behåller sin mening. Luckor i fjärranåren tränas ändå — rekommendationen
+ * fyller ofullständiga år i ordning; det är bara VÄKTARSTRIDEN som skänks.
+ * Beräknas ur schoolYear (föräldern uppdaterar den) — ingen lagring, så
+ * regeln följer med när barnet byter årskurs.
+ */
+export function grantedYears(profile: Pick<ChildProfile, 'conqueredYears' | 'schoolYear'>): SchoolYear[] {
+  const idx = YEAR_ORDER.indexOf(profile.schoolYear)
+  const distant = YEAR_ORDER.filter((y) => YEAR_ORDER.indexOf(y) <= idx - (GUARDIAN_LOOKBACK_YEARS + 1))
+  return [...new Set([...(profile.conqueredYears ?? []), ...distant])]
+}
+
 /**
  * Räkna om locked/available utifrån förkunskaper OCH årsgrinden. Muterar inte.
  *
@@ -345,7 +365,7 @@ export function currentMomentId(profile: ChildProfile): string | undefined {
   const withGen = (id: string): boolean => hasGenerator(momentById(id).generatorId)
   const needsReview = Object.values(skills).find((s) => s.mastery === 'needs-review' && withGen(s.momentId))
   if (needsReview) return needsReview.momentId
-  const conquered = new Set(profile.conqueredYears ?? [])
+  const conquered = new Set(grantedYears(profile))
   for (const year of YEAR_ORDER) {
     const ids = genMomentIdsInYear(year)
     if (ids.length === 0) continue
@@ -377,7 +397,7 @@ export function currentMomentId(profile: ChildProfile): string | undefined {
  */
 export function pendingGuardianYear(profile: ChildProfile): SchoolYear | undefined {
   const skills = profile.skills
-  const conquered = new Set(profile.conqueredYears ?? [])
+  const conquered = new Set(grantedYears(profile))
   for (const year of YEAR_ORDER) {
     const ids = genMomentIdsInYear(year)
     if (ids.length === 0) continue

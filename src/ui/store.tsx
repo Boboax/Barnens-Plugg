@@ -6,7 +6,7 @@ import { configureChatFromHousehold } from '../chat'
 import { configureCloudTts } from '../tts'
 import { MOMENTS } from '../domain/curriculum'
 import {
-  applyAnswer, applyBossResult, applyReviewResult, applyStarResult, newSkillState, recomputeAvailability,
+  applyAnswer, applyBossResult, applyReviewResult, applyStarResult, grantedYears, newSkillState, recomputeAvailability,
 } from '../engine/progress'
 import { applyDiagnosisResult, diagnosisPassesForAge } from '../engine/diagnosis'
 import { blixtMaxTier, blixtBlockedMoments } from '../engine/blixt'
@@ -218,7 +218,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       patchChild(activeChildId, (c) => {
         if (c.conqueredYears?.includes(year)) return c
         const conqueredYears = [...(c.conqueredYears ?? []), year]
-        return { ...c, conqueredYears, skills: recomputeAvailability(c.skills, conqueredYears, blixtBlockedMoments(c)) }
+        return { ...c, conqueredYears, skills: recomputeAvailability(c.skills, grantedYears({ ...c, conqueredYears }), blixtBlockedMoments(c)) }
       })
     },
 
@@ -251,7 +251,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const rec = { best, lastAt: nowISO(), tier, cleared: (prev?.cleared ?? false) || cleared, bestTimeMs }
         const next = { ...c, blixt: { ...c.blixt, [kind]: rec } }
         // Klarad flyt-grind → räkna om tillgänglighet så nästa moment öppnas.
-        return { ...next, skills: recomputeAvailability(next.skills, next.conqueredYears ?? [], blixtBlockedMoments(next)) }
+        return { ...next, skills: recomputeAvailability(next.skills, grantedYears(next), blixtBlockedMoments(next)) }
       })
     },
     setBlixtTarget: (kind, target) => {
@@ -265,7 +265,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         id: `barn-${Date.now().toString(36)}`,
         name, color, birthYear, schoolYear,
         createdAt: nowISO(),
-        skills: recomputeAvailability(skills),
+        skills: recomputeAvailability(skills, grantedYears({ conqueredYears: [], schoolYear })),
         answers: [],
         diagnosis: {
           passesDone: 0,
@@ -317,7 +317,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // och diagnosprober smutsade ned rating på oövade moment.
         const skills = context === 'blixt' || context === 'diagnos'
           ? c.skills
-          : recomputeAvailability({ ...c.skills, [momentId]: nextSkill }, c.conqueredYears ?? [], blixtBlockedMoments(c))
+          : recomputeAvailability({ ...c.skills, [momentId]: nextSkill }, grantedYears(c), blixtBlockedMoments(c))
         return { ...c, skills, answers, streak, pendingStreakToast }
       })
     },
@@ -335,7 +335,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         skills: recomputeAvailability({
           ...c.skills,
           [momentId]: applyBossResult(c.skills[momentId] ?? newSkillState(momentId), won, todayISO()),
-        }, c.conqueredYears ?? [], blixtBlockedMoments(c)),
+        }, grantedYears(c), blixtBlockedMoments(c)),
       }))
     },
 
@@ -393,7 +393,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       for (const m of MOMENTS) fresh[m.id] = newSkillState(m.id)
       return {
         ...c,
-        skills: recomputeAvailability(fresh, [], blixtBlockedMoments(c)),
+        skills: recomputeAvailability(fresh, grantedYears({ ...c, conqueredYears: [] }), blixtBlockedMoments(c)),
         // Ny placering börjar om från noll — erövrade årskurser och världar
         // nollställs så grindarna gäller på nytt utifrån den nya diagnosen.
         conqueredWorlds: [],
@@ -409,7 +409,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         skills: recomputeAvailability({
           ...c.skills,
           [momentId]: applyReviewResult(c.skills[momentId] ?? newSkillState(momentId), passed, todayISO()),
-        }, c.conqueredYears ?? [], blixtBlockedMoments(c)),
+        }, grantedYears(c), blixtBlockedMoments(c)),
       }))
     },
 
