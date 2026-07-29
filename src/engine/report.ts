@@ -2,7 +2,8 @@ import type { AnswerRecord, ChildProfile, CurriculumArea, MisconceptionTag } fro
 import { momentById } from '../domain/curriculum'
 import { worldById } from '../domain/worlds'
 import { misconceptionInfo } from './misconceptions'
-import { currentMomentId, bossPendingWorldId } from './progress'
+import { guardianForYear, yearLabel } from '../domain/guardians'
+import { currentMomentId, pendingGuardianYear, trophyBossWorldId } from './progress'
 import { pendingBlixtKind, blixtConfig } from './blixt'
 
 /* ============================================================
@@ -100,14 +101,16 @@ export function weeklyReport(profile: ChildProfile, now: string): WeeklyReport {
   const current = currentId ? momentById(currentId) : undefined
   // Står barnet vid en grind ska föräldern SE det — annars ser det bara ut
   // som att träningen stannat.
-  const pendingBoss = bossPendingWorldId(profile)
+  const pendingGuardian = pendingGuardianYear(profile)
+  const trophyBoss = trophyBossWorldId(profile)
   const pendingBlixt = pendingBlixtKind(profile)
   if (answers === 0) {
     notes.push('Inga pass den här veckan — kanske dags för en mjuk påminnelse?')
   } else {
     if (current) notes.push(`Tränar just nu på "${current.title}" (${areaName(current.area)}).`)
-    else if (pendingBoss) notes.push(`Redo för världsbossen i ${worldById(pendingBoss).name} — nästa steg är att besegra ${worldById(pendingBoss).boss.name}.`)
+    else if (pendingGuardian) notes.push(`Alla moment i ${yearLabel(pendingGuardian)} är klara — nästa steg är att besegra Årsväktaren ${guardianForYear(pendingGuardian).name} (öppnar nästa årskurs).`)
     else if (pendingBlixt) notes.push(`Flyt-grind: behöver klara blixtpasset "${blixtConfig(pendingBlixt).title}" för att komma vidare (obegränsade försök).`)
+    if (trophyBoss) notes.push(`Trofé väntar: alla moment i ${worldById(trophyBoss).name} är klara — världsbossen ${worldById(trophyBoss).boss.name} kan utmanas (frivillig klimaxstrid).`)
     const acc = correct / answers
     if (acc >= 0.85) notes.push('Hög träffsäkerhet — nivån trappas upp automatiskt.')
     else if (acc < 0.55) notes.push('Det har varit tufft den här veckan — motorn har sänkt nivån så det ska kännas lättare.')

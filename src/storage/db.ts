@@ -108,8 +108,10 @@ export function migrate(data: Household): Household {
         ...c,
         // backfillSplitAddSub: markera nya rena add/sub-noder klara för barn som
         // redan klarat den blandade noden. repairDiagnosisBossReady räknar sedan
-        // om tillgänglighet med boss- och flyt-grindarna.
-        skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, c.conqueredWorlds ?? [], blixtBlockedMoments(c)),
+        // om tillgänglighet med års- och flyt-grindarna (Expeditionsmodellen:
+        // conqueredYears saknas i gamla profiler = tom → grinden gäller bakåt
+        // och barnet möter Årsväktarna för redan behärskade år).
+        skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, c.conqueredYears ?? [], blixtBlockedMoments(c)),
         // Fyll seenWorlds för barn som redan spelat (annars ankomstkort för
         // gamla världar). Idempotent — redan satt lämnas orört.
         seenWorlds: backfillSeenWorlds(c.skills, c.conqueredWorlds, c.seenWorlds),

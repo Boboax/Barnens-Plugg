@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Boss, Moment, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
 import { worldById } from '../../domain/worlds'
+import { guardianForYear, yearLabel, type YearGuardian } from '../../domain/guardians'
 import {
   CHECK_CORRECT_TO_WIN, CHECK_TASK_COUNT,
   WORLDBOSS_SHIELDS_TO_WIN, WORLDBOSS_TASK_COUNT,
   STAR_CORRECT_TO_WIN, STAR_TASK_COUNT,
-  composeCheckTasks, composeWorldBossTasks, composeStarTasks,
+  composeCheckTasks, composeWorldBossTasks, composeGuardianTasks, composeStarTasks,
 } from '../../engine/session'
 import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
@@ -18,13 +19,15 @@ import { EndCard } from './SessionScreen'
 import { useStore } from '../store'
 
 /* ============================================================
-   Tre slags "prov" — alla utan klocka, fel straffas aldrig,
+   Fyra slags "prov" — alla utan klocka, fel straffas aldrig,
    kladdytan alltid tillåten (som papper i skolan), nya frön varje gång:
 
    - 'check': nodens vänliga kunskapskoll ("Visa vad du kan för Pi").
      Pi hejar, du samlar stjärnor. Vinst → noden klar, nästa öppnas.
-   - 'boss': VÄRLDSBOSSEN — den stora, sällsynta klimaxstriden i slutet
-     av en värld. Bossmonster, sköldar, dramatik.
+   - 'boss': VÄRLDSBOSSEN — trofé-klimax när en HEL värld är klar
+     (alla årskurser). Bossmonster, sköldar, dramatik. Grindar inget.
+   - 'guardian': ÅRSVÄKTAREN — Expeditionens hårda grind mellan
+     årskurserna. Frågor från hela årets läroplan; vinst öppnar nästa år.
    - 'star': diamantnivån (nivå 8–10) efter att en nod är klar.
    ============================================================ */
 
@@ -49,22 +52,76 @@ function BossFigure({ boss, state }: { boss: Boss; state: 'idle' | 'traffad' | '
   )
 }
 
+/* Årsväktaren: ritad väktarande (kåpa, lysande ögon, runsköld med årets
+   tecken) i årets egen färgton — ingen målad bild behövs, samma stil som
+   appens övriga SVG-konst. Besegrad: väktaren bugar och ögonen mjuknar. */
+function GuardianFigure({ guardian, state }: { guardian: YearGuardian; state: 'idle' | 'traffad' | 'besegrad' }) {
+  const h = guardian.hue
+  const cloak = `hsl(${h} 42% 34%)`
+  const cloakDark = `hsl(${h} 48% 22%)`
+  const cloakLight = `hsl(${h} 46% 46%)`
+  const beaten = state === 'besegrad'
+  const anim = state === 'traffad' ? 'shake-hard' : beaten ? 'pop-big' : 'float-soft'
+  return (
+    <svg
+      viewBox="0 0 200 240" width={190} className={anim} aria-hidden="true"
+      style={{
+        display: 'block',
+        transform: beaten ? 'rotate(6deg)' : undefined,
+        filter: beaten
+          ? 'drop-shadow(0 6px 10px rgba(0,0,0,.45)) saturate(.75)'
+          : `drop-shadow(0 6px 10px rgba(0,0,0,.45)) drop-shadow(0 0 16px hsl(${h} 80% 60% / .4))`,
+      }}
+    >
+      {/* Svävande kåpa: hätta + fladdrande fåll (ingen kropp — en väktarande). */}
+      <path d="M100 8 C60 8 44 46 44 78 L40 196 C60 182 72 198 88 188 C98 182 102 182 112 188 C128 198 140 182 160 196 L156 78 C156 46 140 8 100 8 Z"
+        fill={cloak} stroke={cloakDark} strokeWidth={5} strokeLinejoin="round" />
+      {/* Hättans innerskugga + ansiktsmörker. */}
+      <path d="M100 22 C72 22 60 50 60 76 L64 106 C76 96 124 96 136 106 L140 76 C140 50 128 22 100 22 Z" fill={cloakDark} />
+      <ellipse cx="100" cy="66" rx="30" ry="26" fill="#141020" />
+      {/* Ögon: lysande i strid, mjuka månar när väktaren är besegrad. */}
+      {beaten ? (
+        <>
+          <path d="M84 64 q6 7 12 0" stroke="#FFE9A0" strokeWidth={4} fill="none" strokeLinecap="round" />
+          <path d="M104 64 q6 7 12 0" stroke="#FFE9A0" strokeWidth={4} fill="none" strokeLinecap="round" />
+        </>
+      ) : (
+        <>
+          <ellipse cx="90" cy="64" rx="6.5" ry="8" fill="#FFE9A0" />
+          <ellipse cx="110" cy="64" rx="6.5" ry="8" fill="#FFE9A0" />
+        </>
+      )}
+      {/* Axelkant som ger kåpan volym. */}
+      <path d="M56 96 C76 86 124 86 144 96" stroke={cloakLight} strokeWidth={5} fill="none" strokeLinecap="round" opacity={0.8} />
+      {/* Runskölden med årets tecken — sänkt och blek när striden är vunnen. */}
+      <g transform={beaten ? 'translate(30 176) rotate(-14)' : 'translate(58 108)'} opacity={beaten ? 0.55 : 1}>
+        <path d="M42 0 C58 6 70 6 84 0 L84 34 C84 58 66 72 42 80 C18 72 0 58 0 34 L0 0 C14 6 26 6 42 0 Z"
+          fill="#EADFC6" stroke="#6E5426" strokeWidth={5} strokeLinejoin="round" transform="scale(1)" />
+        <text x="42" y="46" textAnchor="middle" fontSize="30" fontWeight="900" fill={cloakDark}
+          fontFamily="inherit" style={{ letterSpacing: 1 }}>{guardian.rune}</text>
+      </g>
+    </svg>
+  )
+}
+
 /* Pis varierade hejarop under kunskapskollen — samma rad varje gång blev platt. */
 const PI_CHECK_CHEERS = ['Bra jobbat!', 'En stjärna till!', 'Du är på gång!', 'Pi ser att du tänker!', 'Wow, snyggt!', 'Så nära målet nu!']
 
-export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
+export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guardian' }) {
   const store = useStore()
   const child = store.activeChild
   const momentId = store.battleMomentId
   const worldBossId = store.battleWorldId
+  const year = store.battleYear
 
   const tasks = useMemo<Task[]>(() => {
+    if (kind === 'guardian') return year ? composeGuardianTasks(year) : []
     if (kind === 'boss') return worldBossId ? composeWorldBossTasks(worldBossId) : []
     if (!momentId) return []
     // Kollen matchas mot barnets egen nivå på momentet (rättvis bekräftelse).
     return kind === 'check' ? composeCheckTasks(momentId, child?.skills[momentId]?.rating) : composeStarTasks(momentId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [momentId, worldBossId, kind])
+  }, [momentId, worldBossId, year, kind])
 
   const [index, setIndex] = useState(0)
   const [correct, setCorrect] = useState(0)
@@ -72,11 +129,12 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   const [finished, setFinished] = useState(false)
   const [introDone, setIntroDone] = useState(false)
 
-  const worldId = kind === 'boss' ? worldBossId : (momentId ? momentById(momentId).worldId : undefined)
+  // Årsväktaren hör inte till en värld — den vaktar hela årets läroplan.
+  const worldId = kind === 'boss' ? worldBossId : kind === 'guardian' ? undefined : (momentId ? momentById(momentId).worldId : undefined)
   if (!child) return null
   // Aldrig en tom skärm utan utväg — om uppgifterna inte kunde byggas
   // (trasigt tillstånd) ska barnet alltid kunna gå tillbaka till kartan.
-  if (!worldId || tasks.length === 0) {
+  if ((kind === 'guardian' ? !year : !worldId) || tasks.length === 0) {
     return (
       <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 30 }}>
         <Pi mood="funderar" size={90} />
@@ -85,9 +143,12 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
       </div>
     )
   }
-  const world = worldById(worldId)
-  const boss = world.boss
-  const moment: Moment | undefined = kind !== 'boss' && momentId ? momentById(momentId) : undefined
+  const guardian = kind === 'guardian' && year ? guardianForYear(year) : undefined
+  const world = worldId ? worldById(worldId) : undefined
+  const boss = world?.boss
+  // "Fienden" i striden: väktaren eller bossen — samma replikmekanik.
+  const foe: Pick<Boss, 'name' | 'taunt' | 'defeatLine' | 'taunts'> | undefined = guardian ?? boss
+  const moment: Moment | undefined = (kind === 'check' || kind === 'star') && momentId ? momentById(momentId) : undefined
 
   // Diamantnivån förklaras en gång när den dyker upp.
   if (kind === 'star' && moment && !child.seenStarIntro && !introDone) {
@@ -95,8 +156,11 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   }
 
   const friendly = kind === 'check'
-  const total = kind === 'boss' ? WORLDBOSS_TASK_COUNT : kind === 'check' ? CHECK_TASK_COUNT : STAR_TASK_COUNT
-  const needed = kind === 'boss' ? WORLDBOSS_SHIELDS_TO_WIN : kind === 'check' ? CHECK_CORRECT_TO_WIN : STAR_CORRECT_TO_WIN
+  // Väktaren är byggd på samma stridsmekanik som världsbossen (sköldar, replik-
+  // rotation, 80 %-krav) — bara motståndaren och belöningen skiljer.
+  const epic = kind === 'boss' || kind === 'guardian'
+  const total = epic ? WORLDBOSS_TASK_COUNT : kind === 'check' ? CHECK_TASK_COUNT : STAR_TASK_COUNT
+  const needed = epic ? WORLDBOSS_SHIELDS_TO_WIN : kind === 'check' ? CHECK_CORRECT_TO_WIN : STAR_CORRECT_TO_WIN
   const won = correct >= needed
 
   const handleComplete = (result: TaskResult): void => {
@@ -112,7 +176,8 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
       if (next >= tasks.length || nextCorrect >= needed) {
         const victory = nextCorrect >= needed
         if (kind === 'check') store.finishCheck(momentId!, victory)
-        else if (kind === 'boss') store.finishWorldBoss(worldId, victory)
+        else if (kind === 'boss') store.finishWorldBoss(worldId!, victory)
+        else if (kind === 'guardian') store.finishGuardian(year!, victory)
         else store.finishStar(momentId!, victory)
         setFinished(true)
       } else setIndex(next)
@@ -125,10 +190,16 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
         ? <CheckWin moment={moment!} onDiamond={() => store.startBattle(momentId!, 'star')} onHome={() => store.go('home')} />
         : <EndCard title="Nästan!" text={`${correct} av ${total} rätt — du behövde ${needed}. Träna momentet lite till, så fixar du det nästa gång!`} onDone={() => store.go('home')} buttonText="Tillbaka och träna" />
     }
-    if (kind === 'boss') {
-      // Världsbossen är spelets KLIMAX — grand-läget skiljer den från vardagsfirandet.
+    if (kind === 'guardian' && guardian && year) {
+      // Årsväktaren är Expeditionens KLIMAX — vinsten öppnar nästa årskurs.
       return won
-        ? <EndCard title={`${boss.name} är besegrad!`} text={`"${boss.defeatLine}"`} onDone={() => store.go('home')} celebrate grand grandBanner={`⚔ ${world.name.toUpperCase()} ÄR ERÖVRAD ⚔`} grandSub="En ny värld har öppnat sig. Nästa äventyr väntar!" />
+        ? <EndCard title={`${guardian.name} bugar!`} text={`"${guardian.defeatLine}"`} onDone={() => store.go('home')} celebrate grand grandBanner={`⚔ ${yearLabel(year).toUpperCase()} ÄR ERÖVRAD ⚔`} grandSub={year === '6' ? 'Hela Matteriket är ditt. Du är en mästare!' : 'Nästa årskurs har öppnat sig. Resan fortsätter!'} />
+        : <EndCard title={`${guardian.name} står emot … än!`} text={`${correct} av ${total} rätt — du behövde ${needed}. Träna lite till och kom tillbaka starkare — väktaren väntar tålmodigt!`} onDone={() => store.go('home')} buttonText="Tillbaka till kartan" />
+    }
+    if (kind === 'boss' && boss && world) {
+      // Världsbossen är trofé-klimaxen när HELA världen är klar.
+      return won
+        ? <EndCard title={`${boss.name} är besegrad!`} text={`"${boss.defeatLine}"`} onDone={() => store.go('home')} celebrate grand grandBanner={`⚔ ${world.name.toUpperCase()} ÄR ERÖVRAD ⚔`} grandSub="Hela världen är din — vilken bedrift!" />
         : <EndCard title={`${boss.name} står emot … än!`} text={`${correct} av ${total} rätt — du behövde ${needed}. Träna dina moment lite till och kom tillbaka starkare!`} onDone={() => store.go('home')} buttonText="Tillbaka till kartan" />
     }
     return won
@@ -137,18 +208,23 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
   }
 
   const filled = Math.min(correct, needed)
-  const theme = worldTheme(worldId)
-  const bgImg = `${import.meta.env.BASE_URL}art/${friendly ? 'world' : 'arena'}/${worldId}.webp`
+  const theme = worldId ? worldTheme(worldId) : undefined
+  // Väktaren har ingen värld: en mörk valvsal i årets färgton i stället för
+  // målad arena (samma dramatiska stämning, ingen bild behövs).
+  const guardianBg = guardian
+    ? `radial-gradient(ellipse 95% 80% at 50% 34%, hsl(${guardian.hue} 38% 26%) 0%, hsl(${guardian.hue} 34% 14%) 55%, #0D0B14 100%)`
+    : undefined
+  const bgImg = worldId ? `${import.meta.env.BASE_URL}art/${friendly ? 'world' : 'arena'}/${worldId}.webp` : undefined
 
   return (
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column',
       padding: 'calc(10px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))',
-      background: `url(${bgImg}) center / cover no-repeat, ${theme.sky}`,
+      background: guardianBg ?? `url(${bgImg}) center / cover no-repeat, ${theme?.sky ?? '#1B1F30'}`,
       position: 'relative', overflow: 'hidden',
       ...({ '--ink': '#F6EFDF', '--muted': '#E6DAC0', '--sun-ink': '#FFE39A' } as React.CSSProperties),
     }}>
-      {/* Scrim: varm och mild för kollen, dramatiskt mörk för världsbossen. */}
+      {/* Scrim: varm och mild för kollen, dramatiskt mörk för boss/väktare. */}
       <div aria-hidden="true" style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
         background: friendly
@@ -175,8 +251,11 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
         <button className="chip" onClick={() => store.go('home')}>{friendly ? 'Avbryt' : 'Fly (försök igen senare)'}</button>
         <span style={{ fontWeight: 900, fontSize: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Icon name={kind === 'boss' ? 'svards' : kind === 'star' ? 'kristall' : 'stjarna'} size={18} />
-          {kind === 'boss' ? boss.name : kind === 'star' ? `Diamant: ${moment!.title}` : `Visa vad du kan: ${moment!.title}`}
+          <Icon name={epic ? 'svards' : kind === 'star' ? 'kristall' : 'stjarna'} size={18} />
+          {kind === 'guardian' && guardian && year ? `${guardian.name} — ${yearLabel(year)}`
+            : kind === 'boss' ? boss!.name
+            : kind === 'star' ? `Diamant: ${moment!.title}`
+            : `Visa vad du kan: ${moment!.title}`}
         </span>
         <span className="chip" style={{ color: 'var(--muted)' }}>{friendly ? 'Pi hejar på dig!' : 'Pi vilar under striden'}</span>
       </div>
@@ -205,11 +284,11 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
               ? (flash === 'hit'
                   ? <><Icon name="stjarna" size={15} style={{ marginRight: 5 }} />{PI_CHECK_CHEERS[correct % PI_CHECK_CHEERS.length]}</>
                   : flash === 'miss' ? 'Nästan — fortsätt!' : 'Visa vad du lärt dig!')
-              // Bossen får personlighet: replikerna roteras efter knäckta sköldar,
-              // så striden känns levande i stället för en enda fast rad.
+              // Bossen/väktaren får personlighet: replikerna roteras efter
+              // knäckta sköldar, så striden känns levande.
               : (flash === 'hit'
-                  ? <><Icon name="skold" size={15} style={{ marginRight: 5 }} />{correct > 0 && boss.taunts?.length ? `"${boss.taunts[(correct - 1) % boss.taunts.length]}"` : 'En sköld knäcktes!'}</>
-                  : flash === 'miss' ? '"Hihi! Inte den här gången!"' : `"${boss.taunt}"`)}
+                  ? <><Icon name="skold" size={15} style={{ marginRight: 5 }} />{correct > 0 && foe?.taunts?.length ? `"${foe.taunts[(correct - 1) % foe.taunts.length]}"` : 'En sköld knäcktes!'}</>
+                  : flash === 'miss' ? '"Hihi! Inte den här gången!"' : `"${foe?.taunt ?? ''}"`)}
           </div>
           <div className={friendly ? undefined : 'boss-enter'} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {flash === 'hit' && !friendly && (
@@ -224,7 +303,9 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
             )}
             {friendly
               ? <Pi mood={flash === 'hit' || won ? 'hejar' : flash === 'miss' ? 'funderar' : 'glad'} size={132} />
-              : kind === 'boss'
+              : kind === 'guardian' && guardian
+                ? <GuardianFigure guardian={guardian} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
+              : kind === 'boss' && boss
                 ? <BossFigure boss={boss} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
                 : <span className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'} style={{ display: 'inline-block', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.45))' }}><Icon name="kristall" size={92} /></span>}
           </div>
@@ -238,7 +319,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' }) {
           <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--muted)', textAlign: 'center', maxWidth: 200 }}>
             {friendly
               ? `Samla ${needed} stjärnor så är noden klar!`
-              : `Varje rätt svar knäcker en sköld — knäck ${needed} så ${kind === 'boss' ? 'faller bossen' : 'är diamanten din'}!`}
+              : `Varje rätt svar knäcker en sköld — knäck ${needed} så ${kind === 'boss' ? 'faller bossen' : kind === 'guardian' ? 'öppnar väktaren porten' : 'är diamanten din'}!`}
           </div>
         </div>
       </div>

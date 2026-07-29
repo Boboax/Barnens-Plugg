@@ -164,8 +164,8 @@ export function applyDiagnosisResult(profile: ChildProfile, now: string): Record
     }
   })
 
-  // Bossgrinden gäller även efter diagnos: världar som placeringen "klarade"
-  // erövras inte automatiskt — barnet möter deras bossar bakåt först (medvetet
-  // val: bossen är i slutet av varje värld). conqueredWorlds är normalt tom här.
-  return recomputeAvailability(skills, profile.conqueredWorlds ?? [], blixtBlockedMoments(profile))
+  // Årsgrinden gäller även efter diagnos: årskurser som placeringen "klarade"
+  // erövras inte automatiskt — barnet möter deras Årsväktare bakåt först
+  // (medvetet val, som blixt-grinden). conqueredYears är normalt tom här.
+  return recomputeAvailability(skills, profile.conqueredYears ?? [], blixtBlockedMoments(profile))
 }

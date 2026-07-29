@@ -1,5 +1,5 @@
-import type { ChildProfile, DifficultyLevel, SessionPlan, Task } from '../domain/types'
-import { momentById, momentsInWorld } from '../domain/curriculum'
+import type { ChildProfile, DifficultyLevel, SchoolYear, SessionPlan, Task } from '../domain/types'
+import { MOMENTS_ORDERED, momentById, momentsInWorld } from '../domain/curriculum'
 import { generateTask, hasGenerator } from '../generators'
 import { freshSeed, createRng } from '../generators/rng'
 import { variedLevel, practiceLevel } from './rating'
@@ -135,6 +135,23 @@ export function composeCheckTasks(momentId: string, rating?: number): Task[] {
  */
 export function composeWorldBossTasks(worldId: string): Task[] {
   const moments = momentsInWorld(worldId).filter((m) => hasGenerator(m.generatorId))
+  if (moments.length === 0) return []
+  const rng = createRng(freshSeed())
+  const tasks: Task[] = []
+  for (let i = 0; i < WORLDBOSS_TASK_COUNT; i++) {
+    const m = rng.pick(moments)
+    tasks.push(generateTask(m.generatorId!, rng.pick([5, 6, 6, 7, 7] as const), freshSeed()))
+  }
+  return rng.shuffle(tasks)
+}
+
+/**
+ * Årsväktarens frågor: blandat från ÅRSKURSENS alla generatorförsedda moment
+ * (över alla världar — årets slutprov i Expeditionen), nivå 5–7 precis som
+ * världsbossen. Nya frön varje försök. Ingen klocka, obegränsade omförsök.
+ */
+export function composeGuardianTasks(year: SchoolYear): Task[] {
+  const moments = MOMENTS_ORDERED.filter((m) => m.year === year && hasGenerator(m.generatorId))
   if (moments.length === 0) return []
   const rng = createRng(freshSeed())
   const tasks: Task[] = []

@@ -323,10 +323,18 @@ export interface ChildProfile {
       = bakåtkompatibelt; visas en gång på hemskärmen. */
   seenMapIntro?: boolean
 
-  /** Världar där barnet besegrat världsbossen (klimaxstriden i slutet).
-      Optionellt = bakåtkompatibelt. HÅRD grind: nästa värld öppnas först när
-      den förra världens boss finns här (se recomputeAvailability). */
+  /** Världar där barnet besegrat världsbossen (klimaxstriden när VARJE moment
+      i världen är klart, oavsett årskurs). Sedan Expeditionsmodellen (juli
+      2026) är detta en TROFÉ — den hårda grinden mellan årskurser är
+      Årsväktaren (`conqueredYears`). Optionellt = bakåtkompatibelt. */
   conqueredWorlds?: string[]
+
+  /** Årskurser vars Årsväktare är besegrad. HÅRD grind (Expeditionsmodellen):
+      nästa årskurs moment låses upp först när föregående års väktare finns
+      här — se recomputeAvailability. Grinden gäller även bakåt: diagnos-
+      placerade barn möter väktarna för redan behärskade år innan de
+      fortsätter framåt. Optionellt = bakåtkompatibelt. */
+  conqueredYears?: SchoolYear[]
 
   /** Världar barnet "anlänt" till — ankomstkortet (Pi anländer) har visats.
       Optionellt = bakåtkompatibelt; migreringen fyller i det för alla världar

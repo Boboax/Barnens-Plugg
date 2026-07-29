@@ -3,7 +3,8 @@ import type { ChildProfile, Moment, SkillState, World } from '../../domain/types
 import { momentsInWorld, momentById } from '../../domain/curriculum'
 import { WORLDS, worldById } from '../../domain/worlds'
 import { hasGenerator } from '../../generators'
-import { currentMomentId, bossPendingWorldId, worldMomentsComplete } from '../../engine/progress'
+import { currentMomentId, pendingGuardianYear, genMomentIdsInYear, worldMomentsComplete } from '../../engine/progress'
+import { guardianForYear, yearLabel } from '../../domain/guardians'
 import { dueForReview } from '../../engine/spaced-repetition'
 import { rewardProgress } from '../../engine/rewards'
 import { blixtTarget, unlockedBlixtTests, blixtLevel, blixtTier, blixtMaxTier, blixtConfig, blixtCleared, pendingBlixtKind, BLIXT_GATE, type BlixtConfig } from '../../engine/blixt'
@@ -101,10 +102,10 @@ export function Home() {
 function HomeInner({ child }: { child: ChildProfile }) {
   const store = useStore()
   const currentId = useMemo(() => currentMomentId(child), [child])
-  // Väntar en världsboss? (alla moment klara men världen inte erövrad) — då är
-  // BOSSEN nästa steg, inte ett nytt moment. Styr "Du är här", vy och knapp.
-  const pendingBossWorldId = useMemo(() => bossPendingWorldId(child), [child])
-  const pendingBossWorld = pendingBossWorldId ? worldById(pendingBossWorldId) : undefined
+  // Väntar en Årsväktare? (årskursens alla moment klara men året inte erövrat)
+  // — då är VÄKTAREN nästa steg, inte ett nytt moment (Expeditionens grind).
+  const pendingGuardian = useMemo(() => pendingGuardianYear(child), [child])
+  const guardian = pendingGuardian !== undefined ? guardianForYear(pendingGuardian) : undefined
   // Väntar en flyt-grind (blixt som måste klaras innan nästa moment)?
   const pendingBlixt = useMemo(() => pendingBlixtKind(child), [child])
   const currentMoment = currentId ? momentById(currentId) : undefined
@@ -113,9 +114,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
   // attempts, inte mastery: diagnosen sätter frontmomentet till in-progress utan
   // att barnet spelat, så vi vill inte säga "Fortsätt" redan dag ett.
   const hasStarted = (currentSkill?.attempts ?? 0) > 0
-  // Boss/blixt är nästa steg först när inget moment finns kvar att träna.
-  const bossIsNextStep = !!pendingBossWorldId && !currentId
-  // Flyt-grinden gäller ÄVEN BAKÅT (samma beslut som bossen): en "försenad"
+  // Väktare/blixt är nästa steg först när inget moment finns kvar att träna.
+  const guardianIsNextStep = pendingGuardian !== undefined && !currentId
+  // Flyt-grinden gäller ÄVEN BAKÅT (samma beslut som väktaren): en "försenad"
   // grind — momentet bakom den redan behärskat (diagnos/migrering) men blixten
   // aldrig klarad — går före vidare träning. Snabbt för barn med flyt
   // (1-minutstest, obegränsade försök) och håller memoreringskravet ärligt.
@@ -123,13 +124,17 @@ function HomeInner({ child }: { child: ChildProfile }) {
     const m = child.skills[BLIXT_GATE[pendingBlixt]]?.mastery
     return m === 'mastered' || m === 'star'
   })()
-  const blixtIsNextStep = !!pendingBlixt && !bossIsNextStep && (!currentId || blixtOverdue)
+  const blixtIsNextStep = !!pendingBlixt && !guardianIsNextStep && (!currentId || blixtOverdue)
   const blixtWorldId = blixtIsNextStep && pendingBlixt
     ? momentById(blixtConfig(pendingBlixt).unlockMomentId).worldId : undefined
+  // Väktaren hör inte till en värld — visa världen där årets resa slutade
+  // (sista momentet i terminsordning), så bakgrunden känns som "här är vi".
+  const guardianWorldId = pendingGuardian !== undefined
+    ? momentById(genMomentIdsInYear(pendingGuardian).at(-1)!).worldId : undefined
   const currentWorld = currentMoment ? worldById(currentMoment.worldId)
-    : pendingBossWorld ?? (blixtWorldId ? worldById(blixtWorldId) : undefined)
-  // "Du är här" och startvyn: bossvärld > flyt-grindens värld > aktuellt moment.
-  const focusWorldId = pendingBossWorldId ?? blixtWorldId ?? currentMoment?.worldId ?? WORLDS[0].id
+    : (guardianWorldId ? worldById(guardianWorldId) : blixtWorldId ? worldById(blixtWorldId) : undefined)
+  // "Du är här" och startvyn: väktarens värld > flyt-grindens värld > aktuellt moment.
+  const focusWorldId = (guardianIsNextStep ? guardianWorldId : undefined) ?? blixtWorldId ?? currentMoment?.worldId ?? WORLDS[0].id
   const [worldId, setWorldId] = useState(focusWorldId)
   const world = worldById(worldId)
   const theme = worldTheme(worldId)
@@ -146,27 +151,32 @@ function HomeInner({ child }: { child: ChildProfile }) {
   // att bossen är slagen — precis buggen på fotot).
   const worldConquered = child.conqueredWorlds?.includes(worldId) ?? false
   const worldAllMomentsDone = worldMomentsComplete(child.skills, worldId)
-  // "Pi anländer": första gången barnet går in i en ÖPPEN värld (första världen
-  // eller föregående erövrad) som ännu inte "setts" → ett ankomstkort med
-  // världens första kapiteltext. Migreringen har fyllt seenWorlds för barn med
-  // gammalt framsteg, så bara genuint nya världar utlöser kortet.
+  // "Pi anländer": första gången barnet går in i en ÖPPEN värld som ännu inte
+  // "setts" → ett ankomstkort med världens första kapiteltext. Öppen sedan
+  // Expeditionsmodellen = världen har något nåbart moment (årsgrinden har
+  // släppt in resan hit) eller är erövrad. Migreringen har fyllt seenWorlds
+  // för barn med gammalt framsteg, så bara genuint nya världar utlöser kortet.
   const worldIdx = WORLDS.findIndex((w) => w.id === worldId)
-  const worldIsOpen = worldIdx <= 0 || (child.conqueredWorlds?.includes(WORLDS[worldIdx - 1].id) ?? false)
+  const worldIsOpen = worldIdx <= 0 || worldConquered || moments.some((m) => {
+    if (!hasGenerator(m.generatorId)) return false
+    const s = child.skills[m.id]
+    return s !== undefined && s.mastery !== 'locked'
+  })
   const worldSeen = child.seenWorlds?.includes(worldId) ?? false
 
   // FK (förskoleklass, ~6 år) läser inte flytande: kortare guidetext + stora
   // uppläsningsknappar. Åk 1+ behåller sina fylligare texter.
   const isFK = child.schoolYear === 'F'
   // Pi-guidebubblans text i två former: full (uppläsning + åk1+) och kort (FK).
-  const guideFull = bossIsNextStep && pendingBossWorld
-    ? `Alla moment i ${pendingBossWorld.name} är klara! Nu vaknar ${pendingBossWorld.boss.name}. Tryck så tar jag dig till bossstriden!`
+  const guideFull = guardianIsNextStep && guardian && pendingGuardian !== undefined
+    ? `Alla moment i ${yearLabel(pendingGuardian)} är klara! ${guardian.name} vaktar porten till nästa årskurs. Tryck så tar jag dig till väktarstriden!`
     : blixtIsNextStep && pendingBlixt
     ? `Dags för blixtpasset ${blixtConfig(pendingBlixt).title}! Visa ditt flyt så öppnas vägen vidare. Tryck så kör vi!`
     : currentMoment
     ? `${hasStarted ? 'Vi fortsätter med' : 'Nästa'}: ${currentMoment.title}${currentWorld ? ` i ${currentWorld.name}` : ''}. Tryck på knappen så tar jag dig dit!`
     : 'Tryck på knappen så börjar vi träna tillsammans!'
-  const guideShort = bossIsNextStep && pendingBossWorld
-    ? `Möt bossen! ⚔ Tryck här!`
+  const guideShort = guardianIsNextStep && guardian
+    ? `Möt väktaren! ⚔ Tryck här!`
     : blixtIsNextStep
     ? `Dags för blixten! ⚡ Tryck här!`
     : currentMoment
@@ -237,8 +247,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
     if (secondsLeft <= 0) return store.go('time-up')
     sfx.whoosh()
     // Inget moment kvar att träna → gula knappen tar till nästa grind:
-    // världsboss eller flyt-blixt. Annars vanligt pass (motorn väljer momentet).
-    if (bossIsNextStep && pendingBossWorldId) store.startWorldBoss(pendingBossWorldId)
+    // Årsväktaren eller flyt-blixten. Annars vanligt pass (motorn väljer momentet).
+    if (guardianIsNextStep && pendingGuardian !== undefined) store.startGuardian(pendingGuardian)
     else if (blixtIsNextStep && pendingBlixt) store.startBlixt(pendingBlixt)
     else store.startSession()
   }
@@ -684,9 +694,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
           {/* När en grind väntar är NÄSTA STEG blixten/bossen — inte "Fritt läge". */}
           <Row
             label={blixtIsNextStep && pendingBlixt ? `⚡ Blixtpass: ${blixtConfig(pendingBlixt).title}`
-              : bossIsNextStep && pendingBossWorld ? `⚔ Världsboss: ${pendingBossWorld.boss.name}`
+              : guardianIsNextStep && guardian ? `⚔ Årsväktaren: ${guardian.name}`
               : currentMoment ? currentMoment.title : 'Fritt läge'}
-            tag={blixtIsNextStep || bossIsNextStep ? 'nästa steg' : hasStarted ? 'pågår' : 'nytt'}
+            tag={blixtIsNextStep || guardianIsNextStep ? 'nästa steg' : hasStarted ? 'pågår' : 'nytt'}
             tagColor="new"
           />
           <Row label="Blandade uppgifter" tag="mix" tagColor="rep" />
@@ -698,12 +708,12 @@ function HomeInner({ child }: { child: ChildProfile }) {
             background: 'linear-gradient(rgba(246,236,212,.96), rgba(230,213,176,.96)), var(--tex-parchment, none) center / cover',
             border: '2px solid #7A6544', borderRadius: 12, padding: '8px 10px', color: '#3E3016',
           }}>
-            <Pi mood={bossIsNextStep || blixtIsNextStep ? 'hejar' : 'glad'} size={34} />
+            <Pi mood={guardianIsNextStep || blixtIsNextStep ? 'hejar' : 'glad'} size={34} />
             <span style={{ flex: 1, fontSize: isFK ? 14 : 12.5, fontWeight: 700, lineHeight: 1.35 }}>
               {isFK
                 ? guideShort
-                : bossIsNextStep && pendingBossWorld
-                ? <>Alla moment i <b>{pendingBossWorld.name}</b> är klara! Nu vaknar <b>{pendingBossWorld.boss.name}</b>. Tryck så tar jag dig till bossstriden!</>
+                : guardianIsNextStep && guardian && pendingGuardian !== undefined
+                ? <>Alla moment i <b>{yearLabel(pendingGuardian)}</b> är klara! <b>{guardian.name}</b> vaktar porten till nästa årskurs. Tryck så tar jag dig till väktarstriden!</>
                 : blixtIsNextStep && pendingBlixt
                 ? <>Dags för <b>blixtpasset {blixtConfig(pendingBlixt).title}</b>! Visa ditt flyt så öppnas vägen vidare. Tryck så kör vi!</>
                 : currentMoment
@@ -718,7 +728,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
           </div>
 
           <button className="btn btn-primary" style={{ width: '100%', marginTop: 10 }} onClick={startTraining}>
-            {bossIsNextStep && pendingBossWorld ? `Möt ${pendingBossWorld.boss.name}! ⚔`
+            {guardianIsNextStep && guardian ? `Möt ${guardian.name}! ⚔`
               : blixtIsNextStep ? 'Kör blixtpasset! ⚡'
               : hasStarted ? 'Fortsätt passet ▶' : 'Starta passet ▶'}
           </button>

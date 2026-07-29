@@ -57,3 +57,43 @@ frustrationsloopar (särskilt i FK). Därför: exakt ETT extra försök, sedan f
   motorn känner igen felet, annars en processledtråd efter uppgiftstyp) — inte
   AI-chatten. Barn med chatten på får en frivillig "Prata med Pi 💬"-knapp i
   ledtrådssteget; chatten öppnas ALDRIG automatiskt (lager 0 orört).
+
+## Expeditionsmodellen: årsgrind i stället för världsgrind
+
+Beslutat med föräldern (juli 2026), efter en verklig observation: Nikolai
+(åk 2) hade klarat allt åk 2-innehåll i Urtalens dal och matades då vidare
+UPPÅT i dalen — "Räkna till 1000" (åk 3), stora tal (åk 4), negativa tal
+(åk 5) — medan multiplikationen (åk 2 VT, nästa värld) förblev låst av den
+gamla världsboss-grinden. Appen och skolan gick i otakt.
+
+**Roten:** Lgr22 är en spiralläroplan — varje läsår återbesöker flera
+områden. Världarna är tematiska (taluppfattning, geometri, statistik …), så
+en grind PER VÄRLD tvingar barnet att göra klart ett tema flera år framåt
+innan nästa tema ens börjar. En grind PER ÅRSKURS följer spiralen.
+
+**Modellen:**
+- **Resan går år för år.** Rekommendationen (`currentMomentId`) följer
+  terminsordningen genom hela årskursen, över världsgränserna. Att "hoppa
+  mellan världar" är expeditionens natur — Pi bär berättelsen ("nu reser vi
+  till skogen; dalen väntar tills vi blivit starkare").
+- **Årsväktaren är den hårda grinden.** När årskursens alla tränbara moment
+  är behärskade vaknar årets väktare (Gryningsvakten i F … Kronvakten i 6).
+  Striden är byggd som världsbossen: frågor från hela årets läroplan,
+  sköldar, ingen klocka, fel straffas aldrig, obegränsade omförsök. Vinst
+  öppnar nästa årskurs.
+- **Grinden gäller bakåt** (samma beslut som boss- och blixtgrindarna
+  tidigare): ett diagnosplacerat barn med hela F–åk 1 behärskat möter
+  Gryningsvakten och Stigvakten innan resan fortsätter — snabbt för den som
+  kan, och väktarsegrarna ger placeringen legitimitet i barnets ögon.
+- **Världsbossarna blev troféer.** De vaknar när en HEL värld är klar (alla
+  årskurser) — en sällsynt, frivillig klimax som inte grindar något. Så är
+  ett återbesök i en värld aldrig "samma boss igen": världens boss möter man
+  EN gång, när världen verkligen är färdig.
+- **Påbörjade moment över årskursen förstörs inte** (t.ex. Nikolais 0–1000):
+  de behåller sitt tillstånd och sin rating, syns på kartan, men
+  rekommendationen pekar dit först när deras år är öppet.
+
+**Varför inte årskurstak utan väktare?** Ett osynligt tak känns som ett
+stopp; en väktare är ett MÅL. Att erövra sitt läsår ger samma "jag klarade
+tvåan!"-stolthet som skolavslutningen — kopplad till behärskning, aldrig
+till hastighet eller jämförelse (orubblig princip 3).
