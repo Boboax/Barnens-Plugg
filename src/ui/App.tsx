@@ -13,7 +13,7 @@ import { TimeUp } from './screens/TimeUp'
 import { useStore } from './store'
 
 /** Skärmar där aktiv träningstid tickar mot dagens gräns. */
-const TIMED_SCREENS = new Set(['session', 'check', 'boss', 'star', 'blixt', 'diagnosis'])
+const TIMED_SCREENS = new Set(['session', 'check', 'boss', 'star', 'guardian', 'blixt', 'diagnosis'])
 /**
  * Rundor som får SPELAS KLART även om dagstiden tar slut mitt i — att slitas
  * ut mitt i bossens klimax (och tappa striden) är den mest frustrerande
@@ -121,6 +121,7 @@ export function App() {
       case 'check': return <BattleScreen kind="check" />
       case 'boss': return <BattleScreen kind="boss" />
       case 'star': return <BattleScreen kind="star" />
+      case 'guardian': return <BattleScreen kind="guardian" />
       case 'blixt': return <BlixtScreen key={store.blixtKind} />
       case 'diagnosis': return <DiagnosisScreen />
       case 'parent': return <ParentScreen />

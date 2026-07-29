@@ -1,7 +1,7 @@
 import type {
-  AnswerRecord, ChildProfile, MasteryState, MisconceptionTag, SkillState, Task,
+  AnswerRecord, ChildProfile, MasteryState, MisconceptionTag, SchoolYear, SkillState, Task,
 } from '../domain/types'
-import { MOMENTS, MOMENTS_ORDERED, momentById } from '../domain/curriculum'
+import { MOMENTS, MOMENTS_ORDERED, YEAR_ORDER, momentById } from '../domain/curriculum'
 import { WORLDS } from '../domain/worlds'
 import { hasGenerator } from '../generators'
 import { RATING_START, isBossReady, practiceLevel, updateRating } from './rating'
@@ -42,37 +42,68 @@ function genMomentIdsInWorld(worldId: string): string[] {
   return MOMENTS_ORDERED.filter((m) => m.worldId === worldId && hasGenerator(m.generatorId)).map((m) => m.id)
 }
 
-/** Är alla (tränbara) moment i en värld behärskade? Tom värld räknas EJ som klar. */
+/** Är alla (tränbara) moment i en värld behärskade? Tom värld räknas EJ som klar.
+    Sedan Expeditionsmodellen styr detta bara TROFÉ-bossen — grinden är årets. */
 export function worldMomentsComplete(skills: Record<string, SkillState>, worldId: string): boolean {
   const ids = genMomentIdsInWorld(worldId)
   return ids.length > 0 && ids.every((id) => isDone(skills[id]))
 }
 
+/** Tränbara moment i en ÅRSKURS (över alla världar), i terminsordning.
+    Expeditionens grundenhet: läroplanen är en spiral, så resan går år för år
+    genom flera världar — inte värld för värld genom flera år. */
+export function genMomentIdsInYear(year: SchoolYear): string[] {
+  return MOMENTS_ORDERED.filter((m) => m.year === year && hasGenerator(m.generatorId)).map((m) => m.id)
+}
+
+/** Är alla tränbara moment i en årskurs behärskade? Tom årskurs räknas EJ klar. */
+export function yearMomentsComplete(skills: Record<string, SkillState>, year: SchoolYear): boolean {
+  const ids = genMomentIdsInYear(year)
+  return ids.length > 0 && ids.every((id) => isDone(skills[id]))
+}
+
+/** Årskurser som har tränbara moment (lat + memoiserad: generatorregistret
+    ska vara fyllt när vi frågar, inte vid modul-laddning). */
+let trainableYearsMemo: SchoolYear[] | undefined
+function trainableYears(): SchoolYear[] {
+  trainableYearsMemo ??= YEAR_ORDER.filter((y) => genMomentIdsInYear(y).length > 0)
+  return trainableYearsMemo
+}
+
+/** Är årskursen öppen för träning? Öppen = varje TIDIGARE årskurs (med
+    tränbara moment) har sin Årsväktare besegrad. Första årskursen är alltid
+    öppen. Detta är Expeditionsmodellens hårda grind. */
+function yearOpen(year: SchoolYear, conqueredYears: ReadonlySet<SchoolYear>): boolean {
+  const idx = YEAR_ORDER.indexOf(year)
+  return trainableYears().every((y) => YEAR_ORDER.indexOf(y) >= idx || conqueredYears.has(y))
+}
+
 /**
- * Räkna om locked/available utifrån förkunskaper OCH bossgrinden. Muterar inte.
+ * Räkna om locked/available utifrån förkunskaper OCH årsgrinden. Muterar inte.
  *
- * Bossgrind (orubblig princip: framsteg styrs av appkod): för att korsa in i
- * en NY värld måste den förra världens boss vara besegrad. Konkret — ett
- * moment vars förkunskap ligger i en ANNAN värld låses upp först när DEN
- * världen finns i `conqueredWorlds`. Moment inom samma värld påverkas inte.
- * `conqueredWorlds` default tom = inga bossar tagna än (t.ex. ny profil).
+ * Årsgrind (orubblig princip: framsteg styrs av appkod): ett moment låses upp
+ * först när dess årskurs är öppen — dvs. alla tidigare årskursers Årsväktare
+ * är besegrade. Så följer resan läroplanens spiral (multiplikation i åk 2
+ * öppnas när åk 1 är erövrad — inte när en hel värld är färdigspelad upp till
+ * åk 5). `conqueredYears` default tom = inga väktare besegrade än (ny profil).
+ *
+ * Moment som redan är in-progress/mastered rörs ALDRIG av grinden — den
+ * växlar bara locked ⇄ available. (Ett barn som hunnit påbörja ett moment
+ * över sin årskurs får behålla det på kartan, men rekommendationen pekar dit
+ * först när året är öppet.)
  */
 export function recomputeAvailability(
   skills: Record<string, SkillState>,
-  conqueredWorlds: readonly string[] = [],
+  conqueredYears: readonly SchoolYear[] = [],
   blixtBlocked: ReadonlySet<string> = EMPTY_SET,
 ): Record<string, SkillState> {
-  const conquered = new Set(conqueredWorlds)
+  const conquered = new Set(conqueredYears)
   const next: Record<string, SkillState> = { ...skills }
   for (const moment of MOMENTS) {
     const skill = next[moment.id] ?? newSkillState(moment.id)
     const prereqsDone = moment.prerequisites.every((p) => isDone(next[p]))
-    const bossGateOpen = moment.prerequisites.every((p) => {
-      const pWorld = momentById(p).worldId
-      return pWorld === moment.worldId || conquered.has(pWorld)
-    })
     // Flyt-grind: momentet hålls låst tills blixten före det är klarad.
-    const unlocked = prereqsDone && bossGateOpen && !blixtBlocked.has(moment.id)
+    const unlocked = prereqsDone && yearOpen(moment.year, conquered) && !blixtBlocked.has(moment.id)
     let mastery: MasteryState = skill.mastery
     if (skill.mastery === 'locked' && unlocked) mastery = 'available'
     if (skill.mastery === 'available' && !unlocked) mastery = 'locked'
@@ -94,7 +125,7 @@ export function recomputeAvailability(
 export function repairDiagnosisBossReady(
   skills: Record<string, SkillState>,
   now: string,
-  conqueredWorlds: readonly string[] = [],
+  conqueredYears: readonly SchoolYear[] = [],
   blixtBlocked: ReadonlySet<string> = EMPTY_SET,
 ): Record<string, SkillState> {
   const next: Record<string, SkillState> = { ...skills }
@@ -103,9 +134,9 @@ export function repairDiagnosisBossReady(
       next[id] = { ...s, mastery: 'mastered', rating: Math.max(s.rating, 700), review: s.review ?? scheduleFirstReview(now) }
     }
   }
-  // Alltid räkna om tillgänglighet — så boss- OCH flyt-grinden greppar även
+  // Alltid räkna om tillgänglighet — så års- OCH flyt-grinden greppar även
   // gamla profiler som placerades innan grindarna fanns.
-  return recomputeAvailability(next, conqueredWorlds, blixtBlocked)
+  return recomputeAvailability(next, conqueredYears, blixtBlocked)
 }
 
 /**
@@ -300,24 +331,27 @@ export function applyReviewResult(skill: SkillState, passed: boolean, now: strin
 
 /**
  * Nästa moment att träna. Repetition (needs-review) går alltid först — den
- * är tillåten var som helst. Därefter går vi igenom världarna i läroplans-
- * ordning och STANNAR vid den första världen som inte är både klar OCH
- * erövrad: är det moment kvar tränar vi dem; är alla moment klara men bossen
- * kvar returnerar vi undefined (barnet ska möta bossen — se bossPendingWorldId).
- * Så hoppar vi aldrig förbi en oerövrad boss in i nästa värld.
+ * är tillåten var som helst. Därefter går vi igenom ÅRSKURSERNA i ordning
+ * (Expeditionen: läroplanens spiral, år för år genom flera världar) och
+ * STANNAR vid den första årskurs som inte är både klar OCH erövrad: är det
+ * moment kvar tränar vi dem (terminsordning); är alla moment klara men
+ * Årsväktaren kvar returnerar vi undefined (barnet ska möta väktaren — se
+ * pendingGuardianYear). Så hoppar vi aldrig förbi en obesegrad väktare in i
+ * nästa årskurs — och rekommenderar aldrig ett moment ÖVER barnets front,
+ * även om det råkar vara påbörjat sedan tidigare.
  */
 export function currentMomentId(profile: ChildProfile): string | undefined {
   const skills = profile.skills
   const withGen = (id: string): boolean => hasGenerator(momentById(id).generatorId)
   const needsReview = Object.values(skills).find((s) => s.mastery === 'needs-review' && withGen(s.momentId))
   if (needsReview) return needsReview.momentId
-  const conquered = new Set(profile.conqueredWorlds ?? [])
-  for (const world of WORLDS) {
-    const ids = genMomentIdsInWorld(world.id)
+  const conquered = new Set(profile.conqueredYears ?? [])
+  for (const year of YEAR_ORDER) {
+    const ids = genMomentIdsInYear(year)
     if (ids.length === 0) continue
     const complete = ids.every((id) => isDone(skills[id]))
     if (!complete) {
-      // Träna vidare i denna värld: pågående/boss-redo först, annars nästa öppna.
+      // Träna vidare i denna årskurs: pågående/boss-redo först, annars nästa öppna.
       const active = ids.find((id) => {
         const m = skills[id]?.mastery
         return m === 'in-progress' || m === 'boss-ready'
@@ -327,27 +361,42 @@ export function currentMomentId(profile: ChildProfile): string | undefined {
       // flyt-grind) → returnera undefined; Home visar då blixt-grinden som steg.
       return ids.find((id) => skills[id]?.mastery === 'available')
     }
-    // Världen klar men bossen inte besegrad → stanna (barnet möter bossen).
-    if (!conquered.has(world.id)) return undefined
-    // Klar OCH erövrad → gå vidare till nästa värld.
+    // Årskursen klar men väktaren inte besegrad → stanna (barnet möter väktaren).
+    if (!conquered.has(year)) return undefined
+    // Klar OCH erövrad → gå vidare till nästa årskurs.
   }
   return undefined
 }
 
 /**
- * Vilken världs boss väntar just nu (alla moment klara men världen inte
- * erövrad)? Den avgör "Du är här" och den gula knappen när det inte finns
- * något moment kvar att träna. undefined = ingen boss väntar.
+ * Vilken Årsväktare väntar just nu (alla årskursens moment klara men året
+ * inte erövrat)? Den avgör "Du är här" och den gula knappen när det inte
+ * finns något moment kvar att träna. Grinden gäller även bakåt: ett diagnos-
+ * placerat barn med hela förskoleklassen behärskad möter Gryningsvakten
+ * innan resan fortsätter. undefined = ingen väktare väntar.
  */
-export function bossPendingWorldId(profile: ChildProfile): string | undefined {
+export function pendingGuardianYear(profile: ChildProfile): SchoolYear | undefined {
   const skills = profile.skills
+  const conquered = new Set(profile.conqueredYears ?? [])
+  for (const year of YEAR_ORDER) {
+    const ids = genMomentIdsInYear(year)
+    if (ids.length === 0) continue
+    if (!ids.every((id) => isDone(skills[id]))) return undefined // moment kvar → ingen väktare än
+    if (!conquered.has(year)) return year // klar men oerövrad → väktaren väntar
+    // annars nästa årskurs
+  }
+  return undefined
+}
+
+/**
+ * Trofé-boss: första världen som är HELT klar (alla år) men vars världsboss
+ * inte besegrats. Blockerar INGENTING sedan Expeditionsmodellen — striden är
+ * en frivillig klimax som erbjuds på världens stig och i rapporten.
+ */
+export function trophyBossWorldId(profile: ChildProfile): string | undefined {
   const conquered = new Set(profile.conqueredWorlds ?? [])
   for (const world of WORLDS) {
-    const ids = genMomentIdsInWorld(world.id)
-    if (ids.length === 0) continue
-    if (!ids.every((id) => isDone(skills[id]))) return undefined // moment kvar → ingen boss än
-    if (!conquered.has(world.id)) return world.id // klar men oerövrad → bossen väntar
-    // annars nästa värld
+    if (worldMomentsComplete(profile.skills, world.id) && !conquered.has(world.id)) return world.id
   }
   return undefined
 }

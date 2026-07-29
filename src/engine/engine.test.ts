@@ -5,7 +5,7 @@ import { WORLDS } from '../domain/worlds'
 import { hasGenerator } from '../generators'
 import { expectedSuccess, practiceLevel, updateRating } from './rating'
 import { REVIEW_INTERVALS_DAYS, scheduleFirstReview, scheduleNextReview } from './spaced-repetition'
-import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady, currentMomentId, bossPendingWorldId, worldMomentsComplete } from './progress'
+import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady, currentMomentId, pendingGuardianYear, trophyBossWorldId, worldMomentsComplete, genMomentIdsInYear, yearMomentsComplete } from './progress'
 import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
 import { composeCheckTasks, composeWorldBossTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
@@ -193,39 +193,117 @@ describe('startdiagnosen', () => {
   })
 })
 
-describe('bossgrinden: bossen öppnar nästa värld', () => {
-  const w0 = WORLDS[0].id
-  const masterFirstWorld = (): ChildProfile => {
-    const profile = makeProfile()
-    for (const m of momentsInWorld(w0)) {
-      profile.skills[m.id] = { ...profile.skills[m.id], mastery: 'mastered', rating: 700 }
+describe('årsgrinden (Expeditionsmodellen): Årsväktaren öppnar nästa årskurs', () => {
+  /** Behärska alla tränbara moment i de angivna årskurserna. */
+  const masterYears = (profile: ChildProfile, years: string[]): void => {
+    for (const m of MOMENTS) {
+      if (years.includes(m.year) && hasGenerator(m.generatorId)) {
+        profile.skills[m.id] = { ...profile.skills[m.id], mastery: 'mastered', rating: 700 }
+      }
     }
-    return profile
   }
+  /** Alla blixtar klarade — så flyt-grinden inte blandar sig i årstesterna. */
+  const allBlixtCleared = { 'add-sub-0-10': { best: 20, lastAt: '', cleared: true }, 'add-sub-0-20': { best: 20, lastAt: '', cleared: true }, tabeller: { best: 20, lastAt: '', cleared: true } } as ChildProfile['blixt']
 
-  it('alla moment klara men bossen kvar → bossen väntar, inget moment att träna, nästa värld låst', () => {
-    const profile = masterFirstWorld()
-    profile.skills = recomputeAvailability(profile.skills, []) // ingen erövrad boss
-    expect(worldMomentsComplete(profile.skills, w0)).toBe(true)
-    // Bossen är nästa steg — vi hoppar INTE vidare till nästa värld.
-    expect(bossPendingWorldId(profile)).toBe(w0)
+  it('år F klart men väktaren kvar → väktaren väntar, inget moment att träna, åk 1 låst', () => {
+    const profile = makeProfile({ blixt: allBlixtCleared })
+    masterYears(profile, ['F'])
+    profile.skills = recomputeAvailability(profile.skills, []) // ingen väktare besegrad
+    expect(yearMomentsComplete(profile.skills, 'F')).toBe(true)
+    // Väktaren är nästa steg — vi hoppar INTE vidare in i åk 1.
+    expect(pendingGuardianYear(profile)).toBe('F')
     expect(currentMomentId(profile)).toBeUndefined()
-    // Ett moment i en senare värld (förkunskap i w0) är fortfarande låst.
-    const laterGated = MOMENTS.find(
-      (m) => m.worldId !== w0 && hasGenerator(m.generatorId) &&
-        m.prerequisites.some((p) => momentById(p).worldId === w0),
-    )
-    if (laterGated) expect(profile.skills[laterGated.id].mastery).toBe('locked')
+    // Ett åk 1-moment med alla förkunskaper i F hålls låst av årsgrinden.
+    const gated = MOMENTS.find((m) => m.year === '1' && hasGenerator(m.generatorId) &&
+      m.prerequisites.every((p) => momentById(p).year === 'F'))
+    expect(gated, 'testet behöver ett F-grindat åk 1-moment').toBeDefined()
+    expect(profile.skills[gated!.id].mastery).toBe('locked')
   })
 
-  it('erövrad boss → nästa värld öppnas och blir aktuell', () => {
-    const profile = masterFirstWorld()
-    profile.conqueredWorlds = [w0]
-    profile.skills = recomputeAvailability(profile.skills, [w0])
-    expect(bossPendingWorldId(profile)).not.toBe(w0)
+  it('besegrad väktare → nästa årskurs öppnas och blir aktuell', () => {
+    const profile = makeProfile({ blixt: allBlixtCleared, conqueredYears: ['F'] })
+    masterYears(profile, ['F'])
+    profile.skills = recomputeAvailability(profile.skills, ['F'])
+    expect(pendingGuardianYear(profile)).toBeUndefined()
     const next = currentMomentId(profile)
     expect(next).toBeDefined()
-    expect(momentById(next!).worldId).not.toBe(w0)
+    expect(momentById(next!).year).toBe('1')
+  })
+
+  it('Nikolai-scenariot: dalen klar t.o.m. åk 2 + 0–1000 påbörjat → rekommendationen lämnar 0–1000 och öppnar åk 2 (multiplikation)', () => {
+    // Läget som föranledde modellbytet: diagnos+träning hade behärskat F–åk 2 i
+    // Urtalens dal och motorn matade vidare UPPÅT i dalen (0–1000 = åk 3) i
+    // stället för åk 2-innehållet i nästa värld (gånger = åk 2 VT!).
+    const profile = makeProfile({ blixt: allBlixtCleared, conqueredYears: ['F', '1'] })
+    masterYears(profile, ['F', '1'])
+    for (const id of ['positionssystem-100', 'add-sub-0-100', 'vaxling-0-100', 'rimlighet']) {
+      profile.skills[id] = { ...profile.skills[id], mastery: 'mastered', rating: 700 }
+    }
+    // 0–1000 (åk 3) hann påbörjas under den gamla modellen.
+    profile.skills['add-sub-0-1000'] = { ...profile.skills['add-sub-0-1000'], mastery: 'in-progress', rating: 500, attempts: 9 }
+    profile.skills = recomputeAvailability(profile.skills, profile.conqueredYears)
+
+    // Multiplikationen (åk 2 VT) är UPPLÅST trots att dalen inte är färdig.
+    expect(profile.skills['mult-intro'].mastery).toBe('available')
+    // Rekommendationen pekar på ett åk 2-moment — aldrig på 0–1000 (åk 3).
+    const next = currentMomentId(profile)
+    expect(next).toBeDefined()
+    expect(next).not.toBe('add-sub-0-1000')
+    expect(momentById(next!).year).toBe('2')
+    // Det påbörjade åk 3-momentet förstörs inte — det väntar bara på sitt år.
+    expect(profile.skills['add-sub-0-1000'].mastery).toBe('in-progress')
+  })
+
+  it('grinden gäller bakåt: diagnosplacerat barn möter väktarna för redan klarade år', () => {
+    const profile = makeProfile({ blixt: allBlixtCleared }) // inga erövrade år
+    masterYears(profile, ['F', '1'])
+    profile.skills = recomputeAvailability(profile.skills, [])
+    // F är först i kön — väktarna tas i ordning.
+    expect(pendingGuardianYear(profile)).toBe('F')
+    expect(currentMomentId(profile)).toBeUndefined()
+  })
+
+  it('ingen återvändsgränd: i varje årsläge finns ett nästa steg (moment, väktare eller blixt)', () => {
+    const years = ['F', '1', '2', '3', '4', '5', '6']
+    for (let k = 0; k < years.length; k++) {
+      // Åren före k är behärskade + erövrade; år k är delvis/inte påbörjat.
+      const conquered = years.slice(0, k) as ChildProfile['conqueredYears']
+      const profile = makeProfile({ conqueredYears: conquered })
+      masterYears(profile, years.slice(0, k))
+      profile.skills = recomputeAvailability(profile.skills, conquered, blixtBlockedMoments(profile))
+      const step = currentMomentId(profile) ?? pendingGuardianYear(profile) ?? pendingBlixtKind(profile)
+      expect(step, `år ${years[k]}: inget nästa steg`).toBeDefined()
+    }
+    // Allt behärskat + alla väktare tagna → färdigspelat (inget steg, ingen krasch).
+    const done = makeProfile({ blixt: allBlixtCleared, conqueredYears: years as ChildProfile['conqueredYears'] })
+    masterYears(done, years)
+    done.skills = recomputeAvailability(done.skills, done.conqueredYears)
+    expect(currentMomentId(done)).toBeUndefined()
+    expect(pendingGuardianYear(done)).toBeUndefined()
+  })
+
+  it('världsbossen är en trofé: hel värld klar → bossen erbjuds, men inget grindas av den', () => {
+    const w0 = WORLDS[0].id
+    const profile = makeProfile({ blixt: allBlixtCleared, conqueredYears: ['F', '1', '2', '3', '4'] })
+    for (const m of momentsInWorld(w0)) {
+      if (hasGenerator(m.generatorId)) profile.skills[m.id] = { ...profile.skills[m.id], mastery: 'mastered', rating: 700 }
+    }
+    profile.skills = recomputeAvailability(profile.skills, profile.conqueredYears)
+    expect(worldMomentsComplete(profile.skills, w0)).toBe(true)
+    expect(trophyBossWorldId(profile)).toBe(w0)
+    // Trots att trofé-bossen inte är tagen finns moment att träna (grindar inget).
+    expect(currentMomentId(profile)).toBeDefined()
+  })
+
+  it('terminsordning inom året: åk-moment rekommenderas i läroplansföljd', () => {
+    const profile = makeProfile({ blixt: allBlixtCleared, conqueredYears: ['F'] })
+    masterYears(profile, ['F'])
+    profile.skills = recomputeAvailability(profile.skills, ['F'], blixtBlockedMoments(profile))
+    const first = currentMomentId(profile)
+    const yearIds = genMomentIdsInYear('1')
+    // Rekommendationen är det FÖRSTA öppna åk 1-momentet i terminsordning.
+    const firstOpen = yearIds.find((id) => profile.skills[id]?.mastery === 'available')
+    expect(first).toBe(firstOpen)
   })
 })
 
@@ -296,12 +374,13 @@ describe('flyt-grind (blixt som krav för att gå vidare)', () => {
   })
 
   it('oklarad blixt låser momentet efter den — klarad öppnar det', () => {
-    const gated = BLIXT_GATE['add-sub-0-10'] // 'addition-0-20'
+    const gated = BLIXT_GATE['add-sub-0-10'] // 'addition-0-20' (åk 1)
     const before = reachAddSub010()
     const blockedNo = blixtBlockedMoments(before)
     expect(blockedNo.has(gated)).toBe(true)
+    // År F erövrat så årsgrinden inte skuggar flyt-grinden i testet.
     // Trots att förkunskaperna är klara hålls momentet låst av grinden.
-    const locked = recomputeAvailability(before.skills, [], blockedNo)
+    const locked = recomputeAvailability(before.skills, ['F'], blockedNo)
     expect(locked[gated].mastery).toBe('locked')
     expect(pendingBlixtKind(before)).toBe('add-sub-0-10')
 
@@ -309,7 +388,7 @@ describe('flyt-grind (blixt som krav för att gå vidare)', () => {
     const after: ChildProfile = { ...before, blixt: { 'add-sub-0-10': { best: 20, lastAt: '', cleared: true } } }
     const blockedYes = blixtBlockedMoments(after)
     expect(blockedYes.has(gated)).toBe(false)
-    const open = recomputeAvailability(after.skills, [], blockedYes)
+    const open = recomputeAvailability(after.skills, ['F'], blockedYes)
     expect(open[gated].mastery).toBe('available')
     expect(pendingBlixtKind(after)).not.toBe('add-sub-0-10')
   })

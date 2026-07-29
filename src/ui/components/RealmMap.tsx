@@ -155,19 +155,30 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
   // Hur långt barnet nått i resvägen (för den upplysta "hittills"-stigen).
   const currentIdx = Math.max(0, WORLDS.findIndex((w) => w.id === currentWorldId))
 
-  /* Dimma ("fog of war"): oupptäckta delar av riket ligger i moln. En värld är
-     ÖPPEN = första världen eller föregående värld erövrad (samma begrepp som
-     bossgrinden — inga nya motorbegrepp). Första icke-öppna världen visas i
-     lätt dis (medaljong + namn syns, men framsteg döljs), världarna bortom den
-     i tjock dimma med ???. Erövran är sekventiell, så de öppna världarna bildar
-     ett sammanhängande förled och det finns som mest EN "nästa". */
+  /* Dimma ("fog of war"): oupptäckta delar av riket ligger i moln. Sedan
+     Expeditionsmodellen (årsgrindar i stället för världsboss-grind) är en
+     värld ÖPPEN när den har något NÅBART moment — upplåst av årsgrinden eller
+     redan påbörjat/behärskat — eller är erövrad. Årets resa besöker flera
+     världar, så flera kan vara öppna samtidigt. Första icke-öppna världen
+     (i kartordning) visas i lätt dis, världarna bortom den i tjock dimma. */
   const conqueredSet = new Set(child.conqueredWorlds ?? [])
-  const worldOpen = (i: number): boolean => i === 0 || conqueredSet.has(WORLDS[i - 1].id)
+  const worldOpen = (i: number): boolean => {
+    const w = WORLDS[i]
+    if (i === 0 || conqueredSet.has(w.id)) return true
+    return momentsInWorld(w.id).some((m) => {
+      if (!hasGenerator(m.generatorId)) return false
+      const s = child.skills[m.id]
+      return s !== undefined && s.mastery !== 'locked'
+    })
+  }
   const firstClosedIdx = WORLDS.findIndex((_, i) => !worldOpen(i))
   const visibilityOf = (worldId: string): 'open' | 'next' | 'beyond' => {
     if (firstClosedIdx === -1) return 'open'
     const i = WORLDS.findIndex((w) => w.id === worldId)
-    return i < firstClosedIdx ? 'open' : i === firstClosedIdx ? 'next' : 'beyond'
+    // Öppna världar kan ligga även EFTER den första stängda (spiralen hoppar);
+    // de visas alltid klart. Stängda graderas efter avstånd som förr.
+    if (worldOpen(i)) return 'open'
+    return i === firstClosedIdx ? 'next' : 'beyond'
   }
 
   /* Avslöjandet: en värld som är ÖPPEN men ännu inte "sedd" (barnet har inte

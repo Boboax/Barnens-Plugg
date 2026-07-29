@@ -434,7 +434,7 @@ export const momentById = (id: string): Moment => {
   return m
 }
 
-const YEAR_ORDER: SchoolYear[] = ['F', '1', '2', '3', '4', '5', '6']
+export const YEAR_ORDER: SchoolYear[] = ['F', '1', '2', '3', '4', '5', '6']
 
 export const termSortKey = (slot: TermSlot): number =>
   YEAR_ORDER.indexOf(slot.year) * 4 + (slot.term === 'HT' ? 0 : 2) + (slot.half - 1)

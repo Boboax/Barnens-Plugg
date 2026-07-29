@@ -114,18 +114,24 @@ publikt för Pages på gratisplanen.
   det redan — följ mönstret).
 - **Diagnosen visar aldrig rätt/fel** — den är inramad som "vi lär känna
   varandra". Bryt inte den illusionen i UI-ändringar.
-- **Världsbossen är en HÅRD grind mellan världar.** När alla (tränbara) moment
-  i en värld är klara vaknar världsbossen — och nästa värld öppnas FÖRST när
-  bossen besegrats (`conqueredWorlds`). Grinden sitter i
-  `recomputeAvailability(skills, conqueredWorlds)`: ett moment vars förkunskap
-  ligger i en annan värld låses upp först när DEN världen är erövrad.
-  `currentMomentId`/`bossPendingWorldId` går igenom `WORLDS` i ordning och
-  STANNAR vid första klara-men-oerövrade världen (då är bossen nästa steg, inte
-  ett nytt moment). Hoppa aldrig förbi bossen: bygg inte om availability eller
-  "Du är här" så att en oerövrad boss kan förbigås. Gäller även bakåt —
-  diagnos-placerade/redan klarade världar måste också bossas (medvetet val med
-  föräldern). Kapitelbanderollens SISTA kapitel ("… bossen besegrad, vägen
-  öppnas") får bara visas när världen är erövrad, aldrig innan.
+- **Årsväktaren är den HÅRDA grinden mellan årskurser (Expeditionsmodellen,
+  juli 2026).** Läroplanen är en spiral — varje läsår besöker flera världar —
+  så resan går ÅR för år, inte värld för värld. När alla (tränbara) moment i
+  en årskurs är klara vaknar årets väktare (`domain/guardians.ts`), och nästa
+  årskurs öppnas FÖRST när väktaren besegrats (`conqueredYears`). Grinden
+  sitter i `recomputeAvailability(skills, conqueredYears)`: ett moment låses
+  upp först när dess årskurs är öppen. `currentMomentId`/`pendingGuardianYear`
+  går igenom `YEAR_ORDER` och STANNAR vid första klara-men-oerövrade året (då
+  är väktaren nästa steg, inte ett nytt moment). Hoppa aldrig förbi väktaren:
+  bygg inte om availability eller "Du är här" så att en obesegrad väktare kan
+  förbigås. Gäller även bakåt — diagnos-placerade år måste också väktas
+  (medvetet val med föräldern). Bakgrund: den gamla världsboss-grinden
+  tvingade en åk 2-elev genom åk 3–5-innehåll (0–1000, negativa tal) innan
+  multiplikationen (åk 2!) öppnades. **Världsbossarna är numera TROFÉER**
+  (`conqueredWorlds`): striden erbjuds när en HEL värld är klar (alla år) och
+  grindar ingenting — så ett återbesök i en värld aldrig är samma boss igen.
+  Kapitelbanderollens SISTA kapitel ("… bossen besegrad, vägen öppnas") får
+  bara visas när världen är erövrad, aldrig innan.
 
 ## Roadmap (prioritetsordning, beslutad med föräldern)
 

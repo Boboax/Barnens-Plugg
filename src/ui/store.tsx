@@ -23,7 +23,7 @@ import { hashPin, verifyPin } from '../storage/pin'
    ============================================================ */
 
 export type Screen =
-  | 'profiles' | 'home' | 'session' | 'check' | 'boss' | 'star'
+  | 'profiles' | 'home' | 'session' | 'check' | 'boss' | 'star' | 'guardian'
   | 'blixt' | 'diagnosis' | 'parent' | 'time-up'
 
 export const KID_COLORS = ['#FF7A6E', '#3FBF87', '#4A56C6', '#E8A13C', '#8C6BC8', '#2FA8C7'] as const
@@ -49,11 +49,17 @@ interface StoreValue {
   leaveChild(): void
   /** Momentet vars kunskapskoll/stjärnnivå körs just nu. */
   battleMomentId: string | undefined
-  /** Världen vars boss (klimaxstrid i slutet) utmanas just nu. */
+  /** Världen vars boss (trofé-klimax när HELA världen är klar) utmanas just nu. */
   battleWorldId: string | undefined
+  /** Årskursen vars Årsväktare (Expeditionens hårda grind) utmanas just nu. */
+  battleYear: SchoolYear | undefined
   startBattle(momentId: string, kind: 'check' | 'star'): void
-  /** Starta världsbossen (den stora striden när alla noder i världen är klara). */
+  /** Starta världsbossen (trofé-striden när alla noder i världen är klara). */
   startWorldBoss(worldId: string): void
+  /** Starta Årsväktaren (grindstriden när årskursens alla moment är klara). */
+  startGuardian(year: SchoolYear): void
+  /** Resultat av väktarstriden (vinst → årskursen erövrad, nästa öppnas). */
+  finishGuardian(year: SchoolYear, won: boolean): void
   /** Momentet barnet valde på kartan för nästa pass (undefined = motorn väljer). */
   sessionMomentId: string | undefined
   /** Fokuserat pass? (nodtryck = bara det momentet; "Starta passet" = fullt pass). */
@@ -133,6 +139,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [parentUnlocked, setParentUnlocked] = useState(false)
   const [battleMomentId, setBattleMomentId] = useState<string>()
   const [battleWorldId, setBattleWorldId] = useState<string>()
+  const [battleYear, setBattleYear] = useState<SchoolYear>()
   const [blixtKind, setBlixtKind] = useState<BlixtKind>()
   const [sessionMomentId, setSessionMomentId] = useState<string>()
   const [sessionFocused, setSessionFocused] = useState(false)
@@ -191,6 +198,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     battleMomentId,
     battleWorldId,
+    battleYear,
     startBattle: (momentId, kind) => {
       setBattleMomentId(momentId)
       setScreen(kind)
@@ -198,6 +206,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     startWorldBoss: (worldId) => {
       setBattleWorldId(worldId)
       setScreen('boss')
+    },
+    startGuardian: (year) => {
+      setBattleYear(year)
+      setScreen('guardian')
+    },
+    finishGuardian: (year, won) => {
+      if (!activeChildId || !won) return
+      // Vinst mot Årsväktaren → årskursen erövrad. Räkna om tillgänglighet så
+      // att NÄSTA årskurs moment öppnas (årsgrinden släpper). Enda vägen vidare.
+      patchChild(activeChildId, (c) => {
+        if (c.conqueredYears?.includes(year)) return c
+        const conqueredYears = [...(c.conqueredYears ?? []), year]
+        return { ...c, conqueredYears, skills: recomputeAvailability(c.skills, conqueredYears, blixtBlockedMoments(c)) }
+      })
     },
 
     sessionMomentId,
@@ -229,7 +251,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const rec = { best, lastAt: nowISO(), tier, cleared: (prev?.cleared ?? false) || cleared, bestTimeMs }
         const next = { ...c, blixt: { ...c.blixt, [kind]: rec } }
         // Klarad flyt-grind → räkna om tillgänglighet så nästa moment öppnas.
-        return { ...next, skills: recomputeAvailability(next.skills, next.conqueredWorlds ?? [], blixtBlockedMoments(next)) }
+        return { ...next, skills: recomputeAvailability(next.skills, next.conqueredYears ?? [], blixtBlockedMoments(next)) }
       })
     },
     setBlixtTarget: (kind, target) => {
@@ -295,7 +317,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // och diagnosprober smutsade ned rating på oövade moment.
         const skills = context === 'blixt' || context === 'diagnos'
           ? c.skills
-          : recomputeAvailability({ ...c.skills, [momentId]: nextSkill }, c.conqueredWorlds ?? [], blixtBlockedMoments(c))
+          : recomputeAvailability({ ...c.skills, [momentId]: nextSkill }, c.conqueredYears ?? [], blixtBlockedMoments(c))
         return { ...c, skills, answers, streak, pendingStreakToast }
       })
     },
@@ -313,18 +335,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         skills: recomputeAvailability({
           ...c.skills,
           [momentId]: applyBossResult(c.skills[momentId] ?? newSkillState(momentId), won, todayISO()),
-        }, c.conqueredWorlds ?? [], blixtBlockedMoments(c)),
+        }, c.conqueredYears ?? [], blixtBlockedMoments(c)),
       }))
     },
 
     finishWorldBoss: (worldId, won) => {
       if (!activeChildId || !won) return
-      // Vinst mot världsbossen → världen erövrad. Räkna om tillgänglighet så att
-      // NÄSTA värld nu öppnas (bossgrinden släpper). Detta är enda vägen vidare.
+      // Vinst mot världsbossen → världen erövrad. Sedan Expeditionsmodellen är
+      // detta en TROFÉ (firande + medalj på kartan) — grinden mellan årskurser
+      // är Årsväktarens (finishGuardian). Ingen tillgänglighet ändras här.
       patchChild(activeChildId, (c) => {
         if (c.conqueredWorlds?.includes(worldId)) return c
-        const conqueredWorlds = [...(c.conqueredWorlds ?? []), worldId]
-        return { ...c, conqueredWorlds, skills: recomputeAvailability(c.skills, conqueredWorlds, blixtBlockedMoments(c)) }
+        return { ...c, conqueredWorlds: [...(c.conqueredWorlds ?? []), worldId] }
       })
     },
 
@@ -372,9 +394,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return {
         ...c,
         skills: recomputeAvailability(fresh, [], blixtBlockedMoments(c)),
-        // Ny placering börjar om från noll — även erövrade världar nollställs så
-        // bossgrinden gäller på nytt utifrån den nya diagnosen.
+        // Ny placering börjar om från noll — erövrade årskurser och världar
+        // nollställs så grindarna gäller på nytt utifrån den nya diagnosen.
         conqueredWorlds: [],
+        conqueredYears: [],
         diagnosis: { passesDone: 0, passesTotal: 1, done: false, probes: [] },
       }
     }),
@@ -386,7 +409,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         skills: recomputeAvailability({
           ...c.skills,
           [momentId]: applyReviewResult(c.skills[momentId] ?? newSkillState(momentId), passed, todayISO()),
-        }, c.conqueredWorlds ?? [], blixtBlockedMoments(c)),
+        }, c.conqueredYears ?? [], blixtBlockedMoments(c)),
       }))
     },
 
@@ -507,7 +530,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setHousehold((h) => ({ ...h, chat: config ?? undefined }))
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, battleWorldId, blixtKind, sessionMomentId, sessionFocused])
+  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, battleWorldId, battleYear, blixtKind, sessionMomentId, sessionFocused])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
