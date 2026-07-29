@@ -8,7 +8,7 @@ import { REVIEW_INTERVALS_DAYS, scheduleFirstReview, scheduleNextReview } from '
 import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady, currentMomentId, pendingGuardianYear, trophyBossWorldId, worldMomentsComplete, genMomentIdsInYear, yearMomentsComplete, grantedYears } from './progress'
 import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
-import { composeCheckTasks, composeWorldBossTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
+import { composeCheckTasks, composeWorldBossTasks, composeGuardianTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
 import { rewardProgress, updateStreak } from './rewards'
 import { BLIXT_TESTS, blixtTask, blixtUnlocked, blixtLevel, blixtTier, blixtMaxTier, blixtTimed, BLIXT_GATE, blixtBlockedMoments, pendingBlixtKind } from './blixt'
 import { backfillSplitAddSub, backfillSeenWorlds } from './progress'
@@ -309,6 +309,57 @@ describe('årsgrinden (Expeditionsmodellen): Årsväktaren öppnar nästa årsku
     expect(pendingGuardianYear(edward)).toBeUndefined() // F ofullständigt → ingen väktare än
   })
 
+  it('fjärranår för åk 6: F–åk 3 skänks', () => {
+    expect(grantedYears({ conqueredYears: [], schoolYear: '6' })).toEqual(['F', '1', '2', '3'])
+  })
+
+  it('missad repetition ÖVER fronten gömmer inte väktaren', () => {
+    // Edward-läget: diagnosplacerad högt, allt t.o.m. åk 4 behärskat, väktaren
+    // för åk 3 väntar. Ett åk 6-moment (mastered via placering) missar sin
+    // repetition → needs-review i ett STÄNGT år får inte kapa rekommendationen.
+    const p = makeProfile({ schoolYear: '5', blixt: allBlixtCleared })
+    masterYears(p, ['F', '1', '2', '3', '4'])
+    const above = MOMENTS.find((m) => m.year === '6' && hasGenerator(m.generatorId))!
+    p.skills[above.id] = { ...p.skills[above.id], mastery: 'needs-review', rating: 500, attempts: 20 }
+    p.skills = recomputeAvailability(p.skills, grantedYears(p))
+    expect(currentMomentId(p)).toBeUndefined() // väktaren är nästa steg …
+    expect(pendingGuardianYear(p)).toBe('3')   // … och den syns
+    // Repetition i ett ÖPPET år går däremot fortfarande först.
+    const open = MOMENTS.find((m) => m.year === 'F' && hasGenerator(m.generatorId))!
+    p.skills[open.id] = { ...p.skills[open.id], mastery: 'needs-review' }
+    expect(currentMomentId(p)).toBe(open.id)
+  })
+
+  it('nya fjärranår efter årskursbyte öppnar nästa steg vid omräkning', () => {
+    // Motorproxy för updateChild-fixen: åk 2-barn med hela F klar (väktaren
+    // ej tagen) byter till åk 3 → F blir fjärranår och åk 1 ska öppna direkt
+    // NÄR availability räknas om (store gör det numera i updateChild).
+    const p = makeProfile({ schoolYear: '2', blixt: allBlixtCleared })
+    masterYears(p, ['F'])
+    p.skills = recomputeAvailability(p.skills, grantedYears(p))
+    expect(pendingGuardianYear(p)).toBe('F')
+    const bumped = { ...p, schoolYear: '3' as const }
+    bumped.skills = recomputeAvailability(bumped.skills, grantedYears(bumped), blixtBlockedMoments(bumped))
+    expect(pendingGuardianYear(bumped)).toBeUndefined() // F skänkt
+    expect(currentMomentId(bumped)).toBeDefined()       // åk 1 öppet — inget dödläge
+    expect(momentById(currentMomentId(bumped)!).year).toBe('1')
+  })
+
+  it('väktarens frågor täcker årets moment (inte dragningsberoende) på nivå 5–7', () => {
+    for (const year of ['F', '1', '2', '3', '4', '5', '6'] as const) {
+      const tasks = composeGuardianTasks(year)
+      expect(tasks.length, `år ${year}: antal`).toBe(WORLDBOSS_TASK_COUNT)
+      for (const t of tasks) {
+        expect(t.ref.level, `år ${year}: nivå`).toBeGreaterThanOrEqual(5)
+        expect(t.ref.level, `år ${year}: nivå`).toBeLessThanOrEqual(7)
+      }
+      // Täckning först: distinkta generatorer = min(årets moment, 14).
+      const distinct = new Set(tasks.map((t) => t.ref.generatorId)).size
+      const momentCount = genMomentIdsInYear(year).length
+      expect(distinct, `år ${year}: täckning`).toBe(Math.min(momentCount, WORLDBOSS_TASK_COUNT))
+    }
+  })
+
   it('världsbossen är en trofé: hel värld klar → bossen erbjuds, men inget grindas av den', () => {
     const w0 = WORLDS[0].id
     const profile = makeProfile({ blixt: allBlixtCleared, conqueredYears: ['F', '1', '2', '3', '4'] })
@@ -527,7 +578,7 @@ describe('belöningar', () => {
     }, profile)
     expect(progress.done).toBe(1)
     expect(progress.earned).toBe(false)
-    expect(progress.requirement).toContain('1 boss till')
+    expect(progress.requirement).toContain('1 moment till')
   })
 
   it('terminsmål listar de återstående momenten vid namn', () => {

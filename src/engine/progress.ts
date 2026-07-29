@@ -363,9 +363,14 @@ export function applyReviewResult(skill: SkillState, passed: boolean, now: strin
 export function currentMomentId(profile: ChildProfile): string | undefined {
   const skills = profile.skills
   const withGen = (id: string): boolean => hasGenerator(momentById(id).generatorId)
-  const needsReview = Object.values(skills).find((s) => s.mastery === 'needs-review' && withGen(s.momentId))
-  if (needsReview) return needsReview.momentId
   const conquered = new Set(grantedYears(profile))
+  // Repetition först — men bara i ÖPPNA årskurser. En missad repetition på
+  // stoff ÖVER fronten (diagnosplacerat, t.ex. åk 6 hos ett barn som står vid
+  // Portvakten) får inte gömma den väntande väktaren eller peka "Du är här"
+  // över grinden; den tas upp igen när dess år öppnas.
+  const needsReview = Object.values(skills).find((s) =>
+    s.mastery === 'needs-review' && withGen(s.momentId) && yearOpen(momentById(s.momentId).year, conquered))
+  if (needsReview) return needsReview.momentId
   for (const year of YEAR_ORDER) {
     const ids = genMomentIdsInYear(year)
     if (ids.length === 0) continue

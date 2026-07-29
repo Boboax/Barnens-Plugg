@@ -152,9 +152,6 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
   const zooming = useRef(false)
   const artUrl = `${import.meta.env.BASE_URL}art/riket.webp`
   const ringUrl = `${import.meta.env.BASE_URL}art/tex/nodering.webp`
-  // Hur långt barnet nått i resvägen (för den upplysta "hittills"-stigen).
-  const currentIdx = Math.max(0, WORLDS.findIndex((w) => w.id === currentWorldId))
-
   /* Dimma ("fog of war"): oupptäckta delar av riket ligger i moln. Sedan
      Expeditionsmodellen (årsgrindar i stället för världsboss-grind) är en
      värld ÖPPEN när den har något NÅBART moment — upplåst av årsgrinden eller
@@ -172,6 +169,14 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
     })
   }
   const firstClosedIdx = WORLDS.findIndex((_, i) => !worldOpen(i))
+  // Den upplysta "hittills"-stigen dras till den BORTERSTA öppna världen —
+  // inte fokusvärlden. Spiralen kan skicka barnet tillbaka till värld 1
+  // (t.ex. ett åk 3-moment i dalen) och då ska den gyllene resan inte
+  // krympa ihop till en punkt.
+  const currentIdx = Math.max(
+    WORLDS.reduce((acc, _, i) => (worldOpen(i) ? i : acc), 0),
+    Math.max(0, WORLDS.findIndex((w) => w.id === currentWorldId)),
+  )
   const visibilityOf = (worldId: string): 'open' | 'next' | 'beyond' => {
     if (firstClosedIdx === -1) return 'open'
     const i = WORLDS.findIndex((w) => w.id === worldId)
@@ -477,7 +482,10 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
             // (De TVÅ blobbarna överlappar, så effektiv opacitet i mitten blir
             // högre än per-blobb-värdet nedan — därför skönjs de närmare formerna.)
             const dist = WORLDS.findIndex((w) => w.id === region.worldId) - firstClosedIdx
-            const mist = isRevealing ? (revealed ? 0 : 0.5)
+            // Dimtätheten ligger FAST i gradienten; själva avslöjandet animeras
+            // via yttre spannets opacity (gradient-alfa kan inte transitas —
+            // förr snappade molnen bort i stället för att tona i 1,3 s).
+            const mist = isRevealing ? 0.5
               : dist <= 0 ? 0.3
               : dist === 1 ? 0.42
               : dist === 2 ? 0.58
@@ -489,7 +497,7 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
               { w: '48%', dur: 17 + ri, delay: -ri * 1.6 - 4, dx: 10, dy: -8, o: 0.85 },
             ]
             return (
-              <span key={`fog-${region.worldId}`} style={{ position: 'absolute', inset: 0, opacity: 1, transition: fadeTransition }}>
+              <span key={`fog-${region.worldId}`} style={{ position: 'absolute', inset: 0, opacity: isRevealing && revealed ? 0 : 1, transition: fadeTransition }}>
                 {puffs.map((p, pi) => (
                   <span
                     key={pi}
@@ -499,7 +507,6 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
                       width: p.w, aspectRatio: '1', borderRadius: '50%', filter: 'blur(9px)',
                       animationDuration: `${p.dur}s`, animationDelay: `${p.delay}s`,
                       background: `radial-gradient(circle, rgba(236,239,246,${mist * p.o}) 0%, rgba(228,233,243,${mist * p.o}) 34%, rgba(222,228,240,${mist * p.o * 0.6}) 56%, rgba(222,228,240,0) 76%)`,
-                      transition: fadeTransition,
                     }}
                   />
                 ))}

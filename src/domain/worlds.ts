@@ -23,7 +23,7 @@ export const WORLDS: World[] = [
       'Pi landar i Talens dal, där talen växer på träden.',
       'Tiofloden porlar — men något stort trampar på bron …',
       'Växlartrollet har tagit bron över Tiofloden! Lär dig växlingens hemlighet för att ta dig förbi.',
-      'Med trollet besegrat öppnar sig vägen mot Multiplikationsskogen.',
+      'Trollet besegrat — hela dalen firar sin nya räknemästare!',
     ],
   },
   {
@@ -43,7 +43,7 @@ export const WORLDS: World[] = [
       'I Multiplikationsskogen växer kottarna i lika stora högar.',
       'Ekorrarna behöver hjälp att räkna sina förråd — grupp för grupp.',
       'Djupt inne i skogen ruvar Tabelldraken på sina gånger-skatter.',
-      'Draken besegrad! Stigen mot Bråkberget skymtar mellan träden.',
+      'Draken besegrad! Skogens alla gånger-skatter är dina.',
     ],
   },
   {
@@ -83,7 +83,7 @@ export const WORLDS: World[] = [
       'I Mönsterskogen går stigarna i mönster: röd, blå, röd, blå …',
       'Likhetstecknets gamla vågskål står mitt i skogen — båda sidor måste väga lika.',
       'Mönsterormen ringlar runt utgången och kräver nästa tal i följden.',
-      'Ormen övervunnen! Ekvationernas port står öppen.',
+      'Ormen övervunnen! Inget mönster i skogen är längre en hemlighet.',
     ],
   },
   {
@@ -103,7 +103,7 @@ export const WORLDS: World[] = [
       'Formernas berg är byggt av trianglar, kvadrater och cirklar.',
       'Klocktornet på klippan visar tiden för hela Matteriket.',
       'Stenjätten Kant vaktar passet och frågar om hörn, sidor och vinklar.',
-      'Jätten bugar! Vägen över berget ligger öppen.',
+      'Jätten bugar! Bergets alla former känner nu sin mästare.',
     ],
   },
   {

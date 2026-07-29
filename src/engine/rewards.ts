@@ -104,7 +104,7 @@ function computeRewardProgress(reward: Reward, profile: ChildProfile): RewardPro
       earned: done >= reward.target.count,
       label: `${done} av ${reward.target.count} moment`,
       requirement:
-        left <= 0 ? 'Klart!' : `Besegra ${left} ${left === 1 ? 'boss' : 'bossar'} till — valfria moment räknas`,
+        left <= 0 ? 'Klart!' : `Klara ${left} moment till — valfria moment räknas`,
       nextSteps: [],
     }
   }

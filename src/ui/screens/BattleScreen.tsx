@@ -164,7 +164,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
   const won = correct >= needed
 
   const handleComplete = (result: TaskResult): void => {
-    store.recordAnswer(tasks[index], result.correct, result.elapsedMs, kind === 'star' ? 'stjarna' : kind === 'check' ? 'koll' : 'boss', result.given, result.scratchPng)
+    store.recordAnswer(tasks[index], result.correct, result.elapsedMs, kind === 'star' ? 'stjarna' : kind === 'check' ? 'koll' : kind === 'guardian' ? 'vaktare' : 'boss', result.given, result.scratchPng)
     const nextCorrect = correct + (result.correct ? 1 : 0)
     setCorrect(nextCorrect)
     setFlash(result.correct ? 'hit' : 'miss')
@@ -250,7 +250,10 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
         <button className="chip" onClick={() => store.go('home')}>{friendly ? 'Avbryt' : 'Fly (försök igen senare)'}</button>
-        <span style={{ fontWeight: 900, fontSize: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+        {/* Explicit color krävs: `color` ärvs som BERÄKNAT värde från body
+            (mörk ink) — att sätta --ink på behållaren räcker inte. Utan den
+            blev rubriken mörk-på-mörk över väktarens valvsal. */}
+        <span style={{ fontWeight: 900, fontSize: 16, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink)' }}>
           <Icon name={epic ? 'svards' : kind === 'star' ? 'kristall' : 'stjarna'} size={18} />
           {kind === 'guardian' && guardian && year ? `${guardian.name} — ${yearLabel(year)}`
             : kind === 'boss' ? boss!.name

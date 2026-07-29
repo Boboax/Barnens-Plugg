@@ -38,11 +38,11 @@ export const BLIXT_GATE: Record<BlixtKind, string> = {
 const BLIXT_ORDER: BlixtKind[] = ['add-sub-0-10', 'add-sub-0-20', 'tabeller']
 
 /** Har barnet klarat blixten minst en gång (grinden öppen)? */
-export const blixtCleared = (kind: BlixtKind, profile: ChildProfile): boolean =>
+export const blixtCleared = (kind: BlixtKind, profile: Pick<ChildProfile, 'blixt'>): boolean =>
   profile.blixt?.[kind]?.cleared === true
 
 /** Moment som är låsta av en ännu oklarad flyt-grind. */
-export function blixtBlockedMoments(profile: ChildProfile): Set<string> {
+export function blixtBlockedMoments(profile: Pick<ChildProfile, 'blixt'>): Set<string> {
   const blocked = new Set<string>()
   for (const kind of BLIXT_ORDER) {
     if (!blixtCleared(kind, profile)) blocked.add(BLIXT_GATE[kind])
