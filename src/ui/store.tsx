@@ -193,6 +193,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     leaveChild: () => {
       resetNamePool()
       setActiveChildId(undefined)
+      // Nollställ stridskontexten — gammal battleYear/momentId får aldrig
+      // läcka till nästa barn via någon framtida väg in i stridsskärmarna.
+      setBattleMomentId(undefined)
+      setBattleWorldId(undefined)
+      setBattleYear(undefined)
       setScreen('profiles')
     },
 
@@ -265,7 +270,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         id: `barn-${Date.now().toString(36)}`,
         name, color, birthYear, schoolYear,
         createdAt: nowISO(),
-        skills: recomputeAvailability(skills, grantedYears({ conqueredYears: [], schoolYear })),
+        // Blixt-grinden gäller från dag ett (nytt barn = inga klarade blixtar).
+        skills: recomputeAvailability(skills, grantedYears({ conqueredYears: [], schoolYear }), blixtBlockedMoments({ blixt: undefined })),
         answers: [],
         diagnosis: {
           passesDone: 0,
@@ -281,7 +287,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setHousehold((h) => ({ ...h, children: [...h.children, child] }))
     },
 
-    updateChild: (id, patch) => patchChild(id, (c) => ({ ...c, ...patch })),
+    updateChild: (id, patch) => patchChild(id, (c) => {
+      const next = { ...c, ...patch }
+      // Byter föräldern årskurs flyttas fjärranårs-gränsen (grantedYears
+      // beräknas LIVE ur schoolYear) — då MÅSTE availability räknas om direkt,
+      // annars hamnar lagrade lås och levande grind i konflikt (barnet kunde
+      // fastna helt utan nästa steg tills nästa svar/omladdning).
+      if (patch.schoolYear !== undefined && patch.schoolYear !== c.schoolYear) {
+        return { ...next, skills: recomputeAvailability(next.skills, grantedYears(next), blixtBlockedMoments(next)) }
+      }
+      return next
+    }),
 
     recordAnswer: (task, correct, elapsedMs, context, givenAnswer, scratchPng, hotStreak) => {
       if (!activeChildId) return
@@ -310,12 +326,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           : earnedFreeze ? 'earned' as const
           : c.pendingStreakToast
 
-        // Orubblig princip: blixtpass och diagnos påverkar ALDRIG rating,
-        // framsteg eller bossupplåsning. De loggas (för föräldravyn) och
+        // Orubblig princip: blixtpass, diagnos och VÄKTARSTRID påverkar ALDRIG
+        // rating, framsteg eller upplåsning. De loggas (för föräldravyn) och
         // förlänger streaken, men skills lämnas orörda — annars kunde en
         // snabb blixtrunda knuffa ett moment till "boss-ready" utan träning,
-        // och diagnosprober smutsade ned rating på oövade moment.
-        const skills = context === 'blixt' || context === 'diagnos'
+        // diagnosprober smutsade ned rating på oövade moment, och upprepade
+        // väktarförsök (obegränsade omförsök!) malde ned ratingen på redan
+        // behärskade moment. Väktaren mäter ÅRET — segern bokförs i
+        // conqueredYears (finishGuardian), inte i nodernas rating.
+        const skills = context === 'blixt' || context === 'diagnos' || context === 'vaktare'
           ? c.skills
           : recomputeAvailability({ ...c.skills, [momentId]: nextSkill }, grantedYears(c), blixtBlockedMoments(c))
         return { ...c, skills, answers, streak, pendingStreakToast }

@@ -219,7 +219,10 @@ export interface AnswerRecord {
   errorKind?: 'slarv' | 'kunskap'
   // 'koll' = nodens kunskapskoll; 'boss' = världsbossen. (Äldre sparade svar
   // använder 'boss' för båda — rapporten räknar därför bägge som nodklarering.)
-  context: 'ovning' | 'boss' | 'koll' | 'diagnos' | 'repetition' | 'blixt' | 'stjarna'
+  // 'vaktare' = Årsväktarstriden (Expeditionens årsgrind) — skiljs från 'boss'
+  // så föräldrarapportens boss-räkning inte blåses upp av väktarens frågor
+  // (som kommer från redan behärskade moment).
+  context: 'ovning' | 'boss' | 'koll' | 'diagnos' | 'repetition' | 'blixt' | 'stjarna' | 'vaktare'
   /** Kladdytan som liten PNG-dataURL, sparas för de senaste svaren. */
   scratchPng?: string
 }

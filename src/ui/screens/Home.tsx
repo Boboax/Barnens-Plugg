@@ -656,7 +656,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
                         {world.boss.name}
                       </span>
                       <span style={{ display: 'block', fontWeight: 700, fontSize: 11, color: 'var(--muted)' }}>
-                        {conquered ? 'erövrad! ✓' : bossReady ? 'Möt bossen!' : 'väktare'}
+                        {conquered ? 'erövrad! ✓' : bossReady ? 'Möt bossen!' : 'världsboss'}
                       </span>
                     </span>
                   </button>
@@ -855,12 +855,12 @@ function HomeInner({ child }: { child: ChildProfile }) {
   )
 }
 
-/* Pis engångsförklaring av kartans noder: träna → bossen vaknar → besegra
-   bossen → noden blir klar → nästa öppnas. Så barnet förstår hur man tar
-   sig vidare. */
+/* Pis engångsförklaring av kartans noder: träna → klara Pis koll → nästa
+   öppnas — och när hela årskursen är klar vaknar Årsväktaren som öppnar
+   nästa år (Expeditionsmodellen). Så barnet förstår hur man tar sig vidare. */
 function MapIntro({ onDone }: { onDone(): void }) {
   // Uppläsning för den som inte läser flytande (tap-to-hear, aldrig autoplay).
-  const spoken = 'Så funkar äventyret! Tryck på en nod och träna. Klara Pis vänliga koll så blir noden klar. Vissa vägar öppnas när du klarar ett blixtpass. När alla noder i världen är klara vaknar världsbossen. Besegra bossen så öppnas nästa värld!'
+  const spoken = 'Så funkar äventyret! Tryck på en nod och träna. Klara Pis vänliga koll så blir noden klar. Vissa vägar öppnas när du klarar ett blixtpass. När alla moment i din årskurs är klara vaknar Årsväktaren. Besegra väktaren så öppnas nästa årskurs!'
   useEffect(() => () => stopSpeaking(), [])
   return (
     <div style={{
@@ -881,8 +881,8 @@ function MapIntro({ onDone }: { onDone(): void }) {
           <Legend icon="penna" bg="#FFDF94">Tryck på en nod och <b>träna</b> momentet.</Legend>
           <Legend icon="kristall" bg="var(--mint)">Klara <b>Pis vänliga koll</b> så blir noden <b>klar</b> ✓.</Legend>
           <Legend icon="blixt" bg="var(--sun)">Vissa vägar öppnas när du klarar ett <b>blixtpass</b> ⚡ — försök hur många gånger du vill!</Legend>
-          <Legend icon="svards" bg="var(--boss)">När <b>alla</b> noder i världen är klara <b>vaknar världsbossen</b>.</Legend>
-          <Legend icon="las" bg="#D8D4C8"><b>Besegra bossen</b> så öppnas <b>nästa värld</b>!</Legend>
+          <Legend icon="svards" bg="var(--boss)">När <b>alla moment i din årskurs</b> är klara vaknar <b>Årsväktaren</b>.</Legend>
+          <Legend icon="las" bg="#D8D4C8"><b>Besegra väktaren</b> så öppnas <b>nästa årskurs</b>!</Legend>
         </div>
         <button className="btn btn-primary" onClick={onDone} style={{ marginTop: 4 }}>Jag fattar! ▶</button>
       </div>

@@ -148,16 +148,22 @@ export function composeWorldBossTasks(worldId: string): Task[] {
 /**
  * Årsväktarens frågor: blandat från ÅRSKURSENS alla generatorförsedda moment
  * (över alla världar — årets slutprov i Expeditionen), nivå 5–7 precis som
- * världsbossen. Nya frön varje försök. Ingen klocka, obegränsade omförsök.
+ * världsbossen. TÄCKNING FÖRST: en fråga per moment innan slumpen fyller på —
+ * ren uniform dragning kunde annars missa halva årets moment och göra den
+ * hårda grinden dragningsberoende (orättvist prov). Nya frön varje försök,
+ * ingen klocka, obegränsade omförsök.
  */
 export function composeGuardianTasks(year: SchoolYear): Task[] {
   const moments = MOMENTS_ORDERED.filter((m) => m.year === year && hasGenerator(m.generatorId))
   if (moments.length === 0) return []
   const rng = createRng(freshSeed())
+  const level = (): DifficultyLevel => rng.pick([5, 6, 6, 7, 7] as const)
   const tasks: Task[] = []
-  for (let i = 0; i < WORLDBOSS_TASK_COUNT; i++) {
-    const m = rng.pick(moments)
-    tasks.push(generateTask(m.generatorId!, rng.pick([5, 6, 6, 7, 7] as const), freshSeed()))
+  for (const m of rng.shuffle(moments).slice(0, WORLDBOSS_TASK_COUNT)) {
+    tasks.push(generateTask(m.generatorId!, level(), freshSeed()))
+  }
+  while (tasks.length < WORLDBOSS_TASK_COUNT) {
+    tasks.push(generateTask(rng.pick(moments).generatorId!, level(), freshSeed()))
   }
   return rng.shuffle(tasks)
 }

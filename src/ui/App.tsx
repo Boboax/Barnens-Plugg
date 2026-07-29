@@ -20,7 +20,7 @@ const TIMED_SCREENS = new Set(['session', 'check', 'boss', 'star', 'guardian', '
  * stunden som finns. Tiden fortsätter ticka; låsningen slår till när barnet
  * är tillbaka på en annan skärm, och inget nytt går att starta med 0 kvar.
  */
-const GRACE_SCREENS = new Set(['check', 'boss', 'star', 'blixt'])
+const GRACE_SCREENS = new Set(['check', 'boss', 'star', 'guardian', 'blixt'])
 const TICK_SECONDS = 5
 /**
  * Aktivitetsbaserad tid: klockan räknar bara när barnet faktiskt gör något.
@@ -75,7 +75,7 @@ export function App() {
     if (piSover) { pauseMusic(); return }
     // Bara VÄRLDSBOSSEN (klimaxstriden) får den dramatiska boss-musiken.
     // Nodens vänliga kunskapskoll ('check') och diamanten ('star') kör temalåten.
-    if (screen === 'boss') setMusicScene('boss')
+    if (screen === 'boss' || screen === 'guardian') setMusicScene('boss')
     else if (screen === 'profiles') setMusicScene('start')
     else setMusicScene('spel') // home, session, check, star, diagnosis, blixt, time-up, parent
   }, [screen, piSover])
