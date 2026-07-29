@@ -5,7 +5,7 @@ import { WORLDS } from '../domain/worlds'
 import { hasGenerator } from '../generators'
 import { expectedSuccess, practiceLevel, updateRating } from './rating'
 import { REVIEW_INTERVALS_DAYS, scheduleFirstReview, scheduleNextReview } from './spaced-repetition'
-import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady, currentMomentId, pendingGuardianYear, trophyBossWorldId, worldMomentsComplete, genMomentIdsInYear, yearMomentsComplete } from './progress'
+import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady, currentMomentId, pendingGuardianYear, trophyBossWorldId, worldMomentsComplete, genMomentIdsInYear, yearMomentsComplete, grantedYears } from './progress'
 import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
 import { composeCheckTasks, composeWorldBossTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
@@ -280,6 +280,33 @@ describe('årsgrinden (Expeditionsmodellen): Årsväktaren öppnar nästa årsku
     done.skills = recomputeAvailability(done.skills, done.conqueredYears)
     expect(currentMomentId(done)).toBeUndefined()
     expect(pendingGuardianYear(done)).toBeUndefined()
+  })
+
+  it('fjärranår skänks: en åk 5-elev väktar bara de närmaste åren, inte F–åk 2', () => {
+    // Mjukats upp på förälderns begäran (juli 2026): Edward (åk 5) ska inte
+    // behöva bossa förskoleklassen. År ≥3 under barnets årskurs auto-erövras;
+    // de närmaste två åren bakåt väktas fortfarande.
+    const edward = makeProfile({ schoolYear: '5', blixt: allBlixtCleared })
+    masterYears(edward, ['F', '1', '2', '3', '4'])
+    edward.skills = recomputeAvailability(edward.skills, grantedYears(edward))
+    expect(grantedYears(edward)).toEqual(expect.arrayContaining(['F', '1', '2']))
+    // Första väktaren är Portvakten (åk 3) — inte Gryningsvakten (F).
+    expect(pendingGuardianYear(edward)).toBe('3')
+    // Yngre barn skänks inget: åk 2 väktar hela vägen från F.
+    expect(grantedYears({ conqueredYears: [], schoolYear: '2' })).toEqual([])
+    expect(grantedYears({ conqueredYears: [], schoolYear: 'F' })).toEqual([])
+  })
+
+  it('luckor i skänkta fjärranår tränas ändå (bara striden skänks)', () => {
+    const gap = genMomentIdsInYear('F')[0]
+    const edward = makeProfile({ schoolYear: '5', blixt: allBlixtCleared })
+    masterYears(edward, ['F', '1', '2', '3', '4'])
+    // Ett F-moment visade sig ändå inte sitta (t.ex. missad repetition).
+    edward.skills[gap] = { ...newSkillState(gap), mastery: 'available' }
+    edward.skills = recomputeAvailability(edward.skills, grantedYears(edward))
+    // Rekommendationen går TILLBAKA och fyller luckan — ingen väktare krävs för F.
+    expect(currentMomentId(edward)).toBe(gap)
+    expect(pendingGuardianYear(edward)).toBeUndefined() // F ofullständigt → ingen väktare än
   })
 
   it('världsbossen är en trofé: hel värld klar → bossen erbjuds, men inget grindas av den', () => {

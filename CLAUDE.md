@@ -124,8 +124,11 @@ publikt för Pages på gratisplanen.
   går igenom `YEAR_ORDER` och STANNAR vid första klara-men-oerövrade året (då
   är väktaren nästa steg, inte ett nytt moment). Hoppa aldrig förbi väktaren:
   bygg inte om availability eller "Du är här" så att en obesegrad väktare kan
-  förbigås. Gäller även bakåt — diagnos-placerade år måste också väktas
-  (medvetet val med föräldern). Bakgrund: den gamla världsboss-grinden
+  förbigås. Gäller även bakåt — men bara de NÄRMASTE TVÅ åren under barnets
+  årskurs: fjärranår (≥3 år under) auto-erövras via `grantedYears()` (mjukats
+  upp på förälderns begäran — en tioåring bossar inte förskoleklassen; luckor
+  i fjärranår TRÄNAS ändå, bara striden skänks). Bakgrund: den gamla
+  världsboss-grinden
   tvingade en åk 2-elev genom åk 3–5-innehåll (0–1000, negativa tal) innan
   multiplikationen (åk 2!) öppnades. **Världsbossarna är numera TROFÉER**
   (`conqueredWorlds`): striden erbjuds när en HEL värld är klar (alla år) och

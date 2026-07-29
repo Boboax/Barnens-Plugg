@@ -2,7 +2,7 @@ import type { ChildProfile, DiagnosisState, DifficultyLevel, SchoolYear, SkillSt
 import { MOMENTS_ORDERED, momentById } from '../domain/curriculum'
 import { generateTask, hasGenerator } from '../generators'
 import { freshSeed } from '../generators/rng'
-import { newSkillState, recomputeAvailability } from './progress'
+import { grantedYears, newSkillState, recomputeAvailability } from './progress'
 import { blixtBlockedMoments } from './blixt'
 import { scheduleFirstReviewSpread } from './spaced-repetition'
 
@@ -167,5 +167,5 @@ export function applyDiagnosisResult(profile: ChildProfile, now: string): Record
   // Årsgrinden gäller även efter diagnos: årskurser som placeringen "klarade"
   // erövras inte automatiskt — barnet möter deras Årsväktare bakåt först
   // (medvetet val, som blixt-grinden). conqueredYears är normalt tom här.
-  return recomputeAvailability(skills, profile.conqueredYears ?? [], blixtBlockedMoments(profile))
+  return recomputeAvailability(skills, grantedYears(profile), blixtBlockedMoments(profile))
 }
