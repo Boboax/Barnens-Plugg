@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChildProfile, Moment, SkillState, World } from '../../domain/types'
-import { momentsInWorld, momentById } from '../../domain/curriculum'
+import { MOMENTS, momentsInWorld, momentById } from '../../domain/curriculum'
 import { WORLDS, worldById } from '../../domain/worlds'
 import { hasGenerator } from '../../generators'
 import { currentMomentId, pendingGuardianYear, genMomentIdsInYear, worldMomentsComplete } from '../../engine/progress'
@@ -133,6 +133,14 @@ function HomeInner({ child }: { child: ChildProfile }) {
     ? momentById(genMomentIdsInYear(pendingGuardian).at(-1)!).worldId : undefined
   const currentWorld = currentMoment ? worldById(currentMoment.worldId)
     : (guardianWorldId ? worldById(guardianWorldId) : blixtWorldId ? worldById(blixtWorldId) : undefined)
+  // Expeditionen byter värld: när nästa moment ligger i en ANNAN värld än där
+  // barnet senast tränade sätter Pi ord på resan — hoppet ska kännas som en
+  // avresa i berättelsen, inte som att kartan slumpar. (Säker uppslagning:
+  // gamla svar kan peka på borttagna moment.)
+  const lastAnswer = child.answers.length > 0 ? child.answers[child.answers.length - 1] : undefined
+  const lastTrainedWorldId = lastAnswer
+    ? MOMENTS.find((m) => m.id === lastAnswer.momentId)?.worldId : undefined
+  const traveling = !!currentMoment && !!lastTrainedWorldId && currentMoment.worldId !== lastTrainedWorldId
   // "Du är här" och startvyn: väktarens värld > flyt-grindens värld > aktuellt moment.
   const focusWorldId = (guardianIsNextStep ? guardianWorldId : undefined) ?? blixtWorldId ?? currentMoment?.worldId ?? WORLDS[0].id
   const [worldId, setWorldId] = useState(focusWorldId)
@@ -172,6 +180,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
     ? `Alla moment i ${yearLabel(pendingGuardian)} är klara! ${guardian.name} vaktar porten till nästa årskurs. Tryck så tar jag dig till väktarstriden!`
     : blixtIsNextStep && pendingBlixt
     ? `Dags för blixtpasset ${blixtConfig(pendingBlixt).title}! Visa ditt flyt så öppnas vägen vidare. Tryck så kör vi!`
+    : currentMoment && traveling && currentWorld
+    ? `Expeditionen reser vidare till ${currentWorld.name}! 🧭 Där väntar: ${currentMoment.title}. Tryck på knappen så packar vi!`
     : currentMoment
     ? `${hasStarted ? 'Vi fortsätter med' : 'Nästa'}: ${currentMoment.title}${currentWorld ? ` i ${currentWorld.name}` : ''}. Tryck på knappen så tar jag dig dit!`
     : 'Tryck på knappen så börjar vi träna tillsammans!'
@@ -179,6 +189,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
     ? `Möt väktaren! ⚔ Tryck här!`
     : blixtIsNextStep
     ? `Dags för blixten! ⚡ Tryck här!`
+    : currentMoment && traveling && currentWorld
+    ? `Vi reser till ${currentWorld.name}! 🧭 Tryck här!`
     : currentMoment
     ? `Nästa: ${currentMoment.title}! 🚩 Tryck här!`
     : `Tryck här så börjar vi! ▶`
@@ -716,6 +728,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
                 ? <>Alla moment i <b>{yearLabel(pendingGuardian)}</b> är klara! <b>{guardian.name}</b> vaktar porten till nästa årskurs. Tryck så tar jag dig till väktarstriden!</>
                 : blixtIsNextStep && pendingBlixt
                 ? <>Dags för <b>blixtpasset {blixtConfig(pendingBlixt).title}</b>! Visa ditt flyt så öppnas vägen vidare. Tryck så kör vi!</>
+                : currentMoment && traveling && currentWorld
+                ? <>Expeditionen reser vidare till <b>{currentWorld.name}</b>! 🧭 Där väntar: <b>{currentMoment.title}</b>. Tryck på knappen så packar vi!</>
                 : currentMoment
                 ? <>{hasStarted ? 'Vi fortsätter med' : 'Nästa'}: <b>{currentMoment.title}</b>{currentWorld ? <> i {currentWorld.name}</> : null}. Tryck på knappen så tar jag dig dit!</>
                 : <>Tryck på knappen så börjar vi träna tillsammans!</>}

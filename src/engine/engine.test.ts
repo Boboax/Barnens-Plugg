@@ -3,12 +3,12 @@ import type { ChildProfile, SkillState } from '../domain/types'
 import { MOMENTS, momentById, momentsInWorld } from '../domain/curriculum'
 import { WORLDS } from '../domain/worlds'
 import { hasGenerator } from '../generators'
-import { expectedSuccess, practiceLevel, updateRating } from './rating'
+import { expectedSuccess, practiceLevel, updateRating, variedLevel } from './rating'
 import { REVIEW_INTERVALS_DAYS, scheduleFirstReview, scheduleNextReview } from './spaced-repetition'
 import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady, currentMomentId, pendingGuardianYear, trophyBossWorldId, worldMomentsComplete, genMomentIdsInYear, yearMomentsComplete, grantedYears } from './progress'
 import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
-import { composeCheckTasks, composeWorldBossTasks, composeGuardianTasks, composeStarTasks, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
+import { composeCheckTasks, composeWorldBossTasks, composeGuardianTasks, composeStarTasks, taskForPart, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
 import { rewardProgress, updateStreak } from './rewards'
 import { BLIXT_TESTS, blixtTask, blixtUnlocked, blixtLevel, blixtTier, blixtMaxTier, blixtTimed, BLIXT_GATE, blixtBlockedMoments, pendingBlixtKind } from './blixt'
 import { backfillSplitAddSub, backfillSeenWorlds } from './progress'
@@ -382,6 +382,58 @@ describe('årsgrinden (Expeditionsmodellen): Årsväktaren öppnar nästa årsku
     // Rekommendationen är det FÖRSTA öppna åk 1-momentet i terminsordning.
     const firstOpen = yearIds.find((id) => profile.skills[id]?.mastery === 'available')
     expect(first).toBe(firstOpen)
+  })
+})
+
+describe('kalla handen (adaptivitet nedåt)', () => {
+  it('lugn-läget pausar +1-kryddan men behåller resten av variationen', () => {
+    // roll > 0.85 ger normalt base+1 — med noUp stannar den på base.
+    expect(variedLevel(550, 0.9)).toBe(practiceLevel(550) + 1)
+    expect(variedLevel(550, 0.9, true)).toBe(practiceLevel(550))
+    expect(variedLevel(550, 0.1, true)).toBe(practiceLevel(550) - 1) // −1 lever kvar
+  })
+
+  it("'sank' tvingar nästa nya uppgift ett steg under barnets nivå", () => {
+    const profile = makeProfile()
+    profile.skills['antal-0-10'] = { ...profile.skills['antal-0-10'], mastery: 'in-progress', rating: 550 }
+    const base = practiceLevel(550)
+    for (let i = 0; i < 12; i++) {
+      const t = taskForPart(profile, 'antal-0-10', 'nytt', 'sank')
+      expect(t.ref.level).toBe(Math.max(1, base - 1))
+    }
+    // Lugn-läget: aldrig över barnets nivå, oavsett slumpen.
+    for (let i = 0; i < 20; i++) {
+      const t = taskForPart(profile, 'antal-0-10', 'nytt', 'lugn')
+      expect(t.ref.level).toBeLessThanOrEqual(base)
+    }
+  })
+})
+
+describe('världsgruppering i årets resa (färre hopp)', () => {
+  it('inom samma terminshalva ligger varje världs moment i EN sammanhängande grupp', () => {
+    for (const year of ['F', '1', '2', '3', '4', '5', '6'] as const) {
+      const ids = genMomentIdsInYear(year)
+      const moments = ids.map((id) => momentById(id))
+      // Terminsordningen består …
+      for (let i = 1; i < moments.length; i++) {
+        const key = (m: typeof moments[0]): number =>
+          ['F', '1', '2', '3', '4', '5', '6'].indexOf(m.year) * 4 + (m.term.term === 'HT' ? 0 : 2) + (m.term.half - 1)
+        expect(key(moments[i]), `år ${year}: terminsordning`).toBeGreaterThanOrEqual(key(moments[i - 1]))
+      }
+      // … och ingen värld återkommer i en ANDRA grupp inom samma halva.
+      const slots = new Map<string, Set<string>>()
+      for (let i = 0; i < moments.length; i++) {
+        const slot = `${moments[i].term.term}${moments[i].term.half}`
+        const prev = i > 0 ? moments[i - 1] : undefined
+        const seen = slots.get(slot) ?? new Set<string>()
+        const sameRun = prev && `${prev.term.term}${prev.term.half}` === slot && prev.worldId === moments[i].worldId
+        if (!sameRun) {
+          expect(seen.has(moments[i].worldId), `år ${year} ${slot}: ${moments[i].worldId} splittrad`).toBe(false)
+          seen.add(moments[i].worldId)
+        }
+        slots.set(slot, seen)
+      }
+    }
   })
 })
 

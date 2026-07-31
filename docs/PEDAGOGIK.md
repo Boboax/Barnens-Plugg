@@ -102,3 +102,35 @@ innan nästa tema ens börjar. En grind PER ÅRSKURS följer spiralen.
 stopp; en väktare är ett MÅL. Att erövra sitt läsår ger samma "jag klarade
 tvåan!"-stolthet som skolavslutningen — kopplad till behärskning, aldrig
 till hastighet eller jämförelse (orubblig princip 3).
+
+## Kalla handen och lugn-läget (adaptivitet nedåt)
+
+Byggt efter Edwards återkoppling (juli 2026): "om jag inte klarar en fråga
+blir det inte lättare". Motorn sänkte visserligen nivån vid fel — men två
+dämpare gjorde den nästan döv för en snabb tioåring: slarvfiltret (snabba
+±1-fel sänker inte ratingen) och +1-kryddan (15 % av uppgifterna serveras
+ett steg över nivån). Tre spegelbilder av "heta handen" rättar till det:
+
+1. **Lugn-läget** (2 fel i rad): +1-kryddan pausas — aldrig ett steg upp
+   mitt i en felsvit.
+2. **Kalla handen** (3 fel i rad): nästa uppgift läggs ett helt steg UNDER
+   barnets nivå — en trygg landning att lyckas på — och Pi säger det varmt
+   ("Vi tar en lite lugnare — du bestämmer takten!"). Struktursignalen *tre
+   i rad* kan inte misstolkas som slarv, så den går förbi slarvfiltret.
+3. **Efter ledtrappans båda försök** (fel två gånger på samma uppgift):
+   nästa uppgift ett steg lägre — bottenledtrådens naturliga fortsättning.
+
+Endast övningspass. Rating, prov, blixt och väktare påverkas inte (orubblig
+princip 5); rätt svar nollställer sviten och den vanliga adaptiviteten tar
+över igen.
+
+## Världsbesök i stället för hopp (världsgruppering)
+
+Förälderns observation (juli 2026): när expeditionen hoppar värld för varje
+moment tappar "en ny del av världen öppnas"-ögonblicket sin laddning. Därför
+grupperas årets moment **värld för värld inom varje terminshalva** (där
+läroplanen inte kräver inbördes ordning). Resan blir några få tydliga
+världsbesök per termin — man anländer, gör klart världens del av terminen,
+och reser vidare — och Pi sätter ord på varje avresa ("Expeditionen reser
+vidare till Bråkdrakens klippa! 🧭"). Terminsordningen och förkunskaps-
+kedjorna påverkas inte.

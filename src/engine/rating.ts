@@ -52,10 +52,12 @@ export function practiceLevel(rating: number): DifficultyLevel {
   return 1
 }
 
-/** Nivå med lite variation: mest practiceLevel, ibland ett steg upp/ner. */
-export function variedLevel(rating: number, roll: number): DifficultyLevel {
+/** Nivå med lite variation: mest practiceLevel, ibland ett steg upp/ner.
+    `noUp` = lugn-läget: när barnet nyss haft det kämpigt pausas +1-kryddan —
+    en svårare uppgift mitt i en felsvit känns som ett hån, inte en utmaning. */
+export function variedLevel(rating: number, roll: number, noUp = false): DifficultyLevel {
   const base = practiceLevel(rating)
-  const adjusted = roll < 0.2 ? base - 1 : roll > 0.85 ? base + 1 : base
+  const adjusted = roll < 0.2 ? base - 1 : roll > 0.85 && !noUp ? base + 1 : base
   return Math.min(10, Math.max(1, adjusted)) as DifficultyLevel
 }
 

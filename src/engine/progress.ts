@@ -1,7 +1,7 @@
 import type {
   AnswerRecord, ChildProfile, MasteryState, MisconceptionTag, SchoolYear, SkillState, Task,
 } from '../domain/types'
-import { MOMENTS, MOMENTS_ORDERED, YEAR_ORDER, momentById } from '../domain/curriculum'
+import { MOMENTS, MOMENTS_ORDERED, YEAR_ORDER, momentById, termSortKey } from '../domain/curriculum'
 import { WORLDS } from '../domain/worlds'
 import { hasGenerator } from '../generators'
 import { RATING_START, isBossReady, practiceLevel, updateRating } from './rating'
@@ -49,11 +49,19 @@ export function worldMomentsComplete(skills: Record<string, SkillState>, worldId
   return ids.length > 0 && ids.every((id) => isDone(skills[id]))
 }
 
-/** Tränbara moment i en ÅRSKURS (över alla världar), i terminsordning.
-    Expeditionens grundenhet: läroplanen är en spiral, så resan går år för år
-    genom flera världar — inte värld för värld genom flera år. */
+/** Tränbara moment i en ÅRSKURS (över alla världar), i terminsordning MED
+    världsgruppering: inom samma terminshalva (där läroplanen inte kräver
+    inbördes ordning) klumpas momenten värld för värld. Så blir årets resa
+    några få tydliga VÄRLDSBESÖK per termin i stället för ständigt hoppande —
+    och ögonblicket när expeditionen anländer till en ny värld behåller sin
+    laddning (förälderns önskemål, juli 2026). Förkunskapskedjor gäller ändå
+    via availability, så grupperingen kan aldrig bryta en beroendeordning. */
 export function genMomentIdsInYear(year: SchoolYear): string[] {
-  return MOMENTS_ORDERED.filter((m) => m.year === year && hasGenerator(m.generatorId)).map((m) => m.id)
+  const worldIdx = (id: string): number => WORLDS.findIndex((w) => w.id === id)
+  return MOMENTS_ORDERED
+    .filter((m) => m.year === year && hasGenerator(m.generatorId))
+    .sort((a, b) => termSortKey(a.term) - termSortKey(b.term) || worldIdx(a.worldId) - worldIdx(b.worldId))
+    .map((m) => m.id)
 }
 
 /** Är alla tränbara moment i en årskurs behärskade? Tom årskurs räknas EJ klar. */
