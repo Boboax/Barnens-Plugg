@@ -43,6 +43,10 @@ interface TaskRunnerProps {
   /** Om satt visas "Prata med Pi 💬" i ledtrådssteget (bara barn med chatt på).
       Chatten öppnas ALDRIG automatiskt — det här är ett frivilligt knapptryck. */
   onOpenChat?(): void
+  /** Övningsläget: utfallet av OMFÖRSÖKET (ledtrappans andra försök). Bokförs
+      aldrig i motorn — används av passet för kalla handen (fel på båda
+      försöken → nästa uppgift ett steg lägre). */
+  onRetryResult?(correct: boolean): void
 }
 
 const parseNumeric = (raw: string): number => Number(raw.replace('−', '-').replace(',', '.'))
@@ -75,7 +79,7 @@ const PI_JOKES = [
 ]
 const pick = (pool: string[]): string => pool[Math.floor(Math.random() * pool.length)]
 
-export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle, firstTask = false, onOpenChat }: TaskRunnerProps) {
+export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle, firstTask = false, onOpenChat, onRetryResult }: TaskRunnerProps) {
   // FK (~6 år) läser inte flytande → stor, tydlig uppläsningsknapp med etikett.
   const { activeChild } = useStore()
   const fk = activeChild?.schoolYear === 'F'
@@ -165,6 +169,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
     // repetitionsutvärdering). Omförsöket är ett rent pedagogiskt UI-lager —
     // orubblig princip 5: framsteg styrs av appkod, opåverkat av omförsöket.
     if (attempt === 1) onComplete(result)
+    else onRetryResult?.(correct)
   }
 
   /** "Försök igen!" — tillbaka till svarsläget för ett andra (obokfört) försök. */

@@ -78,15 +78,33 @@ export function composeSession(profile: ChildProfile, today: string, preferredMo
   return { parts }
 }
 
+/**
+ * "Kalla handen" — spegelbilden av het hand-accelerationen. När barnet nyss
+ * kämpat styr passet ned svårigheten direkt, oavsett vad slarvfiltret tycker
+ * (tre fel i rad går inte att misstolka som slarv):
+ * - 'lugn' (2 fel i rad): +1-kryddan pausas — aldrig ett steg UPP just nu.
+ * - 'sank' (3 fel i rad, eller fel på BÅDA ledtrappans försök): nästa uppgift
+ *   läggs ett helt steg under barnets nivå — en trygg landning att lyckas på.
+ * Bara övningspass. Rating/prov/blixt/väktare rörs inte (orubblig princip 5).
+ */
+export type CalmMode = 'lugn' | 'sank' | undefined
+
 /** Generera nästa uppgift i ett passavsnitt, på barnets adaptiva nivå. */
-export function taskForPart(profile: ChildProfile, momentId: string, kind: 'uppvarmning' | 'nytt' | 'blandat'): Task {
+export function taskForPart(profile: ChildProfile, momentId: string, kind: 'uppvarmning' | 'nytt' | 'blandat', calm?: CalmMode): Task {
   const moment = momentById(momentId)
   if (!moment.generatorId) throw new Error(`Momentet ${momentId} saknar generator`)
   const skill = profile.skills[momentId]
   const rating = skill?.rating ?? 300
   // Repetition och blandat körs ett snäpp under toppnivån — målet är att hålla kunskapen vid liv.
   const roll = Math.random()
-  const level = kind === 'nytt' ? variedLevel(rating, roll) : Math.max(1, variedLevel(rating, roll) - 1) as DifficultyLevel
+  let level: DifficultyLevel
+  if (kind === 'nytt') {
+    level = calm === 'sank'
+      ? Math.max(1, practiceLevel(rating) - 1) as DifficultyLevel
+      : variedLevel(rating, roll, calm === 'lugn')
+  } else {
+    level = Math.max(1, variedLevel(rating, roll, calm !== undefined) - (calm === 'sank' ? 2 : 1)) as DifficultyLevel
+  }
   return generateTask(moment.generatorId, level, freshSeed())
 }
 

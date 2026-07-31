@@ -79,6 +79,13 @@ export function SessionScreen() {
   )
   const [correctCount, setCorrectCount] = useState(0)
   const [combo, setCombo] = useState(0)
+  // "Kalla handen": felsvit i följd (första försök; +1 om även omförsöket
+  // missas). 2 i rad → ingen +1-krydda; 3 i rad eller dubbelmiss → nästa
+  // uppgift ett steg NER, med en varm rad från Pi. Rätt svar nollställer.
+  const coldStreak = useRef(0)
+  const dropNext = useRef(false)
+  const calmActive = useRef(false)
+  const [calmToast, setCalmToast] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   // Pi-samtal per uppgift: nyckel = uppgiftens identitet. Så överlever samtalet
   // att panelen stängs/öppnas för SAMMA uppgift, men börjar om vid ny uppgift.
@@ -137,6 +144,7 @@ export function SessionScreen() {
     store.recordAnswer(task, result.correct, result.elapsedMs, CONTEXT[slot.kind], result.given, result.scratchPng, streak)
     if (result.correct) {
       setCorrectCount((n) => n + 1)
+      coldStreak.current = 0
       const next = combo + 1
       setCombo(next)
       // Combofirande vid 3, 5, 8, 12 … — belönar uthållig noggrannhet.
@@ -146,11 +154,19 @@ export function SessionScreen() {
       }
     } else {
       setCombo(0)
+      coldStreak.current += 1
     }
     if (slot.kind === 'uppvarmning') {
       const tally = reviewTally.current.get(slot.momentId) ?? [0, 0]
       reviewTally.current.set(slot.momentId, [tally[0] + (result.correct ? 1 : 0), tally[1] + 1])
     }
+  }
+
+  // Ledtrappans omförsök: rätt → sviten bruten; fel på BÅDA försöken →
+  // nästa uppgift läggs ett steg lägre (bottenledtrådens fortsättning).
+  const handleRetryResult = (correct: boolean): void => {
+    if (correct) coldStreak.current = 0
+    else dropNext.current = true
   }
 
   const advance = (): void => {
@@ -168,8 +184,19 @@ export function SessionScreen() {
       setIndex(next)
       return
     }
+    // Kalla handen: styr nästa uppgifts nivå efter den senaste felsviten.
+    const calm = dropNext.current || coldStreak.current >= 3 ? 'sank' as const
+      : coldStreak.current >= 2 ? 'lugn' as const : undefined
+    dropNext.current = false
+    if (calm === 'sank' && !calmActive.current) {
+      // Visas en gång per aktivering — varm, aldrig skuldbeläggande.
+      calmActive.current = true
+      setCalmToast(true)
+      window.setTimeout(() => setCalmToast(false), 4200)
+    }
+    if (calm !== 'sank') calmActive.current = false
     setIndex(next)
-    setTask(taskForPart(child, slots[next].momentId, slots[next].kind))
+    setTask(taskForPart(child, slots[next].momentId, slots[next].kind, calm))
   }
 
   // Skattkistan: öppna → generera EN bonusuppgift från ett behärskat moment.
@@ -334,12 +361,29 @@ export function SessionScreen() {
         mode="ovning"
         firstTask={index === 0}
         onComplete={handleComplete}
+        onRetryResult={handleRetryResult}
         onNext={advance}
         onScratchHandle={(h) => { scratchHandle.current = h }}
         onOpenChat={chatAvailable ? () => { sfx.whoosh(); setChatOpen(true) } : undefined}
       />
       )}
       </div>
+
+      {/* Kalla handen-skylten: nästa uppgift lades ett steg ner. Varm och kort —
+          barnet ska känna omsorg, aldrig "du misslyckades". */}
+      {calmToast && (
+        <div className="pop-big" style={{
+          position: 'absolute', left: '50%', bottom: 18, transform: 'translateX(-50%)', zIndex: 30,
+          display: 'flex', alignItems: 'center', gap: 8, maxWidth: 340,
+          background: 'linear-gradient(rgba(246,236,212,.97), rgba(230,213,176,.97))',
+          border: '2px solid #7A6544', borderRadius: 14, padding: '8px 14px',
+          fontWeight: 800, fontSize: 13.5, color: '#3E3016', lineHeight: 1.3,
+          boxShadow: '0 4px 14px rgba(0,0,0,.35)',
+        }}>
+          <Pi mood="glad" size={34} />
+          <span>Vi tar en lite lugnare — du bestämmer takten! 💛</span>
+        </div>
+      )}
 
       {/* Mattekompisen Pi — bara i övningspass, aldrig i strider. */}
       {chatAvailable && !showIntro && !chatOpen && (
