@@ -297,14 +297,18 @@ export function SessionScreen() {
         ? (strong ? 'Grymt! 🌟' : 'Bra kämpat! 💪')
         : (strong ? 'Du är på väg att bemästra det här!' : 'Varje försök gör dig starkare — imorgon tar vi det igen!')
     }
+    // Tog dagstiden slut UNDER passet (nåden lät det spelas klart)? Säg det
+    // varmt här och gå till tids-slut-skärmen — inte till en låst karta.
+    const timeOut = store.secondsLeftToday(child) <= 0
+    const timeNote = timeOut ? (isFK ? ' Nu är tiden slut — sov gott! 🌙' : ' Dagens tid är slut — imorgon fortsätter äventyret! 🌙') : ''
     return (
       <EndCard
         title={flawless ? 'Felfritt! ⭐' : strong ? 'Superjobbat!' : 'Bra kämpat!'}
         // FK: kort och varmt utan den längre streak-meningen.
         text={isFK
-          ? `${chestPrefix}${correctCount} av ${slots.length} rätt! ${nextStep}`
-          : `${chestPrefix}${correctCount} av ${slots.length} rätt${flawless ? ' — varenda en!' : '.'} ${nextStep}${streakHook}`}
-        onDone={() => store.go('home')}
+          ? `${chestPrefix}${correctCount} av ${slots.length} rätt! ${nextStep}${timeNote}`
+          : `${chestPrefix}${correctCount} av ${slots.length} rätt${flawless ? ' — varenda en!' : '.'} ${nextStep}${streakHook}${timeNote}`}
+        onDone={() => store.go(timeOut ? 'time-up' : 'home')}
         celebrate={strong}
       />
     )
