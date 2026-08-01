@@ -514,8 +514,13 @@ function Kropp({ body }: { body: 'klot' | 'kub' | 'cylinder' | 'kon' | 'pyramid'
       )}
       {body === 'pyramid' && (
         <>
-          <polygon points="80,28 128,120 32,120" fill={mid} stroke={P} strokeWidth={3} strokeLinejoin="round" />
-          <polygon points="80,28 128,120 92,132" fill={dark} stroke={P} strokeWidth={3} strokeLinejoin="round" />
+          {/* Klassisk 3D-vy (som kuben): två synliga sidoytor som möts i kanten
+              från spetsen till främre högra bashörnet. Förr stack "sidan" ut
+              NEDANFÖR basen — såg ut som en pappersflygare, inte en pyramid. */}
+          {/* framsida: spets → vänstra → främre högra bashörnet */}
+          <polygon points="80,24 22,116 106,130" fill={mid} stroke={P} strokeWidth={3} strokeLinejoin="round" />
+          {/* höger sida: spets → främre högra → bakre högra bashörnet */}
+          <polygon points="80,24 106,130 142,100" fill={dark} stroke={P} strokeWidth={3} strokeLinejoin="round" />
         </>
       )}
     </svg>

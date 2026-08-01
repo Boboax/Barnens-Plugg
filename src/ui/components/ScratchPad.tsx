@@ -15,13 +15,22 @@ export interface ScratchPadHandle {
   clear(): void
 }
 
-export function ScratchPad({ onReady }: { onReady?: (handle: ScratchPadHandle) => void }) {
+export function ScratchPad({ onReady, onDraw }: {
+  onReady?: (handle: ScratchPadHandle) => void
+  /** Första pennstrecket i ett drag — låter passet stänga sådant som skymmer
+      (Pi-panelen ligger annars kvar ÖVER kladdytan). */
+  onDraw?: () => void
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const drawing = useRef(false)
   const hasInk = useRef(false)
   const [color, setColor] = useState<string>(COLORS[0])
   const colorRef = useRef(color)
   colorRef.current = color
+  // Ref-mönster (som colorRef): pointerdown-lyssnaren binds en gång i effekten
+  // nedan — utan ref skulle den kalla en inaktuell onDraw.
+  const onDrawRef = useRef(onDraw)
+  onDrawRef.current = onDraw
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -50,6 +59,7 @@ export function ScratchPad({ onReady }: { onReady?: (handle: ScratchPadHandle) =
     const down = (e: PointerEvent): void => {
       drawing.current = true
       hasInk.current = true
+      onDrawRef.current?.()
       const ctx = canvas.getContext('2d')!
       const [x, y] = pos(e)
       ctx.beginPath()
