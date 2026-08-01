@@ -17,10 +17,13 @@ const TIMED_SCREENS = new Set(['session', 'check', 'boss', 'star', 'guardian', '
 /**
  * Rundor som får SPELAS KLART även om dagstiden tar slut mitt i — att slitas
  * ut mitt i bossens klimax (och tappa striden) är den mest frustrerande
- * stunden som finns. Tiden fortsätter ticka; låsningen slår till när barnet
- * är tillbaka på en annan skärm, och inget nytt går att starta med 0 kvar.
+ * stunden som finns. Sedan aug 2026 gäller samma nåd även ÖVNINGSPASSET
+ * (förälderns beslut): gränsen betyder "inget nytt startas efter noll",
+ * inte "släpp pennan mitt i en uppgift". Värsta överdraget är ett pass
+ * (~15 min) eftersom nya pass spärras på 0 kvar; tiden fortsätter ticka
+ * och bokföras, så föräldrarapporten visar verklig tid.
  */
-const GRACE_SCREENS = new Set(['check', 'boss', 'star', 'guardian', 'blixt'])
+const GRACE_SCREENS = new Set(['check', 'boss', 'star', 'guardian', 'blixt', 'session'])
 const TICK_SECONDS = 5
 /**
  * Aktivitetsbaserad tid: klockan räknar bara när barnet faktiskt gör något.
