@@ -170,6 +170,9 @@ export function SessionScreen() {
   }
 
   const advance = (): void => {
+    // Pi-panelen stängs vid uppgiftsbyte — samtalet gällde FÖRRA uppgiften
+    // (trådarna är redan per uppgift) och panelen ska inte skymma den nya.
+    setChatOpen(false)
     // Avsluta repetitionsutvärderingen när momentets uppvärmning är slut.
     const next = index + 1
     if (slot.kind === 'uppvarmning' && !reviewsFinished.current.has(slot.momentId)) {
