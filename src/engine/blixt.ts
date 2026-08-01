@@ -17,7 +17,9 @@ import { createRng, freshSeed } from '../generators/rng'
    ============================================================ */
 
 export const BLIXT_SECONDS = 60
-export const BLIXT_DEFAULT_TARGET = 20
+// Mål: 16 rätt på minuten (förälderns val, aug 2026 — matchar skolans
+// tempotest). Justerbart per test i föräldraläget (blixtTargets).
+export const BLIXT_DEFAULT_TARGET = 16
 
 // FK kör UTAN synlig klocka: en fast liten mängd frågor, "gör så snabbt du
 // kan". Tiden mäts ändå i det tysta (för föräldern). Från åk 1 tickar klockan.
