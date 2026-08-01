@@ -47,6 +47,9 @@ interface TaskRunnerProps {
       aldrig i motorn — används av passet för kalla handen (fel på båda
       försöken → nästa uppgift ett steg lägre). */
   onRetryResult?(correct: boolean): void
+  /** Barnet börjar rita på kladdytan — passet kan stänga sådant som skymmer
+      den (Pi-panelen ligger annars kvar över kladdytan). */
+  onScratchDraw?(): void
 }
 
 const parseNumeric = (raw: string): number => Number(raw.replace('−', '-').replace(',', '.'))
@@ -79,7 +82,7 @@ const PI_JOKES = [
 ]
 const pick = (pool: string[]): string => pool[Math.floor(Math.random() * pool.length)]
 
-export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle, firstTask = false, onOpenChat, onRetryResult }: TaskRunnerProps) {
+export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext, onScratchHandle, firstTask = false, onOpenChat, onRetryResult, onScratchDraw }: TaskRunnerProps) {
   // FK (~6 år) läser inte flytande → stor, tydlig uppläsningsknapp med etikett.
   const { activeChild } = useStore()
   const fk = activeChild?.schoolYear === 'F'
@@ -360,7 +363,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
 
       {withScratch && (
         <div style={{ minHeight: 220 }}>
-          <ScratchPad onReady={(h) => { scratchRef.current = h; onScratchHandle?.(h) }} />
+          <ScratchPad onReady={(h) => { scratchRef.current = h; onScratchHandle?.(h) }} onDraw={onScratchDraw} />
         </div>
       )}
     </div>

@@ -371,6 +371,7 @@ export function SessionScreen() {
         onRetryResult={handleRetryResult}
         onNext={advance}
         onScratchHandle={(h) => { scratchHandle.current = h }}
+        onScratchDraw={() => setChatOpen(false)}
         onOpenChat={chatAvailable ? () => { sfx.whoosh(); setChatOpen(true) } : undefined}
       />
       )}
