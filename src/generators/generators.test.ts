@@ -212,6 +212,22 @@ describe('uppgiftsgeneratorerna', () => {
     for (const f of Object.values(MIRROR_FACTS)) expect(f.lodrat).toBe(true) // alla har lodrät
   })
 
+  it('sidoytor frågas BARA för polyedrar (ett klot har inga sidoytor)', () => {
+    // Förälderns fynd (aug 2026): "hur många sidoytor har ett klot?" med svar 1
+    // är begreppsligt fel — sidoytor är PLANA ytor; klotet har en enda buktig
+    // klotyta och cylinderns mantel är böjd. Antal-frågan får därför bara gälla
+    // kub, rätblock och pyramid.
+    for (const level of LEVELS) {
+      for (const seed of SEEDS) {
+        const task = generateTask('gen.former-3d', level, seed)
+        if (task.prompt.startsWith('Hur många sidoytor')) {
+          expect(task.prompt, `n${level} f${seed}: rund kropp i sidoytefråga`)
+            .toMatch(/en kub|ett rätblock|en pyramid/)
+        }
+      }
+    }
+  })
+
   it('etapp C+D: vinkel/skala/ekvation ger giltiga svar', () => {
     for (const seed of SEEDS) {
       for (const level of LEVELS) {

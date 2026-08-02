@@ -312,24 +312,25 @@ const former3d = g('former-3d', (level, seed, rng) => {
         : `${Cap} har bara platta sidor — ${pron} kan inte rulla.`,
     })
   }
-  // 'antal': BARA sidoytor på årskursnivån (åk 1). Hörn och kanter går inte att
-  // räkna säkert på en 2D-bild (dolda kanter bakom kroppen) — de sparas till
-  // stjärnnivåns gåtor. Ytor syns däremot alltid.
-  const k = rng.pick(pool)
+  // 'antal': BARA sidoytor, och BARA för polyedrar (kub/rätblock/pyramid).
+  // En SIDOYTA är en PLAN yta — ett klot har ingen alls (en enda buktig
+  // klotyta) och cylinderns mantel är böjd, så "hur många sidoytor har ett
+  // klot?" var begreppsligt fel (Edwards/förälderns fynd, aug 2026).
+  // BODY_FACTS.ytor för runda kroppar är begränsningsyte-konventionen och
+  // ligger kvar orörd i facittabellen — men frågas aldrig. Hörn och kanter
+  // sparas till stjärnnivåns gåtor (dolda kanter syns inte på 2D-bilden).
+  const polyPool = pool.filter((p) => BODY_FACTS[p].polyeder)
+  const k = rng.pick(polyPool)
   const facts = BODY_FACTS[k]
-  const prop = 'ytor' as const
-  // Klotets enda yta ger "1 sidoyta" (inte "1 sidoytor").
-  const enhet = facts[prop] === 1 ? 'sidoyta' : 'sidoytor'
-  const label = 'sidoytor'
   const en = enOf(k)
   return numericTask({
     generatorId: id, level, seed,
     visual: { kind: 'kropp', body: k },
-    // enOf → rätt genus: "har ett klot" / "har en kub" (inte "en klot").
-    prompt: `Hur många ${label} har ${en}?`,
-    value: facts[prop],
-    explanation: `${en[0].toUpperCase()}${en.slice(1)} har ${facts[prop]} ${enhet}.`,
-    misconceptions: { [facts[prop] + 1]: 'en-fel', [facts[prop] - 1]: 'en-fel' },
+    // enOf → rätt genus: "har ett rätblock" / "har en kub".
+    prompt: `Hur många sidoytor har ${en}?`,
+    value: facts.ytor,
+    explanation: `${en[0].toUpperCase()}${en.slice(1)} har ${facts.ytor} sidoytor.`,
+    misconceptions: { [facts.ytor + 1]: 'en-fel', [facts.ytor - 1]: 'en-fel' },
   })
 })
 
