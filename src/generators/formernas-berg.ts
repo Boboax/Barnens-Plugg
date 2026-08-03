@@ -63,12 +63,18 @@ const klockText = (h: number, m: number): string => {
   const names = ['tolv', 'ett', 'två', 'tre', 'fyra', 'fem', 'sex', 'sju', 'åtta', 'nio', 'tio', 'elva'] as const
   const hh = names[h % 12]
   const next = names[(h + 1) % 12]
+  const min: Record<number, string> = { 5: 'fem', 10: 'tio', 20: 'tjugo' }
   if (m === 0) return `klockan ${hh}`
   if (m === 30) return `halv ${next}`
   if (m === 15) return `kvart över ${hh}`
   if (m === 45) return `kvart i ${next}`
-  if (m < 30) return `${m} över ${hh}`
-  return `${60 - m} i ${next}`
+  // Kring halvtimmen säger svenskan "fem i halv"/"fem över halv" — aldrig
+  // "25 över" eller "25 i" (förälderns rättelse, aug 2026 — så lär skolan ut
+  // det). Övriga minuter skrivs med ord så stilen matchar kvart/halv.
+  if (m === 25) return `fem i halv ${next}`
+  if (m === 35) return `fem över halv ${next}`
+  if (m < 30) return `${min[m] ?? m} över ${hh}`
+  return `${min[60 - m] ?? 60 - m} i ${next}`
 }
 
 function makeKlocka(momentId: string, minutePool: (level: DifficultyLevel, rng: Rng) => number): TaskGenerator {
