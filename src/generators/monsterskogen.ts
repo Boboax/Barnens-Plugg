@@ -27,7 +27,7 @@ const monsterEnkla = g('monster-enkla', (level, seed, rng) => {
     ['stjarna-guld', 'mane'],
     ['groda', 'anka'],
     ['ruta-gul', 'ruta-gron', 'ruta-bla'],
-    ['apple', 'paron', 'citron'],
+    ['apple', 'paron', 'kotte'],
   ] as const
   const pool = level <= 4 ? rng.pick(pools.slice(0, 3)) : rng.pick(pools)
   // Mönsterenhet: AB, AAB, ABB eller ABC beroende på nivå.

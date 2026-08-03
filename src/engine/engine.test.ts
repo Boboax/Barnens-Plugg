@@ -8,10 +8,10 @@ import { REVIEW_INTERVALS_DAYS, scheduleFirstReview, scheduleNextReview } from '
 import { applyAnswer, classifyError, hotStreakBonus, newSkillState, recomputeAvailability, repairDiagnosisBossReady, currentMomentId, pendingGuardianYear, trophyBossWorldId, worldMomentsComplete, genMomentIdsInYear, yearMomentsComplete, grantedYears } from './progress'
 import { practiceLevel as practiceLevelFor } from './rating'
 import { applyDiagnosisResult, diagnosisBackbone, searchState, startIndexForYear } from './diagnosis'
-import { composeCheckTasks, composeWorldBossTasks, composeGuardianTasks, composeStarTasks, taskForPart, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
+import { composeCheckTasks, composeSession, composeWorldBossTasks, composeGuardianTasks, composeStarTasks, taskForPart, CHECK_TASK_COUNT, WORLDBOSS_TASK_COUNT } from './session'
 import { rewardProgress, updateStreak } from './rewards'
 import { BLIXT_TESTS, blixtTask, blixtUnlocked, blixtLevel, blixtTier, blixtMaxTier, blixtTimed, BLIXT_GATE, blixtBlockedMoments, pendingBlixtKind } from './blixt'
-import { backfillSplitAddSub, backfillSeenWorlds } from './progress'
+import { backfillSplitAddSub, backfillSeenWorlds, backfillLateNewMoments, isDistantYear } from './progress'
 
 const makeProfile = (overrides: Partial<ChildProfile> = {}): ChildProfile => {
   const skills: Record<string, SkillState> = {}
@@ -382,6 +382,108 @@ describe('årsgrinden (Expeditionsmodellen): Årsväktaren öppnar nästa årsku
     // Rekommendationen är det FÖRSTA öppna åk 1-momentet i terminsordning.
     const firstOpen = yearIds.find((id) => profile.skills[id]?.mastery === 'available')
     expect(first).toBe(firstOpen)
+  })
+})
+
+describe('sent tillkomna moment i fjärranår (backfillLateNewMoments)', () => {
+  // Edward-fallet (aug 2026): geometri-etappen lade till moment i F–åk 2
+  // EFTER hans diagnos → de såg ut som luckor och en åk 5-elev fick räkna
+  // päron på åk 1-nivå. Skänkningen kräver färdig diagnos, fjärranår,
+  // behärskat stoff i senare år och ett i övrigt starkt år.
+  const diagnosisDone = { passesDone: 2, passesTotal: 2, done: true, probes: [] }
+  const masterYears = (profile: ChildProfile, years: string[]): void => {
+    for (const m of MOMENTS) {
+      if (years.includes(m.year) && hasGenerator(m.generatorId)) {
+        profile.skills[m.id] = { ...profile.skills[m.id], mastery: 'mastered', rating: 700, review: scheduleFirstReview('2026-01-01') }
+      }
+    }
+  }
+
+  it('Edward-fallet: orört OCH starkt påbörjat sent moment i starkt fjärranår skänks', () => {
+    const p = makeProfile({ schoolYear: '5', diagnosis: diagnosisDone })
+    masterYears(p, ['F', '1', '2', '3', '4'])
+    const [untouchedId, startedId] = genMomentIdsInYear('1')
+    // "Sent tillkommet": ser ut som en helt orörd lucka …
+    p.skills[untouchedId] = newSkillState(untouchedId)
+    // … och ett som barnet redan tvingats in i och klarade allt (8/8 rätt).
+    p.skills[startedId] = { ...newSkillState(startedId), mastery: 'in-progress', rating: 420, attempts: 8, correct: 8 }
+    const out = backfillLateNewMoments(p.skills, p, '2026-08-03')
+    expect(out[untouchedId].mastery).toBe('mastered')
+    expect(out[untouchedId].rating).toBeGreaterThanOrEqual(700)
+    expect(out[untouchedId].review).toBeDefined()
+    expect(out[startedId].mastery).toBe('mastered')
+    // Idempotent: en andra körning ändrar ingenting.
+    expect(backfillLateNewMoments(out, p, '2026-08-04')).toBe(out)
+  })
+
+  it('kämpande påbörjat moment skänks INTE (låg träffbild = riktig lucka)', () => {
+    const p = makeProfile({ schoolYear: '5', diagnosis: diagnosisDone })
+    masterYears(p, ['F', '1', '2', '3', '4'])
+    const id = genMomentIdsInYear('1')[0]
+    p.skills[id] = { ...newSkillState(id), mastery: 'in-progress', rating: 350, attempts: 10, correct: 4 }
+    const out = backfillLateNewMoments(p.skills, p, '2026-08-03')
+    expect(out[id].mastery).toBe('in-progress')
+  })
+
+  it('lågt placerat barn skänks inget: orörda moment ovanför fronten är riktiga luckor', () => {
+    // Diagnosens front hamnade tidigt i åk 1 → resten av åk 1 ligger i exakt
+    // samma "orörda" form som ett sent tillkommet moment. Skillnaden: inget
+    // är behärskat i SENARE år — då rörs ingenting.
+    const p = makeProfile({ schoolYear: '5', diagnosis: diagnosisDone })
+    masterYears(p, ['F'])
+    const ids = genMomentIdsInYear('1')
+    p.skills[ids[0]] = { ...p.skills[ids[0]], mastery: 'mastered', rating: 700, review: scheduleFirstReview('2026-01-01') }
+    const out = backfillLateNewMoments(p.skills, p, '2026-08-03')
+    for (const id of ids.slice(1)) {
+      expect(out[id].mastery, id).not.toBe('mastered')
+    }
+  })
+
+  it('närår skänks aldrig och utan färdig diagnos händer ingenting', () => {
+    // Nikolai (åk 2): åk 1-luckan är hans front och ska tränas.
+    const near = makeProfile({ schoolYear: '2', diagnosis: diagnosisDone })
+    masterYears(near, ['F', '1', '2'])
+    const gap = genMomentIdsInYear('1')[0]
+    near.skills[gap] = newSkillState(gap)
+    expect(backfillLateNewMoments(near.skills, near, '2026-08-03')).toBe(near.skills)
+    // Ingen diagnos → orörda profiler lämnas orörda oavsett årskurs.
+    const undiagnosed = makeProfile({ schoolYear: '5' })
+    masterYears(undiagnosed, ['F', '1', '2', '3', '4'])
+    undiagnosed.skills[gap] = newSkillState(gap)
+    expect(backfillLateNewMoments(undiagnosed.skills, undiagnosed, '2026-08-03')).toBe(undiagnosed.skills)
+  })
+
+  it('svagt fjärranår (under 80 % behärskat) skänks inte', () => {
+    const p = makeProfile({ schoolYear: '5', diagnosis: diagnosisDone })
+    masterYears(p, ['F', '1', '2', '3', '4'])
+    const ids = genMomentIdsInYear('1')
+    // Hälften av årets etablerade moment är INTE behärskade → ingen skänkning.
+    const untouchedId = ids[0]
+    p.skills[untouchedId] = newSkillState(untouchedId)
+    for (const id of ids.slice(1, 1 + Math.ceil((ids.length - 1) / 2))) {
+      p.skills[id] = { ...p.skills[id], mastery: 'needs-review', rating: 400, attempts: 15, correct: 8 }
+    }
+    const out = backfillLateNewMoments(p.skills, p, '2026-08-03')
+    expect(out[untouchedId].mastery).not.toBe('mastered')
+  })
+
+  it('uppvärmning och blandat hämtar aldrig från fjärranår', () => {
+    const p = makeProfile({ schoolYear: '5', diagnosis: diagnosisDone, conqueredYears: ['3', '4'] })
+    masterYears(p, ['F', '1', '2', '3', '4'])
+    // Förfallen repetition i BÅDE fjärranår (F) och närår (åk 4).
+    const distantDue = genMomentIdsInYear('F')[0]
+    const nearDue = genMomentIdsInYear('4')[0]
+    // Tidigast förfallna sorteras först — så hamnar paret säkert i due-listan.
+    const overdue = { nextReviewAt: '2025-12-01', intervalDays: 3, passes: 0 }
+    p.skills[distantDue] = { ...p.skills[distantDue], review: overdue }
+    p.skills[nearDue] = { ...p.skills[nearDue], review: overdue }
+    const plan = composeSession(p, '2026-08-03')
+    const warmups = plan.parts.filter((part) => part.kind === 'uppvarmning').map((part) => part.momentId)
+    expect(warmups).toContain(nearDue)
+    expect(warmups).not.toContain(distantDue)
+    for (const part of plan.parts) {
+      expect(isDistantYear(momentById(part.momentId).year, p.schoolYear), `${part.kind}: ${part.momentId}`).toBe(false)
+    }
   })
 })
 

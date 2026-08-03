@@ -54,6 +54,38 @@ describe('uppgiftsgeneratorerna', () => {
     expect(a).toEqual(b)
   })
 
+  it('alla objekt-ikoner generatorerna pekar på finns som riktiga bildfiler', () => {
+    // Buggen (foto från Edward, aug 2026): citron.webp föreställde ett päron
+    // och paron.webp ett äpple — "citronerna" i bildtabellerna såg ut som
+    // päron. Ikonnycklar ur visualerna måste matcha filerna i
+    // public/art/objekt/, annars visas fel (eller ingen) figur.
+    const files = new Set(
+      Object.keys(import.meta.glob('../../public/art/objekt/*.webp'))
+        .map((p) => p.replace(/^.*\//, '').replace(/\.webp$/, '')),
+    )
+    expect(files.size, 'hittade inga objektbilder — fel sökväg?').toBeGreaterThan(10)
+    const check = (icon: string, where: string): void => {
+      expect(files.has(icon), `${where}: ikonen "${icon}" saknar bildfil i public/art/objekt/`).toBe(true)
+    }
+    for (const id of allGeneratorIds()) {
+      for (const level of LEVELS) {
+        for (const seed of SEEDS) {
+          const task = generateTask(id, level, seed)
+          if (task.visual.kind === 'foljd') {
+            for (const item of task.visual.items) {
+              if (item !== '?') check(item, `${id} n${level} f${seed} (foljd)`)
+            }
+          }
+          if (task.visual.kind === 'stapel') {
+            for (const cat of task.visual.categories) {
+              if (cat.icon) check(cat.icon, `${id} n${level} f${seed} (stapel)`)
+            }
+          }
+        }
+      }
+    }
+  })
+
   it('textuppgifter motsäger sig aldrig: samma namn "har" aldrig två olika antal', () => {
     // Buggen (foto från Edward): "Vera har 7 bullar … Vera har 19 bullar" —
     // den överflödiga informationen drog samma namn som huvudpersonen.

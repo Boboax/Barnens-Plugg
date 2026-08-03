@@ -5,6 +5,7 @@ import { momentById } from '../../domain/curriculum'
 import { hasGenerator } from '../../generators'
 import { worldTheme } from '../worldThemes'
 import { composeSession, taskForPart } from '../../engine/session'
+import { isDistantYear } from '../../engine/progress'
 import { chatReadyFor } from '../../chat'
 import type { ScratchPadHandle } from '../components/ScratchPad'
 import { sfx } from '../../sound'
@@ -47,10 +48,14 @@ const CONTEXT: Record<Slot['kind'], AnswerRecord['context']> = {
    generatorinnehåll → Math.random ok här). Exponerad som konstant för test. */
 export const CHEST_CHANCE = 0.35
 
-/** Slumpa ett behärskat moment till kistans bonusuppgift (som blandat-delen). */
+/** Slumpa ett behärskat moment till kistans bonusuppgift (som blandat-delen).
+    Fjärranår undantas — kistan ska kännas som en belöning, inte som att räkna
+    päron på förskoleklassnivå för en åk 5-elev. */
 function pickChestMoment(child: ChildProfile): string | undefined {
   const mastered = Object.values(child.skills).filter(
-    (s) => (s.mastery === 'mastered' || s.mastery === 'star') && hasGenerator(momentById(s.momentId).generatorId),
+    (s) => (s.mastery === 'mastered' || s.mastery === 'star') &&
+      hasGenerator(momentById(s.momentId).generatorId) &&
+      !isDistantYear(momentById(s.momentId).year, child.schoolYear),
   )
   if (mastered.length === 0) return undefined
   return mastered[Math.floor(Math.random() * mastered.length)].momentId

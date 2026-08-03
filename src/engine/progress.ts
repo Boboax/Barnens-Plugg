@@ -5,7 +5,7 @@ import { MOMENTS, MOMENTS_ORDERED, YEAR_ORDER, momentById, termSortKey } from '.
 import { WORLDS } from '../domain/worlds'
 import { hasGenerator } from '../generators'
 import { RATING_START, isBossReady, practiceLevel, updateRating } from './rating'
-import { scheduleFirstReview, scheduleNextReview, scheduleRetryReview } from './spaced-repetition'
+import { scheduleFirstReview, scheduleFirstReviewSpread, scheduleNextReview, scheduleRetryReview } from './spaced-repetition'
 
 /* ============================================================
    Mästerskapslogik: färdigheternas tillstånd och övergångar.
@@ -90,6 +90,13 @@ function yearOpen(year: SchoolYear, conqueredYears: ReadonlySet<SchoolYear>): bo
     LÄNGRE ner än så är "fjärranår" och auto-erövras. */
 const GUARDIAN_LOOKBACK_YEARS = 2
 
+/** Är årskursen ett FJÄRRANÅR för barnet (≥3 år under aktuell årskurs)?
+    Fjärranår auto-erövras (grantedYears) och hålls utanför uppvärmning/
+    blandat — en åk 5-elev ska inte mötas av förskoleklass-uppgifter. */
+export function isDistantYear(year: SchoolYear, schoolYear: SchoolYear): boolean {
+  return YEAR_ORDER.indexOf(year) <= YEAR_ORDER.indexOf(schoolYear) - (GUARDIAN_LOOKBACK_YEARS + 1)
+}
+
 /**
  * Erövrade år i praktiken: lagrade väktarsegrar + auto-erövrade FJÄRRANÅR —
  * årskurser som ligger ≥3 år under barnets aktuella årskurs. En tioåring ska
@@ -101,8 +108,7 @@ const GUARDIAN_LOOKBACK_YEARS = 2
  * regeln följer med när barnet byter årskurs.
  */
 export function grantedYears(profile: Pick<ChildProfile, 'conqueredYears' | 'schoolYear'>): SchoolYear[] {
-  const idx = YEAR_ORDER.indexOf(profile.schoolYear)
-  const distant = YEAR_ORDER.filter((y) => YEAR_ORDER.indexOf(y) <= idx - (GUARDIAN_LOOKBACK_YEARS + 1))
+  const distant = YEAR_ORDER.filter((y) => isDistantYear(y, profile.schoolYear))
   return [...new Set([...(profile.conqueredYears ?? []), ...distant])]
 }
 
@@ -195,6 +201,87 @@ export function backfillSplitAddSub(
         mastery: 'mastered',
         rating: Math.max(s?.rating ?? 0, 640),
         review: s?.review ?? scheduleFirstReview(now),
+      }
+      changed = true
+    }
+  }
+  return changed ? next : skills
+}
+
+/**
+ * Migrering (idempotent): SENT TILLKOMNA moment i fjärranår skänks som
+ * behärskade för redan diagnosticerade barn.
+ *
+ * Bakgrund (aug 2026): geometri-etappen lade till moment (t.ex. "Sortera och
+ * räkna", åk 1) EFTER att äldre barn gjort sin diagnos. För motorn såg de ut
+ * som kunskapsluckor → en åk 5-elev rekommenderades räkna päron på
+ * förskoleklassnivå. Rätt mekanik, fel upplevelse: diagnosen HADE bedömt året
+ * som behärskat — den kunde bara inte fråga om moment som inte fanns då.
+ *
+ * Regeln: bara FJÄRRANÅR (≥3 år under barnets årskurs — samma gräns som
+ * väktarskänkningen), bara barn med FÄRDIG diagnos, bara när året i övrigt
+ * är bevisat starkt (≥80 % av de redan bedömda momenten behärskade) OCH
+ * barnet har behärskat stoff i SENARE årskurser. Det sista skiljer Edwards
+ * fall från ett lågt placerat barn: diagnosens front lämnar moment OVANFÖR
+ * fronten i exakt samma "orörda" form, men då finns inget behärskat efter —
+ * de är riktiga luckor och rörs aldrig.
+ *
+ * Skänks gör (a) helt orörda moment och (b) påbörjade moment med stark
+ * facit (≥75 % rätt) — barnet som redan tvingats in i "luckan" och klarade
+ * allt ska inte behöva spela klart den för hand. Kämpar barnet i momentet
+ * (låg träffbild) eller är det needs-review lämnas det orört — då är det
+ * på riktigt något att träna. Repetitionsschemat sätts för formens skull
+ * (behärskade moment HAR schema) och vaknar bara om året slutar vara
+ * fjärran (barnet flyttas ner). Närår skänks ALDRIG: där är luckor på
+ * riktigt barnets front och ska tränas.
+ */
+export function backfillLateNewMoments(
+  skills: Record<string, SkillState>,
+  child: Pick<ChildProfile, 'schoolYear' | 'diagnosis'>,
+  now: string,
+): Record<string, SkillState> {
+  if (child.diagnosis?.done !== true) return skills
+  let changed = false
+  const next: Record<string, SkillState> = { ...skills }
+  let spreadIdx = 0
+  for (const year of YEAR_ORDER) {
+    if (!isDistantYear(year, child.schoolYear)) continue
+    const ids = genMomentIdsInYear(year)
+    if (ids.length === 0) continue
+    // Barnets front måste ligga BORTOM året: något behärskat i en senare
+    // årskurs. Annars kan årets orörda moment vara diagnosens ovanför-fronten.
+    const yearIdx = YEAR_ORDER.indexOf(year)
+    const frontBeyond = MOMENTS.some(
+      (m) => YEAR_ORDER.indexOf(m.year) > yearIdx && isDone(skills[m.id]),
+    )
+    if (!frontBeyond) continue
+    // Orört = aldrig bedömt eller tränat (saknas helt, eller står kvar i
+    // startläget utan ett enda försök). Allt annat är "etablerat" — där har
+    // diagnosen eller träningen sagt sitt.
+    const untouched = ids.filter((id) => {
+      const s = skills[id]
+      return !s || (s.attempts === 0 && (s.mastery === 'locked' || s.mastery === 'available') &&
+        s.rating === RATING_START && !s.review)
+    })
+    // Påbörjade "luckor" med stark facit — barnet klarade i praktiken redan
+    // momentet när motorn skickade dit det.
+    const started = ids.filter((id) => {
+      const s = skills[id]
+      return s !== undefined && (s.mastery === 'in-progress' || s.mastery === 'boss-ready') &&
+        s.attempts > 0 && s.correct / s.attempts >= 0.75
+    })
+    const grantable = [...untouched, ...started]
+    if (grantable.length === 0 || untouched.length === ids.length) continue
+    const established = ids.filter((id) => !untouched.includes(id) && !started.includes(id))
+    if (established.length === 0) continue
+    const masteredCount = established.filter((id) => isDone(skills[id])).length
+    if (masteredCount / established.length < 0.8) continue
+    for (const id of grantable) {
+      next[id] = {
+        ...(skills[id] ?? newSkillState(id)),
+        mastery: 'mastered',
+        rating: Math.max(skills[id]?.rating ?? 0, 700),
+        review: skills[id]?.review ?? scheduleFirstReviewSpread(now, spreadIdx++),
       }
       changed = true
     }

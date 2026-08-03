@@ -47,7 +47,7 @@ export function BelongIcon({ name, size = 28, style }: { name: string; size?: nu
 export const OBJEKT_ICONS = [
   'kula', 'kort', 'apple', 'klistermarke', 'snacka', 'kotte', 'boll', 'bulle',
   'cirkel-rod', 'cirkel-bla', 'stjarna-guld', 'mane', 'groda', 'anka',
-  'ruta-gul', 'ruta-gron', 'ruta-bla', 'paron', 'citron',
+  'ruta-gul', 'ruta-gron', 'ruta-bla', 'paron',
 ] as const
 export const isObjektIcon = (v: string): boolean => (OBJEKT_ICONS as readonly string[]).includes(v)
 
