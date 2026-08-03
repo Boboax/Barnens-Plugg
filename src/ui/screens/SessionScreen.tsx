@@ -338,7 +338,11 @@ export function SessionScreen() {
     <div className="screen-fade" style={{
       // env(safe-area-inset-top): annars hamnar Avsluta-raden under iOS-klockan
       // i hemskärmsläge (viewport-fit=cover). Bakgrunden fyller ändå kant till kant.
-      minHeight: '100%', display: 'flex', flexDirection: 'column',
+      // height (inte minHeight): roten MÅSTE vara höjdbegränsad för att
+      // uppgiftskolumnens egen scroll ska greppa — body är fastnaglad och
+      // scrollar aldrig, så en rot som växer med innehållet klipper knappsatsen
+      // utanför skärmen (förälderns foto: diagramuppgift på iPad, aug 2026).
+      height: '100%', display: 'flex', flexDirection: 'column',
       padding: 'calc(10px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))',
       position: 'relative', overflow: 'hidden',
       background: `url(${worldBg}) center / cover no-repeat, ${theme.sky}`,
@@ -437,7 +441,9 @@ function ChestFrame({ title, subtitle, children }: { title: string; subtitle: st
   useDocumentBackground('#241809') // iPad-remsan följer kistscenens kant
   return (
     <div className="screen-fade" style={{
-      minHeight: '100%', display: 'flex', flexDirection: 'column',
+      // height (inte minHeight): höjdbegränsad rot så bonusuppgiftens
+      // TaskRunner-scroll greppar även för höga diagramuppgifter.
+      height: '100%', display: 'flex', flexDirection: 'column',
       padding: 'calc(14px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom))',
       position: 'relative', overflow: 'hidden',
       // Skattig, varm scen: djup guldbrun botten så kistan känns som en fyndstund.

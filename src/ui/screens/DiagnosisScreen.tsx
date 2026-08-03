@@ -101,7 +101,9 @@ export function DiagnosisScreen() {
   const progress = Math.min(0.92, probeCount / 22)
 
   return (
-    <div className="screen-fade" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', padding: 'calc(10px + env(safe-area-inset-top)) 16px 16px' }}>
+    // height (inte minHeight): höjdbegränsad rot krävs för att TaskRunners
+    // egen scroll ska greppa vid höga uppgifter — body scrollar aldrig.
+    <div className="screen-fade" style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: 'calc(10px + env(safe-area-inset-top)) 16px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
         <button className="chip" onClick={store.leaveChild}>✕ Paus</button>
         <div className="pbar" style={{ flex: 1 }}>
