@@ -86,6 +86,28 @@ describe('uppgiftsgeneratorerna', () => {
     }
   })
 
+  it('klockan: kring halvtimmen heter det "fem i halv"/"fem över halv", aldrig siffror', () => {
+    // Förälderns rättelse (aug 2026): svenskan säger aldrig "25 över" eller
+    // "25 i" — 25/35 minuter uttrycks relativt halvtimmen. Övriga minuter
+    // skrivs med ord så stilen matchar kvart/halv.
+    const texts = new Set<string>()
+    for (const id of ['gen.klockan-hel-halv', 'gen.klockan-kvart', 'gen.klockan-minuter']) {
+      for (const level of LEVELS) {
+        for (const seed of SEEDS) {
+          const task = generateTask(id, level, seed)
+          if (task.answer.kind !== 'choice') throw new Error(`${id}: klockan ska vara flerval`)
+          for (const c of task.answer.choices) {
+            expect(c.text, `${id} n${level} f${seed}: siffror i klocktext "${c.text}"`).not.toMatch(/\d/)
+            if (c.correct) texts.add(c.text)
+          }
+        }
+      }
+    }
+    // Båda halv-formerna förekommer bland de rätta svaren.
+    expect([...texts].some((t) => t.includes(' i halv ')), 'fem i halv saknas').toBe(true)
+    expect([...texts].some((t) => t.includes(' över halv ')), 'fem över halv saknas').toBe(true)
+  })
+
   it('textuppgifter motsäger sig aldrig: samma namn "har" aldrig två olika antal', () => {
     // Buggen (foto från Edward): "Vera har 7 bullar … Vera har 19 bullar" —
     // den överflödiga informationen drog samma namn som huvudpersonen.
