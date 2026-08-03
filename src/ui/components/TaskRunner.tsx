@@ -204,9 +204,18 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
     <div style={{
       display: 'grid',
       gridTemplateColumns: withScratch ? 'minmax(0, 1.3fr) minmax(220px, 1fr)' : '1fr',
+      // Raden får ALDRIG växa förbi ytan (auto-rader gör det) — annars kan
+      // uppgiftskolumnens scroll aldrig greppa och knappsatsen hamnar utanför.
+      gridAutoRows: 'minmax(0, 1fr)',
       gap: 14, flex: 1, minHeight: 0,
     }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
+      {/* Kolumnen äger sin egen scroll: höga uppgifter (stort diagram + knapp-
+          sats på iPad) ska kunna rullas ner till svarsknappen — body scrollar
+          aldrig (fastnaglad). margin:auto på innerdiven centrerar kort innehåll
+          men låter högt innehåll börja från toppen; justifyContent:center hade
+          klippt toppen oåtkomligt vid overflow. */}
+      <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', margin: 'auto', width: '100%' }}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', maxWidth: 560 }}>
           {/* Frågan sitter ALLTID på en egen ljus pergamentplatta med mörk text.
               Läsbarheten får aldrig bero på bakgrunden bakom (arena, sol, natt) —
@@ -359,6 +368,7 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
             </button>
           </div>
         )}
+      </div>
       </div>
 
       {withScratch && (

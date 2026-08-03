@@ -225,7 +225,9 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
 
   return (
     <div className="screen-fade" style={{
-      minHeight: '100%', display: 'flex', flexDirection: 'column',
+      // height (inte minHeight): höjdbegränsad rot krävs för att TaskRunners
+      // egen scroll ska greppa vid höga uppgifter (t.ex. diagramkoll på iPad).
+      height: '100%', display: 'flex', flexDirection: 'column',
       padding: 'calc(10px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))',
       background: guardianBg ?? `url(${bgImg}) center / cover no-repeat, ${theme?.sky ?? '#1B1F30'}`,
       position: 'relative', overflow: 'hidden',
@@ -270,7 +272,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
         <span className="chip" style={{ color: 'var(--muted)' }}>{friendly ? 'Pi hejar på dig!' : 'Pi vilar under striden'}</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(180px, 230px)', gap: 12, flex: 1, minHeight: 0, position: 'relative', zIndex: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(180px, 230px)', gridAutoRows: 'minmax(0, 1fr)', gap: 12, flex: 1, minHeight: 0, position: 'relative', zIndex: 2 }}>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginBottom: 4 }}>
             {Array.from({ length: total }).map((_, i) => (
