@@ -16,6 +16,7 @@ import { Pi } from '../components/Pi'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
 import { worldTheme } from '../worldThemes'
 import { EndCard } from './SessionScreen'
+import { useDocumentBackground } from '../useDocumentBackground'
 import { useStore } from '../store'
 
 /* ============================================================
@@ -128,6 +129,12 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
   const [flash, setFlash] = useState<'hit' | 'miss' | null>(null)
   const [finished, setFinished] = useState(false)
   const [introDone, setIntroDone] = useState(false)
+
+  // iPad-remsan bakom home-indikatorn följer stridens scenkant: väktarens
+  // valvsal är blåsvart, kollen scrimmas varmt, boss/diamant kallt. Segerns
+  // EndCard tar sedan själv över med firandets färg (före de tidiga
+  // return-vägarna — hooks måste alltid köras i samma ordning).
+  useDocumentBackground(kind === 'guardian' ? '#0D0B14' : kind === 'check' ? '#241809' : '#100D16')
 
   // Årsväktaren hör inte till en värld — den vaktar hela årets läroplan.
   const worldId = kind === 'boss' ? worldBossId : kind === 'guardian' ? undefined : (momentId ? momentById(momentId).worldId : undefined)

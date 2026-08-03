@@ -90,6 +90,12 @@ publikt för Pages på gratisplanen.
   `#35302E`) eller ha en tillräckligt tät scrim under sig. Barnen läser på
   iPad i starkt ljus; svag kontrast = oläsbart. (Bakgrund: barn kunde inte läsa
   "Vad är 7 − 8?" på kunskapskollen — ljus text över en solig del av världen.)
+- **iPad ritar inte webbvyn bakom home-indikatorn** (hemskärmsläge):
+  remsan längst ner målas av iOS med DOKUMENTETS bakgrundsfärg och nås inte
+  av appens CSS. Mörka helskärmsscener (firande, natt, väktarsal, kista)
+  måste därför kalla `useDocumentBackground(kantfärg)` — annars syns en
+  avvikande lila-grå rand (förälderns foto, aug 2026). Pergamentvyer lämnas
+  i fred (standardtonen #241C24 är deras diskreta ram).
 - **Generatorer får inte använda `Date.now()`/`Math.random()` för innehåll**
   — allt slumpat går via seedad `createRng(seed)` så uppgifter är
   reproducerbara. `freshSeed()` används bara för att välja NYTT frö.
