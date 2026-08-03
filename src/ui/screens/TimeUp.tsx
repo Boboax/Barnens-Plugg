@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Pi } from '../components/Pi'
 import { Icon } from '../components/Icon'
 import { useStore } from '../store'
+import { useDocumentBackground } from '../useDocumentBackground'
 
 /* Tiden är slut — vänligt och bestämt. Sköts av appens kod, inte av AI.
    En förälder kan bevilja extratid här med PIN — beslutet ligger alltså
@@ -14,6 +15,8 @@ export function TimeUp() {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
   const [checking, setChecking] = useState(false)
+  // iPad-remsan bakom home-indikatorn följer nattscenens kant.
+  useDocumentBackground('#14132A')
 
   const grant = async (minutes: number): Promise<void> => {
     if (!child || checking) return

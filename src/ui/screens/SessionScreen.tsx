@@ -6,6 +6,7 @@ import { hasGenerator } from '../../generators'
 import { worldTheme } from '../worldThemes'
 import { composeSession, taskForPart } from '../../engine/session'
 import { isDistantYear } from '../../engine/progress'
+import { useDocumentBackground } from '../useDocumentBackground'
 import { chatReadyFor } from '../../chat'
 import type { ScratchPadHandle } from '../components/ScratchPad'
 import { sfx } from '../../sound'
@@ -433,6 +434,7 @@ export function SessionScreen() {
 /* Skattkistans inramning: ett varmt pergamentkort med 🎁-rubrik. Rymmer både
    erbjudandet ("Öppna kistan!") och själva bonusuppgiftens TaskRunner. */
 function ChestFrame({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+  useDocumentBackground('#241809') // iPad-remsan följer kistscenens kant
   return (
     <div className="screen-fade" style={{
       minHeight: '100%', display: 'flex', flexDirection: 'column',
@@ -465,6 +467,9 @@ export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', c
 }) {
   const store = useStore()
   const hero = store.activeChild?.hero
+  // iPad-remsan bakom home-indikatorn målas med dokumentets bakgrund — den
+  // måste följa firandescenens varma mörkbruna kant (se useDocumentBackground).
+  useDocumentBackground(celebrate ? '#1D1307' : undefined)
   // Firandet (fanfar + fyrverkeri) avfyras exakt en gång när kortet visas.
   // En andra, lättare våg strax efter så segern känns rejält episk.
   useEffect(() => {
