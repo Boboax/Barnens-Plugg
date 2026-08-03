@@ -97,6 +97,16 @@ innan nästa tema ens börjar. En grind PER ÅRSKURS följer spiralen.
 - **Påbörjade moment över årskursen förstörs inte** (t.ex. Nikolais 0–1000):
   de behåller sitt tillstånd och sin rating, syns på kartan, men
   rekommendationen pekar dit först när deras år är öppet.
+- **Sent tillkomna moment i fjärranår skänks** (aug 2026, efter Edwards
+  päron-räknande): moment som byggs EFTER ett barns diagnos ser ut som
+  kunskapsluckor fast diagnosen bedömt året som behärskat — den kunde bara
+  inte fråga om moment som inte fanns då. `backfillLateNewMoments` markerar
+  dem behärskade, men enbart i fjärranår vars övriga moment är ≥80 %
+  behärskade OCH när barnet bevisligen kommit längre (behärskat stoff i
+  senare år) — diagnosens orörda moment OVANFÖR fronten har exakt samma
+  form och är riktiga luckor som ska tränas. Av samma skäl hämtar
+  uppvärmning, blandat-delen och skattkistan aldrig från fjärranår: en
+  åk 5-elev ska inte repetera förskoleklassens taluppdelning.
 
 **Varför inte årskurstak utan väktare?** Ett osynligt tak känns som ett
 stopp; en väktare är ett MÅL. Att erövra sitt läsår ger samma "jag klarade

@@ -1,6 +1,6 @@
 import type { Household } from '../domain/types'
 import { PROFILE_SCHEMA_VERSION } from '../domain/types'
-import { grantedYears, repairDiagnosisBossReady, backfillSplitAddSub, backfillSeenWorlds } from '../engine/progress'
+import { grantedYears, repairDiagnosisBossReady, backfillSplitAddSub, backfillLateNewMoments, backfillSeenWorlds } from '../engine/progress'
 import { blixtBlockedMoments } from '../engine/blixt'
 
 /* ============================================================
@@ -107,11 +107,16 @@ export function migrate(data: Household): Household {
       .map((c) => ({
         ...c,
         // backfillSplitAddSub: markera nya rena add/sub-noder klara för barn som
-        // redan klarat den blandade noden. repairDiagnosisBossReady räknar sedan
-        // om tillgänglighet med års- och flyt-grindarna (Expeditionsmodellen:
-        // conqueredYears saknas i gamla profiler = tom → grinden gäller bakåt
-        // och barnet möter Årsväktarna för redan behärskade år).
-        skills: repairDiagnosisBossReady(backfillSplitAddSub(c.skills, now), now, grantedYears(c), blixtBlockedMoments(c)),
+        // redan klarat den blandade noden. backfillLateNewMoments: skänk sent
+        // tillkomna moment i starka fjärranår (annars ser de ut som luckor och
+        // en åk 5-elev skickas till åk 1-uppgifter). repairDiagnosisBossReady
+        // räknar sedan om tillgänglighet med års- och flyt-grindarna
+        // (Expeditionsmodellen: conqueredYears saknas i gamla profiler = tom →
+        // grinden gäller bakåt och barnet möter Årsväktarna för redan
+        // behärskade år).
+        skills: repairDiagnosisBossReady(
+          backfillLateNewMoments(backfillSplitAddSub(c.skills, now), c, now),
+          now, grantedYears(c), blixtBlockedMoments(c)),
         // Fyll seenWorlds för barn som redan spelat (annars ankomstkort för
         // gamla världar). Idempotent — redan satt lämnas orört.
         seenWorlds: backfillSeenWorlds(c.skills, c.conqueredWorlds, c.seenWorlds),

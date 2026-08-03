@@ -144,8 +144,11 @@ const proportionalitet = g('proportionalitet', (level, seed, rng) => {
 /** Saker att sortera i bildtabeller: [plural-etikett, objekt-ikon]. Ikonerna
     finns i OBJEKT_ICONS så piktogrammet kan rita dem. */
 const TABELL_SAKER: [string, string][] = [
+  // OBS: ikonnyckel = bildfil i public/art/objekt/. Citronerna utgick när det
+  // visade sig att "citron"-bilden föreställde ett päron (och päron-bilden ett
+  // äpple) — barnen fick räkna "citroner" som såg ut som päron (aug 2026).
   ['äpplen', 'apple'], ['kulor', 'kula'], ['kottar', 'kotte'], ['bollar', 'boll'],
-  ['snäckor', 'snacka'], ['bullar', 'bulle'], ['päron', 'paron'], ['citroner', 'citron'],
+  ['snäckor', 'snacka'], ['bullar', 'bulle'], ['päron', 'paron'],
 ]
 
 /** Versaliserar första bokstaven — förklaringar som INLEDS med en etikett

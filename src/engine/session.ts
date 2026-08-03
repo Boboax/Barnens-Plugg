@@ -4,7 +4,7 @@ import { generateTask, hasGenerator } from '../generators'
 import { freshSeed, createRng } from '../generators/rng'
 import { variedLevel, practiceLevel } from './rating'
 import { dueForReview, REVIEW_TASK_COUNT } from './spaced-repetition'
-import { currentMomentId } from './progress'
+import { currentMomentId, isDistantYear } from './progress'
 
 /* ============================================================
    Passkomponering — "Dagens pass".
@@ -44,8 +44,12 @@ export function composeSession(profile: ChildProfile, today: string, preferredMo
     return { parts: [{ kind: 'nytt', momentId: preferredMomentId, taskCount: FOCUSED_TASK_COUNT }] }
   }
 
+  // Fjärranår hålls utanför uppvärmningen: en åk 5-elev ska inte värma upp
+  // med förskoleklassens taluppdelning — repetitionstiden gör mer nytta nära
+  // barnets front. Schemat ligger kvar och vaknar om barnet flyttas ner.
   const due = dueForReview(profile.skills, today)
     .filter((s) => hasGenerator(momentById(s.momentId).generatorId))
+    .filter((s) => !isDistantYear(momentById(s.momentId).year, profile.schoolYear))
     .slice(0, MAX_REVIEW_MOMENTS)
   for (const skill of due) {
     parts.push({ kind: 'uppvarmning', momentId: skill.momentId, taskCount: REVIEW_TASK_COUNT })
@@ -60,12 +64,14 @@ export function composeSession(profile: ChildProfile, today: string, preferredMo
     parts.push({ kind: 'nytt', momentId: current, taskCount: NEW_TASK_COUNT })
   }
 
-  // Blandad avslutning: slumpa bland behärskade moment (interleaving).
+  // Blandad avslutning: slumpa bland behärskade moment (interleaving) —
+  // men inte från fjärranår (för lätt = ingen interleaving-effekt).
   const mastered = Object.values(profile.skills).filter(
     (s) =>
       (s.mastery === 'mastered' || s.mastery === 'star') &&
       s.momentId !== current &&
-      hasGenerator(momentById(s.momentId).generatorId),
+      hasGenerator(momentById(s.momentId).generatorId) &&
+      !isDistantYear(momentById(s.momentId).year, profile.schoolYear),
   )
   if (mastered.length > 0) {
     const rng = createRng(freshSeed())

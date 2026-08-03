@@ -3,7 +3,7 @@ import type { ChildProfile, Moment, SkillState, World } from '../../domain/types
 import { MOMENTS, momentsInWorld, momentById } from '../../domain/curriculum'
 import { WORLDS, worldById } from '../../domain/worlds'
 import { hasGenerator } from '../../generators'
-import { currentMomentId, pendingGuardianYear, genMomentIdsInYear, worldMomentsComplete } from '../../engine/progress'
+import { currentMomentId, pendingGuardianYear, genMomentIdsInYear, worldMomentsComplete, isDistantYear } from '../../engine/progress'
 import { guardianForYear, yearLabel } from '../../domain/guardians'
 import { dueForReview } from '../../engine/spaced-repetition'
 import { rewardProgress } from '../../engine/rewards'
@@ -209,7 +209,10 @@ function HomeInner({ child }: { child: ChildProfile }) {
       ? `Alla moment i ${world.name} är klara — ${world.boss.name} vaknar! Dags att möta bossen.`
       : world.chapters[Math.min(masteredInWorld, lastChapter - 1)]
 
-  const due = dueForReview(child.skills, todayISO()).length
+  // Räkna bara repetition som passet faktiskt tar upp — fjärranår filtreras
+  // bort i composeSession och ska inte synas som "att repetera" här heller.
+  const due = dueForReview(child.skills, todayISO())
+    .filter((s) => !isDistantYear(momentById(s.momentId).year, child.schoolYear)).length
   const secondsLeft = store.secondsLeftToday(child)
   const minutesLeft = Math.ceil(secondsLeft / 60)
 
