@@ -130,6 +130,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
   // den som avbröt kollen träna om hela momentet (Edwards fynd, aug 2026).
   const checkIsNextStep = !guardianIsNextStep && !blixtIsNextStep &&
     currentSkill?.mastery === 'boss-ready' && currentId !== undefined
+  // Grindsteg = gula knappen startar EN sak (koll/väktare/blixt), inte passet.
+  const gateStep = guardianIsNextStep || blixtIsNextStep || checkIsNextStep
   const blixtWorldId = blixtIsNextStep && pendingBlixt
     ? momentById(blixtConfig(pendingBlixt).unlockMomentId).worldId : undefined
   // Väktaren hör inte till en värld — visa världen där årets resa slutade
@@ -714,8 +716,16 @@ function HomeInner({ child }: { child: ChildProfile }) {
         </div>
 
         <div className="panel">
-          <div style={{ fontWeight: 900, fontSize: 15, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7 }}><Icon name="bok" size={20} /> Dagens pass · ca 15 min</div>
-          <Row label="Uppvärmning: repetition" tag={due > 0 ? `${due} moment` : 'kort'} tagColor="rep" />
+          {/* Panelen beskriver det gula knappen FAKTISKT startar: ett pass
+              (uppvärmning/nytt/blandat) — eller ett enda nästa steg (koll,
+              väktare, blixt). Passraderna döljs då; annars lovar panelen
+              delar som inte kommer. */}
+          <div style={{ fontWeight: 900, fontSize: 15, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Icon name="bok" size={20} /> {gateStep ? 'Nästa steg' : 'Dagens pass · ca 15 min'}
+          </div>
+          {!gateStep && (
+            <Row label="Uppvärmning: repetition" tag={due > 0 ? `${due} moment` : 'kort'} tagColor="rep" />
+          )}
           {/* När en grind väntar är NÄSTA STEG blixten/bossen — inte "Fritt läge". */}
           <Row
             label={blixtIsNextStep && pendingBlixt ? `⚡ Blixtpass: ${blixtConfig(pendingBlixt).title}`
@@ -725,7 +735,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
             tag={blixtIsNextStep || guardianIsNextStep || checkIsNextStep ? 'nästa steg' : hasStarted ? 'pågår' : 'nytt'}
             tagColor="new"
           />
-          <Row label="Blandade uppgifter" tag="mix" tagColor="rep" />
+          {!gateStep && <Row label="Blandade uppgifter" tag="mix" tagColor="rep" />}
 
           {/* Pi pekar tydligt ut nästa steg — barnet ska aldrig behöva undra
               var det ska trycka. Knappen tar alltid till RÄTT övning. */}
