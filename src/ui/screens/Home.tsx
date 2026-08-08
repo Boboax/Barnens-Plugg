@@ -125,6 +125,11 @@ function HomeInner({ child }: { child: ChildProfile }) {
     return m === 'mastered' || m === 'star'
   })()
   const blixtIsNextStep = !!pendingBlixt && !guardianIsNextStep && (!currentId || blixtOverdue)
+  // Momentet är redo för Pis koll (boss-ready) → kollen ÄR nästa steg. Gula
+  // knappen ska leda dit, inte till ännu ett träningspass — annars tvingades
+  // den som avbröt kollen träna om hela momentet (Edwards fynd, aug 2026).
+  const checkIsNextStep = !guardianIsNextStep && !blixtIsNextStep &&
+    currentSkill?.mastery === 'boss-ready' && currentId !== undefined
   const blixtWorldId = blixtIsNextStep && pendingBlixt
     ? momentById(blixtConfig(pendingBlixt).unlockMomentId).worldId : undefined
   // Väktaren hör inte till en värld — visa världen där årets resa slutade
@@ -180,6 +185,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
     ? `Alla moment i ${yearLabel(pendingGuardian)} är klara! ${guardian.name} vaktar porten till nästa årskurs. Tryck så tar jag dig till väktarstriden!`
     : blixtIsNextStep && pendingBlixt
     ? `Dags för blixtpasset ${blixtConfig(pendingBlixt).title}! Visa ditt flyt så öppnas vägen vidare. Tryck så kör vi!`
+    : checkIsNextStep && currentMoment
+    ? `Du är redo! Visa vad du kan i ${currentMoment.title} — klarar du kollen blir momentet klart. Tryck så kör vi!`
     : currentMoment && traveling && currentWorld
     ? `Expeditionen reser vidare till ${currentWorld.name}! 🧭 Där väntar: ${currentMoment.title}. Tryck på knappen så packar vi!`
     : currentMoment
@@ -189,6 +196,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
     ? `Möt väktaren! ⚔ Tryck här!`
     : blixtIsNextStep
     ? `Dags för blixten! ⚡ Tryck här!`
+    : checkIsNextStep
+    ? `Visa Pi vad du kan! ⭐ Tryck här!`
     : currentMoment && traveling && currentWorld
     ? `Vi reser till ${currentWorld.name}! 🧭 Tryck här!`
     : currentMoment
@@ -265,6 +274,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
     // Årsväktaren eller flyt-blixten. Annars vanligt pass (motorn väljer momentet).
     if (guardianIsNextStep && pendingGuardian !== undefined) store.startGuardian(pendingGuardian)
     else if (blixtIsNextStep && pendingBlixt) store.startBlixt(pendingBlixt)
+    else if (checkIsNextStep && currentId) store.startBattle(currentId, 'check')
     else store.startSession()
   }
 
@@ -710,8 +720,9 @@ function HomeInner({ child }: { child: ChildProfile }) {
           <Row
             label={blixtIsNextStep && pendingBlixt ? `⚡ Blixtpass: ${blixtConfig(pendingBlixt).title}`
               : guardianIsNextStep && guardian ? `⚔ Årsväktaren: ${guardian.name}`
+              : checkIsNextStep && currentMoment ? `⭐ Pis koll: ${currentMoment.title}`
               : currentMoment ? currentMoment.title : 'Fritt läge'}
-            tag={blixtIsNextStep || guardianIsNextStep ? 'nästa steg' : hasStarted ? 'pågår' : 'nytt'}
+            tag={blixtIsNextStep || guardianIsNextStep || checkIsNextStep ? 'nästa steg' : hasStarted ? 'pågår' : 'nytt'}
             tagColor="new"
           />
           <Row label="Blandade uppgifter" tag="mix" tagColor="rep" />
@@ -723,7 +734,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
             background: 'linear-gradient(rgba(246,236,212,.96), rgba(230,213,176,.96)), var(--tex-parchment, none) center / cover',
             border: '2px solid #7A6544', borderRadius: 12, padding: '8px 10px', color: '#3E3016',
           }}>
-            <Pi mood={guardianIsNextStep || blixtIsNextStep ? 'hejar' : 'glad'} size={34} />
+            <Pi mood={guardianIsNextStep || blixtIsNextStep || checkIsNextStep ? 'hejar' : 'glad'} size={34} />
             <span style={{ flex: 1, fontSize: isFK ? 14 : 12.5, fontWeight: 700, lineHeight: 1.35 }}>
               {isFK
                 ? guideShort
@@ -731,6 +742,8 @@ function HomeInner({ child }: { child: ChildProfile }) {
                 ? <>Alla moment i <b>{yearLabel(pendingGuardian)}</b> är klara! <b>{guardian.name}</b> vaktar porten till nästa årskurs. Tryck så tar jag dig till väktarstriden!</>
                 : blixtIsNextStep && pendingBlixt
                 ? <>Dags för <b>blixtpasset {blixtConfig(pendingBlixt).title}</b>! Visa ditt flyt så öppnas vägen vidare. Tryck så kör vi!</>
+                : checkIsNextStep && currentMoment
+                ? <>Du är redo! Visa vad du kan i <b>{currentMoment.title}</b> — klarar du kollen blir momentet klart. Tryck så kör vi!</>
                 : currentMoment && traveling && currentWorld
                 ? <>Expeditionen reser vidare till <b>{currentWorld.name}</b>! 🧭 Där väntar: <b>{currentMoment.title}</b>. Tryck på knappen så packar vi!</>
                 : currentMoment
@@ -747,6 +760,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
           <button className="btn btn-primary" style={{ width: '100%', marginTop: 10 }} onClick={startTraining}>
             {guardianIsNextStep && guardian ? `Möt ${guardian.name}! ⚔`
               : blixtIsNextStep ? 'Kör blixtpasset! ⚡'
+              : checkIsNextStep ? 'Visa vad du kan! ⭐'
               : hasStarted ? 'Fortsätt passet ▶' : 'Starta passet ▶'}
           </button>
         </div>
