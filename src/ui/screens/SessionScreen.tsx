@@ -110,6 +110,8 @@ export function SessionScreen() {
   // Repetitionsresultat per moment: [rätt, totalt]
   const reviewTally = useRef(new Map<string, [number, number]>())
   const reviewsFinished = useRef(new Set<string>())
+  // Nytt-delens facit: [rätt, totalt] — styr om koll-erbjudandet tjänas.
+  const nyttTally = useRef<[number, number]>([0, 0])
 
   // Skattkista: en bonusöverraskning efter ett starkt pass (se effekten nedan).
   const [chestPhase, setChestPhase] = useState<'none' | 'offer' | 'task' | 'closed'>('none')
@@ -128,19 +130,24 @@ export function SessionScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneNow])
 
-  // Ett förtjänat koll-erbjudande är BESTÄNDIGT: när den fokuserade träningen
-  // slutar starkt markeras momentet "redo för Pis koll" (boss-ready) redan
-  // här — INNAN kollen startar. Avbryter barnet kollen väntar den kvar på
-  // nodens ring ("visa vad du kan!") och i gula knappen, med obegränsade
-  // omförsök precis som väktaren. Utan detta försvann inbjudan med passets
-  // arbetsminne och en hel omträning krävdes (Edward avbröt, aug 2026).
+  // Ett förtjänat koll-erbjudande är BESTÄNDIGT: när nytt-delen slutar starkt
+  // (≥80 % — fokuserad ELLER vanligt pass, samma regel) markeras momentet
+  // "redo för Pis koll" (boss-ready) redan här — INNAN kollen ens erbjuds.
+  // Avbryter barnet kollen väntar den kvar på nodens ring ("visa vad du
+  // kan!") och i gula knappen, med obegränsade omförsök precis som väktaren.
+  // Utan detta försvann inbjudan med passets arbetsminne och en hel
+  // omträning krävdes (Edward avbröt, aug 2026). Kravet på ett HELT
+  // nytt-block (≥8 uppgifter) skiljer ett förtjänat erbjudande från ett
+  // avbrutet pass med 2/2 rätt.
   useEffect(() => {
-    if (!doneNow || !child || !store.sessionFocused) return
+    if (!doneNow || !child) return
     const trainedId = slots.find((s) => s.kind === 'nytt')?.momentId
     if (!trainedId) return
     const m = child.skills[trainedId]?.mastery
-    const strong = slots.length > 0 && correctCount / slots.length >= 0.8
-    if (strong && m !== 'mastered' && m !== 'star') store.markCheckReady(trainedId)
+    const [right, total] = nyttTally.current
+    if (total >= 8 && right / total >= 0.8 && m !== 'mastered' && m !== 'star') {
+      store.markCheckReady(trainedId)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneNow])
 
@@ -181,6 +188,9 @@ export function SessionScreen() {
     if (slot.kind === 'uppvarmning') {
       const tally = reviewTally.current.get(slot.momentId) ?? [0, 0]
       reviewTally.current.set(slot.momentId, [tally[0] + (result.correct ? 1 : 0), tally[1] + 1])
+    }
+    if (slot.kind === 'nytt') {
+      nyttTally.current = [nyttTally.current[0] + (result.correct ? 1 : 0), nyttTally.current[1] + 1]
     }
   }
 
@@ -481,11 +491,16 @@ function ChestFrame({ title, subtitle, children }: { title: string; subtitle: st
   )
 }
 
-export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', celebrate = false, grand = false, grandBanner, grandSub }: {
+export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', celebrate = false, grand = false, grandBanner, grandSub, secondaryText, onSecondary, exitText, onExit }: {
   title: string; text: string; onDone(): void; buttonText?: string; celebrate?: boolean
   /** grand = spelets KLIMAX (världsboss): större fanfar, guldband, tredje
       konfettivåg — klimax ska kännas skilt från en bra vardagsdag. */
   grand?: boolean; grandBanner?: string; grandSub?: string
+  /** Valfri andra väg (t.ex. "Träna lite till" efter förlorad koll) —
+      barnet väljer själv, och Pi säger inget som knapparna motsäger. */
+  secondaryText?: string; onSecondary?(): void
+  /** Diskret utväg (chip) under knapparna — inget kort får sakna väg ut. */
+  exitText?: string; onExit?(): void
 }) {
   const store = useStore()
   const hero = store.activeChild?.hero
@@ -571,7 +586,15 @@ export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', c
         }}>{title}</h2>
         <p style={{ color: 'var(--muted)', fontWeight: 700, maxWidth: 440, margin: 0, ...(grand ? { fontSize: 16, fontStyle: 'italic' } : {}) }}>{text}</p>
         {grand && grandSub && <p style={{ color: 'var(--ink)', fontWeight: 800, maxWidth: 440, margin: 0 }}>{grandSub}</p>}
-        <button className="btn btn-primary" onClick={onDone} style={{ marginTop: 4 }}>{buttonText}</button>
+        <div style={{ display: 'flex', gap: 10, marginTop: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button className="btn btn-primary" onClick={onDone}>{buttonText}</button>
+          {secondaryText && onSecondary && (
+            <button className="btn btn-quiet" onClick={onSecondary}>{secondaryText}</button>
+          )}
+        </div>
+        {exitText && onExit && (
+          <button className="chip" onClick={onExit} style={{ marginTop: 2 }}>{exitText}</button>
+        )}
       </div>
     </div>
   )

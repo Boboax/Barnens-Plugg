@@ -115,6 +115,9 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
   const worldBossId = store.battleWorldId
   const year = store.battleYear
 
+  // round bumpas av "Försök igen" på förlustkortet → nya frön/frågor utan
+  // att lämna skärmen (komponenten återmonteras inte av startBattle).
+  const [round, setRound] = useState(0)
   const tasks = useMemo<Task[]>(() => {
     if (kind === 'guardian') return year ? composeGuardianTasks(year) : []
     if (kind === 'boss') return worldBossId ? composeWorldBossTasks(worldBossId) : []
@@ -122,13 +125,19 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
     // Kollen matchas mot barnets egen nivå på momentet (rättvis bekräftelse).
     return kind === 'check' ? composeCheckTasks(momentId, child?.skills[momentId]?.rating) : composeStarTasks(momentId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [momentId, worldBossId, year, kind])
+  }, [momentId, worldBossId, year, kind, round])
 
   const [index, setIndex] = useState(0)
   const [correct, setCorrect] = useState(0)
   const [flash, setFlash] = useState<'hit' | 'miss' | null>(null)
   const [finished, setFinished] = useState(false)
   const [introDone, setIntroDone] = useState(false)
+
+  // Direkt omförsök (obegränsade försök är kollens princip — som väktaren).
+  const retry = (): void => {
+    setIndex(0); setCorrect(0); setFlash(null); setFinished(false)
+    setRound((r) => r + 1)
+  }
 
   // iPad-remsan bakom home-indikatorn följer stridens scenkant: väktarens
   // valvsal är blåsvart, kollen scrimmas varmt, boss/diamant kallt. Segerns
@@ -195,7 +204,9 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
     if (kind === 'check') {
       return won
         ? <CheckWin moment={moment!} onDiamond={() => store.startBattle(momentId!, 'star')} onHome={() => store.go('home')} />
-        : <EndCard title="Nästan!" text={`${correct} av ${total} rätt — du behövde ${needed}. Träna momentet lite till, så fixar du det nästa gång!`} onDone={() => store.go('home')} buttonText="Tillbaka och träna" />
+        // Två vägar efter förlust — barnet väljer själv (och orden krockar
+        // aldrig med knapparna): direkt omförsök eller ett fokuserat pass.
+        : <EndCard title="Nästan!" text={`${correct} av ${total} rätt — du behövde ${needed}. Försök igen direkt, eller träna lite till först — du väljer!`} onDone={retry} buttonText="Försök igen ▶" secondaryText="Träna lite till" onSecondary={() => store.startSession(momentId!, true)} exitText="Till kartan" onExit={() => store.go('home')} />
     }
     if (kind === 'guardian' && guardian && year) {
       // Årsväktaren är Expeditionens KLIMAX — vinsten öppnar nästa årskurs.
