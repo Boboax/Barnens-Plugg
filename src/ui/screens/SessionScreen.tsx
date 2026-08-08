@@ -128,6 +128,22 @@ export function SessionScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneNow])
 
+  // Ett förtjänat koll-erbjudande är BESTÄNDIGT: när den fokuserade träningen
+  // slutar starkt markeras momentet "redo för Pis koll" (boss-ready) redan
+  // här — INNAN kollen startar. Avbryter barnet kollen väntar den kvar på
+  // nodens ring ("visa vad du kan!") och i gula knappen, med obegränsade
+  // omförsök precis som väktaren. Utan detta försvann inbjudan med passets
+  // arbetsminne och en hel omträning krävdes (Edward avbröt, aug 2026).
+  useEffect(() => {
+    if (!doneNow || !child || !store.sessionFocused) return
+    const trainedId = slots.find((s) => s.kind === 'nytt')?.momentId
+    if (!trainedId) return
+    const m = child.skills[trainedId]?.mastery
+    const strong = slots.length > 0 && correctCount / slots.length >= 0.8
+    if (strong && m !== 'mastered' && m !== 'star') store.markCheckReady(trainedId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doneNow])
+
   if (!child) return null
   // FK (~6 år) läser inte flytande → korta, varma slutkort. Åk 1+ som förut.
   const isFK = child.schoolYear === 'F'

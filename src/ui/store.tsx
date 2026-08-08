@@ -79,6 +79,9 @@ interface StoreValue {
   recordAnswer(task: Task, correct: boolean, elapsedMs: number, context: AnswerRecord['context'], givenAnswer?: number | string, scratchPng?: string, hotStreak?: number): void
   /** Resultat av nodens kunskapskoll (vinst → momentet behärskat). */
   finishCheck(momentId: string, won: boolean): void
+  /** Spara ett förtjänat koll-erbjudande: momentet markeras "redo för Pis
+      koll" (boss-ready) så inbjudan överlever ett avbrutet försök. */
+  markCheckReady(momentId: string): void
   /** Resultat av världsbossen (vinst → världen erövrad). */
   finishWorldBoss(worldId: string, won: boolean): void
   finishStar(momentId: string, won: boolean): void
@@ -344,6 +347,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     clearStreakToast: () => {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => (c.pendingStreakToast ? { ...c, pendingStreakToast: undefined } : c))
+    },
+
+    markCheckReady: (momentId) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => {
+        const s = c.skills[momentId]
+        // Bara pågående träningstillstånd befordras — klara moment och
+        // otränade rörs aldrig. Idempotent (boss-ready förblir boss-ready).
+        if (!s || (s.mastery !== 'in-progress' && s.mastery !== 'needs-review')) return c
+        return { ...c, skills: { ...c.skills, [momentId]: { ...s, mastery: 'boss-ready' } } }
+      })
     },
 
     finishCheck: (momentId, won) => {
