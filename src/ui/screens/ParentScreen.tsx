@@ -787,8 +787,72 @@ function SafetyTab() {
         {message && <p style={{ margin: '10px 0 0', fontWeight: 700, fontSize: 13.5 }}>{message}</p>}
       </div>
 
+      <SyncCard />
+
       <ChatLogCard />
 
+      <AboutCard />
+    </div>
+  )
+}
+
+/* Familjesynk via förälderns egen Cloudflare Worker (docs/SYNC.md).
+   Medvetet val (aug 2026): frivillig, ägs av föräldern, hemligheten bor
+   bara på enheten — se principresonemang i PEDAGOGIK.md. */
+function SyncCard() {
+  const store = useStore()
+  const cfg = store.household.sync
+  const [endpoint, setEndpoint] = useState(cfg?.endpoint ?? '')
+  const [secret, setSecret] = useState(cfg?.secret ?? '')
+  const [busy, setBusy] = useState(false)
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '9px 11px', borderRadius: 10, fontSize: 14, fontWeight: 700,
+    border: '2px solid var(--line)', fontFamily: 'inherit', marginBottom: 8,
+  }
+  return (
+    <div style={pcard}>
+      <h4 style={h4}>☁️ Familjesynk (mellan enheter)</h4>
+      <p style={{ margin: '0 0 10px', fontSize: 13.5, lineHeight: 1.55 }}>
+        Låter barnen fortsätta på en annan enhet. Kräver en egen liten synktjänst hos Cloudflare
+        (engångsuppsättning ~5 min — se guiden <b>docs/SYNC.md</b> i projektet). Nyaste versionen av
+        varje barn vinner; PIN och AI-nyckel synkas aldrig. Familjekoden sparas bara på den här enheten.
+      </p>
+      <input
+        style={inputStyle} type="url" placeholder="Synktjänstens adress (https://…workers.dev)"
+        value={endpoint} onChange={(e) => setEndpoint(e.target.value)} autoComplete="off"
+      />
+      <input
+        style={inputStyle} type="password" placeholder="Familjekod"
+        value={secret} onChange={(e) => setSecret(e.target.value)} autoComplete="off"
+      />
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <button
+          className="btn btn-primary"
+          disabled={!endpoint.trim() || !secret.trim()}
+          onClick={() => store.setSyncConfig({ endpoint: endpoint.trim(), secret: secret.trim() })}
+        >Spara</button>
+        <button
+          className="btn btn-quiet"
+          disabled={!cfg || busy}
+          onClick={() => { setBusy(true); void store.syncNow().finally(() => setBusy(false)) }}
+        >{busy ? 'Synkar …' : 'Synka nu ⟳'}</button>
+        {cfg && (
+          <button className="btn btn-quiet" onClick={() => { store.setSyncConfig(null); setEndpoint(''); setSecret('') }}>
+            Slå av synk
+          </button>
+        )}
+      </div>
+      <p style={{ margin: '10px 0 0', fontWeight: 700, fontSize: 13 }}>
+        {cfg ? (store.syncStatus ?? 'Synk är på — hämtar vid start, laddar upp efter ändringar.') : 'Synk är av — all data bor bara på den här enheten.'}
+      </p>
+    </div>
+  )
+}
+
+function AboutCard() {
+  return (
+    <>
       <div style={pcard}>
         <h4 style={h4}>ℹ️ Om appen</h4>
         <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
@@ -796,7 +860,8 @@ function SafetyTab() {
           (aldrig AI), svårigheten anpassas efter varje barn, och repetition schemaläggs med växande intervall.
           All data bor lokalt på enheten. Undantag: när AI-chatten Pi är PÅ skickas barnets förnamn, ålder,
           uppgiftstexten, det barnet skriver och eventuella kladdbilder till den valda AI-leverantören — inget annat,
-          och aldrig framsteg, tider eller belöningar.
+          och aldrig framsteg, tider eller belöningar. Och om familjesynk är PÅ speglas speldatat till din
+          egen synktjänst hos Cloudflare (din lagring, din kod — se Säkerhet ovan).
         </p>
         <p style={{ margin: '10px 0 0', fontSize: 12.5, fontWeight: 700, color: '#8B8FA0' }}>
           Version {__APP_VERSION__} · byggd {__BUILD_TIME__} UTC
@@ -804,6 +869,6 @@ function SafetyTab() {
           Ny version på plattan? Stäng appen helt och öppna igen — två gånger (PWA:er aktiverar uppdateringen vid andra starten).
         </p>
       </div>
-    </div>
+    </>
   )
 }
