@@ -302,6 +302,10 @@ export interface ChildProfile {
 
   /** Träningskedjan. `freezes` = lagrade frysdagar ("skyddshjärtan", max 2) som
       räddar kedjan om EXAKT en dag missas; optionellt = bakåtkompatibelt. */
+  /** Senaste ändring av profilen (sätts av patchChild) — familjesynkens
+      krockregel: nyaste versionen av VARJE BARN vinner. Optionellt = bakåtkomp. */
+  updatedAt?: string
+
   streak: { days: number; lastActiveDate: string; freezes?: number }
   /** Högsta streak-milstolpe (3/7/14/30 …) som redan firats — så firandet
       visas en gång per milstolpe, inte varje dag. Optionellt = bakåtkomp. */
@@ -389,6 +393,9 @@ export interface Household {
   chatLog: ChatLogEntry[]
   /** Chattkonfiguration (fas 5): leverantör + nyckel läggs in i föräldraläget. */
   chat?: { provider: 'gemini' | 'claude'; apiKey: string }
+  /** Familjesynk via förälderns egen Cloudflare Worker (se docs/SYNC.md).
+      Enhetshemlighet: följer ALDRIG med i export eller synkdata. */
+  sync?: { endpoint: string; secret: string }
   /** Skolans minutmål per blixttest (sätts i föräldraläget, standard 20). */
   blixtTargets?: Partial<Record<BlixtKind, number>>
   lastBackupAt?: string

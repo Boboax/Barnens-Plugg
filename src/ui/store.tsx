@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   AnswerRecord, BlixtKind, ChatLogEntry, ChildProfile, Household, Reward, RewardTarget, SchoolYear, SkillState, Task,
 } from '../domain/types'
@@ -13,6 +13,7 @@ import { blixtMaxTier, blixtBlockedMoments } from '../engine/blixt'
 import { activeDayCount, masteredCount, updateStreak } from '../engine/rewards'
 import { resetNamePool, setNamePool } from '../generators/helpers'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
+import { mergeHouseholds, pullRemote, pushRemote, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
 
 /* ============================================================
@@ -124,6 +125,13 @@ interface StoreValue {
   // Chatten (fas 5)
   appendChatLog(entry: ChatLogEntry): void
   setChatConfig(config: { provider: 'gemini' | 'claude'; apiKey: string } | null): void
+
+  // Familjesynk (förälderns egen Cloudflare Worker — se docs/SYNC.md)
+  setSyncConfig(config: SyncConfig | null): void
+  /** Manuell synk: hämta + slå ihop + ladda upp. Returnerar statusrad. */
+  syncNow(): Promise<string>
+  /** Senaste synkhändelse (för statusraden i föräldraläget). */
+  syncStatus: string | undefined
 }
 
 const Ctx = createContext<StoreValue | null>(null)
@@ -146,10 +154,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [blixtKind, setBlixtKind] = useState<BlixtKind>()
   const [sessionMomentId, setSessionMomentId] = useState<string>()
   const [sessionFocused, setSessionFocused] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<string>()
+  const syncPushTimer = useRef<number>()
 
   useEffect(() => {
-    void loadHousehold().then((data) => {
-      if (data) setHousehold(data)
+    void loadHousehold().then(async (data) => {
+      let h = data ?? emptyHousehold()
+      // Familjesynk: hämta molnet vid start och slå ihop (nyaste barn vinner).
+      // Fel (offline, fel kod) får ALDRIG hindra appen — barnet spelar lokalt.
+      const cfg = h.sync
+      if (cfg) {
+        try {
+          const remote = await pullRemote(cfg)
+          h = mergeHouseholds(h, remote)
+          setSyncStatus(`Hämtade från molnet ${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`)
+          // Skjut upp den sammanslagna bilden direkt — så är molnet aktuellt
+          // även om inget ändras på den här enheten (t.ex. nyinstallation).
+          pushRemote(cfg, h).catch(() => undefined)
+        } catch (e) {
+          setSyncStatus(e instanceof Error ? e.message : 'Kunde inte nå synktjänsten (offline?)')
+        }
+      }
+      setHousehold(h)
       setLoaded(true)
       void requestPersistentStorage()
     })
@@ -162,9 +188,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     configureCloudTts(household.chat?.provider === 'gemini' ? household.chat.apiKey : null)
   }, [household.chat?.provider, household.chat?.apiKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Autospar: varje förändring efter inladdning skrivs ner.
+  // Autospar: varje förändring efter inladdning skrivs ner. Med synk på
+  // laddas hushållet dessutom upp — samlat (debounce) så ett helt pass blir
+  // en enda uppladdning i stället för en per svar.
   useEffect(() => {
-    if (loaded) void saveHousehold(household)
+    if (!loaded) return
+    void saveHousehold(household)
+    if (!household.sync) return
+    const cfg = household.sync
+    window.clearTimeout(syncPushTimer.current)
+    syncPushTimer.current = window.setTimeout(() => {
+      pushRemote(cfg, household)
+        .then(() => setSyncStatus(`Uppladdad ${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`))
+        .catch(() => setSyncStatus('Uppladdning misslyckades — försöker igen vid nästa ändring.'))
+    }, 5000)
   }, [household, loaded])
 
   const activeChild = household.children.find((c) => c.id === activeChildId)
@@ -172,7 +209,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const patchChild = (id: string, fn: (c: ChildProfile) => ChildProfile): void => {
     setHousehold((h) => ({
       ...h,
-      children: h.children.map((c) => (c.id === id ? fn(c) : c)),
+      children: h.children.map((c) => {
+        if (c.id !== id) return c
+        const next = fn(c)
+        // Oförändrat barn stämplas inte (annars blev varje no-op en synk).
+        return next === c ? c : { ...next, updatedAt: nowISO() }
+      }),
     }))
   }
 
@@ -273,6 +315,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         id: `barn-${Date.now().toString(36)}`,
         name, color, birthYear, schoolYear,
         createdAt: nowISO(),
+        updatedAt: nowISO(),
         // Blixt-grinden gäller från dag ett (nytt barn = inga klarade blixtar).
         skills: recomputeAvailability(skills, grantedYears({ conqueredYears: [], schoolYear }), blixtBlockedMoments({ blixt: undefined })),
         answers: [],
@@ -562,8 +605,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setChatConfig: (config) => {
       setHousehold((h) => ({ ...h, chat: config ?? undefined }))
     },
+
+    setSyncConfig: (config) => {
+      setHousehold((h) => ({ ...h, sync: config ?? undefined }))
+      if (!config) setSyncStatus(undefined)
+    },
+
+    syncNow: async () => {
+      if (!household.sync) return 'Ingen synk inställd.'
+      try {
+        const remote = await pullRemote(household.sync)
+        const merged = mergeHouseholds(household, remote)
+        setHousehold(merged)
+        await pushRemote(household.sync, merged)
+        const msg = `Synkat! ${merged.children.length} barn${merged.children.length === 1 ? '' : ''} i molnet.`
+        setSyncStatus(msg)
+        return msg
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Synken misslyckades.'
+        setSyncStatus(msg)
+        return msg
+      }
+    },
+    syncStatus,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, battleWorldId, battleYear, blixtKind, sessionMomentId, sessionFocused])
+  }), [household, loaded, screen, activeChild, parentUnlocked, activeChildId, battleMomentId, battleWorldId, battleYear, blixtKind, sessionMomentId, sessionFocused, syncStatus])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

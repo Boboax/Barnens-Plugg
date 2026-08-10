@@ -1,5 +1,6 @@
 import type { Household } from '../domain/types'
 import { migrate } from './db'
+import { stripDeviceSecrets } from './sync'
 
 /* ============================================================
    Export/import av hela hushållet.
@@ -10,14 +11,11 @@ import { migrate } from './db'
    ============================================================ */
 
 export function exportHousehold(household: Household): void {
-  // API-nyckeln följer ALDRIG med i exporten — den bor bara på enheten
-  // och matas in på nytt i föräldraläget om profilen flyttas.
-  // PIN-hashen strippas också: en osaltad hash av 4–6 siffror knäcks på
-  // millisekunder offline. Efter import sätter föräldern ny PIN.
-  const { chat, parentPinHash, ...rest } = household
-  void chat
-  void parentPinHash
-  const stamped: Household = { ...rest, lastBackupAt: new Date().toISOString() }
+  // Enhetshemligheter följer ALDRIG med i exporten (AI-nyckel, PIN-hash,
+  // synkhemlighet) — de bor bara på enheten och matas in på nytt i
+  // föräldraläget om profilen flyttas. PIN-hashen strippas för att en
+  // osaltad hash av 4–6 siffror knäcks på millisekunder offline.
+  const stamped: Household = { ...stripDeviceSecrets(household), lastBackupAt: new Date().toISOString() }
   const blob = new Blob([JSON.stringify(stamped, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

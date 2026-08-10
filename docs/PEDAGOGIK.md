@@ -144,3 +144,20 @@ världsbesök per termin — man anländer, gör klart världens del av terminen
 och reser vidare — och Pi sätter ord på varje avresa ("Expeditionen reser
 vidare till Bråkdrakens klippa! 🧭"). Terminsordningen och förkunskaps-
 kedjorna påverkas inte.
+
+## Familjesynk — "lokalt först" mjukas upp (aug 2026)
+
+Grundprincipen har varit att all data bor lokalt (integritet, noll kostnad,
+inga konton). När Edward glömde sin iPad på landet blev baksidan tydlig:
+framsteget satt fast i en enhet. Medvetet val med föräldern (aug 2026):
+principen mjukas upp till **"lokalt + förälderns eget moln"** — en frivillig
+synk till en Cloudflare Worker som föräldern själv äger, sätter upp och kan
+radera (uppsättning: `docs/SYNC.md`, kod: `cloud/sync-worker.js`).
+
+Gränserna som INTE flyttas: synken är av tills föräldern slår på den; datat
+ligger i förälderns eget Cloudflare-konto (ingen tredje part till); PIN,
+AI-nyckel och familjekoden själv lämnar aldrig enheten
+(`stripDeviceSecrets`); och krockregeln är per barn — nyaste versionen av
+varje barn vinner (`mergeHouseholds`), så syskon kan spela på olika enheter
+samtidigt. Samma barn på två enheter exakt samtidigt stöds inte (sist
+uppladdad vinner) — det är en medveten förenkling, inte en bugg.

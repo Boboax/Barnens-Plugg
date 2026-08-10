@@ -31,7 +31,10 @@ uttryckligen förstått avvägningen (dokumenterad i `docs/PEDAGOGIK.md`).
 5. **Tidsgränser, framsteg och belöningar styrs av appkod** — de får aldrig bli
    nåbara från chatten (fas 5). Se `docs/GUARDRAILS.md`, lager 0.
 6. **All data bor lokalt på enheten.** Ingen server, inga konton, ingen
-   telemetri. Exportfilen är enda vägen ut och den styrs av föräldern.
+   telemetri. Vägarna ut styrs av föräldern: exportfilen, och (medvetet
+   val aug 2026, se `docs/SYNC.md` + PEDAGOGIK) den FRIVILLIGA
+   familjesynken till förälderns EGEN Cloudflare Worker. Synkhemligheten,
+   PIN-hashen och AI-nyckeln lämnar aldrig enheten (`stripDeviceSecrets`).
 7. **Allt UI-språk är svenska**, åldersanpassat, med uppläsningsstöd (TTS).
 
 ## Arkitekturkarta
