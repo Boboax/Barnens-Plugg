@@ -9,6 +9,13 @@ import { useEffect, useRef, useState } from 'react'
 
 const COLORS = ['#2E3350', '#FF7A6E', '#4A56C6'] as const
 
+/** Suddgummit är fingerbrett (pennan är 3) — barnen suddar med fingret på
+    iPad och en pennsmal sudd känns trasig ("det händer inget"). */
+const PEN_WIDTH = 3
+const ERASER_WIDTH = 22
+
+type Tool = 'penna' | 'sudd'
+
 export interface ScratchPadHandle {
   /** PNG-dataURL om något ritats, annars undefined. */
   snapshot(): string | undefined
@@ -27,6 +34,11 @@ export function ScratchPad({ onReady, onDraw }: {
   const [color, setColor] = useState<string>(COLORS[0])
   const colorRef = useRef(color)
   colorRef.current = color
+  // Samma ref-mönster som färgen: pointer-lyssnarna binds EN gång i effekten
+  // nedan, så ett verktygsbyte i state skulle annars aldrig nå ritfunktionen.
+  const [tool, setTool] = useState<Tool>('penna')
+  const toolRef = useRef(tool)
+  toolRef.current = tool
   // Ref-mönster (som colorRef): pointerdown-lyssnaren binds en gång i effekten
   // nedan — utan ref skulle den kalla en inaktuell onDraw.
   const onDrawRef = useRef(onDraw)
@@ -58,7 +70,9 @@ export function ScratchPad({ onReady, onDraw }: {
     }
     const down = (e: PointerEvent): void => {
       drawing.current = true
-      hasInk.current = true
+      // Bara pennan skapar bläck: att sudda på en tom yta ska inte spara en
+      // tom kladdbild med svaret (snapshot returnerar undefined utan bläck).
+      if (toolRef.current === 'penna') hasInk.current = true
       onDrawRef.current?.()
       const ctx = canvas.getContext('2d')!
       const [x, y] = pos(e)
@@ -69,8 +83,13 @@ export function ScratchPad({ onReady, onDraw }: {
     const move = (e: PointerEvent): void => {
       if (!drawing.current) return
       const ctx = canvas.getContext('2d')!
+      // Suddet ritar med 'destination-out': canvasen är genomskinlig ovanpå
+      // pergamentet, så att radera till transparent = pergamentet syns igen
+      // (snapshot fyller pergamenttonen under bitmappen).
+      const erasing = toolRef.current === 'sudd'
+      ctx.globalCompositeOperation = erasing ? 'destination-out' : 'source-over'
       ctx.strokeStyle = colorRef.current
-      ctx.lineWidth = 3 * scale
+      ctx.lineWidth = (erasing ? ERASER_WIDTH : PEN_WIDTH) * scale
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
       const [x, y] = pos(e)
@@ -131,20 +150,38 @@ export function ScratchPad({ onReady, onDraw }: {
           {COLORS.map((c) => (
             <button
               key={c}
-              onClick={() => setColor(c)}
+              // Att välja färg betyder alltid "jag vill rita" — annars fastnar
+              // barnet i suddläget och undrar varför pennan inte lämnar spår.
+              onClick={() => { setColor(c); setTool('penna') }}
               aria-label={`Pennfärg ${c}`}
               style={{
                 width: 20, height: 20, borderRadius: '50%', background: c,
-                border: '2px solid #fff', boxShadow: color === c ? `0 0 0 2.5px ${c}` : '0 0 0 1.5px var(--line)',
+                border: '2px solid #fff',
+                boxShadow: tool === 'penna' && color === c ? `0 0 0 2.5px ${c}` : '0 0 0 1.5px var(--line)',
               }}
             />
           ))}
+          {/* Suddgummi: sudda DÄR man drar (skilt från "Sudda allt"). */}
+          <button
+            onClick={() => setTool(tool === 'sudd' ? 'penna' : 'sudd')}
+            aria-label="Suddgummi"
+            aria-pressed={tool === 'sudd'}
+            style={{
+              width: 24, height: 24, borderRadius: '50%', fontSize: 13, lineHeight: 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: '#FBF4E2', border: '2px solid #fff',
+              boxShadow: tool === 'sudd' ? '0 0 0 2.5px #6E6656' : '0 0 0 1.5px var(--line)',
+            }}
+          >🧽</button>
           <button
             onClick={() => {
               const canvas = canvasRef.current
               if (!canvas) return
               canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height)
               hasInk.current = false
+              // Tom yta = barnet börjar om → pennan tillbaka (annars står man
+              // kvar i suddläget och undrar varför inget syns).
+              setTool('penna')
             }}
             style={{ fontSize: 12, fontWeight: 800, color: '#6E6656', padding: '2px 8px' }}
           >Sudda allt</button>
