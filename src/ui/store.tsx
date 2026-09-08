@@ -15,6 +15,7 @@ import { resetNamePool, setNamePool } from '../generators/helpers'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { mergeHouseholds, pullRemote, pushRemote, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
+import { adoptPet, buyFurniture, completePetPractice, equipFurniture, spendHomeTime } from '../engine/pet-home'
 
 /* ============================================================
    Appens tillstånd: hushållet + navigering + tidsbokföring.
@@ -25,7 +26,7 @@ import { hashPin, verifyPin } from '../storage/pin'
 
 export type Screen =
   | 'profiles' | 'home' | 'session' | 'check' | 'boss' | 'star' | 'guardian'
-  | 'blixt' | 'diagnosis' | 'parent' | 'time-up'
+  | 'blixt' | 'diagnosis' | 'parent' | 'time-up' | 'pet-home'
 
 export const KID_COLORS = ['#FF7A6E', '#3FBF87', '#4A56C6', '#E8A13C', '#8C6BC8', '#2FA8C7'] as const
 
@@ -38,6 +39,11 @@ const ANSWER_HISTORY_LIMIT = 1500
 const SCRATCH_LIMIT = 20
 
 interface StoreValue {
+  completePetPractice(completed: number, planned: number): void
+  adoptPet(name: string): void
+  buyFurniture(itemId: string): void
+  equipFurniture(itemId: string): void
+  spendHomeTime(seconds: number): void
   household: Household
   loaded: boolean
   screen: Screen
@@ -142,7 +148,7 @@ export function useStore(): StoreValue {
   return v
 }
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+export function StoreProvider({ children, storageScope = '' }: { children: ReactNode; storageScope?: string }) {
   const [household, setHousehold] = useState<Household>(emptyHousehold)
   const [loaded, setLoaded] = useState(false)
   const [screen, setScreen] = useState<Screen>('profiles')
@@ -158,7 +164,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const syncPushTimer = useRef<number>()
 
   useEffect(() => {
-    void loadHousehold().then(async (data) => {
+    void loadHousehold(storageScope).then(async (data) => {
       let h = data ?? emptyHousehold()
       // Familjesynk: hämta molnet vid start och slå ihop (nyaste barn vinner).
       // Fel (offline, fel kod) får ALDRIG hindra appen — barnet spelar lokalt.
@@ -193,7 +199,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // en enda uppladdning i stället för en per svar.
   useEffect(() => {
     if (!loaded) return
-    void saveHousehold(household)
+    void saveHousehold(household, storageScope)
     if (!household.sync) return
     const cfg = household.sync
     window.clearTimeout(syncPushTimer.current)
@@ -219,6 +225,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }
 
   const value: StoreValue = useMemo(() => ({
+    completePetPractice: (completed, planned) => {
+      if (activeChildId) setHousehold((h) => completePetPractice(h, activeChildId, completed, planned, new Date()))
+    },
+    adoptPet: (name) => {
+      if (activeChildId) setHousehold((h) => adoptPet(h, activeChildId, name, new Date()))
+    },
+    buyFurniture: (itemId) => {
+      if (activeChildId) setHousehold((h) => buyFurniture(h, activeChildId, itemId, new Date()))
+    },
+    equipFurniture: (itemId) => {
+      if (activeChildId) setHousehold((h) => equipFurniture(h, activeChildId, itemId, new Date()))
+    },
+    spendHomeTime: (seconds) => {
+      if (activeChildId) setHousehold((h) => spendHomeTime(h, activeChildId, seconds, new Date()))
+    },
     household, loaded, screen, activeChild, parentUnlocked,
     hasPin: Boolean(household.parentPinHash),
 

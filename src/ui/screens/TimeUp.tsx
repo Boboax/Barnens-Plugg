@@ -56,6 +56,9 @@ export function TimeUp() {
         Vi ses imorgon, då väntar äventyret igen!
       </p>
       <button className="btn btn-primary" onClick={store.leaveChild}>Hejdå Pi!</button>
+      {child?.petProgress && (
+        <button className="btn btn-quiet" onClick={() => store.go('pet-home')}>Besök djurens stuga</button>
+      )}
 
       {/* Föräldrautväg: mer tid idag kräver PIN. Diskret så barnet inte tjatar. */}
       {!showParent ? (
