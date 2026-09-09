@@ -16,6 +16,7 @@ import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold 
 import { mergeHouseholds, pullRemote, pushRemote, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
 import { adoptPet, buyFurniture, completePetPractice, equipFurniture, spendHomeTime } from '../engine/pet-home'
+import { changeCamp, type CampAction } from '../engine/camp'
 
 /* ============================================================
    Appens tillstånd: hushållet + navigering + tidsbokföring.
@@ -39,7 +40,8 @@ const ANSWER_HISTORY_LIMIT = 1500
 const SCRATCH_LIMIT = 20
 
 interface StoreValue {
-  completePetPractice(completed: number, planned: number): void
+  changeCamp(action: CampAction): void
+  completePetPractice(completed: number, planned: number, worldId?: string): void
   adoptPet(name: string): void
   buyFurniture(itemId: string): void
   equipFurniture(itemId: string): void
@@ -225,8 +227,11 @@ export function StoreProvider({ children, storageScope = '' }: { children: React
   }
 
   const value: StoreValue = useMemo(() => ({
-    completePetPractice: (completed, planned) => {
-      if (activeChildId) setHousehold((h) => completePetPractice(h, activeChildId, completed, planned, new Date()))
+    changeCamp: (action) => {
+      if(activeChildId) setHousehold(h=>changeCamp(h,activeChildId,action,new Date()))
+    },
+    completePetPractice: (completed, planned, worldId) => {
+      if (activeChildId) setHousehold((h) => completePetPractice(h, activeChildId, completed, planned, new Date(), worldId))
     },
     adoptPet: (name) => {
       if (activeChildId) setHousehold((h) => adoptPet(h, activeChildId, name, new Date()))
@@ -654,3 +659,4 @@ export function StoreProvider({ children, storageScope = '' }: { children: React
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
+

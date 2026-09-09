@@ -15,6 +15,14 @@ const oldSave = (): Household => ({ schemaVersion: 1, children: [kid('a'), kid('
 const ready = () => adoptPet(completePetPractice(oldSave(), 'a', 12, 12, at), 'a', 'Mossa', at)
 
 describe('stugan: vana, beständigt ägande och gamla sparfiler', () => {
+  it('hittar en världsanpassad vän och bevarar upptäckten över nya pass och omladdning', () => {
+    const h = completePetPractice(oldSave(), 'a', 8, 8, at, 'formernas-berg')
+    expect(h.children[0].petProgress?.encounterSpecies).toBe('dune-fox')
+    const next = completePetPractice(h, 'a', 8, 8, nextDay, 'diagramoarna')
+    const adopted = adoptPet(JSON.parse(JSON.stringify(next)), 'a', 'Saffran', nextDay)
+    expect(adopted.children[0].petProgress?.pet?.species).toBe('dune-fox')
+    expect(adopted.children[0].petProgress?.coins).toBe(40)
+  })
   it('lämnar tomma och avbrutna pass orörda', () => {
     const h = oldSave()
     for (const [done, planned] of [[0, 0], [3, 12], [13, 12], [-1, -1]]) {
@@ -87,3 +95,4 @@ describe('stugan: vana, beständigt ägande och gamla sparfiler', () => {
     expect(petDay(new Date(2026, 8, 8, 0, 5))).toBe('2026-09-08')
   })
 })
+

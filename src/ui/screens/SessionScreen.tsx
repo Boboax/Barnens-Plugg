@@ -121,7 +121,10 @@ export function SessionScreen() {
   const doneNow = index >= slots.length
   // Vana belönas, inte rättprocent. Sparad dag gör StrictMode/återbesök idempotenta.
   useEffect(() => {
-    if (doneNow && slots.length > 0) store.completePetPractice(index, slots.length)
+    if (doneNow && slots.length > 0) {
+      const discoverySlot = slots.find((s) => s.kind === 'nytt') ?? slots[0]
+      store.completePetPractice(index, slots.length, momentById(discoverySlot.momentId).worldId)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneNow])
   useEffect(() => {
@@ -608,3 +611,4 @@ export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', c
     </div>
   )
 }
+

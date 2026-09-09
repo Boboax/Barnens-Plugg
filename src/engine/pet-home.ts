@@ -1,5 +1,5 @@
 import type { Household } from '../domain/types'
-import { DAILY_PET_COINS, FURNITURE, HOME_VISIT_SECONDS } from '../domain/pet-home'
+import { DAILY_PET_COINS, FURNITURE, HOME_VISIT_SECONDS, PET_SPECIES, petSpecies, campPets } from '../domain/pet-home'
 
 /** Lokal kalenderdag: ett kvällspass ska tillhöra samma dag som barnet ser. */
 export function petDay(date = new Date()): string {
@@ -7,16 +7,21 @@ export function petDay(date = new Date()): string {
 }
 
 /** Endast ett avslutat, icke-tomt pass ger mynt. Upprepade effekter är ofarliga. */
-export function completePetPractice(h: Household, childId: string, completed: number, planned: number, at: Date): Household {
+export function completePetPractice(h: Household, childId: string, completed: number, planned: number, at: Date, worldId?: string): Household {
   if (!Number.isInteger(planned) || planned < 1 || completed !== planned) return h
   const day = petDay(at)
   const child = h.children.find((c) => c.id === childId)
   if (!child || (child.petProgress?.lastPracticeDay ?? '') >= day) return h
+  const pets = campPets(child.petProgress)
+  const candidate = (PET_SPECIES.find((p) => p.worldId === worldId) ?? PET_SPECIES[0]).id
+  const pending = child.petProgress?.encounterSpecies
+  const encounterSpecies = pending && !pets.some(p=>p.species===pending) ? pending : !pets.some(p=>p.species===candidate) ? candidate : undefined
   return {
     ...h,
     children: h.children.map((c) => c.id !== childId ? c : {
       ...c, updatedAt: at.toISOString(),
-      petProgress: { ...c.petProgress, coins: (c.petProgress?.coins ?? 0) + DAILY_PET_COINS, lastPracticeDay: day },
+      petProgress: { ...c.petProgress, coins: (c.petProgress?.coins ?? 0) + DAILY_PET_COINS, lastPracticeDay: day,
+        encounterSpecies },
     }),
   }
 }
@@ -24,9 +29,12 @@ export function completePetPractice(h: Household, childId: string, completed: nu
 export function adoptPet(h: Household, childId: string, name: string, at: Date): Household {
   const child = h.children.find((c) => c.id === childId)
   const clean = name.trim().slice(0, 24)
-  if (!child?.petProgress || child.petProgress.pet || !clean) return h
+  const pets = campPets(child?.petProgress)
+  const species = petSpecies(child?.petProgress?.encounterSpecies).id
+  if (!child?.petProgress || !clean || pets.some(p=>p.species===species) || (pets.length>0 && !child.petProgress.encounterSpecies)) return h
+  const newPet = {id:`${species}-${at.toISOString()}`, name:clean, foundAt:at.toISOString(),species,bedPoint:`bed-${pets.length+1}`}
   return { ...h, children: h.children.map((c) => c.id !== childId ? c : {
-    ...c, updatedAt: at.toISOString(), petProgress: { ...child.petProgress!, pet: { name: clean, foundAt: at.toISOString() } },
+    ...c, updatedAt: at.toISOString(), petProgress: { ...child.petProgress!, pet: child.petProgress!.pet ?? newPet, pets:[...pets,newPet],encounterSpecies:undefined },
   }) }
 }
 
@@ -58,6 +66,7 @@ export function buyFurniture(h: Household, childId: string, itemId: string, at: 
       ...c, updatedAt: at.toISOString(), petProgress: { ...p, coins: p.coins - item.price },
     }),
     petHome: {
+      ...h.petHome,
       owned: { ...h.petHome?.owned, [itemId]: { childId, boughtAt: at.toISOString() } },
       equipped: { ...h.petHome?.equipped, [item.slot]: itemId },
     },
@@ -70,3 +79,4 @@ export function equipFurniture(h: Household, childId: string, itemId: string, at
     || homeSecondsLeft(h, childId, at) <= 0 || h.petHome.equipped[item.slot] === itemId) return h
   return { ...h, petHome: { ...h.petHome, equipped: { ...h.petHome.equipped, [item.slot]: itemId } } }
 }
+
