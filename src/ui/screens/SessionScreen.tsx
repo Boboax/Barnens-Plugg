@@ -119,6 +119,14 @@ export function SessionScreen() {
   const [chestCorrect, setChestCorrect] = useState(false)
   const chestRolled = useRef(false)
   const doneNow = index >= slots.length
+  // Vana belönas, inte rättprocent. Sparad dag gör StrictMode/återbesök idempotenta.
+  useEffect(() => {
+    if (doneNow && slots.length > 0) {
+      const discoverySlot = slots.find((s) => s.kind === 'nytt') ?? slots[0]
+      store.completePetPractice(index, slots.length, momentById(discoverySlot.momentId).worldId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doneNow])
   useEffect(() => {
     if (!doneNow || chestRolled.current || !child) return
     chestRolled.current = true
@@ -278,6 +286,8 @@ export function SessionScreen() {
             : `${correctCount} av ${slots.length} rätt! Nu vill Pi se vad du kan — klarar du kollen blir ${trainedMoment.title} klart. ✓`}
           buttonText={isFK ? 'Visa Pi! ▶' : 'Visa vad du kan för Pi ▶'}
           onDone={() => store.startBattle(trainedId, 'check')}
+          secondaryText="Dina mynt & en liten vän"
+          onSecondary={() => store.go('pet-home')}
           celebrate
         />
       )
@@ -344,6 +354,8 @@ export function SessionScreen() {
           ? `${chestPrefix}${correctCount} av ${slots.length} rätt! ${nextStep}${timeNote}`
           : `${chestPrefix}${correctCount} av ${slots.length} rätt${flawless ? ' — varenda en!' : '.'} ${nextStep}${streakHook}${timeNote}`}
         onDone={() => store.go(timeOut ? 'time-up' : 'home')}
+        secondaryText={child.petProgress?.pet ? 'Besök djurens stuga' : 'Det prasslar i skogen …'}
+        onSecondary={() => store.go('pet-home')}
         celebrate={strong}
       />
     )
@@ -599,3 +611,4 @@ export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', c
     </div>
   )
 }
+

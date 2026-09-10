@@ -1,0 +1,43 @@
+.pet-house-interior { max-width:1200px; margin:auto; }
+.pet-house-intro { color:#d5d6c5; margin:0 0 16px; }
+.pet-house-room { position:relative; aspect-ratio:1.5; isolation:isolate; overflow:hidden; border:1px solid #ad854e; border-radius:22px; background:#39231c; }
+.pet-house-backdrop { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.pet-house-firelight { position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 48% 38%,#ffbe4233,transparent 48%); animation:house-warmth 4s ease-in-out infinite alternate; }
+.pet-house-resident { position:absolute; width:19%; aspect-ratio:1; transform:translate(-50%,-86%); border:0; padding:0; background:none; cursor:pointer; z-index:2; border-radius:45%; }
+.pet-house-resident.pet-house-front { width:25%; z-index:3; }
+.pet-house-resident:hover .pet-house-animal,.pet-house-resident:focus-visible .pet-house-animal { filter:drop-shadow(0 0 5px #ffdca0); }
+.pet-house-resident:focus-visible { outline:2px solid #ffe0a2; outline-offset:8px; }
+.pet-house-bed { position:absolute; width:125%; height:75%; object-fit:contain; left:-12.5%; bottom:-17%; filter:drop-shadow(0 5px 3px #0006); }
+.pet-house-animal { position:absolute; width:100%; height:100%; inset:0; }
+.pet-house-animal-image { display:block; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 5px 3px #0005); }
+.pet-house-hearts { position:absolute; inset:-12% 0 auto; color:#ffb7ac; font-size:clamp(18px,3vw,38px); text-shadow:0 2px 4px #652938; pointer-events:none; animation:house-affection 2.2s ease-out both; }
+.pet-house-hearts i { font-style:normal; position:relative; top:-15px; }
+.pet-house-friends { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:18px 0 22px; }
+.pet-house-friends .chip { background:#243932; color:#efdfbc; border-color:#968054; min-height:44px; }
+.pet-house-friends [aria-pressed=true] { background:#d5b778; color:#222e29; }
+.pet-house-care { display:grid; grid-template-columns:minmax(150px,260px) 1fr; gap:30px; padding:26px; background:linear-gradient(125deg,#30473d,#1a2d32); border:1px solid #8b7b5355; border-radius:20px; align-items:center; }
+.pet-house-closeup { width:100%; aspect-ratio:1; }
+.pet-house-care h3 { color:#ffe3ab; font-size:38px; margin:4px 0 10px; }.pet-house-care p { color:#d3d5c5; line-height:1.6; }
+.pet-house-eyebrow { text-transform:uppercase; letter-spacing:.12em; font-size:11px; color:#c8b784; }
+.pet-house-response { min-height:3em; }.pet-house-care summary { cursor:pointer; padding:10px 0; color:#e2cca0; }
+.pet-house-care label { display:block; margin:10px 0; }.pet-house-care input,.pet-house-care select { display:block; width:100%; max-width:360px; min-height:44px; padding:9px; background:#f1e5ce; color:#24332c; font:inherit; border:1px solid #a28d63; border-radius:8px; }
+.pet-house-care details .chip { margin:5px; }.pet-house-care details p { font-size:13px; }
+@keyframes house-warmth { from { opacity:.5; } to { opacity:1; } }
+@keyframes house-affection { 0% { opacity:0; transform:translateY(5px) scale(.8); } 20% { opacity:1; } 100% { opacity:0; transform:translateY(-35px) scale(1.1); } }
+@media(max-width:600px) { .pet-house-care { grid-template-columns:1fr; gap:8px; padding:20px; }.pet-house-closeup { width:180px; margin:auto; }.pet-house-care h3 { font-size:30px; }.pet-house-room { border-radius:12px; }.pet-house-resident { min-width:44px; min-height:44px; }.pet-house-friends { gap:6px; } }
+@media(prefers-reduced-motion:reduce) { .pet-house-firelight,.pet-house-hearts { animation:none!important; }.pet-house-hearts { opacity:1; } }
+
+button.camp-den-building { pointer-events:auto; cursor:pointer; background:none; border:0; padding:0; z-index:3; }
+button.camp-den-building img { display:block; width:100%; }
+button.camp-den-building:focus-visible { outline:2px solid #ffe0aa; border-radius:15px; }
+
+.pet-house-toolbar { display:flex; align-items:baseline; justify-content:space-between; gap:16px; }
+.pet-house-toolbar .chip { flex-shrink:0; min-height:44px; }
+.pet-care-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.pet-care-actions .chip { min-height:44px; padding:10px 16px; }
+.pet-house-care .pet-care-note { font-size:12px; color:#b9c3b2; }
+.pet-food-bowl { position:absolute; width:42%; height:16%; bottom:-3%; left:29%; border-radius:15% 15% 50% 50%; background:linear-gradient(#815632,#4a2c1d); border-top:4px solid #c4965b; box-shadow:0 4px 6px #0008; }
+.pet-food-bowl i { position:absolute; width:23%; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle at 30% 20%,#deb27a,#986335 70%); top:-55%; left:9%; }
+.pet-food-bowl i:nth-child(2) { left:36%; background:radial-gradient(circle at 30% 20%,#e3be7a,#ab763d 70%); }
+.pet-food-bowl i:nth-child(3) { left:63%; }
+

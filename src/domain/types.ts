@@ -276,6 +276,7 @@ export interface Reward {
 // ---------- Barnprofil ----------
 
 export interface ChildProfile {
+  petProgress?: import('./pet-home').PetProgress
   id: string
   name: string
   /** Profilfärg (hex) som följer barnet genom appen. */
@@ -385,6 +386,8 @@ export interface ChatLogEntry {
 // ---------- Hela hushållet (det som lagras/exporteras) ----------
 
 export interface Household {
+  /** Stugan delas av profiler på den här enheten. */
+  petHome?: import('./pet-home').PetHome
   schemaVersion: number
   /** SHA-256-hash av föräldra-PIN (aldrig klartext). */
   parentPinHash?: string
