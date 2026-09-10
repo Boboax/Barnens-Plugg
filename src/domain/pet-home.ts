@@ -9,7 +9,8 @@ export interface PetProgress {
   outfit?: string
   outfits?: string[]
 }
-export interface CampPet { id: string; name: string; foundAt: string; species: string; bedPoint?: string }
+export type PetCareActivity = 'pet' | 'feed' | 'rest' | 'wake'
+export interface CampPet { id: string; name: string; foundAt: string; species: string; bedPoint?: string; care?: { resting?: boolean; lastFedAt?: string; lastPettedAt?: string } }
 
 export type FurnitureSlot = 'bed' | 'rug' | 'shelf' | 'toy'
 export interface PetHome {

@@ -1,5 +1,5 @@
 import type { Household } from '../domain/types'
-import { campPets } from '../domain/pet-home'
+import { campPets, type PetCareActivity } from '../domain/pet-home'
 import { CAMP_CATALOG, CAMP_POINTS, OUTFITS, campItems } from '../domain/camp'
 import { homeSecondsLeft } from './pet-home'
 export type CampAction =
@@ -7,6 +7,7 @@ export type CampAction =
  | {type:'place';instanceId:string;point?:string}
  | {type:'rename';petId:string;name:string}
  | {type:'bed';petId:string;point:string}
+ | {type:'care';petId:string;activity:PetCareActivity}
  | {type:'outfit';outfitId:string}
 
 /** Alla lägerändringar görs atomiskt och behåller äldre sparade fält. */
@@ -39,6 +40,16 @@ export function changeCamp(h:Household,childId:string,action:CampAction,at:Date)
   if(!CAMP_POINTS.some(s=>s.id===action.point&&s.kind==='bed'))return h
   const occupied=pets.find(v=>v.id!==pet.id&&v.bedPoint===action.point)
   return updateChild({pets:pets.map(v=>v.id===pet.id?{...v,bedPoint:action.point}:v.id===occupied?.id?{...v,bedPoint:pet.bedPoint}:v)})
+ }
+ if(action.type==='care') {
+  const pets=campPets(p),pet=pets.find(v=>v.id===action.petId)
+  if(!pet || (pet.care?.resting && (action.activity==='feed'||action.activity==='pet')))return h
+  const care={...pet.care}
+  if(action.activity==='rest')care.resting=true
+  else if(action.activity==='wake')care.resting=false
+  else if(action.activity==='feed')care.lastFedAt=at.toISOString()
+  else care.lastPettedAt=at.toISOString()
+  return updateChild({pets:pets.map(v=>v.id===pet.id?{...v,care}:v)})
  }
  const outfit=OUTFITS.find(o=>o.id===action.outfitId)
  if(!outfit)return h

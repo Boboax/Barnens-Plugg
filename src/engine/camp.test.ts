@@ -8,6 +8,35 @@ import {migrate} from '../storage/db'
 const at=new Date(2026,8,9,15)
 const fixture=():Household=>({schemaVersion:1,rewards:[],chatLog:[],children:[{id:'a',name:'A',color:'#446633',birthYear:2018,schoolYear:'2',createdAt:at.toISOString(),skills:{},answers:[],diagnosis:{done:true,passesDone:1,passesTotal:1,probes:[]},dailyLimitMinutes:20,usageSeconds:{},chatEnabled:false,streak:{days:0,lastActiveDate:''},petProgress:{coins:200,lastPracticeDay:'2026-09-09',pet:{name:'Mossa',species:'woodland-frog',foundAt:'2026-09-08T15:00:00.000Z'}}}]})
 describe('lägrets samlingar',()=>{
+ it('sparar omsorg för äldre husdjur utan att debitera mynt eller ändra skolarbetet',()=>{
+  const h=fixture()
+  let next=changeCamp(h,'a',{type:'care',petId:'first-pet',activity:'feed'},at)
+  next=changeCamp(next,'a',{type:'care',petId:'first-pet',activity:'pet'},at)
+  const reloaded=migrate(JSON.parse(JSON.stringify(next)))
+  expect(campPets(reloaded.children[0].petProgress)[0]).toMatchObject({name:'Mossa',care:{lastFedAt:at.toISOString(),lastPettedAt:at.toISOString()}})
+  expect(next.children[0].petProgress?.coins).toBe(200)
+  expect(next.children[0].skills).toBe(h.children[0].skills)
+  expect(next.children[0].answers).toBe(h.children[0].answers)
+  expect(next.children[0].petProgress?.pet).toEqual(h.children[0].petProgress?.pet)
+ })
+ it('låter ett valt djur vila tills det väcks och behåller övriga djurs omsorg',()=>{
+  const h=fixture()
+  h.children[0].petProgress!.pets=[...campPets(h.children[0].petProgress),{id:'fox',name:'Saffran',species:'dune-fox',foundAt:'old',care:{lastFedAt:'old'}}]
+  let next=changeCamp(h,'a',{type:'care',petId:'first-pet',activity:'rest'},at)
+  next=migrate(JSON.parse(JSON.stringify(next)))
+  expect(campPets(next.children[0].petProgress)[0].care?.resting).toBe(true)
+  expect(changeCamp(next,'a',{type:'care',petId:'first-pet',activity:'feed'},at)).toBe(next)
+  expect(changeCamp(next,'a',{type:'care',petId:'first-pet',activity:'pet'},at)).toBe(next)
+  next=changeCamp(next,'a',{type:'care',petId:'first-pet',activity:'wake'},at)
+  expect(campPets(next.children[0].petProgress)[0].care?.resting).toBe(false)
+  expect(campPets(next.children[0].petProgress)[1].care).toEqual({lastFedAt:'old'})
+ })
+ it('nekar omsorg för saknade djur och när besökstiden är slut',()=>{
+  const h=fixture()
+  expect(changeCamp(h,'a',{type:'care',petId:'missing',activity:'feed'},at)).toBe(h)
+  h.children[0].petProgress!.visit={day:'2026-09-09',seconds:180}
+  for(const activity of ['feed','pet','rest','wake'] as const)expect(changeCamp(h,'a',{type:'care',petId:'first-pet',activity},at)).toBe(h)
+ })
  it('bevarar äldre djur och möbler vid första ändringen och omladdning',()=>{
   const h=fixture();h.petHome={owned:{'fern-bed':{childId:'a',boughtAt:'old'}},equipped:{bed:'fern-bed'}}
   expect(campPets(h.children[0].petProgress)[0].name).toBe('Mossa')
