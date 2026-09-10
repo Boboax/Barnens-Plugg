@@ -1,0 +1,27 @@
+.crystal-dragon { width:100%; aspect-ratio:1; background-repeat:no-repeat; background-size:100% 100%; background-position:0 0; filter:drop-shadow(0 5px 3px #0006); }
+.crystal-dragon-ready { background-size:400% 200%; animation:dragon-idle 5.8s step-end infinite; }
+.crystal-dragon-ready.crystal-dragon-greeting { animation:dragon-greeting .85s step-end 1; }
+.camp-pet-card>.crystal-dragon { width:180px; max-width:100%; margin:auto; }
+/* Long quiet rests keep the blink natural; frames change only within the sprite. */
+@keyframes dragon-idle {
+  0%,76%,100% { background-position:0 0; }
+  80% { background-position:33.333333% 0; }
+  82% { background-position:66.666667% 0; }
+  83.5% { background-position:100% 0; }
+  85% { background-position:0 100%; }
+  86.5% { background-position:33.333333% 100%; }
+  89% { background-position:66.666667% 100%; }
+  93% { background-position:100% 100%; }
+}
+@keyframes dragon-greeting {
+  0%,100% { background-position:0 0; }
+  15% { background-position:33.333333% 0; }
+  28% { background-position:66.666667% 0; }
+  40% { background-position:100% 0; }
+  50% { background-position:0 100%; }
+  64% { background-position:33.333333% 100%; }
+  80% { background-position:66.666667% 100%; }
+  90% { background-position:100% 100%; }
+}
+.pet-still .crystal-dragon { animation:none!important; background-position:0 0; }
+@media(prefers-reduced-motion:reduce) { .crystal-dragon { animation:none!important; background-position:0 0; } }

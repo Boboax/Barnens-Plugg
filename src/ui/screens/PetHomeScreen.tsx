@@ -6,6 +6,7 @@ import { speak, stopSpeaking } from '../../tts'
 import { useStore } from '../store'
 import { useDocumentBackground } from '../useDocumentBackground'
 import { CampHero } from '../components/CampHero'
+import { CrystalDragon } from '../components/CrystalDragon'
 import '../../styles/pet-home.css'
 import '../../styles/camp.css'
 import '../../styles/camp-stations.css'
@@ -31,7 +32,7 @@ export function PetHomeScreen(){
  useDocumentBackground('#121c27')
  useEffect(()=>{const timer=window.setInterval(()=>{setClock(new Date());if(document.visibilityState==='visible')store.spendHomeTime(1)},1000);return()=>{window.clearInterval(timer);stopSpeaking()}},[child?.id])
  useEffect(()=>{heading.current?.focus();setSelected('');setOutfitPreview(undefined)},[view])
- useEffect(()=>{if(!happy)return;const timer=window.setTimeout(()=>setHappy(''),700);return()=>window.clearTimeout(timer)},[happy])
+ useEffect(()=>{if(!happy)return;const timer=window.setTimeout(()=>setHappy(''),900);return()=>window.clearTimeout(timer)},[happy])
  if(!child)return null
  const pets=campPets(p),left=homeSecondsLeft(store.household,child.id,clock),ready=p?.lastPracticeDay===petDay(clock)
  const pending=p?.encounterSpecies&&!pets.some(pet=>pet.species===p.encounterSpecies)?p.encounterSpecies:undefined
@@ -72,14 +73,14 @@ export function PetHomeScreen(){
      <img className="camp-den-building" src={itemArt('pet-tent')} alt=""/>
      {items.filter(i=>i.point).map(i=>{const point=CAMP_POINTS.find(s=>s.id===i.point),item=CAMP_CATALOG.find(f=>f.id===i.itemId);return point&&item?<button key={i.id} className={`camp-placed ${item.kind==='light'?'camp-light':''}`} style={{left:`${point.x}%`,top:`${point.y}%`,width:`${point.width}%`}} onClick={()=>{setView('packing');setTab('owned');setPlacing(i.id);setSelected('')}} aria-label={`${item.name}, ${point.name}. Flytta eller packa undan`}><img src={itemArt(item.art)} alt=""/></button>:null})}
      {chosen&&freePoint&&<img className="camp-placement-preview" style={{left:`${freePoint.x}%`,top:`${freePoint.y}%`,width:`${freePoint.width}%`}} src={itemArt(chosen.art)} alt={`Förhandsvisning av ${chosen.name}, inte köpt`}/>}
-     {pets.slice(0,4).map((pet,i)=>{const point=CAMP_POINTS.find(s=>s.id===pet.bedPoint)??CAMP_POINTS[i];return <button key={pet.id} className={`camp-pet ${happy===pet.id?'pet-hop':''}`} style={{left:`${point.x}%`,top:`${point.y-4}%`}} disabled={left<=0} onClick={()=>{setHappy(pet.id);setMessage(`${pet.name} blir glad att se dig!`)}} aria-label={`Hälsa på ${pet.name}`}><img src={petArt(pet.species)} alt=""/><span>{pet.name}</span></button>})}
+     {pets.slice(0,4).map((pet,i)=>{const point=CAMP_POINTS.find(s=>s.id===pet.bedPoint)??CAMP_POINTS[i];return <button key={pet.id} className={`camp-pet ${happy===pet.id?'pet-hop':''}`} style={{left:`${point.x}%`,top:`${point.y-4}%`}} disabled={left<=0} onClick={()=>{setHappy(pet.id);setMessage(`${pet.name} blir glad att se dig!`)}} aria-label={`Hälsa på ${pet.name}`}><>{pet.species==='crystal-dragon'?<CrystalDragon greeting={happy===pet.id}/>:<img src={petArt(pet.species)} alt=""/>}</><span>{pet.name}</span></button>})}
      <button className="camp-player" aria-label="Öppna garderoben" onClick={()=>open('wardrobe')}><CampHero child={child}/></button>
      {!placing&&view==='camp'&&STATIONS.map(s=><button key={s.id} className={`camp-hotspot camp-hotspot-${s.id}`} style={{left:`${s.x}%`,top:`${s.y}%`}} onClick={()=>open(s.id)}><span>{s.name}</span></button>)}
      {placingItem&&CAMP_POINTS.filter(s=>s.kind===placingItem.kind).map(point=><button key={point.id} className="camp-placement-target" style={{left:`${point.x}%`,top:`${point.y}%`}} disabled={left<=0||items.some(i=>i.point===point.id&&i.id!==placing)} onClick={()=>{store.changeCamp({type:'place',instanceId:placing,point:point.id});setMessage(`${placingItem.name} står nu på ${point.name.toLowerCase()}.`);setPlacing('')}} aria-label={`Placera på ${point.name}`}>＋<span>{point.name}</span></button>)}
     </div>
     {placingItem&&<div className="camp-placement-bar"><strong>Välj en ledig plats för {placingItem.name.toLowerCase()}.</strong><button className="chip" disabled={left<=0} onClick={()=>{store.changeCamp({type:'place',instanceId:placing});setPlacing('');setMessage('Saken ligger nu i packningen.')}}>Packa undan</button><button className="chip" onClick={()=>setPlacing('')}>Avbryt</button></div>}
    </>}
-   {view==='pets'&&<section className="camp-pet-house"><p>Alla dina vänner bor här. Varje djur har en egen sovplats, och alla får stanna.</p><div className="camp-pet-cards">{pets.map(pet=><article className="camp-pet-card" key={pet.id}><img src={petArt(pet.species)} alt={petSpecies(pet.species).name}/><h3 className="display">{pet.name}</h3><p>{petSpecies(pet.species).world}</p>
+   {view==='pets'&&<section className="camp-pet-house"><p>Alla dina vänner bor här. Varje djur har en egen sovplats, och alla får stanna.</p><div className="camp-pet-cards">{pets.map(pet=><article className="camp-pet-card" key={pet.id}>{pet.species==='crystal-dragon'?<CrystalDragon/>:<img src={petArt(pet.species)} alt={petSpecies(pet.species).name}/>}<h3 className="display">{pet.name}</h3><p>{petSpecies(pet.species).world}</p>
     {renameId===pet.id?<form onSubmit={e=>{e.preventDefault();store.changeCamp({type:'rename',petId:pet.id,name:rename});setRenameId('')}}><label>Nytt namn<input maxLength={24} value={rename} onChange={e=>setRename(e.target.value)}/></label><button className="chip" disabled={left<=0||!rename.trim()}>Spara namn</button><button type="button" className="chip" onClick={()=>setRenameId('')}>Avbryt</button></form>:<button className="chip" disabled={left<=0} onClick={()=>{setRenameId(pet.id);setRename(pet.name)}}>Byt namn</button>}
     <label>Sovplats<select disabled={left<=0} value={pet.bedPoint??'bed-1'} onChange={e=>store.changeCamp({type:'bed',petId:pet.id,point:e.target.value})}>{CAMP_POINTS.filter(s=>s.kind==='bed').map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label></article>)}</div><p className="camp-note">Du kan hitta fler arter när du övar i andra världar. Om två vänner väljer samma sovplats byter de plats.</p></section>}
    {view==='wardrobe'&&<section className="camp-wardrobe"><div className="camp-fitting"><CampHero child={child} outfitId={activeOutfit.id}/><span>{outfitPreview?'Provar · inget köpt ännu':child.name}</span></div><div><p>Prova en mantel. Den följer med din hjälte till lägret och påverkar inte matteäventyren.</p><div className="camp-outfits">{OUTFITS.map(o=><button className="camp-outfit-option" key={o.id} aria-pressed={activeOutfit.id===o.id} onClick={()=>setOutfitPreview(o.id)}><span className="camp-fabric" style={{background:o.color,borderColor:o.trim}}/>{o.name}<small>{o.price===0||p?.outfits?.includes(o.id)?'I garderoben':`${o.price} mynt`}</small></button>)}</div><h3>{activeOutfit.name}</h3><button className="btn btn-primary" disabled={left<=0||(!outfitOwned&&(p?.coins??0)<activeOutfit.price)} onClick={()=>{store.changeCamp({type:'outfit',outfitId:activeOutfit.id});setOutfitPreview(undefined);setMessage(`${activeOutfit.name} är på!`)}}>{outfitOwned?'Ta på manteln':(p?.coins??0)<activeOutfit.price?`Spara ${activeOutfit.price-(p?.coins??0)} mynt till`:`Köp och ta på · ${activeOutfit.price} mynt`}</button><button className="chip" onClick={()=>setOutfitPreview(undefined)}>Tillbaka till mina kläder</button></div></section>}
@@ -93,4 +94,3 @@ export function PetHomeScreen(){
   </div>}
  </main>
 }
-
