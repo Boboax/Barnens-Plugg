@@ -18,6 +18,11 @@ function Demo() {
   const store = useStore()
   const [pending, setPending] = useState(false)
   const [speciesId, setSpeciesId] = useState('woodland-frog')
+  const hasSavedDemo = store.household.children.some((c) => c.id === 'demo-pet')
+  const openSavedDemo = () => {
+    store.selectChild('demo-pet')
+    store.go('pet-home')
+  }
   const reset = (kind: 'discovery' | 'home' | 'locked' | 'collection') => {
     const at = new Date()
     const h: Household = {
@@ -56,7 +61,7 @@ function Demo() {
       <button className="chip" disabled={!store.loaded} onClick={() => reset('locked')}>Före dagens pass</button>
     </div>
     <div style={{ flex: 1, minHeight: 0 }}>
-      {store.activeChild?.id === 'demo-pet' && store.screen === 'pet-home' ? <PetHomeScreen key={store.household.children[0]?.petProgress?.pet?.foundAt ?? String(pending)} /> : <div className="camp-demo-start"><h1 className="display">Kvällslägret väntar</h1><p>Välj ett husdjur ovan. Upptäck din nya vän i det vilda, eller prova lägret med 80 testmynt.</p><button className="btn btn-primary" disabled={!store.loaded} onClick={() => reset('home')}>Besök lägret</button></div>}
+      {store.activeChild?.id === 'demo-pet' && store.screen === 'pet-home' ? <PetHomeScreen key={store.household.children[0]?.petProgress?.pet?.foundAt ?? String(pending)} /> : <div className="camp-demo-start"><h1 className="display">Kvällslägret väntar</h1><p>Välj ett husdjur ovan. Upptäck din nya vän i det vilda, eller prova lägret med 80 testmynt.</p><button className="btn btn-primary" disabled={!store.loaded} onClick={() => hasSavedDemo ? openSavedDemo() : reset('home')}>{hasSavedDemo ? 'Fortsätt sparat läger' : 'Besök lägret'}</button></div>}
     </div>
   </div>
 }
