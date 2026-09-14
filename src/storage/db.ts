@@ -17,9 +17,9 @@ const STORE = 'household'
 const KEY = 'main'
 const LS_KEY = 'barnens-plugg-household'
 
-function openDb(): Promise<IDBDatabase> {
+function openDb(scope = ''): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1)
+    const req = indexedDB.open(DB_NAME + scope, 1)
     req.onupgradeneeded = () => {
       if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE)
     }
@@ -28,9 +28,9 @@ function openDb(): Promise<IDBDatabase> {
   })
 }
 
-export async function loadHousehold(): Promise<Household | null> {
+export async function loadHousehold(scope = ''): Promise<Household | null> {
   try {
-    const db = await openDb()
+    const db = await openDb(scope)
     const data = await new Promise<Household | undefined>((resolve, reject) => {
       const tx = db.transaction(STORE, 'readonly')
       const req = tx.objectStore(STORE).get(KEY)
@@ -43,7 +43,7 @@ export async function loadHousehold(): Promise<Household | null> {
     // IndexedDB otillgänglig (t.ex. privat läge) — prova localStorage.
   }
   try {
-    const raw = localStorage.getItem(LS_KEY)
+    const raw = localStorage.getItem(LS_KEY + scope)
     if (raw) return migrate(JSON.parse(raw) as Household)
   } catch {
     // Ingen lagring alls — appen startar tom.
@@ -51,9 +51,9 @@ export async function loadHousehold(): Promise<Household | null> {
   return null
 }
 
-export async function saveHousehold(household: Household): Promise<void> {
+export async function saveHousehold(household: Household, scope = ''): Promise<void> {
   try {
-    const db = await openDb()
+    const db = await openDb(scope)
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE, 'readwrite')
       tx.objectStore(STORE).put(household, KEY)
@@ -63,7 +63,7 @@ export async function saveHousehold(household: Household): Promise<void> {
     db.close()
   } catch {
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify(household))
+      localStorage.setItem(LS_KEY + scope, JSON.stringify(household))
     } catch {
       // Sista utvägen misslyckades — exportpåminnelsen i föräldraläget är skyddsnätet.
     }

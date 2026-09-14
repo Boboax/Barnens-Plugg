@@ -10,6 +10,7 @@ import { ParentScreen } from './screens/ParentScreen'
 import { ProfileSelect } from './screens/ProfileSelect'
 import { SessionScreen } from './screens/SessionScreen'
 import { TimeUp } from './screens/TimeUp'
+import { PetHomeScreen } from './screens/PetHomeScreen'
 import { useStore } from './store'
 
 /** Skärmar där aktiv träningstid tickar mot dagens gräns. */
@@ -120,6 +121,7 @@ export function App() {
     switch (screen) {
       case 'profiles': return <ProfileSelect />
       case 'home': return <Home />
+      case 'pet-home': return <PetHomeScreen key={activeChild?.id} />
       case 'session': return <SessionScreen key={activeChild?.id} />
       case 'check': return <BattleScreen kind="check" />
       case 'boss': return <BattleScreen kind="boss" />

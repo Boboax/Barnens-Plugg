@@ -305,6 +305,10 @@ function HomeInner({ child }: { child: ChildProfile }) {
         <span style={{ display: 'flex', gap: 8 }}>
           <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
           <SoundToggle />
+          <button className="chip" aria-label="Djurens stuga" onClick={() => store.go('pet-home')}>
+            <img src={`${import.meta.env.BASE_URL}art/objekt/groda.webp`} alt="" width={24} height={24} />
+            Stugan
+          </button>
         </span>
         {/* Titelskylt: snidad plakett som hänger ned över kartan (jfr förlagan).
             Elementets proportion matchar bildens (600×328) → ingen förvrängning.
