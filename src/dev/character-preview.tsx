@@ -5,7 +5,6 @@ import type { CharacterMotion, PrototypeCloakId, PrototypeWeaponId } from '../do
 import { PROTOTYPE_CLOAKS, PROTOTYPE_WEAPONS } from '../domain/character'
 import { CharacterFigure } from '../ui/components/CharacterFigure'
 import { PrototypeBoss } from '../ui/components/PrototypeBoss'
-import '../styles/global.css'
 import '../styles/character-prototype.css'
 
 type SavedDemo = { weapon: PrototypeWeaponId; cloak: PrototypeCloakId; reducedMotion: boolean }
