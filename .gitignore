@@ -1,5 +1,6 @@
 node_modules/
 dist/
 dev-dist/
+dist-character-preview/
 *.local
 .DS_Store
