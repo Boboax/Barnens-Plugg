@@ -1,4 +1,5 @@
-.character-demo { height:100%; overflow:auto; color:#f9f2de; background:#171426; padding:calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); }
+:root { font-family:ui-rounded,system-ui,sans-serif; --font-display:ui-rounded,system-ui,sans-serif; } body { margin:0; min-width:320px; min-height:100vh; } #root { min-height:100vh; }
+.character-demo { min-height:100vh; box-sizing:border-box; overflow:auto; color:#f9f2de; background:#171426; padding:calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); }
 .character-demo__inner { width:min(1120px,100%); margin:auto; }
 .character-demo__eyebrow { margin:0; color:#ffe19a; font-weight:900; font-size:13px; letter-spacing:.06em; }
 .character-demo h1 { margin:3px 0 4px; font-size:clamp(32px,6vw,54px); }
@@ -12,7 +13,6 @@
 .character-demo__panel h2 { margin:0 0 6px; font-size:27px; }
 .character-demo__panel p { margin:4px 0 12px; color:#ded1ba; }
 .character-demo__stage { position:relative; min-height:440px; display:grid; place-items:center; overflow:hidden; border-radius:16px; background:radial-gradient(circle at 50% 28%,#5a427b 0,#29233f 47%,#141221 100%); }
-.character-demo__stage::before { content:""; position:absolute; inset:0; opacity:.22; background:url('/art/arena/multiplikationsskogen.webp') center/cover; mix-blend-mode:screen; }
 .character-demo__stage > * { position:relative; z-index:1; }
 .character-demo__hero { width:min(60vw,340px); height:auto; transform:translateX(-70px); }
 .character-demo__stage--single .character-demo__hero { transform:none; }
