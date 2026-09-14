@@ -19,7 +19,7 @@
 .character-demo__boss { width:min(63vw,370px); height:auto; transform:translate(95px,15px); }
 .character-demo__versus { position:absolute; left:50%; top:48%; transform:translate(-50%,-50%); font-family:var(--font-display); font-size:34px; color:#ffe09b; text-shadow:0 3px 0 #3c214f; }
 .character-demo__stage--motion { min-height:520px; padding:16px; box-sizing:border-box; }
-.cinematic-attack-study { width:min(100%,335px); aspect-ratio:2/3; border-radius:14px; background-image:url('/art/prototype-v2/hero-bow-attack-study-v1.webp'); background-size:400% 100%; background-position:0 50%; box-shadow:0 18px 34px #0008; animation:cinematic-bow-attack 1.25s steps(1,end) both; }
+.cinematic-attack-study { width:min(100%,335px); aspect-ratio:2/3; border-radius:14px; background-size:400% 100%; background-position:0 50%; box-shadow:0 18px 34px #0008; animation:cinematic-bow-attack 1.25s steps(1,end) both; }
 .cinematic-attack-study--paused { animation:none; background-position:66.666% 50%; }
 .character-demo__note { border-left:4px solid #f2c766; padding:8px 11px; margin-top:14px; background:#3c344b; color:#f8efd8; border-radius:0 10px 10px 0; font-size:14px; }
 .character-demo__footer { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; color:#d9cdb7; font-size:13px; }
