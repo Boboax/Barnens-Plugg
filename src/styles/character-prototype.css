@@ -1,0 +1,57 @@
+.character-demo { height:100%; overflow:auto; color:#f9f2de; background:#171426; padding:calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); }
+.character-demo__inner { width:min(1120px,100%); margin:auto; }
+.character-demo__eyebrow { margin:0; color:#ffe19a; font-weight:900; font-size:13px; letter-spacing:.06em; }
+.character-demo h1 { margin:3px 0 4px; font-size:clamp(32px,6vw,54px); }
+.character-demo__lead { max-width:720px; margin:0 0 16px; color:#e5d8c0; }
+.character-demo__tabs,.character-demo__controls,.character-demo__choices { display:flex; flex-wrap:wrap; gap:9px; }
+.character-demo button { min-height:44px; padding:10px 14px; border:2px solid #8b7045; border-radius:13px; background:#2c2941; color:#fff8e9; font-weight:850; font-size:15px; }
+.character-demo button[aria-pressed="true"] { background:linear-gradient(#7b5bba,#4d367b); border-color:#e9c87a; }
+.character-demo button:disabled { opacity:.5; cursor:not-allowed; }
+.character-demo__grid { display:grid; grid-template-columns:minmax(260px,1fr) minmax(300px,1.25fr); gap:16px; margin-top:16px; }
+.character-demo__panel { background:linear-gradient(145deg,#2e2947,#1f1d31); border:1px solid #675477; border-radius:20px; padding:16px; box-shadow:0 8px 28px #0005; }
+.character-demo__panel h2 { margin:0 0 6px; font-size:27px; }
+.character-demo__panel p { margin:4px 0 12px; color:#ded1ba; }
+.character-demo__stage { position:relative; min-height:440px; display:grid; place-items:center; overflow:hidden; border-radius:16px; background:radial-gradient(circle at 50% 28%,#5a427b 0,#29233f 47%,#141221 100%); }
+.character-demo__stage::before { content:""; position:absolute; inset:0; opacity:.22; background:url('/art/arena/multiplikationsskogen.webp') center/cover; mix-blend-mode:screen; }
+.character-demo__stage > * { position:relative; z-index:1; }
+.character-demo__hero { width:min(60vw,340px); height:auto; transform:translateX(-70px); }
+.character-demo__stage--single .character-demo__hero { transform:none; }
+.character-demo__boss { width:min(63vw,370px); height:auto; transform:translate(95px,15px); }
+.character-demo__versus { position:absolute; left:50%; top:48%; transform:translate(-50%,-50%); font-family:var(--font-display); font-size:34px; color:#ffe09b; text-shadow:0 3px 0 #3c214f; }
+.character-demo__note { border-left:4px solid #f2c766; padding:8px 11px; margin-top:14px; background:#3c344b; color:#f8efd8; border-radius:0 10px 10px 0; font-size:14px; }
+.character-demo__footer { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; color:#d9cdb7; font-size:13px; }
+.character-demo__motion { display:flex; align-items:center; gap:8px; padding:8px 0; font-weight:800; }
+.character-demo__motion input { inline-size:20px; block-size:20px; }
+.character-demo__hidden { display:none; }
+
+.character-figure,.prototype-boss { overflow:visible; filter:drop-shadow(0 10px 10px #0008); }
+.character-figure__body,.character-figure__head,.character-figure__back-arm,.character-figure__front-arm,.character-figure__weapon,.character-figure__cape,.character-figure__spark,.prototype-boss__head,.prototype-boss__wing,.prototype-boss__tail,.prototype-boss__blast { transform-box:fill-box; transform-origin:center; }
+.character-figure__spark,.prototype-boss__blast { opacity:0; }
+.character-figure--idle .character-figure__body,.character-figure--idle .character-figure__head { animation:hero-breathe 2.7s ease-in-out infinite; }
+.character-figure--idle .character-figure__cape { animation:hero-cape 2.7s ease-in-out infinite; }
+.character-figure--attack .character-figure__front-arm { animation:hero-strike-arm 1.05s ease-in-out both; }
+.character-figure--attack .character-figure__back-arm { animation:hero-strike-back 1.05s ease-in-out both; }
+.character-figure--attack .character-figure__weapon { animation:hero-weapon 1.05s ease-in-out both; }
+.character-figure--attack .character-figure__body { animation:hero-lunge 1.05s ease-in-out both; }
+.character-figure--attack .character-figure__cape { animation:hero-attack-cape 1.05s ease-in-out both; }
+.character-figure--attack .character-figure__spark { animation:hero-spark 1.05s ease-out both; }
+.character-figure--guard .character-figure__front-arm { animation:hero-guard-arm 1s ease-in-out both; }
+.character-figure--guard .character-figure__back-arm { animation:hero-guard-back 1s ease-in-out both; }
+.character-figure--guard .character-figure__body { animation:hero-duck 1s ease-in-out both; }
+.character-figure--guard .character-figure__cape { animation:hero-guard-cape 1s ease-in-out both; }
+.character-figure--victory .character-figure__front-arm,.character-figure--victory .character-figure__back-arm { animation:hero-victory-arms 1.45s ease-in-out both; }
+.character-figure--victory .character-figure__body,.character-figure--victory .character-figure__head { animation:hero-victory-body 1.45s ease-in-out both; }
+.character-figure--victory .character-figure__cape { animation:hero-victory-cape 1.45s ease-in-out both; }
+.character-figure--victory .character-figure__spark { animation:hero-victory-spark 1.45s ease-out both; }
+
+.prototype-boss--idle .prototype-boss__head { animation:boss-watch 2.8s ease-in-out infinite; }.prototype-boss--idle .prototype-boss__wing { animation:boss-wing 2.8s ease-in-out infinite; }.prototype-boss--idle .prototype-boss__tail { animation:boss-tail 2.8s ease-in-out infinite; }
+.prototype-boss--guard .prototype-boss__head { animation:boss-recoil 1s ease-in-out both; }.prototype-boss--guard .prototype-boss__wing { animation:boss-shield-wing 1s ease-in-out both; }.prototype-boss--guard .prototype-boss__blast { animation:boss-blast 1s ease-out both; }
+.prototype-boss--attack .prototype-boss__head { animation:boss-recoil 1.05s ease-in-out both; }.prototype-boss--attack .prototype-boss__wing { animation:boss-hit-wing 1.05s ease-in-out both; }.prototype-boss--attack .prototype-boss__tail { animation:boss-hit-tail 1.05s ease-in-out both; }
+.prototype-boss--victory .prototype-boss__head { animation:boss-bow 1.45s ease-in-out both; }.prototype-boss--victory .prototype-boss__wing { animation:boss-fold-wing 1.45s ease-in-out both; }.prototype-boss--victory .prototype-boss__tail { animation:boss-tail 1.45s ease-in-out both; }
+
+@keyframes hero-breathe { 50% { transform:translateY(-5px) scaleY(1.015); } } @keyframes hero-cape { 50% { transform:rotate(-2deg) translateX(-3px); } }
+@keyframes hero-strike-arm { 0% { transform:rotate(7deg); } 35% { transform:rotate(-47deg) translate(7px,-13px); } 68% { transform:rotate(42deg) translate(21px,7px); } 100% { transform:rotate(7deg); } } @keyframes hero-strike-back { 35% { transform:rotate(28deg) translate(-5px,-9px); } 68% { transform:rotate(-22deg) translate(8px,5px); } } @keyframes hero-weapon { 35% { transform:rotate(-30deg); } 68% { transform:rotate(46deg) translate(26px,-7px); } } @keyframes hero-lunge { 35% { transform:translate(-9px,4px) rotate(-4deg); } 68% { transform:translate(18px,-5px) rotate(5deg); } } @keyframes hero-attack-cape { 35% { transform:rotate(-10deg) translate(-11px,6px); } 68% { transform:rotate(9deg) translate(10px,-3px); } } @keyframes hero-spark { 50% { opacity:1; transform:translate(62px,-32px) scale(1.7); } }
+@keyframes hero-guard-arm { 35%,70% { transform:rotate(-48deg) translate(-8px,-7px); } } @keyframes hero-guard-back { 35%,70% { transform:rotate(37deg) translate(-5px,-9px); } } @keyframes hero-duck { 35%,70% { transform:translate(-16px,22px) rotate(-8deg); } } @keyframes hero-guard-cape { 35%,70% { transform:rotate(8deg) translate(-9px,12px); } } @keyframes hero-victory-arms { 45%,75% { transform:rotate(-72deg) translate(1px,-23px); } } @keyframes hero-victory-body { 45%,75% { transform:translateY(-25px) scaleY(1.04); } } @keyframes hero-victory-cape { 45%,75% { transform:rotate(-7deg) translate(-3px,-18px) scaleY(1.08); } } @keyframes hero-victory-spark { 35%,80% { opacity:1; transform:translate(46px,-85px) scale(2.6); } }
+@keyframes boss-watch { 50% { transform:translate(-5px,5px) rotate(-4deg); } } @keyframes boss-wing { 50% { transform:rotate(-6deg) translateY(-7px); } } @keyframes boss-tail { 50% { transform:rotate(8deg) translateX(5px); } } @keyframes boss-recoil { 35%,72% { transform:translate(26px,-10px) rotate(12deg); } } @keyframes boss-shield-wing { 35%,72% { transform:translate(-23px,-10px) rotate(-18deg) scale(1.1); } } @keyframes boss-blast { 35%,72% { opacity:1; transform:translate(28px,-3px) scale(2.4); } } @keyframes boss-hit-wing { 35%,72% { transform:rotate(18deg) translate(10px,15px); } } @keyframes boss-hit-tail { 35%,72% { transform:rotate(-16deg) translate(-12px,8px); } } @keyframes boss-bow { 45%,74% { transform:translate(15px,39px) rotate(15deg); } } @keyframes boss-fold-wing { 45%,74% { transform:rotate(27deg) translate(20px,26px) scale(.82); } }
+@media (max-width:680px) { .character-demo__grid { grid-template-columns:1fr; }.character-demo__stage { min-height:355px; }.character-demo__hero { width:260px; transform:translateX(-52px); }.character-demo__boss { width:285px; transform:translate(72px,12px); }.character-demo__versus { font-size:25px; } }
+@media (prefers-reduced-motion:reduce) { .character-figure *, .prototype-boss * { animation:none!important; } }
