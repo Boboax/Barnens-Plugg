@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "build:character-preview": "node scripts/build-character-preview.mjs",
     "test": "vitest run"
   },
   "dependencies": {
