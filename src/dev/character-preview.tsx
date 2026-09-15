@@ -54,7 +54,9 @@ function CharacterPreview() {
           </> : <>
             <p>{view === 'figure' ? 'Byt utrustning och spela en pose direkt.' : view === 'rig4' ? 'V4 använder en kroppskärna, två överarmar, två underarmar, mantel och vapen som separata bildlager. Prova rörelse och växla rustning/mantel.' : view === 'rig' ? 'Den här lagrade delen är en teknisk jämförelse, inte en visuell riktning. Den visar varför en produktionsrigg måste byggas från godkända poser.' : 'Samma hjälte och rigg används i reaktionerna.'}</p>
             <h3>Vapen</h3><div className="character-demo__choices">{PROTOTYPE_WEAPONS.map((item) => <button key={item.id} aria-pressed={saved.weapon === item.id} onClick={() => setSaved((old) => ({ ...old, weapon: item.id }))}>{item.name}</button>)}</div>
-            <h3>Mantel</h3><div className="character-demo__choices">{PROTOTYPE_CLOAKS.map((item) => <button key={item.id} aria-pressed={saved.cloak === item.id} onClick={() => setSaved((old) => ({ ...old, cloak: item.id }))}>{item.name}</button>)}</div>
+            <h3>{view === 'rig4' ? 'Klädsel' : 'Mantel'}</h3>{view === 'rig4'
+              ? <div className="character-demo__choices"><button aria-pressed={saved.motionOutfit === 'star-cloak'} onClick={() => { setSaved((old) => ({ ...old, motionOutfit: 'star-cloak' })); play('idle') }}>Stjärnmantel</button><button aria-pressed={saved.motionOutfit === 'light-armor'} onClick={() => { setSaved((old) => ({ ...old, motionOutfit: 'light-armor' })); play('idle') }}>Lätt rustning</button></div>
+              : <div className="character-demo__choices">{PROTOTYPE_CLOAKS.map((item) => <button key={item.id} aria-pressed={saved.cloak === item.id} onClick={() => setSaved((old) => ({ ...old, cloak: item.id }))}>{item.name}</button>)}</div>}
             <h3>Spela reaktion</h3><div className="character-demo__controls">
               <button onClick={() => play('idle')}>Väntar</button><button onClick={() => play('attack')}>Rätt svar</button><button onClick={() => play('guard')}>Fel svar</button><button onClick={() => play('victory')}>Seger</button><button onClick={() => play(motion)}>Spela om</button>
             </div>
