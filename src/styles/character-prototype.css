@@ -39,8 +39,8 @@
 .production-hero-rig__arm--right { left:254px; top:127px; }
 .production-hero-rig__forearm { position:absolute; z-index:2; top:89px; left:-12px; width:92px; height:165px; transform-origin:50% 8%; }
 .production-hero-rig__forearm > img:first-child { inset:0 auto auto 0; width:72px; }
-.production-hero-rig__weapon { z-index:-1; transform-origin:50% 16%; filter:drop-shadow(0 0 7px #aee9ff77); }
-.production-hero-rig__weapon--sword { left:-32px; top:49px; width:57px; }
+.production-hero-rig__weapon { z-index:3; transform-origin:50% 16%; filter:drop-shadow(0 0 7px #aee9ff77); }
+.production-hero-rig__weapon--sword { left:25px; top:137px; width:57px; }
 .production-hero-rig__weapon--bow { left:-22px; top:-5px; width:58px; }
 .production-hero-rig--idle .production-hero-rig__body { animation:rig4-breathe 3.1s ease-in-out infinite; }
 .production-hero-rig--idle .production-hero-rig__cloak { animation:rig4-cloak-idle 3.1s ease-in-out infinite; }
