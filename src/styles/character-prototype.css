@@ -21,6 +21,61 @@
 .character-demo__stage--motion { min-height:520px; padding:16px; box-sizing:border-box; }
 .cinematic-attack-study { position:relative; width:min(100%,335px); aspect-ratio:2/3; overflow:hidden; border-radius:14px; background:#182b3e; box-shadow:0 18px 34px #0008; }
 .cinematic-attack-study__frame { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+.character-demo__stage--rig { min-height:600px; }
+.modular-hero { position:relative; width:390px; height:590px; transform:scale(.86); transform-origin:center bottom; --rig-time:1.05s; }
+.modular-hero svg { display:block; width:100%; height:100%; overflow:hidden; pointer-events:none; }
+.modular-hero__shadow { position:absolute; left:106px; bottom:12px; width:205px; height:30px; border-radius:50%; background:#08071299; filter:blur(7px); }
+.modular-hero__cloak { position:absolute; z-index:1; left:70px; top:120px; width:260px; height:320px; transform-origin:50% 8%; }
+.modular-hero__cloak svg { position:absolute; top:0; transform-origin:50% 5%; filter:drop-shadow(0 8px 8px #0007); }
+.modular-hero__cloak-left { left:-5px; width:145px!important; object-position:top right; }
+.modular-hero__cloak-center { left:54px; width:160px!important; }
+.modular-hero__cloak-right { right:-5px; width:145px!important; object-position:top left; }
+.modular-hero--forest-cloak .modular-hero__cloak svg,.modular-hero--forest-cloak .modular-hero__collar { filter:hue-rotate(72deg) saturate(.72) brightness(.88) drop-shadow(0 8px 8px #0007); }
+.modular-hero__pelvis { position:absolute; z-index:3; left:123px; top:275px; width:145px; height:100px; transform-origin:50% 22%; }
+.modular-hero__pelvis-art { position:absolute; z-index:4; inset:0; }
+.modular-hero__leg { position:absolute; z-index:2; top:65px; width:80px; height:133px; transform-origin:50% 8%; }
+.modular-hero__leg--left { left:8px; }
+.modular-hero__leg--right { right:5px; }
+.modular-hero__shin { position:absolute; top:109px; left:-3px; width:86px; height:132px; transform-origin:50% 9%; }
+.modular-hero__torso { position:absolute; z-index:5; left:85px; top:105px; width:220px; height:198px; transform-origin:50% 88%; }
+.modular-hero__torso-art { position:absolute; z-index:4; inset:0; clip-path:polygon(24% 0,76% 0,78% 100%,22% 100%); }
+.modular-hero__head { position:absolute; z-index:8; left:45px; top:-102px; width:130px!important; height:138px!important; transform-origin:50% 88%; filter:drop-shadow(0 5px 5px #0005); }
+.modular-hero__collar { position:absolute; z-index:9; left:30px; top:4px; width:160px!important; height:128px!important; object-position:bottom; transform-origin:50% 18%; }
+.modular-hero__arm { position:absolute; z-index:3; top:28px; width:88px; height:90px; }
+.modular-hero__arm--left { left:-7px; transform-origin:78% 15%; }
+.modular-hero__arm--right { right:-5px; z-index:6; transform-origin:22% 15%; }
+.modular-hero__forearm { position:absolute; top:62px; width:76px; height:124px; transform-origin:50% 10%; }
+.modular-hero__arm--left .modular-hero__forearm { left:-17px; }
+.modular-hero__arm--right .modular-hero__forearm { right:-17px; }
+.modular-hero__weapon { position:absolute; z-index:10; left:-18px; top:88px; width:72px!important; height:235px!important; object-position:center; transform-origin:50% 18%; filter:drop-shadow(0 0 7px #9edfff88); }
+.modular-hero--sun-blade .modular-hero__weapon { left:-29px; top:91px; width:82px!important; height:245px!important; }
+
+.modular-hero--idle .modular-hero__torso { animation:rig-idle-torso 3s ease-in-out infinite; }
+.modular-hero--idle .modular-hero__head { animation:rig-idle-head 3s ease-in-out infinite; }
+.modular-hero--idle .modular-hero__arm--left { animation:rig-idle-left-arm 3s ease-in-out infinite; }
+.modular-hero--idle .modular-hero__arm--right { animation:rig-idle-right-arm 3s ease-in-out infinite; }
+.modular-hero--idle .modular-hero__cloak-left { animation:rig-idle-cloak-left 3s ease-in-out infinite; }
+.modular-hero--idle .modular-hero__cloak-right { animation:rig-idle-cloak-right 3s ease-in-out infinite; }
+.modular-hero--attack .modular-hero__pelvis { animation:rig-attack-pelvis var(--rig-time) cubic-bezier(.3,.05,.2,1) both; }
+.modular-hero--attack .modular-hero__torso { animation:rig-attack-torso var(--rig-time) cubic-bezier(.3,.05,.2,1) both; }
+.modular-hero--attack .modular-hero__head { animation:rig-attack-head var(--rig-time) ease-in-out both; }
+.modular-hero--attack .modular-hero__arm--left { animation:rig-attack-left-arm var(--rig-time) cubic-bezier(.25,.1,.2,1) both; }
+.modular-hero--attack .modular-hero__arm--left .modular-hero__forearm { animation:rig-attack-left-forearm var(--rig-time) cubic-bezier(.25,.1,.2,1) both; }
+.modular-hero--attack .modular-hero__arm--right { animation:rig-attack-right-arm var(--rig-time) cubic-bezier(.25,.1,.2,1) both; }
+.modular-hero--attack .modular-hero__arm--right .modular-hero__forearm { animation:rig-attack-right-forearm var(--rig-time) cubic-bezier(.25,.1,.2,1) both; }
+.modular-hero--attack .modular-hero__leg--left { animation:rig-attack-left-leg var(--rig-time) ease-in-out both; }
+.modular-hero--attack .modular-hero__leg--right { animation:rig-attack-right-leg var(--rig-time) ease-in-out both; }
+.modular-hero--attack .modular-hero__cloak { animation:rig-attack-cloak var(--rig-time) ease-out both; }
+.modular-hero--guard .modular-hero__pelvis { animation:rig-guard-pelvis .9s ease-in-out both; }
+.modular-hero--guard .modular-hero__torso { animation:rig-guard-torso .9s ease-in-out both; }
+.modular-hero--guard .modular-hero__arm--left { animation:rig-guard-left-arm .9s ease-in-out both; }
+.modular-hero--guard .modular-hero__arm--right { animation:rig-guard-right-arm .9s ease-in-out both; }
+.modular-hero--guard .modular-hero__leg--left,.modular-hero--guard .modular-hero__leg--right { animation:rig-guard-leg .9s ease-in-out both; }
+.modular-hero--victory .modular-hero__torso { animation:rig-victory-torso 1.25s ease-in-out both; }
+.modular-hero--victory .modular-hero__head { animation:rig-victory-head 1.25s ease-in-out both; }
+.modular-hero--victory .modular-hero__arm--left { animation:rig-victory-left-arm 1.25s ease-in-out both; }
+.modular-hero--victory .modular-hero__arm--right { animation:rig-victory-right-arm 1.25s ease-in-out both; }
+.modular-hero--victory .modular-hero__cloak { animation:rig-victory-cloak 1.25s ease-in-out both; }
 .character-demo__note { border-left:4px solid #f2c766; padding:8px 11px; margin-top:14px; background:#3c344b; color:#f8efd8; border-radius:0 10px 10px 0; font-size:14px; }
 .character-demo__footer { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; color:#d9cdb7; font-size:13px; }
 .character-demo__motion { display:flex; align-items:center; gap:8px; padding:8px 0; font-weight:800; }
@@ -56,5 +111,31 @@
 @keyframes hero-strike-arm { 0% { transform:rotate(7deg); } 35% { transform:rotate(-47deg) translate(7px,-13px); } 68% { transform:rotate(42deg) translate(21px,7px); } 100% { transform:rotate(7deg); } } @keyframes hero-strike-back { 35% { transform:rotate(28deg) translate(-5px,-9px); } 68% { transform:rotate(-22deg) translate(8px,5px); } } @keyframes hero-weapon { 35% { transform:rotate(-30deg); } 68% { transform:rotate(46deg) translate(26px,-7px); } } @keyframes hero-lunge { 35% { transform:translate(-9px,4px) rotate(-4deg); } 68% { transform:translate(18px,-5px) rotate(5deg); } } @keyframes hero-attack-cape { 35% { transform:rotate(-10deg) translate(-11px,6px); } 68% { transform:rotate(9deg) translate(10px,-3px); } } @keyframes hero-spark { 50% { opacity:1; transform:translate(62px,-32px) scale(1.7); } }
 @keyframes hero-guard-arm { 35%,70% { transform:rotate(-48deg) translate(-8px,-7px); } } @keyframes hero-guard-back { 35%,70% { transform:rotate(37deg) translate(-5px,-9px); } } @keyframes hero-duck { 35%,70% { transform:translate(-16px,22px) rotate(-8deg); } } @keyframes hero-guard-cape { 35%,70% { transform:rotate(8deg) translate(-9px,12px); } } @keyframes hero-victory-arms { 45%,75% { transform:rotate(-72deg) translate(1px,-23px); } } @keyframes hero-victory-body { 45%,75% { transform:translateY(-25px) scaleY(1.04); } } @keyframes hero-victory-cape { 45%,75% { transform:rotate(-7deg) translate(-3px,-18px) scaleY(1.08); } } @keyframes hero-victory-spark { 35%,80% { opacity:1; transform:translate(46px,-85px) scale(2.6); } }
 @keyframes boss-watch { 50% { transform:translate(-5px,5px) rotate(-4deg); } } @keyframes boss-wing { 50% { transform:rotate(-6deg) translateY(-7px); } } @keyframes boss-tail { 50% { transform:rotate(8deg) translateX(5px); } } @keyframes boss-recoil { 35%,72% { transform:translate(26px,-10px) rotate(12deg); } } @keyframes boss-shield-wing { 35%,72% { transform:translate(-23px,-10px) rotate(-18deg) scale(1.1); } } @keyframes boss-blast { 35%,72% { opacity:1; transform:translate(28px,-3px) scale(2.4); } } @keyframes boss-hit-wing { 35%,72% { transform:rotate(18deg) translate(10px,15px); } } @keyframes boss-hit-tail { 35%,72% { transform:rotate(-16deg) translate(-12px,8px); } } @keyframes boss-bow { 45%,74% { transform:translate(15px,39px) rotate(15deg); } } @keyframes boss-fold-wing { 45%,74% { transform:rotate(27deg) translate(20px,26px) scale(.82); } }
-@media (max-width:680px) { .character-demo__grid { grid-template-columns:1fr; }.character-demo__stage { min-height:355px; }.character-demo__hero { width:260px; transform:translateX(-52px); }.character-demo__boss { width:285px; transform:translate(72px,12px); }.character-demo__versus { font-size:25px; } }
-@media (prefers-reduced-motion:reduce) { .character-figure *, .prototype-boss * { animation:none!important; } }
+@keyframes rig-idle-torso { 50% { transform:translateY(-3px) rotate(.8deg); } }
+@keyframes rig-idle-head { 50% { transform:translateY(-2px) rotate(-2deg); } }
+@keyframes rig-idle-left-arm { 50% { transform:rotate(-2deg); } }
+@keyframes rig-idle-right-arm { 50% { transform:rotate(2.5deg); } }
+@keyframes rig-idle-cloak-left { 50% { transform:rotate(1.8deg) translateX(-2px); } }
+@keyframes rig-idle-cloak-right { 50% { transform:rotate(-2deg) translateX(2px); } }
+@keyframes rig-attack-pelvis { 0%,100% { transform:none; } 18% { transform:translateX(-5px) rotate(-4deg); } 52% { transform:translate(17px,-4px) rotate(7deg); } 72% { transform:translate(13px,-2px) rotate(4deg); } }
+@keyframes rig-attack-torso { 0%,100% { transform:none; } 18% { transform:translateX(-8px) rotate(-9deg); } 52% { transform:translate(19px,-9px) rotate(10deg); } 72% { transform:translate(12px,-4px) rotate(4deg); } }
+@keyframes rig-attack-head { 0%,100% { transform:none; } 18% { transform:rotate(5deg) translate(-2px,2px); } 52% { transform:rotate(-8deg) translate(5px,-4px); } 72% { transform:rotate(-3deg); } }
+@keyframes rig-attack-left-arm { 0%,100% { transform:none; } 18% { transform:rotate(34deg); } 52% { transform:rotate(-57deg) translate(5px,-5px); } 72% { transform:rotate(-35deg); } }
+@keyframes rig-attack-left-forearm { 0%,100% { transform:none; } 18% { transform:rotate(-24deg); } 52% { transform:rotate(-45deg); } 72% { transform:rotate(-24deg); } }
+@keyframes rig-attack-right-arm { 0%,100% { transform:none; } 18% { transform:rotate(-42deg); } 52% { transform:rotate(58deg) translate(5px,-8px); } 72% { transform:rotate(31deg); } }
+@keyframes rig-attack-right-forearm { 0%,100% { transform:none; } 18% { transform:rotate(61deg); } 52% { transform:rotate(-72deg); } 72% { transform:rotate(-36deg); } }
+@keyframes rig-attack-left-leg { 0%,100% { transform:none; } 18% { transform:rotate(7deg); } 52%,72% { transform:rotate(-11deg) translateX(4px); } }
+@keyframes rig-attack-right-leg { 0%,100% { transform:none; } 18% { transform:rotate(-8deg); } 52%,72% { transform:rotate(13deg) translateX(6px); } }
+@keyframes rig-attack-cloak { 0%,100% { transform:none; } 18% { transform:rotate(3deg) translateX(-5px); } 58% { transform:rotate(-7deg) translate(13px,-2px); } 78% { transform:rotate(4deg) translateX(5px); } }
+@keyframes rig-guard-pelvis { 0%,100% { transform:none; } 35%,70% { transform:translate(-9px,24px) rotate(-5deg); } }
+@keyframes rig-guard-torso { 0%,100% { transform:none; } 35%,70% { transform:translate(-13px,18px) rotate(-9deg); } }
+@keyframes rig-guard-left-arm { 0%,100% { transform:none; } 35%,70% { transform:rotate(-72deg) translate(-3px,-7px); } }
+@keyframes rig-guard-right-arm { 0%,100% { transform:none; } 35%,70% { transform:rotate(68deg) translate(3px,-7px); } }
+@keyframes rig-guard-leg { 0%,100% { transform:none; } 35%,70% { transform:rotate(8deg) scaleY(.9); } }
+@keyframes rig-victory-torso { 0%,100% { transform:none; } 42%,72% { transform:translateY(-17px) scaleY(1.025); } }
+@keyframes rig-victory-head { 0%,100% { transform:none; } 42%,72% { transform:rotate(-7deg) translateY(-4px); } }
+@keyframes rig-victory-left-arm { 0%,100% { transform:none; } 42%,72% { transform:rotate(-96deg) translate(-7px,-11px); } }
+@keyframes rig-victory-right-arm { 0%,100% { transform:none; } 42%,72% { transform:rotate(92deg) translate(7px,-11px); } }
+@keyframes rig-victory-cloak { 0%,100% { transform:none; } 42%,72% { transform:translateY(-13px) scaleX(1.06); } }
+@media (max-width:680px) { .character-demo__grid { grid-template-columns:1fr; }.character-demo__stage { min-height:355px; }.character-demo__stage--rig { min-height:510px; }.modular-hero { transform:scale(.74); }.character-demo__hero { width:260px; transform:translateX(-52px); }.character-demo__boss { width:285px; transform:translate(72px,12px); }.character-demo__versus { font-size:25px; } }
+@media (prefers-reduced-motion:reduce) { .character-figure *, .prototype-boss *, .modular-hero * { animation:none!important; } }
