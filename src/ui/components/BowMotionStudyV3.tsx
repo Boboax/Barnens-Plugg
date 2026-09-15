@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import type { PrototypeWeaponId } from '../../domain/character'
 
 type MotionMode = 'play' | 0 | 1 | 2 | 3 | 4 | 5
+type OutfitMode = 'star-cloak' | 'light-armor'
 
 const bowLabels = ['Grundställning', 'Ladda pilen', 'Fullt drag', 'Släpp', 'Efterrörelse', 'Återhämtning']
 const swordLabels = ['Grundställning', 'Vakt', 'Ladda slaget', 'Kontrollerat slag', 'Efterrörelse', 'Återhämtning']
 
-export function BowMotionStudyV3({ reducedMotion = false, mode = 'play', weapon = 'moon-bow' }: { reducedMotion?: boolean; mode?: MotionMode; weapon?: PrototypeWeaponId }) {
+export function BowMotionStudyV3({ reducedMotion = false, mode = 'play', weapon = 'moon-bow', outfit = 'star-cloak' }: { reducedMotion?: boolean; mode?: MotionMode; weapon?: PrototypeWeaponId; outfit?: OutfitMode }) {
   const [systemReducedMotion, setSystemReducedMotion] = useState(false)
   const [frame, setFrame] = useState(0)
   const [previousFrame, setPreviousFrame] = useState(0)
@@ -40,8 +41,9 @@ export function BowMotionStudyV3({ reducedMotion = false, mode = 'play', weapon 
   const column = frame % 3
   const row = Math.floor(frame / 3)
   const isSword = weapon === 'sun-blade'
+  const isLightArmor = outfit === 'light-armor'
   const labels = isSword ? swordLabels : bowLabels
-  const spriteUrl = `${import.meta.env.BASE_URL}art/prototype-v3/hero-${isSword ? 'sun-sword' : 'moon-bow'}-motion-sheet-v3.webp`
+  const spriteUrl = `${import.meta.env.BASE_URL}art/prototype-v3/hero-${isSword ? 'sun-sword' : 'moon-bow'}${isLightArmor ? '-light-armor' : ''}-motion-sheet-v3.webp`
   const position = (number: number) => `${(number % 3) * 50}% ${Math.floor(number / 3) * 100}%`
   return <div
     className={`bow-motion-study-v3${isSword ? ' bow-motion-study-v3--sword' : ''}${paused ? ' bow-motion-study-v3--paused' : ''}`}

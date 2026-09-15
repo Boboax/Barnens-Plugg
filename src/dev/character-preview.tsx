@@ -9,9 +9,10 @@ import { ModularHeroRig } from '../ui/components/ModularHeroRig'
 import { PrototypeBoss } from '../ui/components/PrototypeBoss'
 import '../styles/character-prototype.css'
 
-type SavedDemo = { weapon: PrototypeWeaponId; cloak: PrototypeCloakId; reducedMotion: boolean }
+type MotionOutfit = 'star-cloak' | 'light-armor'
+type SavedDemo = { weapon: PrototypeWeaponId; cloak: PrototypeCloakId; reducedMotion: boolean; motionOutfit: MotionOutfit }
 const KEY = 'barnens-plugg-character-prototype-v1'
-const fallback: SavedDemo = { weapon: 'moon-bow', cloak: 'forest-cloak', reducedMotion: false }
+const fallback: SavedDemo = { weapon: 'moon-bow', cloak: 'forest-cloak', reducedMotion: false, motionOutfit: 'star-cloak' }
 
 function readSaved(): SavedDemo {
   try { return { ...fallback, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') } } catch { return fallback }
@@ -44,8 +45,9 @@ function CharacterPreview() {
         <section className="character-demo__panel">
           <h2>{view === 'figure' ? 'Garderob' : view === 'battle' ? 'Stridskontroll' : view === 'rig' ? 'Riggkontroll' : 'Rörelsekontroll v3'}</h2>
           {view === 'motion' ? <>
-            <p>Sex sammanhängande helkroppsposer testar balanserad ståställning, korrekt handgrepp och naturlig efterrörelse. Manteln är medvetet låst i detta visuella prov.</p>
+            <p>Sex sammanhängande helkroppsposer testar balanserad ståställning, korrekt handgrepp och naturlig efterrörelse. Växla både vapen och klädsel direkt i detta visuella prov.</p>
             <h3>Vapen</h3><div className="character-demo__choices">{PROTOTYPE_WEAPONS.map((item) => <button key={item.id} aria-pressed={saved.weapon === item.id} onClick={() => { setSaved((old) => ({ ...old, weapon: item.id })); playMotion(0) }}>{item.name}</button>)}</div>
+            <h3>Klädsel</h3><div className="character-demo__choices"><button aria-pressed={saved.motionOutfit === 'star-cloak'} onClick={() => { setSaved((old) => ({ ...old, motionOutfit: 'star-cloak' })); playMotion(0) }}>Stjärnmantel</button><button aria-pressed={saved.motionOutfit === 'light-armor'} onClick={() => { setSaved((old) => ({ ...old, motionOutfit: 'light-armor' })); playMotion(0) }}>Lätt rustning</button></div>
             <div className="character-demo__controls"><button onClick={() => playMotion(0)}>Grundställning</button><button onClick={() => playMotion(2)}>{isSwordMotion ? 'Ladda slaget' : 'Fullt drag'}</button><button onClick={() => playMotion(3)}>{isSwordMotion ? 'Kontrollerat slag' : 'Släpp'}</button><button onClick={() => playMotion(5)}>Återhämtning</button><button onClick={() => playMotion('play')}>Spela hela</button></div>
           </> : <>
             <p>{view === 'figure' ? 'Byt utrustning och spela en pose direkt.' : view === 'rig' ? 'Den här lagrade delen är en teknisk jämförelse, inte en visuell riktning. Den visar varför en produktionsrigg måste byggas från godkända poser.' : 'Samma hjälte och rigg används i reaktionerna.'}</p>
@@ -61,8 +63,8 @@ function CharacterPreview() {
         <section className="character-demo__panel">
           <h2>{view === 'figure' ? 'Posprov' : view === 'battle' ? 'Rätt/fel-reaktion' : view === 'rig' ? 'Modulär hjälte · teknisk jämförelse' : `${isSwordMotion ? 'Svärdssekvens' : 'Bågsekvens'} med naturlig kroppshållning`}</h2>
           {view === 'motion' ? <>
-            <div className="character-demo__stage character-demo__stage--motion"><BowMotionStudyV3 key={`motion-${run}`} mode={motionMode} weapon={saved.weapon} reducedMotion={saved.reducedMotion} /></div>
-            <p className="character-demo__note">V3 ersätter v2 som visuellt rörelseprov. Den demonstrerar korrekt kroppsspråk och vapenfattning för båge och svärd; den är fortfarande ett sammanhängande poseark, inte de frilagda produktionslager som behövs för kläd- och vapenbyte.</p>
+            <div className="character-demo__stage character-demo__stage--motion"><BowMotionStudyV3 key={`motion-${run}`} mode={motionMode} weapon={saved.weapon} outfit={saved.motionOutfit} reducedMotion={saved.reducedMotion} /></div>
+            <p className="character-demo__note">Klädprovet visar att stjärnmantel och lätt rustning fungerar med båge och svärd utan att ståställningen går sönder. Än så länge är varje klädsel ett sammanhängande poseark; slutversionen behöver frilagda produktionslager för verkligt modulära plagg.</p>
           </> : view === 'rig' ? <>
             <div className="character-demo__stage character-demo__stage--rig"><ModularHeroRig key={`rig-${run}`} weapon={saved.weapon} cloak={saved.cloak} motion={motion} reducedMotion={saved.reducedMotion} /></div>
             <p className="character-demo__note">Denna äldre tekniska rigg använder frilagda delar och ledpunkter, men är inte visuellt godkänd. Behåll den endast som jämförelse för nästa produktionsrigg.</p>
