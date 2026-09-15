@@ -38,7 +38,7 @@ export function ModularHeroRig({ weapon, cloak, motion, reducedMotion = false }:
   const weaponName = weapon === 'moon-bow' ? 'Månbågen' : 'Solklingan'
   const cloakName = cloak === 'star-cloak' ? 'stjärnmanteln' : 'skogsmanteln'
 
-  return <div className={`modular-hero modular-hero--${pose} modular-hero--${weapon} modular-hero--${cloak}`} role="img" aria-label={`Modulär v2-hjälte med ${weaponName} och ${cloakName}`}>
+  return <div className={`modular-hero modular-hero--${pose} modular-hero--${weapon} modular-hero--${cloak}${reducedMotion ? ' modular-hero--paused' : ''}`} role="img" aria-label={`Modulär v2-hjälte med ${weaponName} och ${cloakName}`}>
     <div className="modular-hero__shadow" />
     <div className="modular-hero__cloak" aria-hidden="true">
       <Part className="modular-hero__cloak-left" name="cloak-left" />
