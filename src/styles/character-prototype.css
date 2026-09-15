@@ -36,14 +36,15 @@
 .modular-hero__leg { position:absolute; z-index:2; top:65px; width:80px; height:133px; transform-origin:50% 8%; }
 .modular-hero__leg--left { left:8px; }
 .modular-hero__leg--right { right:5px; }
-.modular-hero__shin { position:absolute; top:109px; left:-3px; width:86px; height:132px; transform-origin:50% 9%; }
+.modular-hero__shin { position:absolute; z-index:-1; top:97px; left:-3px; width:86px; height:132px; transform-origin:50% 9%; }
 .modular-hero__torso { position:absolute; z-index:5; left:85px; top:105px; width:220px; height:198px; transform-origin:50% 88%; }
-.modular-hero__torso-art { position:absolute; z-index:4; inset:0; clip-path:polygon(24% 0,76% 0,78% 100%,22% 100%); }
+.modular-hero__torso-art { position:absolute; z-index:4; inset:0; }
 .modular-hero__head { position:absolute; z-index:8; left:45px; top:-102px; width:130px!important; height:138px!important; transform-origin:50% 88%; filter:drop-shadow(0 5px 5px #0005); }
-.modular-hero__collar { position:absolute; z-index:9; left:30px; top:4px; width:160px!important; height:128px!important; object-position:bottom; transform-origin:50% 18%; }
+.modular-hero__collar { display:none!important; }
 .modular-hero__arm { position:absolute; z-index:3; top:28px; width:88px; height:90px; }
 .modular-hero__arm--left { left:-7px; transform-origin:78% 15%; }
-.modular-hero__arm--right { right:-5px; z-index:6; transform-origin:22% 15%; }
+.modular-hero__arm--right { right:-5px; transform-origin:22% 15%; }
+.modular-hero__arm > svg:first-child { opacity:0; }
 .modular-hero__forearm { position:absolute; top:62px; width:76px; height:124px; transform-origin:50% 10%; }
 .modular-hero__arm--left .modular-hero__forearm { left:-17px; }
 .modular-hero__arm--right .modular-hero__forearm { right:-17px; }
