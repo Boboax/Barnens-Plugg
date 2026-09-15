@@ -25,19 +25,22 @@
 .modular-hero { position:relative; width:390px; height:590px; transform:scale(.86); transform-origin:center bottom; --rig-time:1.05s; }
 .modular-hero svg { display:block; width:100%; height:100%; overflow:hidden; pointer-events:none; }
 .modular-hero__shadow { position:absolute; left:106px; bottom:12px; width:205px; height:30px; border-radius:50%; background:#08071299; filter:blur(7px); }
-.modular-hero__cloak { position:absolute; z-index:1; left:70px; top:120px; width:260px; height:320px; transform-origin:50% 8%; }
+.modular-hero__cloak { position:absolute; z-index:1; left:85px; top:116px; width:220px; height:330px; transform-origin:50% 8%; }
 .modular-hero__cloak svg { position:absolute; top:0; transform-origin:50% 5%; filter:drop-shadow(0 8px 8px #0007); }
-.modular-hero__cloak-left { left:-5px; width:145px!important; object-position:top right; }
-.modular-hero__cloak-center { left:54px; width:160px!important; }
-.modular-hero__cloak-right { right:-5px; width:145px!important; object-position:top left; }
+.modular-hero__cloak-left,.modular-hero__cloak-right { display:none!important; }
+.modular-hero__cloak-center { left:0; width:220px!important; }
 .modular-hero--forest-cloak .modular-hero__cloak svg,.modular-hero--forest-cloak .modular-hero__collar { filter:hue-rotate(72deg) saturate(.72) brightness(.88) drop-shadow(0 8px 8px #0007); }
 .modular-hero__pelvis { position:absolute; z-index:3; left:123px; top:275px; width:145px; height:100px; transform-origin:50% 22%; }
 .modular-hero__pelvis-art { position:absolute; z-index:4; inset:0; }
 .modular-hero__leg { position:absolute; z-index:2; top:65px; width:80px; height:133px; transform-origin:50% 8%; }
 .modular-hero__leg--left { left:8px; }
 .modular-hero__leg--right { right:5px; }
-.modular-hero__shin { position:absolute; z-index:-1; top:97px; left:-3px; width:86px; height:132px; transform-origin:50% 9%; }
+.modular-hero__leg > svg { position:relative; z-index:2; }
+.modular-hero__shin { position:absolute; z-index:1; top:85px; left:-3px; width:86px; height:132px; transform-origin:50% 9%; }
 .modular-hero__torso { position:absolute; z-index:5; left:85px; top:105px; width:220px; height:198px; transform-origin:50% 88%; }
+.modular-hero__torso::before,.modular-hero__torso::after { content:""; position:absolute; z-index:7; top:20px; width:24px; height:31px; border:1px solid #c7a05e; border-radius:52% 52% 46% 46%; background:linear-gradient(145deg,#287e9b,#082f43 72%); box-shadow:0 3px 5px #0006; }
+.modular-hero__torso::before { left:43px; transform:rotate(-16deg); }
+.modular-hero__torso::after { right:43px; transform:rotate(16deg); }
 .modular-hero__torso-art { position:absolute; z-index:4; inset:0; }
 .modular-hero__head { position:absolute; z-index:8; left:45px; top:-102px; width:130px!important; height:138px!important; transform-origin:50% 88%; filter:drop-shadow(0 5px 5px #0005); }
 .modular-hero__collar { display:none!important; }
