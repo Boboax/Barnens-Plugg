@@ -45,7 +45,7 @@ export function ProductionPoseAnimatorV5({
   const reactionFrames: ProductionPoseFrame[] = poseSequence === 'guard' ? [0, 1, 2, 3, 4, 5] : [3, 4]
   const visibleFrames = poseSequence === 'attack' ? ([0, 1, 2, 3, 4, 5] as ProductionPoseFrame[]) : reactionFrames
   const labels = poseSequence === 'attack' ? attackSequence.labels : reactionLabels
-  const timing = poseSequence === 'attack' ? attackSequence.timing : poseSequence === 'guard' ? [0, 180, 370, 570, 800, 1100] : [0, 420]
+  const timing = poseSequence === 'attack' ? attackSequence.timing : poseSequence === 'guard' ? [0, 420, 610, 790, 990, 1250] : [0, 420]
   const showFrame = (next: ProductionPoseFrame) => {
     setPreviousFrame(frameRef.current)
     frameRef.current = next
