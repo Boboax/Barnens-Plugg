@@ -33,18 +33,19 @@ export function ProductionPoseAnimatorV5({
   poseSequence?: ProductionPoseSequence
 }) {
   const [systemReducedMotion, setSystemReducedMotion] = useState(false)
-  const [frame, setFrame] = useState<ProductionPoseFrame>(0)
-  const [previousFrame, setPreviousFrame] = useState<ProductionPoseFrame>(0)
-  const frameRef = useRef<ProductionPoseFrame>(0)
+  const initialFrame: ProductionPoseFrame = poseSequence === 'victory' ? 3 : 0
+  const [frame, setFrame] = useState<ProductionPoseFrame>(initialFrame)
+  const [previousFrame, setPreviousFrame] = useState<ProductionPoseFrame>(initialFrame)
+  const frameRef = useRef<ProductionPoseFrame>(initialFrame)
   const paused = reducedMotion || systemReducedMotion
   const attackSequence = sequences[weapon]
   const reactionLabels = poseSequence === 'guard'
-    ? ['Går i försvar', 'Blockerar och kliver undan', 'Återtar balansen']
-    : ['Segern sjunker in', 'Jublar', 'Lugn segerpose']
-  const reactionFrames: ProductionPoseFrame[] = poseSequence === 'guard' ? [0, 1, 2] : [3, 4, 5]
+    ? ['Upptäcker anfallet', 'Blockerar träffen', 'Pressas bakåt', 'Tappar balansen', 'Fångar upp sig', 'Reser sig igen']
+    : ['Segern sjunker in', 'Jublar']
+  const reactionFrames: ProductionPoseFrame[] = poseSequence === 'guard' ? [0, 1, 2, 3, 4, 5] : [3, 4]
   const visibleFrames = poseSequence === 'attack' ? ([0, 1, 2, 3, 4, 5] as ProductionPoseFrame[]) : reactionFrames
   const labels = poseSequence === 'attack' ? attackSequence.labels : reactionLabels
-  const timing = poseSequence === 'attack' ? attackSequence.timing : poseSequence === 'guard' ? [0, 300, 760] : [0, 380, 940]
+  const timing = poseSequence === 'attack' ? attackSequence.timing : poseSequence === 'guard' ? [0, 180, 370, 570, 800, 1100] : [0, 420]
   const showFrame = (next: ProductionPoseFrame) => {
     setPreviousFrame(frameRef.current)
     frameRef.current = next
@@ -61,7 +62,7 @@ export function ProductionPoseAnimatorV5({
 
   useEffect(() => {
     if (paused) {
-      showFrame(poseSequence === 'guard' ? 1 : visibleFrames[visibleFrames.length - 1])
+      showFrame(poseSequence === 'guard' ? 4 : visibleFrames[visibleFrames.length - 1])
       return
     }
     if (mode !== 'play') {
@@ -77,10 +78,12 @@ export function ProductionPoseAnimatorV5({
   const isLightArmor = outfit === 'light-armor'
   const spriteUrl = poseSequence === 'attack'
     ? `${import.meta.env.BASE_URL}art/prototype-v3/hero-${attackSequence.file}${isLightArmor ? '-light-armor' : ''}-motion-sheet-v3.webp`
-    : `${import.meta.env.BASE_URL}art/prototype-v5/hero-sun-sword-light-armor-reactions-v5.webp`
+    : poseSequence === 'guard'
+      ? `${import.meta.env.BASE_URL}art/prototype-v5/hero-sun-sword-light-armor-failure-v5.webp`
+      : `${import.meta.env.BASE_URL}art/prototype-v5/hero-sun-sword-light-armor-reactions-v5.webp`
   const position = (value: number) => `${(value % 3) * 50}% ${Math.floor(value / 3) * 100}%`
   const localFrame = Math.max(0, visibleFrames.indexOf(frame))
-  const sequenceName = poseSequence === 'attack' ? (isSword ? 'Svärdsattack' : 'Bågattack') : poseSequence === 'guard' ? 'Fel svar, säker undanmanöver' : 'Seger'
+  const sequenceName = poseSequence === 'attack' ? (isSword ? 'Svärdsattack' : 'Bågattack') : poseSequence === 'guard' ? 'Fel svar, blockering och tillfälligt bakslag' : 'Seger'
 
   return <div
     className={`production-pose-v5${isSword ? ' production-pose-v5--sword' : ''}${paused ? ' production-pose-v5--paused' : ''}`}
