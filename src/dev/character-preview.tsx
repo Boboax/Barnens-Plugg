@@ -5,6 +5,7 @@ import type { CharacterMotion, PrototypeCloakId, PrototypeWeaponId } from '../do
 import { PROTOTYPE_CLOAKS, PROTOTYPE_WEAPONS } from '../domain/character'
 import { CharacterFigure } from '../ui/components/CharacterFigure'
 import { ProductionPoseAnimatorV5, type ProductionPoseFrame, type ProductionPoseMode, type ProductionPoseSequence } from '../ui/components/ProductionPoseAnimatorV5'
+import { BossPoseAnimator, type BossPoseSequence } from '../ui/components/BossPoseAnimator'
 import { PrototypeBoss } from '../ui/components/PrototypeBoss'
 import '../styles/character-prototype.css'
 
@@ -15,16 +16,6 @@ const fallback: SavedDemo = { weapon: 'moon-bow', cloak: 'forest-cloak', reduced
 
 function readSaved(): SavedDemo {
   try { return { ...fallback, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') } } catch { return fallback }
-}
-
-function PaintedBossCast({ run, mode, paused }: { run: number; mode: ProductionPoseMode; paused: boolean }) {
-  const phase = mode === 'play' ? 'play' : `frame-${mode}`
-  return <div key={`painted-boss-cast-${run}`} className={`painted-boss-cast painted-boss-cast--${phase}${paused ? ' painted-boss-cast--paused' : ''}`} aria-hidden="true">
-    <img src={`${import.meta.env.BASE_URL}art/boss/tabelldraken.webp`} alt="" className="painted-boss-cast__boss" />
-    <span className="painted-boss-cast__charge" />
-    <span className="painted-boss-cast__projectile" />
-    <span className="painted-boss-cast__impact" />
-  </div>
 }
 
 function CharacterPreview() {
@@ -44,13 +35,14 @@ function CharacterPreview() {
   }
   const isSwordMotion = saved.weapon === 'sun-blade'
   const bossMotion: CharacterMotion = motion === 'guard' ? 'guard' : motion === 'attack' ? 'attack' : motion === 'victory' ? 'victory' : 'idle'
+  const bossSequence: BossPoseSequence = poseSequence === 'guard' ? 'attack' : poseSequence === 'victory' ? 'defeat' : 'hit'
   return <main className="character-demo">
     <div className="character-demo__inner">
       <p className="character-demo__eyebrow">TESTPROTOTYP · PÅHITTAD PROFIL · {__APP_VERSION__}</p>
       <h1>Hjälte och bossfight</h1>
       <p className="character-demo__lead">Här provar vi naturlig kroppsrörelse, viktfördelning och vapenfattning. Detta är ett visuellt rörelseprov, inte godkänd slutkonst eller produktionsrigg.</p>
       <nav className="character-demo__tabs" aria-label="Prototypvyer">
-        <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Poseanimation v5</button>
+        <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v6</button>
         <button aria-pressed={view === 'figure'} onClick={() => setView('figure')}>Äldre garderobstest</button>
         <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Äldre bossflöde</button>
         <button disabled>Skattkista · nästa etapp</button>
@@ -78,11 +70,11 @@ function CharacterPreview() {
         <section className="character-demo__panel">
           <h2>{view === 'figure' ? 'Posprov' : view === 'battle' ? 'Rätt/fel-reaktion' : poseSequence === 'guard' ? 'Fel svar · blockeras och tappar balansen' : poseSequence === 'victory' ? 'Seger · stabil triumfpose' : `${isSwordMotion ? 'Svärdssekvens' : 'Bågsekvens'} · samma fas för båda kläderna`}</h2>
           {view === 'motion' ? <>
-            <div className={`character-demo__stage character-demo__stage--motion${poseSequence === 'guard' ? ' character-demo__stage--boss-cast' : ''}`}>
-              {poseSequence === 'guard' && <PaintedBossCast run={run} mode={motionMode} paused={saved.reducedMotion} />}
+            <div className="character-demo__stage character-demo__stage--motion character-demo__stage--boss-cast">
+              <BossPoseAnimator key={`boss-pose-${run}`} sequence={bossSequence} mode={motionMode} reducedMotion={saved.reducedMotion} />
               <ProductionPoseAnimatorV5 key={`motion-${run}`} mode={motionMode} weapon={saved.weapon} outfit={saved.motionOutfit} poseSequence={poseSequence} reducedMotion={saved.reducedMotion} />
             </div>
-            <p className="character-demo__note">{poseSequence === 'attack' ? 'Attackprovet stöder båda vapnen och båda kläderna.' : poseSequence === 'guard' ? 'Fel svar: Tabelldraken laddar och skjuter en blåviolett projektil som hjälten blockerar. Provet är avgränsat till solklinga och lätt rustning.' : 'Segerprovet är avgränsat till solklinga och lätt rustning.'}</p>
+            <p className="character-demo__note">{poseSequence === 'attack' ? 'Rätt svar: hjälten attackerar och Tabelldraken reagerar tydligt på träffen. Båda vapnen och båda kläderna stöds.' : poseSequence === 'guard' ? 'Fel svar: Tabelldraken laddar och skjuter en blåviolett projektil som hjälten blockerar. Provet är avgränsat till solklinga och lätt rustning.' : 'Seger: draken tappar kraft och övergår till spelets befintliga besegrade sovpose.'}</p>
           </> : <>
             <div className={`character-demo__stage ${view === 'figure' ? 'character-demo__stage--single' : ''}`}>
               <CharacterFigure key={`hero-${run}`} weapon={saved.weapon} cloak={saved.cloak} motion={motion} reducedMotion={saved.reducedMotion} className="character-demo__hero" />
@@ -92,7 +84,7 @@ function CharacterPreview() {
           </>}
         </section>
       </div>
-      <footer className="character-demo__footer"><span>V5 testar attack, bossprojektil, blockering, bakslag, seger, direktval av bildruta och rörelsepaus.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
+      <footer className="character-demo__footer"><span>V6 testar målad bossattack, träffreaktion, besegrad pose, direktval av bildruta och rörelsepaus.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
     </div>
   </main>
 }
