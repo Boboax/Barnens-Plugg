@@ -78,7 +78,7 @@ export function BossPoseAnimator({
   const finalPose = `${import.meta.env.BASE_URL}${boss.finalPose}`
 
   return <div className={`boss-pose boss-pose--${bossId} boss-pose--${sequence}${reducedMotion ? ' boss-pose--paused' : ''}`} role="img" aria-label={sequence === 'attack' ? boss.attackLabel : sequence === 'hit' ? `${boss.name} träffas och ryggar tillbaka` : `${boss.name} besegras`}>
-    <img key={`${sequence}-${frame}`} className="boss-pose__sprite" src={pose} alt="" />
+    <img key={`${sequence}-${frame}`} className={`boss-pose__sprite${defeated ? ' boss-pose__sprite--defeated' : ''}`} src={pose} alt="" />
     {sequence === 'attack' && <><span className="boss-pose__charge"/><span className="boss-pose__projectile"/><span className="boss-pose__block-impact"/></>}
     {sequence === 'hit' && <span className="boss-pose__hero-impact"/>}
     {sequence === 'defeat' && <img className={`boss-pose__defeated${defeated ? ' boss-pose__defeated--visible' : ''}`} src={finalPose} alt=""/>}
