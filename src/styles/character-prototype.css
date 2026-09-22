@@ -37,6 +37,7 @@
 .boss-pose--hit .boss-pose__hero-impact { animation:boss-pose-hero-impact 1.2s ease-out both; }
 .boss-pose--brakbjornen .boss-pose__charge { left:67%; top:25%; background:radial-gradient(circle,#fff7cf 0 11%,#ffd76a 20%,#dc812e 48%,#6b3415 69%,transparent 74%); box-shadow:0 0 12px #fff1ae,0 0 27px #e89b3f; }
 .boss-pose--brakbjornen .boss-pose__projectile { left:59%; top:31%; border-radius:50% 8% 50% 50%; background:conic-gradient(from 45deg,#fff4b5 0 23%,#d98a35 24% 48%,#8b4a20 49% 73%,#ffd96a 74% 100%); box-shadow:0 0 12px #fff0a1,0 0 29px #e89136,0 0 44px #8b461d; }
+.boss-pose--brakbjornen .boss-pose__projectile::before { content:"¼"; position:absolute; z-index:1; inset:0; display:grid; place-items:center; color:#fff8cf; font-size:clamp(10px,2.4vw,17px); font-weight:950; line-height:1; text-shadow:0 1px 2px #542307,0 0 5px #fff2ac; }
 .boss-pose--brakbjornen .boss-pose__projectile::after { background:linear-gradient(90deg,#ffeaa3cc,#d9893f88,transparent); }
 .boss-pose--brakbjornen .boss-pose__block-impact { border-color:#ffe9a3; box-shadow:0 0 12px #fff,0 0 28px #e89b3f,inset 0 0 17px #d68032; }
 .boss-pose--paused .boss-pose__charge,.boss-pose--paused .boss-pose__projectile,.boss-pose--paused .boss-pose__block-impact,.boss-pose--paused .boss-pose__hero-impact { display:none; }

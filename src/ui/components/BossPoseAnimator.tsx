@@ -5,14 +5,16 @@ export type BossPoseSequence = 'attack' | 'hit' | 'defeat'
 export type BossId = 'tabelldraken' | 'brakbjornen'
 type BossFrame = 0 | 1 | 2 | 3 | 4 | 5
 
-const bosses: Record<BossId, { name: string; frames: string[]; finalPose: string }> = {
+const bosses: Record<BossId, { name: string; attackLabel: string; frames: string[]; finalPose: string }> = {
   tabelldraken: {
     name: 'Tabelldraken',
+    attackLabel: 'Tabelldraken anfaller',
     frames: [1, 2, 3, 4, 5, 6].map((frame) => `art/prototype-v6/tabelldraken-battle-frame-${frame}-v2.png`),
     finalPose: 'art/boss/tabelldraken-besegrad.webp',
   },
   brakbjornen: {
     name: 'Bråkbjörnen',
+    attackLabel: 'Bråkbjörnen anfaller med bråkskölden',
     frames: [
       'art/boss/brakbjorren.webp',
       'art/prototype-v7/brakbjornen-battle-frame-2-v1.png',
@@ -75,7 +77,7 @@ export function BossPoseAnimator({
   const pose = `${import.meta.env.BASE_URL}${boss.frames[frame]}`
   const finalPose = `${import.meta.env.BASE_URL}${boss.finalPose}`
 
-  return <div className={`boss-pose boss-pose--${bossId} boss-pose--${sequence}${reducedMotion ? ' boss-pose--paused' : ''}`} role="img" aria-label={sequence === 'attack' ? `${boss.name} anfaller` : sequence === 'hit' ? `${boss.name} träffas och ryggar tillbaka` : `${boss.name} besegras`}>
+  return <div className={`boss-pose boss-pose--${bossId} boss-pose--${sequence}${reducedMotion ? ' boss-pose--paused' : ''}`} role="img" aria-label={sequence === 'attack' ? boss.attackLabel : sequence === 'hit' ? `${boss.name} träffas och ryggar tillbaka` : `${boss.name} besegras`}>
     <img key={`${sequence}-${frame}`} className="boss-pose__sprite" src={pose} alt="" />
     {sequence === 'attack' && <><span className="boss-pose__charge"/><span className="boss-pose__projectile"/><span className="boss-pose__block-impact"/></>}
     {sequence === 'hit' && <span className="boss-pose__hero-impact"/>}
