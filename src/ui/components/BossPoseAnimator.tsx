@@ -49,7 +49,7 @@ export function BossPoseAnimator({
   }, [mode, reducedMotion, sequence])
 
   const position = `${(frame % 3) * 50}% ${Math.floor(frame / 3) * 100}%`
-  const sheet = `${import.meta.env.BASE_URL}art/prototype-v6/tabelldraken-battle-sheet-v1.webp`
+  const sheet = `${import.meta.env.BASE_URL}art/prototype-v6/tabelldraken-battle-sheet-v2.png`
   const finalPose = `${import.meta.env.BASE_URL}art/boss/tabelldraken-besegrad.webp`
 
   return <div className={`boss-pose boss-pose--${sequence}${reducedMotion ? ' boss-pose--paused' : ''}`} role="img" aria-label={sequence === 'attack' ? 'Tabelldraken anfaller' : sequence === 'hit' ? 'Tabelldraken träffas och ryggar tillbaka' : 'Tabelldraken besegras och somnar'}>
