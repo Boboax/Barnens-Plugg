@@ -2,7 +2,28 @@ import { useEffect, useState } from 'react'
 import type { ProductionPoseFrame, ProductionPoseMode } from './ProductionPoseAnimatorV5'
 
 export type BossPoseSequence = 'attack' | 'hit' | 'defeat'
+export type BossId = 'tabelldraken' | 'brakbjornen'
 type BossFrame = 0 | 1 | 2 | 3 | 4 | 5
+
+const bosses: Record<BossId, { name: string; frames: string[]; finalPose: string }> = {
+  tabelldraken: {
+    name: 'Tabelldraken',
+    frames: [1, 2, 3, 4, 5, 6].map((frame) => `art/prototype-v6/tabelldraken-battle-frame-${frame}-v2.png`),
+    finalPose: 'art/boss/tabelldraken-besegrad.webp',
+  },
+  brakbjornen: {
+    name: 'Bråkbjörnen',
+    frames: [
+      'art/boss/brakbjorren.webp',
+      'art/prototype-v7/brakbjornen-battle-frame-2-v1.png',
+      'art/prototype-v7/brakbjornen-battle-frame-3-v1.png',
+      'art/prototype-v7/brakbjornen-battle-frame-4-v1.png',
+      'art/prototype-v7/brakbjornen-battle-frame-5-v1.png',
+      'art/boss/brakbjorren-besegrad.webp',
+    ],
+    finalPose: 'art/boss/brakbjorren-besegrad.webp',
+  },
+}
 
 const playback: Record<BossPoseSequence, { frames: BossFrame[]; timing: number[] }> = {
   attack: { frames: [0, 1, 2], timing: [0, 360, 700] },
@@ -17,14 +38,17 @@ const manualFrames: Record<BossPoseSequence, BossFrame[]> = {
 }
 
 export function BossPoseAnimator({
+  bossId = 'tabelldraken',
   sequence,
   mode = 'play',
   reducedMotion = false,
 }: {
+  bossId?: BossId
   sequence: BossPoseSequence
   mode?: ProductionPoseMode
   reducedMotion?: boolean
 }) {
+  const boss = bosses[bossId]
   const [frame, setFrame] = useState<BossFrame>(playback[sequence].frames[0])
   const [defeated, setDefeated] = useState(false)
 
@@ -48,10 +72,10 @@ export function BossPoseAnimator({
     return () => timers.forEach(window.clearTimeout)
   }, [mode, reducedMotion, sequence])
 
-  const pose = `${import.meta.env.BASE_URL}art/prototype-v6/tabelldraken-battle-frame-${frame + 1}-v2.png`
-  const finalPose = `${import.meta.env.BASE_URL}art/boss/tabelldraken-besegrad.webp`
+  const pose = `${import.meta.env.BASE_URL}${boss.frames[frame]}`
+  const finalPose = `${import.meta.env.BASE_URL}${boss.finalPose}`
 
-  return <div className={`boss-pose boss-pose--${sequence}${reducedMotion ? ' boss-pose--paused' : ''}`} role="img" aria-label={sequence === 'attack' ? 'Tabelldraken anfaller' : sequence === 'hit' ? 'Tabelldraken träffas och ryggar tillbaka' : 'Tabelldraken besegras och somnar'}>
+  return <div className={`boss-pose boss-pose--${bossId} boss-pose--${sequence}${reducedMotion ? ' boss-pose--paused' : ''}`} role="img" aria-label={sequence === 'attack' ? `${boss.name} anfaller` : sequence === 'hit' ? `${boss.name} träffas och ryggar tillbaka` : `${boss.name} besegras`}>
     <img key={`${sequence}-${frame}`} className="boss-pose__sprite" src={pose} alt="" />
     {sequence === 'attack' && <><span className="boss-pose__charge"/><span className="boss-pose__projectile"/><span className="boss-pose__block-impact"/></>}
     {sequence === 'hit' && <span className="boss-pose__hero-impact"/>}
