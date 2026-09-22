@@ -48,12 +48,11 @@ export function BossPoseAnimator({
     return () => timers.forEach(window.clearTimeout)
   }, [mode, reducedMotion, sequence])
 
-  const position = `${(frame % 3) * 50}% ${Math.floor(frame / 3) * 100}%`
-  const sheet = `${import.meta.env.BASE_URL}art/prototype-v6/tabelldraken-battle-sheet-v2.png`
+  const pose = `${import.meta.env.BASE_URL}art/prototype-v6/tabelldraken-battle-frame-${frame + 1}-v2.png`
   const finalPose = `${import.meta.env.BASE_URL}art/boss/tabelldraken-besegrad.webp`
 
   return <div className={`boss-pose boss-pose--${sequence}${reducedMotion ? ' boss-pose--paused' : ''}`} role="img" aria-label={sequence === 'attack' ? 'Tabelldraken anfaller' : sequence === 'hit' ? 'Tabelldraken träffas och ryggar tillbaka' : 'Tabelldraken besegras och somnar'}>
-    <div key={`${sequence}-${frame}`} className="boss-pose__sprite" style={{ backgroundImage: `url(${sheet})`, backgroundPosition: position }} />
+    <img key={`${sequence}-${frame}`} className="boss-pose__sprite" src={pose} alt="" />
     {sequence === 'attack' && <><span className="boss-pose__charge"/><span className="boss-pose__projectile"/><span className="boss-pose__block-impact"/></>}
     {sequence === 'hit' && <span className="boss-pose__hero-impact"/>}
     {sequence === 'defeat' && <img className={`boss-pose__defeated${defeated ? ' boss-pose__defeated--visible' : ''}`} src={finalPose} alt=""/>}
