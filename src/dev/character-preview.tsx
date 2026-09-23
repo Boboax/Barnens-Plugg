@@ -13,6 +13,12 @@ type MotionOutfit = 'star-cloak' | 'light-armor'
 type SavedDemo = { weapon: PrototypeWeaponId; cloak: PrototypeCloakId; reducedMotion: boolean; motionOutfit: MotionOutfit }
 const KEY = 'barnens-plugg-character-prototype-v1'
 const fallback: SavedDemo = { weapon: 'moon-bow', cloak: 'forest-cloak', reducedMotion: false, motionOutfit: 'star-cloak' }
+const bossNames: Record<BossId, string> = { tabelldraken: 'Tabelldraken', brakbjornen: 'Bråkbjörnen', monsterormen: 'Mönsterormen' }
+const bossAttackNotes: Record<BossId, string> = {
+  tabelldraken: 'Fel svar: Tabelldraken laddar och skjuter en blåviolett projektil som hjälten blockerar.',
+  brakbjornen: 'Fel svar: Bråkskölden är Bråkbjörnens vapen. Han stöter fram den och skickar en gyllene ¼-tårtbit som hjälten blockerar.',
+  monsterormen: 'Fel svar: Mönsterormen drar ihop ringarna, fäller ut kobrahättan och skickar en cyan–magenta runprojektil som hjälten blockerar.',
+}
 
 function readSaved(): SavedDemo {
   try { return { ...fallback, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') } } catch { return fallback }
@@ -43,17 +49,17 @@ function CharacterPreview() {
       <h1>Hjälte och bossfight</h1>
       <p className="character-demo__lead">Här provar vi naturlig kroppsrörelse, viktfördelning och vapenfattning. Detta är ett visuellt rörelseprov, inte godkänd slutkonst eller produktionsrigg.</p>
       <nav className="character-demo__tabs" aria-label="Prototypvyer">
-        <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v7</button>
+        <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v8</button>
         <button aria-pressed={view === 'figure'} onClick={() => setView('figure')}>Äldre garderobstest</button>
         <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Äldre bossflöde</button>
         <button disabled>Skattkista · nästa etapp</button>
       </nav>
       <div className="character-demo__grid">
         <section className="character-demo__panel">
-          <h2>{view === 'figure' ? 'Garderob' : view === 'battle' ? 'Stridskontroll' : 'Produktionsprov v7'}</h2>
+          <h2>{view === 'figure' ? 'Garderob' : view === 'battle' ? 'Stridskontroll' : 'Produktionsprov v8'}</h2>
           {view === 'motion' ? <>
             <p>V5 använder riktiga helkroppsposer. Vapen och klädsel delar samma sex fasnummer, så samma ögonblick kan jämföras utan lösa kroppsdelar eller ändrad marklinje.</p>
-            <h3>Boss</h3><div className="character-demo__choices"><button aria-pressed={bossId === 'tabelldraken'} onClick={() => { setBossId('tabelldraken'); playMotion('play') }}>Tabelldraken</button><button aria-pressed={bossId === 'brakbjornen'} onClick={() => { setBossId('brakbjornen'); playMotion('play') }}>Bråkbjörnen</button></div>
+            <h3>Boss</h3><div className="character-demo__choices"><button aria-pressed={bossId === 'tabelldraken'} onClick={() => { setBossId('tabelldraken'); playMotion('play') }}>Tabelldraken</button><button aria-pressed={bossId === 'brakbjornen'} onClick={() => { setBossId('brakbjornen'); playMotion('play') }}>Bråkbjörnen</button><button aria-pressed={bossId === 'monsterormen'} onClick={() => { setBossId('monsterormen'); playMotion('play') }}>Mönsterormen</button></div>
             <h3>Händelse</h3><div className="character-demo__choices"><button aria-pressed={poseSequence === 'attack'} onClick={() => selectPoseSequence('attack')}>Rätt svar · attack</button><button aria-pressed={poseSequence === 'guard'} onClick={() => selectPoseSequence('guard')}>Fel svar · bakslag</button><button aria-pressed={poseSequence === 'victory'} onClick={() => selectPoseSequence('victory')}>Seger</button></div>
             <h3>Vapen</h3><div className="character-demo__choices">{PROTOTYPE_WEAPONS.map((item) => <button key={item.id} aria-pressed={saved.weapon === item.id} onClick={() => { setPoseSequence('attack'); setSaved((old) => ({ ...old, weapon: item.id })) }}>{item.name}</button>)}</div>
             <h3>Klädsel</h3><div className="character-demo__choices"><button aria-pressed={saved.motionOutfit === 'star-cloak'} onClick={() => { setPoseSequence('attack'); setSaved((old) => ({ ...old, motionOutfit: 'star-cloak' })) }}>Stjärnmantel</button><button aria-pressed={saved.motionOutfit === 'light-armor'} onClick={() => { setPoseSequence('attack'); setSaved((old) => ({ ...old, motionOutfit: 'light-armor' })) }}>Lätt rustning</button></div>
@@ -76,7 +82,7 @@ function CharacterPreview() {
               <BossPoseAnimator key={`boss-pose-${bossId}-${run}`} bossId={bossId} sequence={bossSequence} mode={motionMode} reducedMotion={saved.reducedMotion} />
               <ProductionPoseAnimatorV5 key={`motion-${run}`} mode={motionMode} weapon={saved.weapon} outfit={saved.motionOutfit} poseSequence={poseSequence} reducedMotion={saved.reducedMotion} />
             </div>
-            <p className="character-demo__note">{poseSequence === 'attack' ? `Rätt svar: hjälten attackerar och ${bossId === 'tabelldraken' ? 'Tabelldraken' : 'Bråkbjörnen'} reagerar tydligt på träffen. Båda vapnen och båda kläderna stöds.` : poseSequence === 'guard' ? bossId === 'tabelldraken' ? 'Fel svar: Tabelldraken laddar och skjuter en blåviolett projektil som hjälten blockerar. Provet är avgränsat till solklinga och lätt rustning.' : 'Fel svar: Bråkskölden är Bråkbjörnens vapen. Han stöter fram den och skickar en gyllene ¼-tårtbit som hjälten blockerar.' : `Seger: ${bossId === 'tabelldraken' ? 'draken' : 'björnen'} tappar kraft och övergår till spelets befintliga besegrade pose.`}</p>
+            <p className="character-demo__note">{poseSequence === 'attack' ? `Rätt svar: hjälten attackerar och ${bossNames[bossId]} reagerar tydligt på träffen. Båda vapnen och båda kläderna stöds.` : poseSequence === 'guard' ? bossAttackNotes[bossId] : `Seger: ${bossNames[bossId]} tappar kraft och övergår till spelets befintliga besegrade pose.`}</p>
           </> : <>
             <div className={`character-demo__stage ${view === 'figure' ? 'character-demo__stage--single' : ''}`}>
               <CharacterFigure key={`hero-${run}`} weapon={saved.weapon} cloak={saved.cloak} motion={motion} reducedMotion={saved.reducedMotion} className="character-demo__hero" />
@@ -86,7 +92,7 @@ function CharacterPreview() {
           </>}
         </section>
       </div>
-      <footer className="character-demo__footer"><span>V7 testar samma återanvändbara bossystem med Tabelldraken och Bråkbjörnen.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
+      <footer className="character-demo__footer"><span>V8 testar samma återanvändbara bossystem med Tabelldraken, Bråkbjörnen och Mönsterormen.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
     </div>
   </main>
 }

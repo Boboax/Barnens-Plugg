@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ProductionPoseFrame, ProductionPoseMode } from './ProductionPoseAnimatorV5'
 
 export type BossPoseSequence = 'attack' | 'hit' | 'defeat'
-export type BossId = 'tabelldraken' | 'brakbjornen'
+export type BossId = 'tabelldraken' | 'brakbjornen' | 'monsterormen'
 type BossFrame = 0 | 1 | 2 | 3 | 4 | 5
 
 const bosses: Record<BossId, { name: string; attackLabel: string; frames: string[]; finalPose: string }> = {
@@ -24,6 +24,19 @@ const bosses: Record<BossId, { name: string; attackLabel: string; frames: string
       'art/boss/brakbjorren-besegrad.webp',
     ],
     finalPose: 'art/boss/brakbjorren-besegrad.webp',
+  },
+  monsterormen: {
+    name: 'Mönsterormen',
+    attackLabel: 'Mönsterormen anfaller med en runprojektil',
+    frames: [
+      'art/boss/monsterormen.webp',
+      'art/prototype-v8/monsterormen-battle-frame-2-v1.png',
+      'art/prototype-v8/monsterormen-battle-frame-3-v1.png',
+      'art/prototype-v8/monsterormen-battle-frame-4-v1.png',
+      'art/prototype-v8/monsterormen-battle-frame-5-v1.png',
+      'art/boss/monsterormen-besegrad.webp',
+    ],
+    finalPose: 'art/boss/monsterormen-besegrad.webp',
   },
 }
 
