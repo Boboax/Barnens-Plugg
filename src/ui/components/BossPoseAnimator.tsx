@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ProductionPoseFrame, ProductionPoseMode } from './ProductionPoseAnimatorV5'
 
 export type BossPoseSequence = 'attack' | 'hit' | 'defeat'
-export type BossId = 'tabelldraken' | 'brakbjornen' | 'monsterormen'
+export type BossId = 'tabelldraken' | 'brakbjornen' | 'monsterormen' | 'plottrig'
 type BossAnimation = { frames: number[]; timing: number[] }
 type BossConfig = {
   name: string
@@ -56,6 +56,19 @@ const bosses: Record<BossId, BossConfig> = {
       hit: [0, 0, 0, 4, 5, 5],
       defeat: [4, 5, 6, 6, 6, 6],
     },
+  },
+  plottrig: {
+    name: 'Plottrig',
+    attackLabel: 'Plottrig ritar iväg ett virrigt diagram',
+    frames: [
+      'art/boss/plottrig.webp',
+      'art/prototype-v9/plottrig-battle-frame-2-v1.png',
+      'art/prototype-v9/plottrig-battle-frame-3-v1.png',
+      'art/prototype-v9/plottrig-battle-frame-4-v1.png',
+      'art/prototype-v9/plottrig-battle-frame-5-v1.png',
+      'art/boss/plottrig-besegrad.webp',
+    ],
+    finalPose: 'art/boss/plottrig-besegrad.webp',
   },
 }
 

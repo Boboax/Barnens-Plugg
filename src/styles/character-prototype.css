@@ -47,6 +47,12 @@
 .boss-pose--monsterormen .boss-pose__projectile::after { background:linear-gradient(90deg,#8ffcffdd,#cf57ff99,transparent); }
 .boss-pose--monsterormen .boss-pose__block-impact { border-color:#aefcff; box-shadow:0 0 12px #fff,0 0 28px #45e6ef,inset 0 0 17px #d45aff; }
 .boss-pose--monsterormen .boss-pose__defeated { clip-path:inset(0 0 0 8%); }
+.boss-pose--plottrig .boss-pose__charge { left:31%; top:17%; background:radial-gradient(circle,#fff 0 9%,#8ffcff 18%,#25c9d8 40%,#32718d 60%,transparent 73%); box-shadow:0 0 13px #9effff,0 0 28px #35d4df; }
+.boss-pose--plottrig .boss-pose__projectile { left:27%; top:22%; border:2px solid #9be9f1; border-radius:12% 30% 14% 28%; background:repeating-linear-gradient(0deg,transparent 0 20%,#83d0dc88 21% 23%),repeating-linear-gradient(90deg,transparent 0 20%,#83d0dc88 21% 23%),#f5f1dd; box-shadow:0 0 12px #eaffff,0 0 29px #45d9df,0 0 43px #1f718d; }
+.boss-pose--plottrig .boss-pose__projectile::before { content:"△"; position:absolute; z-index:1; inset:0; display:grid; place-items:center; color:#287991; font-size:clamp(13px,3vw,22px); font-weight:950; line-height:1; text-shadow:0 0 4px #fff; }
+.boss-pose--plottrig .boss-pose__projectile::after { background:linear-gradient(90deg,#bafaffdd,#42d5df99,transparent); }
+.boss-pose--plottrig .boss-pose__block-impact { border-color:#b8fbff; box-shadow:0 0 12px #fff,0 0 28px #42d7df,inset 0 0 17px #2d8298; }
+.boss-pose--plottrig .boss-pose__defeated { clip-path:inset(0 2% 0 8%); }
 .boss-pose--paused .boss-pose__charge,.boss-pose--paused .boss-pose__projectile,.boss-pose--paused .boss-pose__block-impact,.boss-pose--paused .boss-pose__hero-impact { display:none; }
 .painted-boss-cast { position:absolute!important; z-index:2!important; inset:0; pointer-events:none; overflow:hidden; }
 .painted-boss-cast__boss { position:absolute; z-index:2; width:38%; max-width:190px; height:auto; right:-1%; top:17%; transform-origin:72% 68%; filter:drop-shadow(0 14px 13px #000a); }
