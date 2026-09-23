@@ -3,9 +3,17 @@ import type { ProductionPoseFrame, ProductionPoseMode } from './ProductionPoseAn
 
 export type BossPoseSequence = 'attack' | 'hit' | 'defeat'
 export type BossId = 'tabelldraken' | 'brakbjornen' | 'monsterormen'
-type BossFrame = 0 | 1 | 2 | 3 | 4 | 5
+type BossAnimation = { frames: number[]; timing: number[] }
+type BossConfig = {
+  name: string
+  attackLabel: string
+  frames: string[]
+  finalPose: string
+  playback?: Partial<Record<BossPoseSequence, BossAnimation>>
+  manualFrames?: Partial<Record<BossPoseSequence, number[]>>
+}
 
-const bosses: Record<BossId, { name: string; attackLabel: string; frames: string[]; finalPose: string }> = {
+const bosses: Record<BossId, BossConfig> = {
   tabelldraken: {
     name: 'Tabelldraken',
     attackLabel: 'Tabelldraken anfaller',
@@ -31,22 +39,33 @@ const bosses: Record<BossId, { name: string; attackLabel: string; frames: string
     frames: [
       'art/boss/monsterormen.webp',
       'art/prototype-v8/monsterormen-battle-frame-2-v1.png',
+      'art/prototype-v8/monsterormen-battle-frame-2b-v1.png',
       'art/prototype-v8/monsterormen-battle-frame-3-v1.png',
       'art/prototype-v8/monsterormen-battle-frame-4-v1.png',
       'art/prototype-v8/monsterormen-battle-frame-5-v1.png',
       'art/boss/monsterormen-besegrad.webp',
     ],
     finalPose: 'art/boss/monsterormen-besegrad.webp',
+    playback: {
+      attack: { frames: [0, 1, 2, 3], timing: [0, 270, 520, 800] },
+      hit: { frames: [0, 4, 5], timing: [0, 620, 930] },
+      defeat: { frames: [4, 5, 6], timing: [0, 330, 720] },
+    },
+    manualFrames: {
+      attack: [0, 1, 2, 3, 3, 3],
+      hit: [0, 0, 0, 4, 5, 5],
+      defeat: [4, 5, 6, 6, 6, 6],
+    },
   },
 }
 
-const playback: Record<BossPoseSequence, { frames: BossFrame[]; timing: number[] }> = {
+const defaultPlayback: Record<BossPoseSequence, BossAnimation> = {
   attack: { frames: [0, 1, 2], timing: [0, 360, 700] },
   hit: { frames: [0, 3, 4], timing: [0, 620, 930] },
   defeat: { frames: [3, 4, 5], timing: [0, 330, 720] },
 }
 
-const manualFrames: Record<BossPoseSequence, BossFrame[]> = {
+const defaultManualFrames: Record<BossPoseSequence, number[]> = {
   attack: [0, 1, 1, 2, 2, 2],
   hit: [0, 0, 0, 3, 4, 4],
   defeat: [3, 4, 5, 5, 5, 5],
@@ -64,28 +83,29 @@ export function BossPoseAnimator({
   reducedMotion?: boolean
 }) {
   const boss = bosses[bossId]
-  const [frame, setFrame] = useState<BossFrame>(playback[sequence].frames[0])
+  const activePlayback = boss.playback?.[sequence] ?? defaultPlayback[sequence]
+  const activeManualFrames = boss.manualFrames?.[sequence] ?? defaultManualFrames[sequence]
+  const [frame, setFrame] = useState(activePlayback.frames[0])
   const [defeated, setDefeated] = useState(false)
 
   useEffect(() => {
     setDefeated(false)
     if (reducedMotion) {
-      setFrame(sequence === 'attack' ? 2 : sequence === 'hit' ? 4 : 5)
+      setFrame(activePlayback.frames.at(-1) ?? activePlayback.frames[0])
       setDefeated(sequence === 'defeat')
       return
     }
     if (mode !== 'play') {
-      const selected = manualFrames[sequence][mode as ProductionPoseFrame]
+      const selected = activeManualFrames[mode as ProductionPoseFrame]
       setFrame(selected)
       setDefeated(sequence === 'defeat' && mode >= 2)
       return
     }
-    const active = playback[sequence]
-    setFrame(active.frames[0])
-    const timers = active.timing.slice(1).map((delay, index) => window.setTimeout(() => setFrame(active.frames[index + 1]), delay))
+    setFrame(activePlayback.frames[0])
+    const timers = activePlayback.timing.slice(1).map((delay, index) => window.setTimeout(() => setFrame(activePlayback.frames[index + 1]), delay))
     if (sequence === 'defeat') timers.push(window.setTimeout(() => setDefeated(true), 1080))
     return () => timers.forEach(window.clearTimeout)
-  }, [mode, reducedMotion, sequence])
+  }, [activeManualFrames, activePlayback, mode, reducedMotion, sequence])
 
   const pose = `${import.meta.env.BASE_URL}${boss.frames[frame]}`
   const finalPose = `${import.meta.env.BASE_URL}${boss.finalPose}`
