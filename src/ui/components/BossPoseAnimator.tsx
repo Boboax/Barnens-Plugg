@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ProductionPoseFrame, ProductionPoseMode } from './ProductionPoseAnimatorV5'
 
 export type BossPoseSequence = 'attack' | 'hit' | 'defeat'
-export type BossId = 'tabelldraken' | 'brakbjornen' | 'monsterormen' | 'plottrig' | 'stenjatten'
+export type BossId = 'tabelldraken' | 'brakbjornen' | 'monsterormen' | 'plottrig' | 'stenjatten' | 'procentspoket'
 type BossAnimation = { frames: number[]; timing: number[] }
 type BossConfig = {
   name: string
@@ -82,6 +82,19 @@ const bosses: Record<BossId, BossConfig> = {
       'art/boss/stenjatten-besegrad.webp',
     ],
     finalPose: 'art/boss/stenjatten-besegrad.webp',
+  },
+  procentspoket: {
+    name: 'Procentspöket',
+    attackLabel: 'Procentspöket kastar en lysande procentvirvel',
+    frames: [
+      'art/boss/procentspoket.webp',
+      'art/prototype-v11/procentspoket-battle-frame-2-v1.png',
+      'art/prototype-v11/procentspoket-battle-frame-3-v1.png',
+      'art/prototype-v11/procentspoket-battle-frame-4-v1.png',
+      'art/prototype-v11/procentspoket-battle-frame-5-v1.png',
+      'art/boss/procentspoket-besegrad.webp',
+    ],
+    finalPose: 'art/boss/procentspoket-besegrad.webp',
   },
 }
 
