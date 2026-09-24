@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 /** Bygger en isolerad statisk demo till Preview-repots undermapp. */
 export default defineConfig({
   base: '/Barnens-Plugg-Preview/character-prototype/',
-  define: { __APP_VERSION__: JSON.stringify('character-prototype-v9-plottrig-v1') },
+  define: { __APP_VERSION__: JSON.stringify('character-prototype-v10-stenjatten-v1') },
   plugins: [react()],
   build: {
     outDir: 'dist-character-preview',

@@ -53,6 +53,11 @@
 .boss-pose--plottrig .boss-pose__projectile::after { background:linear-gradient(90deg,#bafaffdd,#42d5df99,transparent); }
 .boss-pose--plottrig .boss-pose__block-impact { border-color:#b8fbff; box-shadow:0 0 12px #fff,0 0 28px #42d7df,inset 0 0 17px #2d8298; }
 .boss-pose--plottrig .boss-pose__defeated { clip-path:inset(0 2% 0 8%); }
+.boss-pose--stenjatten .boss-pose__charge { left:43%; top:35%; background:radial-gradient(circle,#fff 0 9%,#91ffff 18%,#28dce1 39%,#177c89 61%,transparent 73%); box-shadow:0 0 13px #9cffff,0 0 29px #27dbe1; }
+.boss-pose--stenjatten .boss-pose__projectile { left:34%; top:35%; border:2px solid #b5ffff; border-radius:18% 45% 18% 45%; background:conic-gradient(from 45deg,#eaffd5,#3ce1dd,#157886,#8ff4e7,#eaffd5); box-shadow:0 0 12px #eaffff,0 0 29px #35dce0,0 0 44px #197b8c; }
+.boss-pose--stenjatten .boss-pose__projectile::before { content:"◇"; position:absolute; z-index:1; inset:0; display:grid; place-items:center; color:#efffff; font-size:clamp(13px,3vw,22px); font-weight:950; line-height:1; text-shadow:0 0 4px #fff,0 0 8px #126d78; }
+.boss-pose--stenjatten .boss-pose__projectile::after { background:linear-gradient(90deg,#c5ffffdd,#2ed7dc99,transparent); }
+.boss-pose--stenjatten .boss-pose__block-impact { border-color:#baffff; box-shadow:0 0 12px #fff,0 0 28px #32d8dd,inset 0 0 17px #197c8a; }
 .boss-pose--paused .boss-pose__charge,.boss-pose--paused .boss-pose__projectile,.boss-pose--paused .boss-pose__block-impact,.boss-pose--paused .boss-pose__hero-impact { display:none; }
 .painted-boss-cast { position:absolute!important; z-index:2!important; inset:0; pointer-events:none; overflow:hidden; }
 .painted-boss-cast__boss { position:absolute; z-index:2; width:38%; max-width:190px; height:auto; right:-1%; top:17%; transform-origin:72% 68%; filter:drop-shadow(0 14px 13px #000a); }

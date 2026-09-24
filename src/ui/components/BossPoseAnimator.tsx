@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ProductionPoseFrame, ProductionPoseMode } from './ProductionPoseAnimatorV5'
 
 export type BossPoseSequence = 'attack' | 'hit' | 'defeat'
-export type BossId = 'tabelldraken' | 'brakbjornen' | 'monsterormen' | 'plottrig'
+export type BossId = 'tabelldraken' | 'brakbjornen' | 'monsterormen' | 'plottrig' | 'stenjatten'
 type BossAnimation = { frames: number[]; timing: number[] }
 type BossConfig = {
   name: string
@@ -69,6 +69,19 @@ const bosses: Record<BossId, BossConfig> = {
       'art/boss/plottrig-besegrad.webp',
     ],
     finalPose: 'art/boss/plottrig-besegrad.webp',
+  },
+  stenjatten: {
+    name: 'Stenjätten',
+    attackLabel: 'Stenjätten slår iväg en lysande runsten',
+    frames: [
+      'art/boss/stenjatten.webp',
+      'art/prototype-v10/stenjatten-battle-frame-2-v1.png',
+      'art/prototype-v10/stenjatten-battle-frame-3-v1.png',
+      'art/prototype-v10/stenjatten-battle-frame-4-v1.png',
+      'art/prototype-v10/stenjatten-battle-frame-5-v1.png',
+      'art/boss/stenjatten-besegrad.webp',
+    ],
+    finalPose: 'art/boss/stenjatten-besegrad.webp',
   },
 }
 
