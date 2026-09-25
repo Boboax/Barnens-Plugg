@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ProductionPoseFrame, ProductionPoseMode } from './ProductionPoseAnimatorV5'
 
 export type BossPoseSequence = 'attack' | 'hit' | 'defeat'
-export type BossId = 'tabelldraken' | 'brakbjornen' | 'monsterormen' | 'plottrig' | 'stenjatten' | 'procentspoket'
+export type BossId = 'tabelldraken' | 'brakbjornen' | 'monsterormen' | 'plottrig' | 'stenjatten' | 'procentspoket' | 'vaxlartrollet'
 type BossAnimation = { frames: number[]; timing: number[] }
 type BossConfig = {
   name: string
@@ -95,6 +95,19 @@ const bosses: Record<BossId, BossConfig> = {
       'art/boss/procentspoket-besegrad.webp',
     ],
     finalPose: 'art/boss/procentspoket-besegrad.webp',
+  },
+  vaxlartrollet: {
+    name: 'Växlartrollet',
+    attackLabel: 'Växlartrollet slår iväg en lysande tioruna',
+    frames: [
+      'art/boss/vaxlartrollet.webp',
+      'art/prototype-v12/vaxlartrollet-battle-frame-2-v1.png',
+      'art/prototype-v12/vaxlartrollet-battle-frame-3-v1.png',
+      'art/prototype-v12/vaxlartrollet-battle-frame-4-v1.png',
+      'art/prototype-v12/vaxlartrollet-battle-frame-5-v1.png',
+      'art/boss/vaxlartrollet-besegrad.webp',
+    ],
+    finalPose: 'art/boss/vaxlartrollet-besegrad.webp',
   },
 }
 

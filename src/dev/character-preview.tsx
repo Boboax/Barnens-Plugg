@@ -13,7 +13,7 @@ type MotionOutfit = 'star-cloak' | 'light-armor'
 type SavedDemo = { weapon: PrototypeWeaponId; cloak: PrototypeCloakId; reducedMotion: boolean; motionOutfit: MotionOutfit }
 const KEY = 'barnens-plugg-character-prototype-v1'
 const fallback: SavedDemo = { weapon: 'moon-bow', cloak: 'forest-cloak', reducedMotion: false, motionOutfit: 'star-cloak' }
-const bossNames: Record<BossId, string> = { tabelldraken: 'Tabelldraken', brakbjornen: 'Bråkbjörnen', monsterormen: 'Mönsterormen', plottrig: 'Plottrig', stenjatten: 'Stenjätten', procentspoket: 'Procentspöket' }
+const bossNames: Record<BossId, string> = { tabelldraken: 'Tabelldraken', brakbjornen: 'Bråkbjörnen', monsterormen: 'Mönsterormen', plottrig: 'Plottrig', stenjatten: 'Stenjätten', procentspoket: 'Procentspöket', vaxlartrollet: 'Växlartrollet' }
 const bossAttackNotes: Record<BossId, string> = {
   tabelldraken: 'Fel svar: Tabelldraken laddar och skjuter en blåviolett projektil som hjälten blockerar.',
   brakbjornen: 'Fel svar: Bråkskölden är Bråkbjörnens vapen. Han stöter fram den och skickar en gyllene ¼-tårtbit som hjälten blockerar.',
@@ -21,6 +21,7 @@ const bossAttackNotes: Record<BossId, string> = {
   plottrig: 'Fel svar: Plottrig samlar pennorna och ritar iväg ett virrigt, lysande diagram som hjälten blockerar.',
   stenjatten: 'Fel svar: Stenjätten laddar bröstkristallen och slår iväg en turkos runsten som hjälten blockerar.',
   procentspoket: 'Fel svar: Procentspöket samlar en cyan procentvirvel och kastar den mot hjälten, som blockerar.',
+  vaxlartrollet: 'Fel svar: Växlartrollet laddar klubban och slår iväg en orange tioruna som hjälten blockerar.',
 }
 
 function readSaved(): SavedDemo {
@@ -52,17 +53,17 @@ function CharacterPreview() {
       <h1>Hjälte och bossfight</h1>
       <p className="character-demo__lead">Här provar vi naturlig kroppsrörelse, viktfördelning och vapenfattning. Detta är ett visuellt rörelseprov, inte godkänd slutkonst eller produktionsrigg.</p>
       <nav className="character-demo__tabs" aria-label="Prototypvyer">
-        <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v11</button>
+        <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v12</button>
         <button aria-pressed={view === 'figure'} onClick={() => setView('figure')}>Äldre garderobstest</button>
         <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Äldre bossflöde</button>
         <button disabled>Skattkista · nästa etapp</button>
       </nav>
       <div className="character-demo__grid">
         <section className="character-demo__panel">
-          <h2>{view === 'figure' ? 'Garderob' : view === 'battle' ? 'Stridskontroll' : 'Produktionsprov v11'}</h2>
+          <h2>{view === 'figure' ? 'Garderob' : view === 'battle' ? 'Stridskontroll' : 'Produktionsprov v12'}</h2>
           {view === 'motion' ? <>
             <p>V5 använder riktiga helkroppsposer. Vapen och klädsel delar samma sex fasnummer, så samma ögonblick kan jämföras utan lösa kroppsdelar eller ändrad marklinje.</p>
-            <h3>Boss</h3><div className="character-demo__choices"><button aria-pressed={bossId === 'tabelldraken'} onClick={() => { setBossId('tabelldraken'); playMotion('play') }}>Tabelldraken</button><button aria-pressed={bossId === 'brakbjornen'} onClick={() => { setBossId('brakbjornen'); playMotion('play') }}>Bråkbjörnen</button><button aria-pressed={bossId === 'monsterormen'} onClick={() => { setBossId('monsterormen'); playMotion('play') }}>Mönsterormen</button><button aria-pressed={bossId === 'plottrig'} onClick={() => { setBossId('plottrig'); playMotion('play') }}>Plottrig</button><button aria-pressed={bossId === 'stenjatten'} onClick={() => { setBossId('stenjatten'); playMotion('play') }}>Stenjätten</button><button aria-pressed={bossId === 'procentspoket'} onClick={() => { setBossId('procentspoket'); playMotion('play') }}>Procentspöket</button></div>
+            <h3>Boss</h3><div className="character-demo__choices"><button aria-pressed={bossId === 'tabelldraken'} onClick={() => { setBossId('tabelldraken'); playMotion('play') }}>Tabelldraken</button><button aria-pressed={bossId === 'brakbjornen'} onClick={() => { setBossId('brakbjornen'); playMotion('play') }}>Bråkbjörnen</button><button aria-pressed={bossId === 'monsterormen'} onClick={() => { setBossId('monsterormen'); playMotion('play') }}>Mönsterormen</button><button aria-pressed={bossId === 'plottrig'} onClick={() => { setBossId('plottrig'); playMotion('play') }}>Plottrig</button><button aria-pressed={bossId === 'stenjatten'} onClick={() => { setBossId('stenjatten'); playMotion('play') }}>Stenjätten</button><button aria-pressed={bossId === 'procentspoket'} onClick={() => { setBossId('procentspoket'); playMotion('play') }}>Procentspöket</button><button aria-pressed={bossId === 'vaxlartrollet'} onClick={() => { setBossId('vaxlartrollet'); playMotion('play') }}>Växlartrollet</button></div>
             <h3>Händelse</h3><div className="character-demo__choices"><button aria-pressed={poseSequence === 'attack'} onClick={() => selectPoseSequence('attack')}>Rätt svar · attack</button><button aria-pressed={poseSequence === 'guard'} onClick={() => selectPoseSequence('guard')}>Fel svar · bakslag</button><button aria-pressed={poseSequence === 'victory'} onClick={() => selectPoseSequence('victory')}>Seger</button></div>
             <h3>Vapen</h3><div className="character-demo__choices">{PROTOTYPE_WEAPONS.map((item) => <button key={item.id} aria-pressed={saved.weapon === item.id} onClick={() => { setPoseSequence('attack'); setSaved((old) => ({ ...old, weapon: item.id })) }}>{item.name}</button>)}</div>
             <h3>Klädsel</h3><div className="character-demo__choices"><button aria-pressed={saved.motionOutfit === 'star-cloak'} onClick={() => { setPoseSequence('attack'); setSaved((old) => ({ ...old, motionOutfit: 'star-cloak' })) }}>Stjärnmantel</button><button aria-pressed={saved.motionOutfit === 'light-armor'} onClick={() => { setPoseSequence('attack'); setSaved((old) => ({ ...old, motionOutfit: 'light-armor' })) }}>Lätt rustning</button></div>
@@ -95,7 +96,7 @@ function CharacterPreview() {
           </>}
         </section>
       </div>
-      <footer className="character-demo__footer"><span>V11 testar samma återanvändbara bossystem med sex världsbossar, senast Procentspöket.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
+      <footer className="character-demo__footer"><span>V12 testar samma återanvändbara bossystem med sju världsbossar, senast Växlartrollet.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
     </div>
   </main>
 }
