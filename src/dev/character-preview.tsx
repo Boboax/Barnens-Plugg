@@ -54,7 +54,7 @@ function CharacterPreview() {
       <nav className="character-demo__tabs" aria-label="Prototypvyer">
         <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v13</button>
         <button aria-pressed={view === 'figure'} onClick={() => setView('figure')}>Äldre garderobstest</button>
-        <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Stridsvy v13</button>
+        <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Stridsvy v14</button>
         <button disabled>Skattkista · nästa etapp</button>
       </nav>
       <div className="character-demo__grid">
@@ -89,13 +89,13 @@ function CharacterPreview() {
           </> : <>
             <div className={`character-demo__stage ${view === 'figure' ? 'character-demo__stage--single' : ''}`}>
               {view === 'figure' && <CharacterFigure key={`hero-${run}`} weapon={saved.weapon} cloak={saved.cloak} motion={motion} reducedMotion={saved.reducedMotion} className="character-demo__hero" />}
-              {view === 'battle' && <BattleDuel key={`duel-${bossId}-${run}`} boss={{ id: bossId === 'brakbjornen' ? 'brakbjorren' : bossId, name: bossNames[bossId], emoji: '✨' }} state={(motion === 'attack' ? 'hit' : motion === 'guard' ? 'attack' : motion === 'victory' ? 'defeat' : 'idle') as BattleDuelState} reducedMotion={saved.reducedMotion} />}
+              {view === 'battle' && <BattleDuel key={`duel-${bossId}-${run}`} boss={{ id: bossId === 'brakbjornen' ? 'brakbjorren' : bossId, name: bossNames[bossId], emoji: '✨' }} state={(motion === 'attack' ? 'hit' : motion === 'guard' ? 'attack' : motion === 'victory' ? 'defeat' : 'idle') as BattleDuelState} reducedMotion={saved.reducedMotion} heroPresentation="production-prototype" weapon={saved.weapon} outfit={saved.cloak} />}
             </div>
             <p className="character-demo__note">{view === 'battle' ? motion === 'attack' ? 'Rätt svar: hjälten gör ett kontrollerat anfall och bossen ryggar tillbaka.' : motion === 'guard' ? 'Fel svar: hjälten blockerar och bossen går in i sin attacksekvens.' : motion === 'victory' ? 'Seger: hjälten firar och endast bossens befintliga besegrade pose visas.' : 'Vänteläge: hjälte och boss har egna, tydliga bildytor.' : motion === 'attack' ? 'Rätt svar: hjälten attackerar och draken ryggar tillbaka.' : motion === 'guard' ? 'Fel svar: hjälten skyddar sig och draken sänder en kort magisk våg.' : motion === 'victory' ? 'Seger: hjälten firar och draken bugar.' : 'Vänteläge: andning, mantel och drakens huvud, vingar och svans rör sig var för sig.'}</p>
           </>}
         </section>
       </div>
-      <footer className="character-demo__footer"><span>V13 testar samma återanvändbara duell i testdemon och riktiga stridsvyn.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
+      <footer className="character-demo__footer"><span>V14 provar helkroppsposer i den återanvändbara duellkomponenten. Riktiga stridsvyn behåller barnets valda profilbild.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
     </div>
   </main>
 }

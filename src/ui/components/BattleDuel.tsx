@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { Boss } from '../../domain/types'
+import type { PrototypeCloakId, PrototypeWeaponId } from '../../domain/character'
 import { HeroImg } from './Icon'
 import { BossPoseAnimator, type BossId } from './BossPoseAnimator'
+import { ProductionPoseAnimatorV5 } from './ProductionPoseAnimatorV5'
 import '../../styles/boss-pose.css'
 
 export type BattleDuelState = 'idle' | 'hit' | 'attack' | 'defeat'
+export type BattleDuelHeroPresentation = 'profile' | 'production-prototype'
 
 /* Domändatan behåller sitt sedan tidigare publicerade "brakbjorren", medan
    rörelseprovet använder den visuella filidentifieraren "brakbjornen". */
@@ -13,8 +16,21 @@ function animatedBossId(id: string): BossId | undefined {
   return ['tabelldraken', 'monsterormen', 'plottrig', 'stenjatten', 'procentspoket', 'vaxlartrollet'].includes(id) ? id as BossId : undefined
 }
 
-function BattleHero({ hero, state }: { hero?: string; state: BattleDuelState }) {
+function BattleHero({ hero, state, reducedMotion, presentation, weapon, outfit }: {
+  hero?: string
+  state: BattleDuelState
+  reducedMotion: boolean
+  presentation: BattleDuelHeroPresentation
+  weapon: PrototypeWeaponId
+  outfit: PrototypeCloakId
+}) {
   const motion = state === 'hit' ? 'attack' : state === 'attack' ? 'guard' : state === 'defeat' ? 'victory' : 'idle'
+  if (presentation === 'production-prototype') {
+    const poseSequence = state === 'attack' ? 'guard' : state === 'defeat' ? 'victory' : 'attack'
+    return <div className="battle-duel__hero battle-duel__hero--production" aria-label="Hjälte med helkroppsposer i produktionsprov">
+      <ProductionPoseAnimatorV5 mode={state === 'idle' ? 0 : 'play'} weapon={state === 'attack' || state === 'defeat' ? 'sun-blade' : weapon} outfit={state === 'attack' || state === 'defeat' ? 'light-armor' : outfit === 'star-cloak' ? 'star-cloak' : 'light-armor'} poseSequence={poseSequence} reducedMotion={reducedMotion} />
+    </div>
+  }
   return <div className={`battle-duel__hero battle-duel__hero--${motion}`} role="img" aria-label={motion === 'attack' ? 'Hjälten gör ett kontrollerat anfall' : motion === 'guard' ? 'Hjälten blockerar bossens anfall' : motion === 'victory' ? 'Hjälten firar segern' : 'Hjälten väntar'}>
     <HeroImg kind={hero ?? 'bagskytt'} variant="figur" />
   </div>
@@ -41,7 +57,15 @@ function BattleBoss({ boss, state, reducedMotion }: { boss: Pick<Boss, 'id' | 'n
  * Rent presentationslager: samma duell används i riktig BattleScreen och i
  * den fristående demon. Den tar inte emot eller skriver någon spelstatus.
  */
-export function BattleDuel({ boss, hero, state, reducedMotion = false }: { boss: Pick<Boss, 'id' | 'name' | 'emoji'>; hero?: string; state: BattleDuelState; reducedMotion?: boolean }) {
+export function BattleDuel({ boss, hero, state, reducedMotion = false, heroPresentation = 'profile', weapon = 'moon-bow', outfit = 'star-cloak' }: {
+  boss: Pick<Boss, 'id' | 'name' | 'emoji'>
+  hero?: string
+  state: BattleDuelState
+  reducedMotion?: boolean
+  heroPresentation?: BattleDuelHeroPresentation
+  weapon?: PrototypeWeaponId
+  outfit?: PrototypeCloakId
+}) {
   const [systemReducedMotion, setSystemReducedMotion] = useState(false)
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -51,8 +75,8 @@ export function BattleDuel({ boss, hero, state, reducedMotion = false }: { boss:
     return () => query.removeEventListener('change', update)
   }, [])
   const paused = reducedMotion || systemReducedMotion
-  return <div className={`battle-duel${paused ? ' battle-duel--paused' : ''}`}>
-    <BattleHero hero={hero} state={state} />
+  return <div className={`battle-duel${heroPresentation === 'production-prototype' ? ' battle-duel--production' : ''}${paused ? ' battle-duel--paused' : ''}`}>
+    <BattleHero hero={hero} state={state} reducedMotion={paused} presentation={heroPresentation} weapon={weapon} outfit={outfit} />
     <BattleBoss boss={boss} state={state} reducedMotion={paused} />
   </div>
 }

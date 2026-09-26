@@ -21,6 +21,14 @@
 .battle-duel__hero--attack { animation: battle-hero-attack .9s ease-out both; }
 .battle-duel__hero--guard { animation: battle-hero-guard .9s ease-in-out both; }
 .battle-duel__hero--victory { animation: battle-hero-victory 1.15s ease-in-out both; }
+.battle-duel--production { width: min(330px, 100%); min-height: 230px; }
+.battle-duel--production .battle-duel__hero--production { width: 62%; max-width: 205px; animation: none; }
+.battle-duel--production .battle-duel__boss { width: 44%; max-height: 186px; }
+.battle-duel--production .production-pose-v5 { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: 14px; background: #07182d; box-shadow: 0 12px 24px #0008; isolation: isolate; }
+.battle-duel--production .production-pose-v5__sprite { position: absolute; z-index: 1; inset: 0; background-size: 300% 200%; background-repeat: no-repeat; }
+.battle-duel--production .production-pose-v5__sprite--current { z-index: 2; animation: battle-boss-pose-frame-in 90ms linear both; }
+.battle-duel--production .production-pose-v5__ground { display: none; }
+.battle-duel--production .production-pose-v5__label { position: absolute; z-index: 3; left: 8px; bottom: 8px; padding: 4px 6px; border-radius: 7px; color: #fff5d5; background: #081426d9; font-size: 11px; font-weight: 800; }
 
 .battle-duel__boss {
   position: relative;
