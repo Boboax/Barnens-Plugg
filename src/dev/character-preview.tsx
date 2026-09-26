@@ -54,7 +54,7 @@ function CharacterPreview() {
       <nav className="character-demo__tabs" aria-label="Prototypvyer">
         <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v13</button>
         <button aria-pressed={view === 'figure'} onClick={() => setView('figure')}>Äldre garderobstest</button>
-        <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Stridsvy v14</button>
+        <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Stridsvy v15</button>
         <button disabled>Skattkista · nästa etapp</button>
       </nav>
       <div className="character-demo__grid">
@@ -70,7 +70,7 @@ function CharacterPreview() {
           </> : <>
             <p>{view === 'figure' ? 'Byt utrustning och spela en pose direkt.' : 'Samma duellkomponent som riktiga stridsvyn, med påhittad profil och lokal testlagring.'}</p>
             <h3>Vapen</h3><div className="character-demo__choices">{PROTOTYPE_WEAPONS.map((item) => <button key={item.id} aria-pressed={saved.weapon === item.id} onClick={() => setSaved((old) => ({ ...old, weapon: item.id }))}>{item.name}</button>)}</div>
-            <h3>Mantel</h3><div className="character-demo__choices">{PROTOTYPE_CLOAKS.map((item) => <button key={item.id} aria-pressed={saved.cloak === item.id} onClick={() => setSaved((old) => ({ ...old, cloak: item.id }))}>{item.name}</button>)}</div>
+            {view === 'battle' ? <><h3>Klädsel</h3><div className="character-demo__choices"><button aria-pressed={saved.motionOutfit === 'star-cloak'} onClick={() => setSaved((old) => ({ ...old, motionOutfit: 'star-cloak' }))}>Stjärnmantel</button><button aria-pressed={saved.motionOutfit === 'light-armor'} onClick={() => setSaved((old) => ({ ...old, motionOutfit: 'light-armor' }))}>Lätt rustning</button></div></> : <><h3>Mantel</h3><div className="character-demo__choices">{PROTOTYPE_CLOAKS.map((item) => <button key={item.id} aria-pressed={saved.cloak === item.id} onClick={() => setSaved((old) => ({ ...old, cloak: item.id }))}>{item.name}</button>)}</div></>}
             <h3>Spela reaktion</h3><div className="character-demo__controls">
               <button onClick={() => play('idle')}>Väntar</button><button onClick={() => play('attack')}>Rätt svar</button><button onClick={() => play('guard')}>Fel svar</button><button onClick={() => play('victory')}>Seger</button><button onClick={() => play(motion)}>Spela om</button>
             </div>
@@ -89,13 +89,13 @@ function CharacterPreview() {
           </> : <>
             <div className={`character-demo__stage ${view === 'figure' ? 'character-demo__stage--single' : ''}`}>
               {view === 'figure' && <CharacterFigure key={`hero-${run}`} weapon={saved.weapon} cloak={saved.cloak} motion={motion} reducedMotion={saved.reducedMotion} className="character-demo__hero" />}
-              {view === 'battle' && <BattleDuel key={`duel-${bossId}-${run}`} boss={{ id: bossId === 'brakbjornen' ? 'brakbjorren' : bossId, name: bossNames[bossId], emoji: '✨' }} state={(motion === 'attack' ? 'hit' : motion === 'guard' ? 'attack' : motion === 'victory' ? 'defeat' : 'idle') as BattleDuelState} reducedMotion={saved.reducedMotion} heroPresentation="production-prototype" weapon={saved.weapon} outfit={saved.cloak} />}
+              {view === 'battle' && <BattleDuel key={`duel-${bossId}-${run}`} boss={{ id: bossId === 'brakbjornen' ? 'brakbjorren' : bossId, name: bossNames[bossId], emoji: '✨' }} state={(motion === 'attack' ? 'hit' : motion === 'guard' ? 'attack' : motion === 'victory' ? 'defeat' : 'idle') as BattleDuelState} reducedMotion={saved.reducedMotion} heroPresentation="production-prototype" weapon={saved.weapon} outfit={saved.motionOutfit} />}
             </div>
             <p className="character-demo__note">{view === 'battle' ? motion === 'attack' ? 'Rätt svar: hjälten gör ett kontrollerat anfall och bossen ryggar tillbaka.' : motion === 'guard' ? 'Fel svar: hjälten blockerar och bossen går in i sin attacksekvens.' : motion === 'victory' ? 'Seger: hjälten firar och endast bossens befintliga besegrade pose visas.' : 'Vänteläge: hjälte och boss har egna, tydliga bildytor.' : motion === 'attack' ? 'Rätt svar: hjälten attackerar och draken ryggar tillbaka.' : motion === 'guard' ? 'Fel svar: hjälten skyddar sig och draken sänder en kort magisk våg.' : motion === 'victory' ? 'Seger: hjälten firar och draken bugar.' : 'Vänteläge: andning, mantel och drakens huvud, vingar och svans rör sig var för sig.'}</p>
           </>}
         </section>
       </div>
-      <footer className="character-demo__footer"><span>V14 provar helkroppsposer i den återanvändbara duellkomponenten. Riktiga stridsvyn behåller barnets valda profilbild.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
+      <footer className="character-demo__footer"><span>V15 provar helkroppsposer och deras riktiga klädvarianter i den återanvändbara duellkomponenten. Riktiga stridsvyn behåller barnets valda profilbild.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
     </div>
   </main>
 }

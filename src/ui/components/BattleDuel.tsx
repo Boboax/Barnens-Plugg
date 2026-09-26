@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { Boss } from '../../domain/types'
-import type { PrototypeCloakId, PrototypeWeaponId } from '../../domain/character'
+import type { PrototypeWeaponId } from '../../domain/character'
 import { HeroImg } from './Icon'
 import { BossPoseAnimator, type BossId } from './BossPoseAnimator'
-import { ProductionPoseAnimatorV5 } from './ProductionPoseAnimatorV5'
+import { ProductionPoseAnimatorV5, type ProductionPoseOutfit } from './ProductionPoseAnimatorV5'
 import '../../styles/boss-pose.css'
 
 export type BattleDuelState = 'idle' | 'hit' | 'attack' | 'defeat'
@@ -22,13 +22,13 @@ function BattleHero({ hero, state, reducedMotion, presentation, weapon, outfit }
   reducedMotion: boolean
   presentation: BattleDuelHeroPresentation
   weapon: PrototypeWeaponId
-  outfit: PrototypeCloakId
+  outfit: ProductionPoseOutfit
 }) {
   const motion = state === 'hit' ? 'attack' : state === 'attack' ? 'guard' : state === 'defeat' ? 'victory' : 'idle'
   if (presentation === 'production-prototype') {
     const poseSequence = state === 'attack' ? 'guard' : state === 'defeat' ? 'victory' : 'attack'
     return <div className="battle-duel__hero battle-duel__hero--production" aria-label="Hjälte med helkroppsposer i produktionsprov">
-      <ProductionPoseAnimatorV5 mode={state === 'idle' ? 0 : 'play'} weapon={state === 'attack' || state === 'defeat' ? 'sun-blade' : weapon} outfit={state === 'attack' || state === 'defeat' ? 'light-armor' : outfit === 'star-cloak' ? 'star-cloak' : 'light-armor'} poseSequence={poseSequence} reducedMotion={reducedMotion} />
+      <ProductionPoseAnimatorV5 mode={state === 'idle' ? 0 : 'play'} weapon={state === 'attack' || state === 'defeat' ? 'sun-blade' : weapon} outfit={state === 'attack' || state === 'defeat' ? 'light-armor' : outfit} poseSequence={poseSequence} reducedMotion={reducedMotion} />
     </div>
   }
   return <div className={`battle-duel__hero battle-duel__hero--${motion}`} role="img" aria-label={motion === 'attack' ? 'Hjälten gör ett kontrollerat anfall' : motion === 'guard' ? 'Hjälten blockerar bossens anfall' : motion === 'victory' ? 'Hjälten firar segern' : 'Hjälten väntar'}>
@@ -64,7 +64,7 @@ export function BattleDuel({ boss, hero, state, reducedMotion = false, heroPrese
   reducedMotion?: boolean
   heroPresentation?: BattleDuelHeroPresentation
   weapon?: PrototypeWeaponId
-  outfit?: PrototypeCloakId
+  outfit?: ProductionPoseOutfit
 }) {
   const [systemReducedMotion, setSystemReducedMotion] = useState(false)
   useEffect(() => {
