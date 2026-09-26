@@ -6,7 +6,7 @@ import { PROTOTYPE_CLOAKS, PROTOTYPE_WEAPONS } from '../domain/character'
 import { CharacterFigure } from '../ui/components/CharacterFigure'
 import { ProductionPoseAnimatorV5, type ProductionPoseFrame, type ProductionPoseMode, type ProductionPoseSequence } from '../ui/components/ProductionPoseAnimatorV5'
 import { BossPoseAnimator, type BossId, type BossPoseSequence } from '../ui/components/BossPoseAnimator'
-import { PrototypeBoss } from '../ui/components/PrototypeBoss'
+import { BattleDuel, type BattleDuelState } from '../ui/components/BattleDuel'
 import '../styles/character-prototype.css'
 
 type MotionOutfit = 'star-cloak' | 'light-armor'
@@ -45,7 +45,6 @@ function CharacterPreview() {
     playMotion('play')
   }
   const isSwordMotion = saved.weapon === 'sun-blade'
-  const bossMotion: CharacterMotion = motion === 'guard' ? 'guard' : motion === 'attack' ? 'attack' : motion === 'victory' ? 'victory' : 'idle'
   const bossSequence: BossPoseSequence = poseSequence === 'guard' ? 'attack' : poseSequence === 'victory' ? 'defeat' : 'hit'
   return <main className="character-demo">
     <div className="character-demo__inner">
@@ -53,14 +52,14 @@ function CharacterPreview() {
       <h1>Hjälte och bossfight</h1>
       <p className="character-demo__lead">Här provar vi naturlig kroppsrörelse, viktfördelning och vapenfattning. Detta är ett visuellt rörelseprov, inte godkänd slutkonst eller produktionsrigg.</p>
       <nav className="character-demo__tabs" aria-label="Prototypvyer">
-        <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v12</button>
+        <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v13</button>
         <button aria-pressed={view === 'figure'} onClick={() => setView('figure')}>Äldre garderobstest</button>
-        <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Äldre bossflöde</button>
+        <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Stridsvy v13</button>
         <button disabled>Skattkista · nästa etapp</button>
       </nav>
       <div className="character-demo__grid">
         <section className="character-demo__panel">
-          <h2>{view === 'figure' ? 'Garderob' : view === 'battle' ? 'Stridskontroll' : 'Produktionsprov v12'}</h2>
+          <h2>{view === 'figure' ? 'Garderob' : view === 'battle' ? 'Stridskontroll' : 'Produktionsprov v13'}</h2>
           {view === 'motion' ? <>
             <p>V5 använder riktiga helkroppsposer. Vapen och klädsel delar samma sex fasnummer, så samma ögonblick kan jämföras utan lösa kroppsdelar eller ändrad marklinje.</p>
             <h3>Boss</h3><div className="character-demo__choices"><button aria-pressed={bossId === 'tabelldraken'} onClick={() => { setBossId('tabelldraken'); playMotion('play') }}>Tabelldraken</button><button aria-pressed={bossId === 'brakbjornen'} onClick={() => { setBossId('brakbjornen'); playMotion('play') }}>Bråkbjörnen</button><button aria-pressed={bossId === 'monsterormen'} onClick={() => { setBossId('monsterormen'); playMotion('play') }}>Mönsterormen</button><button aria-pressed={bossId === 'plottrig'} onClick={() => { setBossId('plottrig'); playMotion('play') }}>Plottrig</button><button aria-pressed={bossId === 'stenjatten'} onClick={() => { setBossId('stenjatten'); playMotion('play') }}>Stenjätten</button><button aria-pressed={bossId === 'procentspoket'} onClick={() => { setBossId('procentspoket'); playMotion('play') }}>Procentspöket</button><button aria-pressed={bossId === 'vaxlartrollet'} onClick={() => { setBossId('vaxlartrollet'); playMotion('play') }}>Växlartrollet</button></div>
@@ -69,7 +68,7 @@ function CharacterPreview() {
             <h3>Klädsel</h3><div className="character-demo__choices"><button aria-pressed={saved.motionOutfit === 'star-cloak'} onClick={() => { setPoseSequence('attack'); setSaved((old) => ({ ...old, motionOutfit: 'star-cloak' })) }}>Stjärnmantel</button><button aria-pressed={saved.motionOutfit === 'light-armor'} onClick={() => { setPoseSequence('attack'); setSaved((old) => ({ ...old, motionOutfit: 'light-armor' })) }}>Lätt rustning</button></div>
             <h3>Sekvens</h3><div className="character-demo__controls">{([0, 1, 2, 3, 4, 5] as ProductionPoseFrame[]).slice(0, poseSequence === 'victory' ? 2 : 6).map((frame) => <button key={frame} aria-pressed={motionMode === frame} onClick={() => playMotion(frame)}>Fas {frame + 1}</button>)}<button aria-pressed={motionMode === 'play'} onClick={() => playMotion('play')}>Spela hela</button></div>
           </> : <>
-            <p>{view === 'figure' ? 'Byt utrustning och spela en pose direkt.' : 'Detta är det äldre bossflödet och används bara som funktionsreferens.'}</p>
+            <p>{view === 'figure' ? 'Byt utrustning och spela en pose direkt.' : 'Samma duellkomponent som riktiga stridsvyn, med påhittad profil och lokal testlagring.'}</p>
             <h3>Vapen</h3><div className="character-demo__choices">{PROTOTYPE_WEAPONS.map((item) => <button key={item.id} aria-pressed={saved.weapon === item.id} onClick={() => setSaved((old) => ({ ...old, weapon: item.id }))}>{item.name}</button>)}</div>
             <h3>Mantel</h3><div className="character-demo__choices">{PROTOTYPE_CLOAKS.map((item) => <button key={item.id} aria-pressed={saved.cloak === item.id} onClick={() => setSaved((old) => ({ ...old, cloak: item.id }))}>{item.name}</button>)}</div>
             <h3>Spela reaktion</h3><div className="character-demo__controls">
@@ -89,14 +88,14 @@ function CharacterPreview() {
             <p className="character-demo__note">{poseSequence === 'attack' ? `Rätt svar: hjälten attackerar och ${bossNames[bossId]} reagerar tydligt på träffen. Båda vapnen och båda kläderna stöds.` : poseSequence === 'guard' ? bossAttackNotes[bossId] : `Seger: ${bossNames[bossId]} tappar kraft och övergår till spelets befintliga besegrade pose.`}</p>
           </> : <>
             <div className={`character-demo__stage ${view === 'figure' ? 'character-demo__stage--single' : ''}`}>
-              <CharacterFigure key={`hero-${run}`} weapon={saved.weapon} cloak={saved.cloak} motion={motion} reducedMotion={saved.reducedMotion} className="character-demo__hero" />
-              {view === 'battle' && <><span className="character-demo__versus">mot</span><PrototypeBoss key={`boss-${run}`} motion={bossMotion} reducedMotion={saved.reducedMotion} className="character-demo__boss" /></>}
+              {view === 'figure' && <CharacterFigure key={`hero-${run}`} weapon={saved.weapon} cloak={saved.cloak} motion={motion} reducedMotion={saved.reducedMotion} className="character-demo__hero" />}
+              {view === 'battle' && <BattleDuel key={`duel-${bossId}-${run}`} boss={{ id: bossId === 'brakbjornen' ? 'brakbjorren' : bossId, name: bossNames[bossId], emoji: '✨' }} state={(motion === 'attack' ? 'hit' : motion === 'guard' ? 'attack' : motion === 'victory' ? 'defeat' : 'idle') as BattleDuelState} />}
             </div>
-            <p className="character-demo__note">{motion === 'attack' ? 'Rätt svar: hjälten attackerar och draken ryggar tillbaka.' : motion === 'guard' ? 'Fel svar: hjälten skyddar sig och draken sänder en kort magisk våg.' : motion === 'victory' ? 'Seger: hjälten firar och draken bugar.' : 'Vänteläge: andning, mantel och drakens huvud, vingar och svans rör sig var för sig.'}</p>
+            <p className="character-demo__note">{view === 'battle' ? motion === 'attack' ? 'Rätt svar: hjälten gör ett kontrollerat anfall och bossen ryggar tillbaka.' : motion === 'guard' ? 'Fel svar: hjälten blockerar och bossen går in i sin attacksekvens.' : motion === 'victory' ? 'Seger: hjälten firar och endast bossens befintliga besegrade pose visas.' : 'Vänteläge: hjälte och boss har egna, tydliga bildytor.' : motion === 'attack' ? 'Rätt svar: hjälten attackerar och draken ryggar tillbaka.' : motion === 'guard' ? 'Fel svar: hjälten skyddar sig och draken sänder en kort magisk våg.' : motion === 'victory' ? 'Seger: hjälten firar och draken bugar.' : 'Vänteläge: andning, mantel och drakens huvud, vingar och svans rör sig var för sig.'}</p>
           </>}
         </section>
       </div>
-      <footer className="character-demo__footer"><span>V12 testar samma återanvändbara bossystem med sju världsbossar, senast Växlartrollet.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
+      <footer className="character-demo__footer"><span>V13 testar samma återanvändbara duell i testdemon och riktiga stridsvyn.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
     </div>
   </main>
 }

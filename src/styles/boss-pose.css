@@ -1,16 +1,56 @@
-/* Produktionsvyns avgränsade layout för de redan godkända bossposerna.
-   Den här filen innehåller bara själva bossytan; prototypdemons övriga CSS
-   följer inte med in i den riktiga appen. */
-.battle-boss-pose {
+/* Gemensam, kompakt duellyta för riktig stridsvy och separat testdemo. */
+.battle-duel {
   position: relative;
-  width: min(240px, 100%);
-  aspect-ratio: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: min(230px, 100%);
+  min-height: 188px;
+  isolation: isolate;
+}
+
+.battle-duel__hero {
+  position: relative;
+  z-index: 2;
+  width: 48%;
+  transform-origin: 56% 88%;
+  filter: drop-shadow(0 6px 9px rgba(0, 0, 0, .45));
+}
+.battle-duel__hero img { width: 100%; height: auto; }
+.battle-duel__hero--idle { animation: battle-hero-idle 2.8s ease-in-out infinite; }
+.battle-duel__hero--attack { animation: battle-hero-attack .9s ease-out both; }
+.battle-duel__hero--guard { animation: battle-hero-guard .9s ease-in-out both; }
+.battle-duel__hero--victory { animation: battle-hero-victory 1.15s ease-in-out both; }
+
+.battle-duel__boss {
+  position: relative;
+  z-index: 1;
+  width: 54%;
+  max-height: 172px;
+  object-fit: contain;
   pointer-events: none;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45));
 }
+.battle-duel__boss--image { height: 172px; }
+.battle-duel__boss--emoji { display: grid; place-items: center; height: 172px; font-size: 72px; line-height: 1; }
+.battle-duel__boss--idle { animation: battle-boss-idle 2.8s ease-in-out infinite; }
+.battle-duel__boss--defeat { animation: battle-boss-defeat .8s ease-out both; }
 
-.battle-boss-pose .boss-pose__sprite,
-.battle-boss-pose .boss-pose__defeated {
+.battle-duel .battle-boss-pose,
+.battle-duel .boss-pose {
+  position: relative !important;
+  right: auto !important;
+  top: auto !important;
+  width: 54% !important;
+  max-width: none !important;
+  aspect-ratio: 1;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45)) !important;
+}
+.battle-duel .boss-pose__sprite,
+.battle-duel .boss-pose__defeated {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -18,23 +58,29 @@
   object-fit: contain;
 }
 
-.battle-boss-pose .boss-pose__sprite { animation: battle-boss-pose-frame-in 100ms linear both; }
-.battle-boss-pose .boss-pose__sprite--defeated { visibility: hidden; }
-.battle-boss-pose .boss-pose__defeated { opacity: 0; }
-.battle-boss-pose .boss-pose__defeated--visible { opacity: 1; }
+.battle-duel .boss-pose__sprite { animation: battle-boss-pose-frame-in 100ms linear both; }
+.battle-duel .boss-pose__sprite--defeated { visibility: hidden; }
+.battle-duel .boss-pose__defeated { opacity: 0; }
+.battle-duel .boss-pose__defeated--visible { opacity: 1; }
 
 /* Mellanposerna har redan bossens egen laddning och träffkonst. Effekterna
    som i demot sträcker sig över en separat hjältesyta visas därför inte här. */
-.battle-boss-pose .boss-pose__charge,
-.battle-boss-pose .boss-pose__projectile,
-.battle-boss-pose .boss-pose__block-impact,
-.battle-boss-pose .boss-pose__hero-impact { display: none; }
+.battle-duel .boss-pose__charge,
+.battle-duel .boss-pose__projectile,
+.battle-duel .boss-pose__block-impact,
+.battle-duel .boss-pose__hero-impact { display: none; }
 
 @keyframes battle-boss-pose-frame-in {
   from { opacity: .18; }
   to { opacity: 1; }
 }
+@keyframes battle-hero-idle { 50% { transform: translateY(-3px) rotate(-1deg); } }
+@keyframes battle-hero-attack { 28% { transform: translate(-7px, 4px) rotate(-7deg); } 62% { transform: translate(14px, -6px) rotate(7deg) scale(1.03); } }
+@keyframes battle-hero-guard { 35%, 70% { transform: translate(-7px, 10px) rotate(-6deg) scale(.96); } }
+@keyframes battle-hero-victory { 45%, 78% { transform: translateY(-12px) rotate(-5deg) scale(1.05); } }
+@keyframes battle-boss-idle { 50% { transform: translateY(-3px) rotate(1deg); } }
+@keyframes battle-boss-defeat { 45% { transform: translate(8px, 10px) rotate(7deg) scale(.94); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .battle-boss-pose * { animation: none !important; }
+  .battle-duel *, .battle-duel { animation: none !important; }
 }
