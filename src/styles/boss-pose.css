@@ -84,3 +84,4 @@
 @media (prefers-reduced-motion: reduce) {
   .battle-duel *, .battle-duel { animation: none !important; }
 }
+.battle-duel--paused *, .battle-duel--paused { animation: none !important; }
