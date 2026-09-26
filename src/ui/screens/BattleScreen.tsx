@@ -13,11 +13,13 @@ import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
 import { Icon } from '../components/Icon'
 import { Pi } from '../components/Pi'
+import { BossPoseAnimator, type BossId } from '../components/BossPoseAnimator'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
 import { worldTheme } from '../worldThemes'
 import { EndCard } from './SessionScreen'
 import { useDocumentBackground } from '../useDocumentBackground'
 import { useStore } from '../store'
+import '../../styles/boss-pose.css'
 
 /* ============================================================
    Fyra slags "prov" — alla utan klocka, fel straffas aldrig,
@@ -32,11 +34,22 @@ import { useStore } from '../store'
    - 'star': diamantnivån (nivå 8–10) efter att en nod är klar.
    ============================================================ */
 
-/* Bossfiguren: målad bild (per boss.id) med svävande idle, skakning vid
-   träff och besegrad-pose när sista skölden knäcks. Reserv: bossens emoji. */
-function BossFigure({ boss, state }: { boss: Boss; state: 'idle' | 'traffad' | 'besegrad' }) {
+/* Domändatan behåller sitt sedan tidigare publicerade "brakbjorren", medan
+   rörelseprovet använder den visuella filidentifieraren "brakbjornen". */
+function animatedBossId(id: string): BossId | undefined {
+  if (id === 'brakbjorren') return 'brakbjornen'
+  return ['tabelldraken', 'monsterormen', 'plottrig', 'stenjatten', 'procentspoket', 'vaxlartrollet'].includes(id) ? id as BossId : undefined
+}
+
+/* Bossfiguren: målad bild i vänteläge/slutpose. Vid svar återanvänds de
+   godkända mellanposerna, helt skilt från fråge- och sparlogiken. */
+function BossFigure({ boss, state }: { boss: Boss; state: 'idle' | 'traffad' | 'attack' | 'besegrad' }) {
   const [broken, setBroken] = useState(false)
   const base = import.meta.env.BASE_URL
+  const poseId = animatedBossId(boss.id)
+  if (poseId && (state === 'traffad' || state === 'attack')) {
+    return <BossPoseAnimator bossId={poseId} sequence={state === 'attack' ? 'attack' : 'hit'} className="battle-boss-pose" />
+  }
   const src = state === 'besegrad' ? `${base}art/boss/${boss.id}-besegrad.webp` : `${base}art/boss/${boss.id}.webp`
   const anim = state === 'traffad' ? 'shake-hard' : state === 'besegrad' ? 'pop-big' : 'float-soft'
   if (broken) return <span className={anim} style={{ fontSize: 84, lineHeight: 1, display: 'inline-block' }}>{boss.emoji}</span>
@@ -329,7 +342,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
               : kind === 'guardian' && guardian
                 ? <GuardianFigure guardian={guardian} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
               : kind === 'boss' && boss
-                ? <BossFigure boss={boss} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
+                ? <BossFigure boss={boss} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : flash === 'miss' ? 'attack' : 'idle'} />
                 : <span className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'} style={{ display: 'inline-block', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.45))' }}><Icon name="kristall" size={92} /></span>}
           </div>
           {/* Framsteg: stjärnor för kollen, sköldar för boss/diamant. */}

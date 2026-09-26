@@ -128,11 +128,14 @@ export function BossPoseAnimator({
   sequence,
   mode = 'play',
   reducedMotion = false,
+  className = '',
 }: {
   bossId?: BossId
   sequence: BossPoseSequence
   mode?: ProductionPoseMode
   reducedMotion?: boolean
+  /** Yttre layout skiljer mellan testdemon och den riktiga stridsvyn. */
+  className?: string
 }) {
   const boss = bosses[bossId]
   const activePlayback = boss.playback?.[sequence] ?? defaultPlayback[sequence]
@@ -162,7 +165,7 @@ export function BossPoseAnimator({
   const pose = `${import.meta.env.BASE_URL}${boss.frames[frame]}`
   const finalPose = `${import.meta.env.BASE_URL}${boss.finalPose}`
 
-  return <div className={`boss-pose boss-pose--${bossId} boss-pose--${sequence}${reducedMotion ? ' boss-pose--paused' : ''}`} role="img" aria-label={sequence === 'attack' ? boss.attackLabel : sequence === 'hit' ? `${boss.name} träffas och ryggar tillbaka` : `${boss.name} besegras`}>
+  return <div className={`boss-pose boss-pose--${bossId} boss-pose--${sequence}${reducedMotion ? ' boss-pose--paused' : ''} ${className}`} role="img" aria-label={sequence === 'attack' ? boss.attackLabel : sequence === 'hit' ? `${boss.name} träffas och ryggar tillbaka` : `${boss.name} besegras`}>
     <img key={`${sequence}-${frame}`} className={`boss-pose__sprite${defeated ? ' boss-pose__sprite--defeated' : ''}`} src={pose} alt="" />
     {sequence === 'attack' && <><span className="boss-pose__charge"/><span className="boss-pose__projectile"/><span className="boss-pose__block-impact"/></>}
     {sequence === 'hit' && <span className="boss-pose__hero-impact"/>}

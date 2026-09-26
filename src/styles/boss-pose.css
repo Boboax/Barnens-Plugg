@@ -1,0 +1,40 @@
+/* Produktionsvyns avgränsade layout för de redan godkända bossposerna.
+   Den här filen innehåller bara själva bossytan; prototypdemons övriga CSS
+   följer inte med in i den riktiga appen. */
+.battle-boss-pose {
+  position: relative;
+  width: min(240px, 100%);
+  aspect-ratio: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45));
+}
+
+.battle-boss-pose .boss-pose__sprite,
+.battle-boss-pose .boss-pose__defeated {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.battle-boss-pose .boss-pose__sprite { animation: battle-boss-pose-frame-in 100ms linear both; }
+.battle-boss-pose .boss-pose__sprite--defeated { visibility: hidden; }
+.battle-boss-pose .boss-pose__defeated { opacity: 0; }
+.battle-boss-pose .boss-pose__defeated--visible { opacity: 1; }
+
+/* Mellanposerna har redan bossens egen laddning och träffkonst. Effekterna
+   som i demot sträcker sig över en separat hjältesyta visas därför inte här. */
+.battle-boss-pose .boss-pose__charge,
+.battle-boss-pose .boss-pose__projectile,
+.battle-boss-pose .boss-pose__block-impact,
+.battle-boss-pose .boss-pose__hero-impact { display: none; }
+
+@keyframes battle-boss-pose-frame-in {
+  from { opacity: .18; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-boss-pose * { animation: none !important; }
+}
