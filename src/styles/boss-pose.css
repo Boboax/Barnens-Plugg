@@ -29,6 +29,10 @@
 .battle-duel--production .production-pose-v5__sprite--current { z-index: 2; animation: battle-boss-pose-frame-in 90ms linear both; }
 .battle-duel--production .production-pose-v5__ground { display: none; }
 .battle-duel--production .production-pose-v5__label { position: absolute; z-index: 3; left: 8px; bottom: 8px; padding: 4px 6px; border-radius: 7px; color: #fff5d5; background: #081426d9; font-size: 11px; font-weight: 800; }
+.battle-duel--profile-prototype { width: min(330px, 100%); min-height: 230px; }
+.battle-duel--profile-prototype .battle-duel__hero--profile-pose { width: 62%; max-width: 205px; animation: none; }
+.battle-duel--profile-prototype .battle-duel__boss { width: 44%; max-height: 186px; }
+.battle-duel--profile-prototype .battle-duel__hero--profile-pose img { animation: battle-boss-pose-frame-in 100ms linear both; }
 
 .battle-duel__boss {
   position: relative;

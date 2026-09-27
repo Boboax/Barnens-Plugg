@@ -7,7 +7,7 @@ import { ProductionPoseAnimatorV5, type ProductionPoseOutfit } from './Productio
 import '../../styles/boss-pose.css'
 
 export type BattleDuelState = 'idle' | 'hit' | 'attack' | 'defeat'
-export type BattleDuelHeroPresentation = 'profile' | 'production-prototype'
+export type BattleDuelHeroPresentation = 'profile' | 'production-prototype' | 'profile-pose-prototype'
 
 /* Domändatan behåller sitt sedan tidigare publicerade "brakbjorren", medan
    rörelseprovet använder den visuella filidentifieraren "brakbjornen". */
@@ -25,6 +25,13 @@ function BattleHero({ hero, state, reducedMotion, presentation, weapon, outfit }
   outfit: ProductionPoseOutfit
 }) {
   const motion = state === 'hit' ? 'attack' : state === 'attack' ? 'guard' : state === 'defeat' ? 'victory' : 'idle'
+  if (presentation === 'profile-pose-prototype') {
+    const base = import.meta.env.BASE_URL
+    const pose = state === 'hit' ? 'attack' : state === 'attack' ? 'block' : state === 'defeat' ? 'victory' : undefined
+    const src = pose ? `${base}art/prototype-v16/bagskytt-${pose}-v1.png` : `${base}art/hero/bagskytt.webp`
+    const label = pose === 'attack' ? 'Bågskytten skjuter en pil' : pose === 'block' ? 'Bågskytten blockerar' : pose === 'victory' ? 'Bågskytten firar segern' : 'Bågskytten väntar'
+    return <div className="battle-duel__hero battle-duel__hero--profile-pose" role="img" aria-label={label}><img src={src} alt="" /></div>
+  }
   if (presentation === 'production-prototype') {
     const poseSequence = state === 'attack' ? 'guard' : state === 'defeat' ? 'victory' : 'attack'
     return <div className="battle-duel__hero battle-duel__hero--production" aria-label="Hjälte med helkroppsposer i produktionsprov">
@@ -75,7 +82,7 @@ export function BattleDuel({ boss, hero, state, reducedMotion = false, heroPrese
     return () => query.removeEventListener('change', update)
   }, [])
   const paused = reducedMotion || systemReducedMotion
-  return <div className={`battle-duel${heroPresentation === 'production-prototype' ? ' battle-duel--production' : ''}${paused ? ' battle-duel--paused' : ''}`}>
+  return <div className={`battle-duel${heroPresentation === 'production-prototype' ? ' battle-duel--production' : heroPresentation === 'profile-pose-prototype' ? ' battle-duel--profile-prototype' : ''}${paused ? ' battle-duel--paused' : ''}`}>
     <BattleHero hero={hero} state={state} reducedMotion={paused} presentation={heroPresentation} weapon={weapon} outfit={outfit} />
     <BattleBoss boss={boss} state={state} reducedMotion={paused} />
   </div>
