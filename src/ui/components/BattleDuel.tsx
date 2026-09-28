@@ -27,10 +27,10 @@ function BattleHero({ hero, state, reducedMotion, presentation, weapon, outfit }
   const motion = state === 'hit' ? 'attack' : state === 'attack' ? 'guard' : state === 'defeat' ? 'victory' : 'idle'
   if (presentation === 'profile-pose-prototype') {
     const base = import.meta.env.BASE_URL
-    const profile = hero === 'riddare' ? 'riddare' : 'bagskytt'
-    const artFolder = profile === 'riddare' ? 'prototype-v17' : 'prototype-v16'
+    const profile = hero === 'riddare' || hero === 'trollkarl' ? hero : 'bagskytt'
+    const artFolder = profile === 'riddare' ? 'prototype-v17' : profile === 'trollkarl' ? 'prototype-v18' : 'prototype-v16'
     const pose = state === 'hit' ? 'attack' : state === 'attack' ? 'block' : state === 'defeat' ? 'victory' : undefined
-    const name = profile === 'riddare' ? 'Riddaren' : 'Bågskytten'
+    const name = profile === 'riddare' ? 'Riddaren' : profile === 'trollkarl' ? 'Trollkarlen' : 'Bågskytten'
     const src = pose ? `${base}art/${artFolder}/${profile}-${pose}-v1.png` : `${base}art/hero/${profile}.webp`
     const label = pose === 'attack' ? `${name} attackerar` : pose === 'block' ? `${name} blockerar` : pose === 'victory' ? `${name} firar segern` : `${name} väntar`
     return <div className="battle-duel__hero battle-duel__hero--profile-pose" role="img" aria-label={label}><img src={src} alt="" /></div>

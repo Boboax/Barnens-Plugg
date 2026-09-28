@@ -35,7 +35,7 @@ function CharacterPreview() {
   const [motionMode, setMotionMode] = useState<ProductionPoseMode>('play')
   const [poseSequence, setPoseSequence] = useState<ProductionPoseSequence>('attack')
   const [bossId, setBossId] = useState<BossId>('tabelldraken')
-  const [battleHero, setBattleHero] = useState<'bagskytt' | 'riddare'>('bagskytt')
+  const [battleHero, setBattleHero] = useState<'bagskytt' | 'riddare' | 'trollkarl'>('bagskytt')
   const [view, setView] = useState<'figure' | 'battle' | 'motion'>('motion')
   useEffect(() => { localStorage.setItem(KEY, JSON.stringify(saved)) }, [saved])
   const play = (next: CharacterMotion) => { setMotion(next); setRun((n) => n + 1) }
@@ -55,12 +55,12 @@ function CharacterPreview() {
       <nav className="character-demo__tabs" aria-label="Prototypvyer">
         <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v13</button>
         <button aria-pressed={view === 'figure'} onClick={() => setView('figure')}>Äldre garderobstest</button>
-        <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Stridsvy v17</button>
+        <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Stridsvy v18</button>
         <button disabled>Skattkista · nästa etapp</button>
       </nav>
       <div className="character-demo__grid">
         <section className="character-demo__panel">
-          <h2>{view === 'figure' ? 'Garderob' : view === 'battle' ? `Profilprov · ${battleHero === 'riddare' ? 'Riddaren' : 'Bågskytten'}` : 'Produktionsprov v13'}</h2>
+          <h2>{view === 'figure' ? 'Garderob' : view === 'battle' ? `Profilprov · ${battleHero === 'riddare' ? 'Riddaren' : battleHero === 'trollkarl' ? 'Trollkarlen' : 'Bågskytten'}` : 'Produktionsprov v13'}</h2>
           {view === 'motion' ? <>
             <p>V5 använder riktiga helkroppsposer. Vapen och klädsel delar samma sex fasnummer, så samma ögonblick kan jämföras utan lösa kroppsdelar eller ändrad marklinje.</p>
             <h3>Boss</h3><div className="character-demo__choices"><button aria-pressed={bossId === 'tabelldraken'} onClick={() => { setBossId('tabelldraken'); playMotion('play') }}>Tabelldraken</button><button aria-pressed={bossId === 'brakbjornen'} onClick={() => { setBossId('brakbjornen'); playMotion('play') }}>Bråkbjörnen</button><button aria-pressed={bossId === 'monsterormen'} onClick={() => { setBossId('monsterormen'); playMotion('play') }}>Mönsterormen</button><button aria-pressed={bossId === 'plottrig'} onClick={() => { setBossId('plottrig'); playMotion('play') }}>Plottrig</button><button aria-pressed={bossId === 'stenjatten'} onClick={() => { setBossId('stenjatten'); playMotion('play') }}>Stenjätten</button><button aria-pressed={bossId === 'procentspoket'} onClick={() => { setBossId('procentspoket'); playMotion('play') }}>Procentspöket</button><button aria-pressed={bossId === 'vaxlartrollet'} onClick={() => { setBossId('vaxlartrollet'); playMotion('play') }}>Växlartrollet</button></div>
@@ -70,7 +70,7 @@ function CharacterPreview() {
             <h3>Sekvens</h3><div className="character-demo__controls">{([0, 1, 2, 3, 4, 5] as ProductionPoseFrame[]).slice(0, poseSequence === 'victory' ? 2 : 6).map((frame) => <button key={frame} aria-pressed={motionMode === frame} onClick={() => playMotion(frame)}>Fas {frame + 1}</button>)}<button aria-pressed={motionMode === 'play'} onClick={() => playMotion('play')}>Spela hela</button></div>
           </> : <>
             <p>{view === 'figure' ? 'Byt utrustning och spela en pose direkt.' : 'Samma duellkomponent som riktiga stridsvyn, med påhittad profil och lokal testlagring.'}</p>
-            {view === 'battle' ? <><h3>Vald profil</h3><div className="character-demo__choices"><button aria-pressed={battleHero === 'bagskytt'} onClick={() => { setBattleHero('bagskytt'); play('idle') }}>Bågskytten</button><button aria-pressed={battleHero === 'riddare'} onClick={() => { setBattleHero('riddare'); play('idle') }}>Riddaren</button></div><p className="character-demo__note">Tre frilagda helkroppsposer per profil. Vapen och klädsel är låsta till respektive bildreferens i detta avgränsade prov.</p></> : <><h3>Vapen</h3><div className="character-demo__choices">{PROTOTYPE_WEAPONS.map((item) => <button key={item.id} aria-pressed={saved.weapon === item.id} onClick={() => setSaved((old) => ({ ...old, weapon: item.id }))}>{item.name}</button>)}</div><h3>Mantel</h3><div className="character-demo__choices">{PROTOTYPE_CLOAKS.map((item) => <button key={item.id} aria-pressed={saved.cloak === item.id} onClick={() => setSaved((old) => ({ ...old, cloak: item.id }))}>{item.name}</button>)}</div></>}
+            {view === 'battle' ? <><h3>Vald profil</h3><div className="character-demo__choices"><button aria-pressed={battleHero === 'bagskytt'} onClick={() => { setBattleHero('bagskytt'); play('idle') }}>Bågskytten</button><button aria-pressed={battleHero === 'riddare'} onClick={() => { setBattleHero('riddare'); play('idle') }}>Riddaren</button><button aria-pressed={battleHero === 'trollkarl'} onClick={() => { setBattleHero('trollkarl'); play('idle') }}>Trollkarlen</button></div><p className="character-demo__note">Tre frilagda helkroppsposer per profil. Vapen och klädsel är låsta till respektive bildreferens i detta avgränsade prov.</p></> : <><h3>Vapen</h3><div className="character-demo__choices">{PROTOTYPE_WEAPONS.map((item) => <button key={item.id} aria-pressed={saved.weapon === item.id} onClick={() => setSaved((old) => ({ ...old, weapon: item.id }))}>{item.name}</button>)}</div><h3>Mantel</h3><div className="character-demo__choices">{PROTOTYPE_CLOAKS.map((item) => <button key={item.id} aria-pressed={saved.cloak === item.id} onClick={() => setSaved((old) => ({ ...old, cloak: item.id }))}>{item.name}</button>)}</div></>}
             <h3>Spela reaktion</h3><div className="character-demo__controls">
               <button onClick={() => play('idle')}>Väntar</button><button onClick={() => play('attack')}>Rätt svar</button><button onClick={() => play('guard')}>Fel svar</button><button onClick={() => play('victory')}>Seger</button><button onClick={() => play(motion)}>Spela om</button>
             </div>
@@ -95,7 +95,7 @@ function CharacterPreview() {
           </>}
         </section>
       </div>
-      <footer className="character-demo__footer"><span>V17 provar Bågskyttens och Riddarens frilagda helkroppsposer i den återanvändbara duellkomponenten. Riktiga stridsvyn behåller barnets valda profilbild.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
+      <footer className="character-demo__footer"><span>V18 provar Bågskyttens, Riddarens och Trollkarlens frilagda helkroppsposer i den återanvändbara duellkomponenten. Riktiga stridsvyn behåller barnets valda profilbild.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
     </div>
   </main>
 }
