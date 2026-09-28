@@ -55,7 +55,7 @@ function CharacterPreview() {
       <nav className="character-demo__tabs" aria-label="Prototypvyer">
         <button aria-pressed={view === 'motion'} onClick={() => { setView('motion'); playMotion('play') }}>Bossfight v13</button>
         <button aria-pressed={view === 'figure'} onClick={() => setView('figure')}>Äldre garderobstest</button>
-        <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Stridsvy v18</button>
+        <button aria-pressed={view === 'battle'} onClick={() => setView('battle')}>Stridsvy v19</button>
         <button disabled>Skattkista · nästa etapp</button>
       </nav>
       <div className="character-demo__grid">
@@ -95,7 +95,7 @@ function CharacterPreview() {
           </>}
         </section>
       </div>
-      <footer className="character-demo__footer"><span>V18 provar Bågskyttens, Riddarens och Trollkarlens frilagda helkroppsposer i den återanvändbara duellkomponenten. Riktiga stridsvyn behåller barnets valda profilbild.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
+      <footer className="character-demo__footer"><span>V19 provar Bågskyttens, Riddarens och Trollkarlens frilagda helkroppsposer i den återanvändbara duellkomponenten. Riktiga stridsvyn behåller barnets valda profilbild.</span><span>Ingen matte, valuta, sparfil eller vanlig appdata ändras.</span></footer>
     </div>
   </main>
 }
