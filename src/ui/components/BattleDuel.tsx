@@ -27,9 +27,12 @@ function BattleHero({ hero, state, reducedMotion, presentation, weapon, outfit }
   const motion = state === 'hit' ? 'attack' : state === 'attack' ? 'guard' : state === 'defeat' ? 'victory' : 'idle'
   if (presentation === 'profile-pose-prototype') {
     const base = import.meta.env.BASE_URL
+    const profile = hero === 'riddare' ? 'riddare' : 'bagskytt'
+    const artFolder = profile === 'riddare' ? 'prototype-v17' : 'prototype-v16'
     const pose = state === 'hit' ? 'attack' : state === 'attack' ? 'block' : state === 'defeat' ? 'victory' : undefined
-    const src = pose ? `${base}art/prototype-v16/bagskytt-${pose}-v1.png` : `${base}art/hero/bagskytt.webp`
-    const label = pose === 'attack' ? 'Bågskytten skjuter en pil' : pose === 'block' ? 'Bågskytten blockerar' : pose === 'victory' ? 'Bågskytten firar segern' : 'Bågskytten väntar'
+    const name = profile === 'riddare' ? 'Riddaren' : 'Bågskytten'
+    const src = pose ? `${base}art/${artFolder}/${profile}-${pose}-v1.png` : `${base}art/hero/${profile}.webp`
+    const label = pose === 'attack' ? `${name} attackerar` : pose === 'block' ? `${name} blockerar` : pose === 'victory' ? `${name} firar segern` : `${name} väntar`
     return <div className="battle-duel__hero battle-duel__hero--profile-pose" role="img" aria-label={label}><img src={src} alt="" /></div>
   }
   if (presentation === 'production-prototype') {
