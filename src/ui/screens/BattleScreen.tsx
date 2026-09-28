@@ -309,7 +309,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
               : kind === 'guardian' && guardian
                 ? <GuardianFigure guardian={guardian} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
               : kind === 'boss' && boss
-                ? <BattleDuel boss={boss} hero={child.hero} state={won ? 'defeat' : flash === 'hit' ? 'hit' : flash === 'miss' ? 'attack' : 'idle'} />
+                ? <BattleDuel boss={boss} hero={child.hero} state={won ? 'defeat' : flash === 'hit' ? 'hit' : flash === 'miss' ? 'attack' : 'idle'} heroPresentation="profile-pose-prototype" />
                 : <span className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'} style={{ display: 'inline-block', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.45))' }}><Icon name="kristall" size={92} /></span>}
           </div>
           {/* Framsteg: stjärnor för kollen, sköldar för boss/diamant. */}
