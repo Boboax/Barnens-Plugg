@@ -2,5 +2,7 @@ node_modules/
 dist/
 dev-dist/
 dist-character-preview/
+dist-full-preview/
+dist-full-preview-public/
 *.local
 .DS_Store

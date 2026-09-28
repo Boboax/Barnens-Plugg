@@ -36,10 +36,10 @@ const TICK_SECONDS = 5
 const IDLE_GRACE_MS = 90_000
 const IDLE_SLEEP_MS = 150_000
 
-export function App() {
+export function App({ skipSplash = false, disableAudio = false }: { skipSplash?: boolean; disableAudio?: boolean }) {
   const store = useStore()
   const { screen, activeChild, loaded } = store
-  const [showSplash, setShowSplash] = useState(true)
+  const [showSplash, setShowSplash] = useState(!skipSplash)
   const [piSover, setPiSover] = useState(false)
   const lastActivity = useRef(Date.now())
 
@@ -50,14 +50,15 @@ export function App() {
 
   // iOS släpper ljudet först efter en användargest.
   useEffect(() => {
+    if (disableAudio) return
     const unlock = (): void => unlockAudio()
     window.addEventListener('pointerdown', unlock, { once: true })
     return () => window.removeEventListener('pointerdown', unlock)
-  }, [])
+  }, [disableAudio])
 
   // Tysta musiken när appen göms/stängs (annars spelar mp3-låten kvar i
   // bakgrunden på iOS). Återupptas automatiskt när appen blir synlig igen.
-  useEffect(() => { installAudioLifecycle() }, [])
+  useEffect(() => { if (!disableAudio) installAudioLifecycle() }, [disableAudio])
 
   // All interaktion räknas som aktivitet (peka, rita, skriva).
   useEffect(() => {
@@ -76,13 +77,14 @@ export function App() {
   // Startlåten spelar på spelarvalet och FÅR spela klart in på kartan; sen
   // loopar temalåten tills en bosstrid, då bosslåtarna tar över.
   useEffect(() => {
+    if (disableAudio) { pauseMusic(); return }
     if (piSover) { pauseMusic(); return }
     // Bara VÄRLDSBOSSEN (klimaxstriden) får den dramatiska boss-musiken.
     // Nodens vänliga kunskapskoll ('check') och diamanten ('star') kör temalåten.
     if (screen === 'boss' || screen === 'guardian') setMusicScene('boss')
     else if (screen === 'profiles') setMusicScene('start')
     else setMusicScene('spel') // home, session, check, star, diagnosis, blixt, time-up, parent
-  }, [screen, piSover])
+  }, [screen, piSover, disableAudio])
 
   // Tidsbokföring: tickar bara på träningsskärmar, bara vid aktivitet,
   // bara när appen är synlig. Låser vänligt när tiden är slut.
