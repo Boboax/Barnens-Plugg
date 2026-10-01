@@ -6,6 +6,7 @@ const assets = [
   'art/arena/sambandsgrottan.webp',
   'art/boss/procentspoket.webp', 'art/boss/procentspoket-besegrad.webp',
   'art/hero/bagskytt.webp', 'art/hero/riddare.webp', 'art/hero/trollkarl.webp',
+  'art/icons/svards.webp', 'art/icons/ljud.webp', 'art/icons/skold.webp',
   'art/prototype-v11', 'art/prototype-v16', 'art/prototype-v17', 'art/prototype-v18', 'art/prototype-v19',
   'art/tex', 'art/camp/evening-camp.webp',
 ]
