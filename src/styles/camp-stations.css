@@ -30,3 +30,15 @@
 @media(max-width:900px){.camp-workspace { padding:15px; }.camp-pet-cards,.camp-book-grid { grid-template-columns:repeat(2,1fr); }.camp-hotspot { font-size:10px; padding:6px 8px; }.camp-wardrobe { gap:16px; }.camp-fitting { height:350px; }.camp-shop-grid { grid-template-columns:repeat(3,1fr); }}
 @media(max-width:600px){.camp-workspace { padding:10px; }.camp-navigation { gap:6px; }.camp-navigation .chip { font-size:11px; padding:6px 9px; }.camp-hotspot { min-height:32px; max-width:95px; }.camp-hotspot::before { display:none; }.camp-view-heading { font-size:28px; }.camp-wardrobe { grid-template-columns:1fr; }.camp-fitting { height:300px; }.camp-shop-grid { grid-template-columns:repeat(2,1fr); }.camp-pet-cards { gap:10px; }.camp-pet-card { padding:10px; }.camp-pet-card>img { height:140px; }.camp-pet-house,.camp-pack-panel,.camp-wardrobe,.camp-gear,.camp-library { padding:14px; }.camp-buy-confirm { flex-direction:column; align-items:stretch; gap:8px; }.camp-buy-confirm>img { height:120px; align-self:center; }.camp-outfit-option { padding:10px; font-size:12px; }.camp-placement-target span { width:72px; }.camp-pet span { padding:2px 5px; }.camp-book-grid { grid-template-columns:1fr 1fr; gap:10px; }.camp-book { padding:12px; }.camp-book h3 { font-size:20px; }}
 
+/* Världsgåvor: permanenta små föremål vid elden, samlingsbok och bossreliker. */
+.camp-world-gifts { position:absolute; right:3%; bottom:5%; z-index:5; display:flex; align-items:flex-end; gap:5px; max-width:43%; flex-wrap:wrap-reverse; justify-content:flex-end; }
+.camp-world-gift { width:42px; height:42px; display:grid; place-items:center; border:2px solid #B8893C; border-radius:50%; background:radial-gradient(circle at 36% 30%,#FFF7C7,#7A4D28 72%); box-shadow:0 4px 8px #0008,0 0 13px #FFD45A66; }
+.camp-world-gift--pet { background:radial-gradient(circle at 36% 30%,#E8FFF2,#315D4B 72%); border-color:#91C8A8; }
+.camp-world-gift span { font-size:23px; filter:drop-shadow(0 2px 2px #0005); }
+.camp-gift-library,.camp-relic-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; }
+.camp-gift-library article,.camp-relic { display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px; border:1px solid #CBB687; border-radius:13px; text-align:center; background:#F6ECCE; box-shadow:0 3px 9px #0002; }
+.camp-gift-library article>span,.camp-relic>span { font-size:38px; }
+.camp-gift-library small,.camp-relic small { color:#6B5B40; font-weight:700; line-height:1.3; }
+.camp-relic { border:2px solid #A97B2E; background:linear-gradient(#FFF4C8,#E5C97E); box-shadow:inset 0 0 0 2px #FFF9DE,0 5px 13px #0003; }
+@media(max-width:600px){.camp-world-gifts{max-width:55%;}.camp-world-gift{width:36px;height:36px}.camp-world-gift span{font-size:19px}.camp-gift-library,.camp-relic-grid{grid-template-columns:1fr 1fr}}
+

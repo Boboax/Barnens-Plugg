@@ -8,6 +8,7 @@ import { Pi } from './Pi'
 import { Ambience } from './Ambience'
 import { CloudSvg, Sprite, type SpriteName } from './WorldSprites'
 import { worldTheme } from '../worldThemes'
+import { giftById, type WorldGift } from '../../domain/world-gifts'
 
 /* ============================================================
    Riket — den stora startkartan över hela Matteriket.
@@ -152,6 +153,9 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
   const zooming = useRef(false)
   const artUrl = `${import.meta.env.BASE_URL}art/riket.webp`
   const ringUrl = `${import.meta.env.BASE_URL}art/tex/nodering.webp`
+  const visibleGifts = (child.worldGifts ?? [])
+    .map((id) => giftById(id))
+    .filter((gift): gift is WorldGift => gift !== undefined && (gift.kind === 'world' || gift.kind === 'boss'))
   /* Dimma ("fog of war"): oupptäckta delar av riket ligger i moln. Sedan
      Expeditionsmodellen (årsgrindar i stället för världsboss-grind) är en
      värld ÖPPEN när den har något NÅBART moment — upplåst av årsgrinden eller
@@ -337,6 +341,42 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
           {artOk && <AmbientLife />}
           {/* Tunna, långsamma moln som driver över kartan (ersätter fåglarna). */}
           {artOk && <Ambience scene="riket" />}
+
+          {/* Beständiga världsgåvor och bossreliker förändrar kartan på riktigt.
+              De är rena dekorationer och ligger under regionknapparna. */}
+          {visibleGifts.map((gift) => {
+            const region = REGIONS.find((item) => item.worldId === gift.worldId)
+            if (!region) return null
+            const pos = artOk ? region.art : region.svg
+            const bossRelic = gift.kind === 'boss'
+            return (
+              <span
+                key={gift.id}
+                role="img"
+                aria-label={'Världsgåva: ' + gift.name}
+                title={gift.name}
+                className={bossRelic ? 'pop-big' : 'float-soft'}
+                style={{
+                  position: 'absolute',
+                  left: `calc(${pos.x}% + ${bossRelic ? 36 : -46}px)`,
+                  top: `calc(${pos.y}% + ${bossRelic ? 38 : -48}px)`,
+                  zIndex: 2,
+                  width: bossRelic ? 36 : 32,
+                  height: bossRelic ? 36 : 32,
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: '50%',
+                  border: bossRelic ? '2px solid #FFE28A' : '1px solid rgba(255,255,255,.75)',
+                  background: bossRelic ? 'rgba(70,42,18,.9)' : 'rgba(30,55,55,.78)',
+                  boxShadow: bossRelic ? '0 0 18px #FFD45A' : '0 0 14px rgba(170,245,210,.8)',
+                  fontSize: bossRelic ? 22 : 19,
+                  pointerEvents: 'none',
+                }}
+              >
+                {gift.emoji}
+              </span>
+            )
+          })}
 
           {/* Regionernas knappar (och sprites i SVG-reserven). */}
           {REGIONS.map((region) => {

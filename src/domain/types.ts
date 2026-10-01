@@ -277,6 +277,9 @@ export interface Reward {
 
 export interface ChildProfile {
   petProgress?: import('./pet-home').PetProgress
+  /** Beständiga, kosmetiska världsgåvor från skattkistor. Påverkar aldrig
+      matte, rating eller upplåsning. Frivilligt för gamla sparfiler. */
+  worldGifts?: string[]
   id: string
   name: string
   /** Profilfärg (hex) som följer barnet genom appen. */

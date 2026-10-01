@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { AnswerRecord, ChildProfile, SessionPlan, Task } from '../../domain/types'
+import type { AnswerRecord, SessionPlan, Task } from '../../domain/types'
 import type { ChatMessage } from '../../chat/adapter'
 import { momentById } from '../../domain/curriculum'
-import { hasGenerator } from '../../generators'
+import { giftById, unclaimedGifts, type WorldGift } from '../../domain/world-gifts'
 import { worldTheme } from '../worldThemes'
 import { composeSession, taskForPart } from '../../engine/session'
-import { isDistantYear } from '../../engine/progress'
 import { useDocumentBackground } from '../useDocumentBackground'
 import { chatReadyFor } from '../../chat'
 import type { ScratchPadHandle } from '../components/ScratchPad'
@@ -17,6 +16,7 @@ import { Icon, HeroImg } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { PiVisar } from '../components/PiVisar'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
+import { WorldGiftChest } from '../components/WorldGiftChest'
 import { todayISO, useStore } from '../store'
 
 /* ============================================================
@@ -48,19 +48,6 @@ const CONTEXT: Record<Slot['kind'], AnswerRecord['context']> = {
 /* Chans att en skattkista dyker upp efter ett STARKT pass (UI-slump, inte
    generatorinnehåll → Math.random ok här). Exponerad som konstant för test. */
 export const CHEST_CHANCE = 0.35
-
-/** Slumpa ett behärskat moment till kistans bonusuppgift (som blandat-delen).
-    Fjärranår undantas — kistan ska kännas som en belöning, inte som att räkna
-    päron på förskoleklassnivå för en åk 5-elev. */
-function pickChestMoment(child: ChildProfile): string | undefined {
-  const mastered = Object.values(child.skills).filter(
-    (s) => (s.mastery === 'mastered' || s.mastery === 'star') &&
-      hasGenerator(momentById(s.momentId).generatorId) &&
-      !isDistantYear(momentById(s.momentId).year, child.schoolYear),
-  )
-  if (mastered.length === 0) return undefined
-  return mastered[Math.floor(Math.random() * mastered.length)].momentId
-}
 
 export function SessionScreen() {
   const store = useStore()
@@ -113,10 +100,11 @@ export function SessionScreen() {
   // Nytt-delens facit: [rätt, totalt] — styr om koll-erbjudandet tjänas.
   const nyttTally = useRef<[number, number]>([0, 0])
 
-  // Skattkista: en bonusöverraskning efter ett starkt pass (se effekten nedan).
-  const [chestPhase, setChestPhase] = useState<'none' | 'offer' | 'task' | 'closed'>('none')
-  const [chestTask, setChestTask] = useState<Task | null>(null)
-  const [chestCorrect, setChestCorrect] = useState(false)
+  // Skattkista: barnet väljer en beständig, kosmetisk världsgåva. Gåvan
+  // påverkar aldrig rating eller progression och erbjuds aldrig igen.
+  const [chestPhase, setChestPhase] = useState<'none' | 'offer' | 'closed'>('none')
+  const [chestGiftIds, setChestGiftIds] = useState<string[]>([])
+  const [chosenGiftName, setChosenGiftName] = useState('')
   const chestRolled = useRef(false)
   const doneNow = index >= slots.length
   // Vana belönas, inte rättprocent. Sparad dag gör StrictMode/återbesök idempotenta.
@@ -128,13 +116,19 @@ export function SessionScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneNow])
   useEffect(() => {
-    if (!doneNow || chestRolled.current || !child) return
+    if (!doneNow || chestRolled.current || !child || slots.length === 0) return
     chestRolled.current = true
     const ratio = slots.length > 0 ? correctCount / slots.length : 0
     // Kista bara efter STARKT pass (≥6 uppgifter), och ALDRIG i det fokuserade
     // flödet som leder till Pi-kollen. UI-slump → Math.random ok här.
     const eligible = !store.sessionFocused && ratio >= 0.8 && slots.length >= 6
-    if (eligible && Math.random() < CHEST_CHANCE) setChestPhase('offer')
+    const discoverySlot = slots.find((s) => s.kind === 'nytt') ?? slots[0]
+    const worldId = momentById(discoverySlot.momentId).worldId
+    const available = unclaimedGifts(worldId, child.worldGifts)
+    if (eligible && available.length > 0 && Math.random() < CHEST_CHANCE) {
+      setChestGiftIds(available.map((gift) => gift.id))
+      setChestPhase('offer')
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneNow])
 
@@ -242,19 +236,10 @@ export function SessionScreen() {
     setTask(taskForPart(child, slots[next].momentId, slots[next].kind, calm))
   }
 
-  // Skattkistan: öppna → generera EN bonusuppgift från ett behärskat moment.
-  const openChest = (): void => {
-    const momentId = pickChestMoment(child)
-    if (!momentId) { setChestPhase('closed'); return } // inga behärskade moment → hoppa
-    setChestTask(taskForPart(child, momentId, 'blandat'))
-    setChestPhase('task')
-  }
-  const handleChestComplete = (result: TaskResult): void => {
-    if (!chestTask) return
-    // Svaret räknas som vanlig träning (påverkar rating). KROK för framtida
-    // "Blandning"-valuta när husdjuren byggs (roadmap) — kistan ger inget ännu.
-    store.recordAnswer(chestTask, result.correct, result.elapsedMs, 'ovning', result.given, result.scratchPng)
-    setChestCorrect(result.correct)
+  const claimChestGift = (gift: WorldGift): void => {
+    store.claimWorldGift(gift.id)
+    setChosenGiftName(gift.name)
+    setChestPhase('closed')
     sfx.skatt()
     fireConfetti({ count: 45, power: 0.85 })
   }
@@ -293,32 +278,15 @@ export function SessionScreen() {
       )
     }
 
-    // Skattkiste-faser (bonus efter ett starkt pass) — visas FÖRE den vanliga
-    // slutsammanfattningen. "Kistan öppnad!" bakas sedan in i slutkortet.
+    // Världsgåvan väljs FÖRE den vanliga slutsammanfattningen.
     if (chestPhase === 'offer') {
-      return (
-        <ChestFrame title="Pi hittade en skattkista! 🎁" subtitle="Vad gömmer sig inuti?">
-          <button className="btn btn-primary" onClick={openChest} style={{ marginTop: 8 }}>Öppna kistan! ▶</button>
-        </ChestFrame>
-      )
+      const gifts = chestGiftIds.map((id) => giftById(id)).filter((gift): gift is WorldGift => gift !== undefined)
+      if (gifts.length > 0) {
+        return <WorldGiftChest gifts={gifts} title="Pi hittade en skattkista!" onChoose={claimChestGift} />
+      }
     }
-    if (chestPhase === 'task' && chestTask) {
-      return (
-        <ChestFrame title="Skattkistan 🎁" subtitle="En bonusuppgift — bara på skoj, ingen press!">
-          <TaskRunner
-            key="chest"
-            task={chestTask}
-            mode="ovning"
-            withScratch={false}
-            onComplete={handleChestComplete}
-            onNext={() => setChestPhase('closed')}
-          />
-        </ChestFrame>
-      )
-    }
-    // Kistan avklarad → visa "Kistan öppnad!" överst i det vanliga slutkortet.
-    const chestPrefix = chestPhase === 'closed'
-      ? (chestCorrect ? 'Kistan öppnad! 🎁 ' : 'Kistan öppnad ändå — bra försök! 🎁 ')
+    const chestPrefix = chestPhase === 'closed' && chosenGiftName
+      ? 'Världsgåvan ' + chosenGiftName + ' är din! 🎁 '
       : ''
 
     let nextStep = ''
@@ -469,36 +437,6 @@ export function SessionScreen() {
           onClose={() => setChatOpen(false)}
         />
       )}
-    </div>
-  )
-}
-
-/* Skattkistans inramning: ett varmt pergamentkort med 🎁-rubrik. Rymmer både
-   erbjudandet ("Öppna kistan!") och själva bonusuppgiftens TaskRunner. */
-function ChestFrame({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
-  useDocumentBackground('#241809') // iPad-remsan följer kistscenens kant
-  return (
-    <div className="screen-fade" style={{
-      // height (inte minHeight): höjdbegränsad rot så bonusuppgiftens
-      // TaskRunner-scroll greppar även för höga diagramuppgifter.
-      height: '100%', display: 'flex', flexDirection: 'column',
-      padding: 'calc(14px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom))',
-      position: 'relative', overflow: 'hidden',
-      // Skattig, varm scen: djup guldbrun botten så kistan känns som en fyndstund.
-      background: 'radial-gradient(ellipse 90% 80% at 50% 40%, #5A431E 0%, #3A2A12 55%, #241809 100%)',
-      ...({ '--ink': '#FBF3DE', '--muted': '#E7D3AC' } as React.CSSProperties),
-    }}>
-      <div style={{ textAlign: 'center', marginBottom: 10 }}>
-        <div className="pop-big display" style={{ fontSize: 24, fontWeight: 900, color: '#FFE7A8', textShadow: '0 2px 6px rgba(0,0,0,.5)' }}>{title}</div>
-        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#E7D3AC', marginTop: 2 }}>{subtitle}</div>
-      </div>
-      {/* Innehållet (knapp eller uppgift) på ett ljust pergamentkort med mörk text. */}
-      <div className="card" style={{
-        flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        gap: 12, padding: 18, maxWidth: 760, width: '100%', margin: '0 auto',
-      }}>
-        {children}
-      </div>
     </div>
   )
 }

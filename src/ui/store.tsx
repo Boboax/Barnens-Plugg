@@ -40,6 +40,8 @@ const ANSWER_HISTORY_LIMIT = 1500
 const SCRATCH_LIMIT = 20
 
 interface StoreValue {
+  /** Lägg en kosmetisk världsgåva i barnets samling. Idempotent. */
+  claimWorldGift(giftId: string): void
   changeCamp(action: CampAction): void
   completePetPractice(completed: number, planned: number, worldId?: string): void
   adoptPet(name: string): void
@@ -227,6 +229,13 @@ export function StoreProvider({ children, storageScope = '' }: { children: React
   }
 
   const value: StoreValue = useMemo(() => ({
+    claimWorldGift: (giftId) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => {
+        if (c.worldGifts?.includes(giftId)) return c
+        return { ...c, worldGifts: [...(c.worldGifts ?? []), giftId] }
+      })
+    },
     changeCamp: (action) => {
       if(activeChildId) setHousehold(h=>changeCamp(h,activeChildId,action,new Date()))
     },

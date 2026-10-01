@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Boss, Moment, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
 import { worldById } from '../../domain/worlds'
+import { bossGiftForWorld } from '../../domain/world-gifts'
 import { guardianForYear, yearLabel, type YearGuardian } from '../../domain/guardians'
 import {
   CHECK_CORRECT_TO_WIN, CHECK_TASK_COUNT,
@@ -15,6 +16,7 @@ import { Icon } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { BattleDuel } from '../components/BattleDuel'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
+import { WorldGiftChest } from '../components/WorldGiftChest'
 import { worldTheme } from '../worldThemes'
 import { EndCard } from './SessionScreen'
 import { useDocumentBackground } from '../useDocumentBackground'
@@ -112,6 +114,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
   const [flash, setFlash] = useState<'hit' | 'miss' | null>(null)
   const [finished, setFinished] = useState(false)
   const [introDone, setIntroDone] = useState(false)
+  const [bossGiftClaimed, setBossGiftClaimed] = useState(false)
 
   // Direkt omförsök (obegränsade försök är kollens princip — som väktaren).
   const retry = (): void => {
@@ -196,6 +199,22 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
     }
     if (kind === 'boss' && boss && world) {
       // Världsbossen är trofé-klimaxen när HELA världen är klar.
+      const bossGift = bossGiftForWorld(world.id)
+      if (won && bossGift && !bossGiftClaimed && !child.worldGifts?.includes(bossGift.id)) {
+        return (
+          <WorldGiftChest
+            gifts={[bossGift]}
+            title="Bosskistan är din!"
+            subtitle={'Du besegrade ' + boss.name + '. Den här unika reliken finns bara i ' + world.name + '.'}
+            onChoose={(gift) => {
+              store.claimWorldGift(gift.id)
+              setBossGiftClaimed(true)
+              sfx.skatt()
+              fireConfetti({ count: 95, power: 1.15 })
+            }}
+          />
+        )
+      }
       return won
         ? <EndCard title={`${boss.name} är besegrad!`} text={`"${boss.defeatLine}"`} onDone={() => store.go('home')} celebrate grand grandBanner={`⚔ ${world.name.toUpperCase()} ÄR ERÖVRAD ⚔`} grandSub="Hela världen är din — vilken bedrift!" />
         : <EndCard title={`${boss.name} står emot … än!`} text={`${correct} av ${total} rätt — du behövde ${needed}. Träna dina moment lite till och kom tillbaka starkare!`} onDone={() => store.go('home')} buttonText="Tillbaka till kartan" />
