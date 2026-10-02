@@ -65,6 +65,7 @@ function PreviewHarness() {
     <nav aria-label="Testgenvägar" style={{ position: 'fixed', zIndex: 900, top: 8, left: 8, right: 8, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', padding: '7px 10px', background: 'rgba(255,247,225,.94)', border: '2px solid #6E5426', borderRadius: 12, fontSize: 12 }}>
       <strong>TESTPROFIL · separat lagring · {__APP_VERSION__}</strong>
       {heroes.map((item) => <button key={item.id} className="chip" disabled={!child} aria-pressed={child?.hero === item.id} onClick={() => child && store.updateChild(child.id, { hero: item.id })}>{item.name}</button>)}
+      <button className="chip" disabled={!child} onClick={() => store.go('pet-home')}>Kvällslägret</button>
       <button className="chip" disabled={!child} onClick={() => store.startWorldBoss('sambandsgrottan')}>Bossfight · Procentspöket</button>
       <button className="chip" disabled={!child} onClick={() => store.startWorldBoss('sambandsgrottan')}>Börja om bossfight</button>
       <button className="chip" disabled={!child} onClick={() => setGiftPreview(true)}>Prova skattkista</button>
