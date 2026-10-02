@@ -1,6 +1,6 @@
 import type { Household } from '../domain/types'
 import { campPets, type PetCareActivity } from '../domain/pet-home'
-import { CAMP_CATALOG, CAMP_POINTS, OUTFITS, campItems } from '../domain/camp'
+import { CAMP_CATALOG, CAMP_POINTS, OUTFITS, campItemLimit, campItems, campItemsForChild, isCampUnlockMet } from '../domain/camp'
 import { homeSecondsLeft } from './pet-home'
 export type CampAction =
  | {type:'buy';itemId:string;purchaseId:string}
@@ -15,18 +15,20 @@ export function changeCamp(h:Household,childId:string,action:CampAction,at:Date)
  const child=h.children.find(c=>c.id===childId), p=child?.petProgress
  if(!p || !campPets(p).length || homeSecondsLeft(h,childId,at)<=0) return h
  const items=campItems(h.petHome)
+ const childItems=campItemsForChild(h.petHome,childId)
  const home={owned:{},equipped:{},...h.petHome,items}
  const updateChild=(patch:Partial<typeof p>)=>({...h,children:h.children.map(c=>c.id===childId?{...c,updatedAt:at.toISOString(),petProgress:{...p,...patch}}:c)})
  if(action.type==='buy') {
   const item=CAMP_CATALOG.find(f=>f.id===action.itemId)
-  if(!item||p.coins<item.price||!action.purchaseId||items.some(i=>i.id===action.purchaseId))return h
+  const ownedCount=childItems.filter(i=>i.itemId===item?.id).length
+  if(!item||!isCampUnlockMet(item.unlock,child)||ownedCount>=campItemLimit(item,child)||p.coins<item.price||!action.purchaseId||items.some(i=>i.id===action.purchaseId))return h
   return {...updateChild({coins:p.coins-item.price}),petHome:{...home,items:[...items,{id:action.purchaseId,itemId:item.id,childId,boughtAt:at.toISOString()}]}}
  }
  if(action.type==='place') {
-  const owned=items.find(i=>i.id===action.instanceId)
+  const owned=childItems.find(i=>i.id===action.instanceId)
   const item=CAMP_CATALOG.find(f=>f.id===owned?.itemId)
   const point=CAMP_POINTS.find(s=>s.id===action.point)
-  if(!owned||!item||(action.point&&(!point||point.kind!==item.kind||items.some(i=>i.id!==owned.id&&i.point===point.id))))return h
+  if(!owned||!item||(action.point&&(!point||point.kind!==item.kind||childItems.some(i=>i.id!==owned.id&&i.point===point.id))))return h
   return {...h,petHome:{...home,items:items.map(i=>i.id===owned.id?{...i,point:action.point}:i)}}
  }
  if(action.type==='rename'||action.type==='bed') {
@@ -54,6 +56,7 @@ export function changeCamp(h:Household,childId:string,action:CampAction,at:Date)
  const outfit=OUTFITS.find(o=>o.id===action.outfitId)
  if(!outfit)return h
  const owned=p.outfits??['traveller']
+ if(!owned.includes(outfit.id)&&!isCampUnlockMet(outfit.unlock,child))return h
  const price=owned.includes(outfit.id)?0:outfit.price
  if(p.coins<price)return h
  return updateChild({coins:p.coins-price,outfit:outfit.id,outfits:Array.from(new Set([...owned,outfit.id]))})
