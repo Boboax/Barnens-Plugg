@@ -10,7 +10,7 @@ const assets = [
   'art/prototype-v11', 'art/prototype-v16', 'art/prototype-v17', 'art/prototype-v18', 'art/prototype-v19',
   'art/tex', 'art/riket.webp', 'art/world/sambandsgrottan.webp',
   'art/camp/evening-camp.webp', 'art/camp/woodland-frog.png', 'art/camp/woodland-frog-motion-v1.webp',
-  'art/camp/items/pet-tent.png',
+  'art/camp/items',
 ]
 await rm(staging, { recursive: true, force: true })
 await rm('dist-full-preview', { recursive: true, force: true })
