@@ -66,6 +66,7 @@ function PreviewHarness() {
       conqueredWorlds: Array.from(new Set([...(profile.conqueredWorlds ?? []), 'monsterskogen'])),
       petProgress: { ...profile.petProgress!, coins: Math.max(profile.petProgress?.coins ?? 0, 300) },
     } : profile) })
+    store.selectChild(child.id)
     store.go('pet-home')
   }
 
