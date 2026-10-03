@@ -1,6 +1,6 @@
 import type { Household } from '../domain/types'
 import { campPets, type PetCareActivity } from '../domain/pet-home'
-import { CAMP_CATALOG, CAMP_POINTS, OUTFITS, campItemLimit, campItems, campItemsForChild, isCampUnlockMet } from '../domain/camp'
+import { CAMP_CATALOG, CAMP_POINTS, OUTFITS, WEAPONS, campItemLimit, campItems, campItemsForChild, isCampUnlockMet } from '../domain/camp'
 import { homeSecondsLeft } from './pet-home'
 export type CampAction =
  | {type:'buy';itemId:string;purchaseId:string}
@@ -9,6 +9,7 @@ export type CampAction =
  | {type:'bed';petId:string;point:string}
  | {type:'care';petId:string;activity:PetCareActivity}
  | {type:'outfit';outfitId:string}
+ | {type:'weapon';weaponId:string}
 
 /** Alla lägerändringar görs atomiskt och behåller äldre sparade fält. */
 export function changeCamp(h:Household,childId:string,action:CampAction,at:Date):Household {
@@ -52,6 +53,15 @@ export function changeCamp(h:Household,childId:string,action:CampAction,at:Date)
   else if(action.activity==='feed')care.lastFedAt=at.toISOString()
   else care.lastPettedAt=at.toISOString()
   return updateChild({pets:pets.map(v=>v.id===pet.id?{...v,care}:v)})
+ }
+ if(action.type==='weapon') {
+  const weapon=WEAPONS.find(item=>item.id===action.weaponId)
+  if(!weapon||weapon.hero!==(child.hero??'bagskytt'))return h
+  const owned=p.weapons??[]
+  if(weapon.price>0&&!owned.includes(weapon.id)&&!isCampUnlockMet(weapon.unlock,child))return h
+  const price=weapon.price===0||owned.includes(weapon.id)?0:weapon.price
+  if(p.coins<price)return h
+  return updateChild({coins:p.coins-price,weapon:weapon.id,weapons:Array.from(new Set([...owned,...(weapon.price>0?[weapon.id]:[])]))})
  }
  const outfit=OUTFITS.find(o=>o.id===action.outfitId)
  if(!outfit)return h

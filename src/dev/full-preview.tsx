@@ -59,6 +59,15 @@ function PreviewHarness() {
     store.replaceHousehold(testHousehold())
     setReady(false)
   }
+  const unlockWeaponPreview = () => {
+    if (!child) return
+    store.replaceHousehold({ ...store.household, children: store.household.children.map((profile) => profile.id === child.id ? {
+      ...profile,
+      conqueredWorlds: Array.from(new Set([...(profile.conqueredWorlds ?? []), 'monsterskogen'])),
+      petProgress: { ...profile.petProgress!, coins: Math.max(profile.petProgress?.coins ?? 0, 300) },
+    } : profile) })
+    store.go('pet-home')
+  }
 
   return <>
     <App skipSplash disableAudio />
@@ -66,6 +75,7 @@ function PreviewHarness() {
       <strong>TESTPROFIL · separat lagring · {__APP_VERSION__}</strong>
       {heroes.map((item) => <button key={item.id} className="chip" disabled={!child} aria-pressed={child?.hero === item.id} onClick={() => child && store.updateChild(child.id, { hero: item.id })}>{item.name}</button>)}
       <button className="chip" disabled={!child} onClick={() => store.go('pet-home')}>Kvällslägret</button>
+      <button className="chip" disabled={!child} onClick={unlockWeaponPreview}>Lås upp vapenprov</button>
       <button className="chip" disabled={!child} onClick={() => store.startWorldBoss('sambandsgrottan')}>Bossfight · Procentspöket</button>
       <button className="chip" disabled={!child} onClick={() => store.startWorldBoss('sambandsgrottan')}>Börja om bossfight</button>
       <button className="chip" disabled={!child} onClick={() => setGiftPreview(true)}>Prova skattkista</button>

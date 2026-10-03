@@ -8,6 +8,8 @@ export interface PetProgress {
   pets?: CampPet[]
   outfit?: string
   outfits?: string[]
+  weapon?: string
+  weapons?: string[]
 }
 export type PetCareActivity = 'pet' | 'feed' | 'rest' | 'wake'
 export interface CampPet { id: string; name: string; foundAt: string; species: string; bedPoint?: string; care?: { resting?: boolean; lastFedAt?: string; lastPettedAt?: string } }

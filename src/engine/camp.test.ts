@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest'
 import type {Household} from '../domain/types'
-import {campItems, campItemsForChild, visibleOutfits} from '../domain/camp'
+import {campItems, campItemsForChild, equippedWeapon, visibleOutfits, visibleWeapons} from '../domain/camp'
 import {campPets} from '../domain/pet-home'
 import {changeCamp} from './camp'
 import {completePetPractice,adoptPet} from './pet-home'
@@ -110,6 +110,22 @@ describe('lägrets samlingar',()=>{
   expect(campItemsForChild(next.petHome,'a')).toMatchObject([{id:'a-light',point:'light-1'}])
   expect(campItemsForChild(next.petHome,'b')).toMatchObject([{id:'b-light',point:'light-1'}])
   expect(changeCamp(next,'a',{type:'place',instanceId:'b-light',point:'light-2'},at)).toBe(next)
+ })
+ it('döljer och nekar Spiralbågen innan Mönsterormen är besegrad',()=>{
+  const h=fixture()
+  expect(visibleWeapons(h.children[0]).map(weapon=>weapon.id)).toEqual(['standard-bow'])
+  expect(changeCamp(h,'a',{type:'weapon',weaponId:'spiral-bow'},at)).toBe(h)
+  expect(changeCamp(h,'a',{type:'weapon',weaponId:'standard-sword'},at)).toBe(h)
+ })
+ it('köper Spiralbågen en gång, utrustar gratis igen och behåller den efter omladdning',()=>{
+  const h=fixture();h.children[0].conqueredWorlds=['monsterskogen'];h.children[0].petProgress!.coins=500
+  expect(visibleWeapons(h.children[0]).map(weapon=>weapon.id)).toEqual(['standard-bow','spiral-bow'])
+  const once=changeCamp(h,'a',{type:'weapon',weaponId:'spiral-bow'},at)
+  expect(once.children[0].petProgress).toMatchObject({coins:280,weapon:'spiral-bow',weapons:['spiral-bow']})
+  const twice=changeCamp(once,'a',{type:'weapon',weaponId:'spiral-bow'},at)
+  expect(twice.children[0].petProgress?.coins).toBe(280)
+  const reloaded=migrate(JSON.parse(JSON.stringify(twice)))
+  expect(equippedWeapon(reloaded.children[0])).toBe('spiral-bow')
  })
  it('nekar ändringar efter besökstiden och utan tillräckligt med mynt',()=>{
   const h=fixture();h.children[0].petProgress!.coins=0

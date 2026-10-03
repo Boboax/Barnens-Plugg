@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Boss } from '../../domain/types'
 import type { PrototypeWeaponId } from '../../domain/character'
+import type { EquipmentWeaponId } from '../../domain/camp'
 import { HeroImg } from './Icon'
 import { BossPoseAnimator, type BossId } from './BossPoseAnimator'
 import { ProductionPoseAnimatorV5, type ProductionPoseOutfit } from './ProductionPoseAnimatorV5'
@@ -16,13 +17,14 @@ function animatedBossId(id: string): BossId | undefined {
   return ['tabelldraken', 'monsterormen', 'plottrig', 'stenjatten', 'procentspoket', 'vaxlartrollet'].includes(id) ? id as BossId : undefined
 }
 
-function BattleHero({ hero, state, reducedMotion, presentation, weapon, outfit }: {
+function BattleHero({ hero, state, reducedMotion, presentation, weapon, outfit, equipmentWeapon }: {
   hero?: string
   state: BattleDuelState
   reducedMotion: boolean
   presentation: BattleDuelHeroPresentation
   weapon: PrototypeWeaponId
   outfit: ProductionPoseOutfit
+  equipmentWeapon?: EquipmentWeaponId
 }) {
   const motion = state === 'hit' ? 'attack' : state === 'attack' ? 'guard' : state === 'defeat' ? 'victory' : 'idle'
   if (presentation === 'profile-pose-prototype') {
@@ -33,8 +35,9 @@ function BattleHero({ hero, state, reducedMotion, presentation, weapon, outfit }
     const name = profile === 'riddare' ? 'Riddaren' : profile === 'trollkarl' ? 'Trollkarlen' : 'Bågskytten'
     const posePath = profile === 'riddare' && pose === 'victory' ? 'prototype-v19/riddare-victory-v2.png' : `${artFolder}/${profile}-${pose}-v1.png`
     const src = pose ? `${base}art/${posePath}` : `${base}art/hero/${profile}.webp`
-    const label = pose === 'attack' ? `${name} attackerar` : pose === 'block' ? `${name} blockerar` : pose === 'victory' ? `${name} firar segern` : `${name} väntar`
-    return <div className="battle-duel__hero battle-duel__hero--profile-pose" role="img" aria-label={label}><img src={src} alt="" /></div>
+    const weaponName=profile==='bagskytt'&&equipmentWeapon==='spiral-bow'?' med Spiralbågen':''
+    const label = pose === 'attack' ? `${name} attackerar${weaponName}` : pose === 'block' ? `${name} blockerar${weaponName}` : pose === 'victory' ? `${name} firar segern${weaponName}` : `${name} väntar${weaponName}`
+    return <div className="battle-duel__hero battle-duel__hero--profile-pose" role="img" aria-label={label}><img src={src} alt="" />{weaponName&&<span className={`battle-weapon-runes battle-weapon-runes--${pose??'idle'}`} aria-hidden="true"><i/><i/><i/></span>}</div>
   }
   if (presentation === 'production-prototype') {
     const poseSequence = state === 'attack' ? 'guard' : state === 'defeat' ? 'victory' : 'attack'
@@ -68,7 +71,7 @@ function BattleBoss({ boss, state, reducedMotion }: { boss: Pick<Boss, 'id' | 'n
  * Rent presentationslager: samma duell används i riktig BattleScreen och i
  * den fristående demon. Den tar inte emot eller skriver någon spelstatus.
  */
-export function BattleDuel({ boss, hero, state, reducedMotion = false, heroPresentation = 'profile', weapon = 'moon-bow', outfit = 'star-cloak' }: {
+export function BattleDuel({ boss, hero, state, reducedMotion = false, heroPresentation = 'profile', weapon = 'moon-bow', outfit = 'star-cloak', equipmentWeapon }: {
   boss: Pick<Boss, 'id' | 'name' | 'emoji'>
   hero?: string
   state: BattleDuelState
@@ -76,6 +79,7 @@ export function BattleDuel({ boss, hero, state, reducedMotion = false, heroPrese
   heroPresentation?: BattleDuelHeroPresentation
   weapon?: PrototypeWeaponId
   outfit?: ProductionPoseOutfit
+  equipmentWeapon?: EquipmentWeaponId
 }) {
   const [systemReducedMotion, setSystemReducedMotion] = useState(false)
   useEffect(() => {
@@ -87,7 +91,7 @@ export function BattleDuel({ boss, hero, state, reducedMotion = false, heroPrese
   }, [])
   const paused = reducedMotion || systemReducedMotion
   return <div className={`battle-duel${heroPresentation === 'production-prototype' ? ' battle-duel--production' : heroPresentation === 'profile-pose-prototype' ? ' battle-duel--profile-prototype' : ''}${paused ? ' battle-duel--paused' : ''}`}>
-    <BattleHero hero={hero} state={state} reducedMotion={paused} presentation={heroPresentation} weapon={weapon} outfit={outfit} />
+    <BattleHero hero={hero} state={state} reducedMotion={paused} presentation={heroPresentation} weapon={weapon} outfit={outfit} equipmentWeapon={equipmentWeapon} />
     <BattleBoss boss={boss} state={state} reducedMotion={paused} />
   </div>
 }

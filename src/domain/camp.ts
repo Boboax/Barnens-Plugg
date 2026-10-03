@@ -61,3 +61,17 @@ export const OUTFITS = [
 ] satisfies {id:string;name:string;color:string;trim:string;price:number;unlock:CampUnlock}[]
 export const visibleOutfits = (child:ChildProfile) => OUTFITS.filter(outfit=>child.petProgress?.outfits?.includes(outfit.id)||isCampUnlockMet(outfit.unlock,child))
 
+export const WEAPONS = [
+ {id:'standard-bow',name:'Jägarbågen',hero:'bagskytt',price:0,unlock:{kind:'always'},description:'Bågskyttens pålitliga grundbåge.'},
+ {id:'standard-sword',name:'Väktarsvärdet',hero:'riddare',price:0,unlock:{kind:'always'},description:'Riddarens pålitliga grundsvärd.'},
+ {id:'standard-staff',name:'Runstaven',hero:'trollkarl',price:0,unlock:{kind:'always'},description:'Trollkarlens pålitliga grundstav.'},
+ {id:'spiral-bow',name:'Spiralbågen',hero:'bagskytt',price:220,unlock:{kind:'world-conquered',worldId:'monsterskogen'},description:'Mönsterormens smaragdgröna spiralruna har väckt bågen. Den förändrar bara utseendet i strid.'},
+] satisfies {id:string;name:string;hero:NonNullable<ChildProfile['hero']>;price:number;unlock:CampUnlock;description:string}[]
+export type EquipmentWeaponId = typeof WEAPONS[number]['id']
+export const defaultWeaponForHero = (hero:ChildProfile['hero']):EquipmentWeaponId => hero==='riddare'?'standard-sword':hero==='trollkarl'?'standard-staff':'standard-bow'
+export const visibleWeapons = (child:ChildProfile) => WEAPONS.filter(weapon=>weapon.hero===(child.hero??'bagskytt')&&(weapon.price===0||child.petProgress?.weapons?.includes(weapon.id)||isCampUnlockMet(weapon.unlock,child)))
+export function equippedWeapon(child:ChildProfile):EquipmentWeaponId {
+ const fallback=defaultWeaponForHero(child.hero)
+ return WEAPONS.some(weapon=>weapon.id===child.petProgress?.weapon&&weapon.hero===(child.hero??'bagskytt'))?child.petProgress!.weapon as EquipmentWeaponId:fallback
+}
+

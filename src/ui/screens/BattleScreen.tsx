@@ -3,6 +3,7 @@ import type { Boss, Moment, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
 import { worldById } from '../../domain/worlds'
 import { bossGiftForWorld } from '../../domain/world-gifts'
+import { equippedWeapon } from '../../domain/camp'
 import { guardianForYear, yearLabel, type YearGuardian } from '../../domain/guardians'
 import {
   CHECK_CORRECT_TO_WIN, CHECK_TASK_COUNT,
@@ -328,7 +329,7 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
               : kind === 'guardian' && guardian
                 ? <GuardianFigure guardian={guardian} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
               : kind === 'boss' && boss
-                ? <BattleDuel boss={boss} hero={child.hero} state={won ? 'defeat' : flash === 'hit' ? 'hit' : flash === 'miss' ? 'attack' : 'idle'} heroPresentation="profile-pose-prototype" />
+                ? <BattleDuel boss={boss} hero={child.hero} equipmentWeapon={equippedWeapon(child)} state={won ? 'defeat' : flash === 'hit' ? 'hit' : flash === 'miss' ? 'attack' : 'idle'} heroPresentation="profile-pose-prototype" />
                 : <span className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'} style={{ display: 'inline-block', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.45))' }}><Icon name="kristall" size={92} /></span>}
           </div>
           {/* Framsteg: stjärnor för kollen, sköldar för boss/diamant. */}
