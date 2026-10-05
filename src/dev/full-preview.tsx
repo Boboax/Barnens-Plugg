@@ -7,7 +7,8 @@ import { newSkillState, recomputeAvailability, grantedYears } from '../engine/pr
 import { blixtBlockedMoments } from '../engine/blixt'
 import { App } from '../ui/App'
 import { StoreProvider, useStore } from '../ui/store'
-import { giftsForWorld, WORLD_GIFTS, type WorldGift } from '../domain/world-gifts'
+import { eligibleChestGifts, WORLD_GIFTS, type WorldGift } from '../domain/world-gifts'
+import { campPets, petSpecies } from '../domain/pet-home'
 import { WorldGiftChest } from '../ui/components/WorldGiftChest'
 import '../styles/global.css'
 
@@ -42,7 +43,7 @@ function testHousehold(hero: HeroKind = 'bagskytt'): Household {
 function PreviewHarness() {
   const store = useStore()
   const [ready, setReady] = useState(false)
-  const [giftPreview, setGiftPreview] = useState(false)
+  const [giftPreview, setGiftPreview] = useState<WorldGift>()
   const child = store.household.children.find((item) => item.id === DEMO_ID)
 
   useEffect(() => {
@@ -57,7 +58,17 @@ function PreviewHarness() {
 
   const reset = () => {
     store.replaceHousehold(testHousehold())
+    setGiftPreview(undefined)
     setReady(false)
+  }
+  const openGiftPreview = () => {
+    if (!child) return
+    const petWorldIds = campPets(child.petProgress).map((pet) => petSpecies(pet.species).worldId)
+    const available = eligibleChestGifts('monsterskogen', child.worldGifts, petWorldIds)
+    const gift = available[Math.floor(Math.random() * available.length)]
+    if (!gift) return
+    store.claimWorldGift(gift.id)
+    setGiftPreview(gift)
   }
   const unlockWeaponPreview = () => {
     if (!child) return
@@ -79,19 +90,17 @@ function PreviewHarness() {
       <button className="chip" disabled={!child} onClick={unlockWeaponPreview}>Lås upp vapenprov</button>
       <button className="chip" disabled={!child} onClick={() => store.startWorldBoss('sambandsgrottan')}>Bossfight · Procentspöket</button>
       <button className="chip" disabled={!child} onClick={() => store.startWorldBoss('sambandsgrottan')}>Börja om bossfight</button>
-      <button className="chip" disabled={!child} onClick={() => setGiftPreview(true)}>Prova skattkista</button>
+      <button className="chip" disabled={!child} onClick={openGiftPreview}>Prova skattkista</button>
       <button className="chip" disabled={!child} onClick={() => WORLD_GIFTS.forEach((gift) => store.claimWorldGift(gift.id))}>Fyll provsamling</button>
       <button className="chip" disabled={!store.loaded} onClick={reset}>Återställ testprofil</button>
     </nav>
     {giftPreview && (
       <div style={{ position: 'fixed', inset: 0, zIndex: 1000 }}>
         <WorldGiftChest
-          gifts={giftsForWorld('sambandsgrottan')}
-          title="Prov: välj en världsgåva"
-          onChoose={(gift: WorldGift) => {
-            store.claimWorldGift(gift.id)
-            setGiftPreview(false)
-          }}
+          gifts={[giftPreview]}
+          title="Prov: slumpad världsgåva"
+          subtitle="Kistan valde gåvan åt dig och sparade den direkt."
+          onChoose={() => setGiftPreview(undefined)}
         />
       </div>
     )}

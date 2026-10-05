@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AnswerRecord, SessionPlan, Task } from '../../domain/types'
 import type { ChatMessage } from '../../chat/adapter'
 import { momentById } from '../../domain/curriculum'
-import { giftById, unclaimedGifts, type WorldGift } from '../../domain/world-gifts'
+import { eligibleChestGifts, giftById, type WorldGift } from '../../domain/world-gifts'
+import { campPets, petSpecies } from '../../domain/pet-home'
 import { worldTheme } from '../worldThemes'
 import { composeSession, taskForPart } from '../../engine/session'
 import { useDocumentBackground } from '../useDocumentBackground'
@@ -100,10 +101,10 @@ export function SessionScreen() {
   // Nytt-delens facit: [rätt, totalt] — styr om koll-erbjudandet tjänas.
   const nyttTally = useRef<[number, number]>([0, 0])
 
-  // Skattkista: barnet väljer en beständig, kosmetisk världsgåva. Gåvan
-  // påverkar aldrig rating eller progression och erbjuds aldrig igen.
-  const [chestPhase, setChestPhase] = useState<'none' | 'offer' | 'closed'>('none')
-  const [chestGiftIds, setChestGiftIds] = useState<string[]>([])
+  // Skattkista: en beständig, kosmetisk världsgåva slumpas och sparas direkt.
+  // Husdjursgåvan ingår bara om barnet redan har en vän från samma värld.
+  const [chestPhase, setChestPhase] = useState<'none' | 'reveal' | 'closed'>('none')
+  const [chestGiftId, setChestGiftId] = useState<string>()
   const [chosenGiftName, setChosenGiftName] = useState('')
   const chestRolled = useRef(false)
   const doneNow = index >= slots.length
@@ -124,10 +125,14 @@ export function SessionScreen() {
     const eligible = !store.sessionFocused && ratio >= 0.8 && slots.length >= 6
     const discoverySlot = slots.find((s) => s.kind === 'nytt') ?? slots[0]
     const worldId = momentById(discoverySlot.momentId).worldId
-    const available = unclaimedGifts(worldId, child.worldGifts)
+    const petWorldIds = campPets(child.petProgress).map((pet) => petSpecies(pet.species).worldId)
+    const available = eligibleChestGifts(worldId, child.worldGifts, petWorldIds)
     if (eligible && available.length > 0 && Math.random() < CHEST_CHANCE) {
-      setChestGiftIds(available.map((gift) => gift.id))
-      setChestPhase('offer')
+      const gift = available[Math.floor(Math.random() * available.length)]
+      // Spara innan avslöjandet visas så gåvan inte kan försvinna vid omladdning.
+      store.claimWorldGift(gift.id)
+      setChestGiftId(gift.id)
+      setChestPhase('reveal')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneNow])
@@ -236,8 +241,7 @@ export function SessionScreen() {
     setTask(taskForPart(child, slots[next].momentId, slots[next].kind, calm))
   }
 
-  const claimChestGift = (gift: WorldGift): void => {
-    store.claimWorldGift(gift.id)
+  const closeChestReveal = (gift: WorldGift): void => {
     setChosenGiftName(gift.name)
     setChestPhase('closed')
     sfx.skatt()
@@ -278,12 +282,10 @@ export function SessionScreen() {
       )
     }
 
-    // Världsgåvan väljs FÖRE den vanliga slutsammanfattningen.
-    if (chestPhase === 'offer') {
-      const gifts = chestGiftIds.map((id) => giftById(id)).filter((gift): gift is WorldGift => gift !== undefined)
-      if (gifts.length > 0) {
-        return <WorldGiftChest gifts={gifts} title="Pi hittade en skattkista!" onChoose={claimChestGift} />
-      }
+    // Den slumpade världsgåvan avslöjas FÖRE den vanliga slutsammanfattningen.
+    if (chestPhase === 'reveal') {
+      const gift = chestGiftId ? giftById(chestGiftId) : undefined
+      if (gift) return <WorldGiftChest gifts={[gift]} title="Pi hittade en skattkista!" subtitle="Kistan valde en världsgåva åt dig — den är redan sparad i ditt äventyr." onChoose={closeChestReveal} />
     }
     const chestPrefix = chestPhase === 'closed' && chosenGiftName
       ? 'Världsgåvan ' + chosenGiftName + ' är din! 🎁 '

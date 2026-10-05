@@ -59,6 +59,18 @@ export function unclaimedGifts(worldId: string, claimed: readonly string[] = [],
   return giftsForWorld(worldId, includeBoss).filter((gift) => !owned.has(gift.id))
 }
 
+/** Husdjursgåvor kan bara hittas när barnet redan har en vän från samma värld. */
+export function eligibleChestGifts(
+  worldId: string,
+  claimed: readonly string[] = [],
+  petWorldIds: readonly string[] = [],
+): WorldGift[] {
+  const ownedPetWorlds = new Set(petWorldIds)
+  return unclaimedGifts(worldId, claimed).filter((gift) =>
+    gift.kind !== 'pet' || ownedPetWorlds.has(gift.worldId),
+  )
+}
+
 export function bossGiftForWorld(worldId: string): WorldGift | undefined {
   return WORLD_GIFTS.find((gift) => gift.worldId === worldId && gift.kind === 'boss')
 }

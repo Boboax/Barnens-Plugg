@@ -38,7 +38,7 @@ export function WorldGiftChest({
               <strong className="display">{gift.name}</strong>
               <span>{gift.description}</span>
               <small>{gift.effect}</small>
-              <b>Välj denna gåva</b>
+              <b>{gifts.length === 1 ? 'Ta emot gåvan' : 'Välj denna gåva'}</b>
             </button>
           ))}
         </div>
