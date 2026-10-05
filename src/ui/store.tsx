@@ -13,7 +13,7 @@ import { blixtMaxTier, blixtBlockedMoments } from '../engine/blixt'
 import { activeDayCount, masteredCount, updateStreak } from '../engine/rewards'
 import { resetNamePool, setNamePool } from '../generators/helpers'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
-import { mergeHouseholds, pullRemote, pushRemote, type SyncConfig } from '../storage/sync'
+import { adoptRemoteHousehold, freshHouseholdForCloudStart, mergeHouseholds, pullRemote, pushRemote, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
 import { adoptPet, buyFurniture, completePetPractice, equipFurniture, spendHomeTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
@@ -138,6 +138,12 @@ interface StoreValue {
 
   // Familjesynk (förälderns egen Cloudflare Worker — se docs/SYNC.md)
   setSyncConfig(config: SyncConfig | null): void
+  /** Första enheten: publicera bara om molnet fortfarande är tomt. */
+  initializeCloudFromLocal(): Promise<string>
+  /** Ny enhet: ersätt lokalt speldata med det befintliga molnhushållet. */
+  replaceLocalFromCloud(): Promise<string>
+  /** Efter färsk backup: töm speldata och pausa synken inför nya profiler. */
+  resetForFreshCloudStart(): void
   /** Manuell synk: hämta + slå ihop + ladda upp. Returnerar statusrad. */
   syncNow(): Promise<string>
   /** Senaste synkhändelse (för statusraden i föräldraläget). */
@@ -173,7 +179,7 @@ export function StoreProvider({ children, storageScope = '' }: { children: React
       // Familjesynk: hämta molnet vid start och slå ihop (nyaste barn vinner).
       // Fel (offline, fel kod) får ALDRIG hindra appen — barnet spelar lokalt.
       const cfg = h.sync
-      if (cfg) {
+      if (cfg && cfg.active !== false) {
         try {
           const remote = await pullRemote(cfg)
           h = mergeHouseholds(h, remote)
@@ -204,9 +210,9 @@ export function StoreProvider({ children, storageScope = '' }: { children: React
   useEffect(() => {
     if (!loaded) return
     void saveHousehold(household, storageScope)
-    if (!household.sync) return
-    const cfg = household.sync
     window.clearTimeout(syncPushTimer.current)
+    if (!household.sync || household.sync.active === false) return
+    const cfg = household.sync
     syncPushTimer.current = window.setTimeout(() => {
       pushRemote(cfg, household)
         .then(() => setSyncStatus(`Uppladdad ${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`))
@@ -642,12 +648,68 @@ export function StoreProvider({ children, storageScope = '' }: { children: React
     },
 
     setSyncConfig: (config) => {
-      setHousehold((h) => ({ ...h, sync: config ?? undefined }))
+      setHousehold((h) => ({ ...h, sync: config ? { ...config, active: false } : undefined }))
       if (!config) setSyncStatus(undefined)
+      else setSyncStatus('Adressen är sparad. Välj hur denna iPad ska anslutas.')
+    },
+
+    initializeCloudFromLocal: async () => {
+      const cfg = household.sync
+      if (!cfg) return 'Ingen synk inställd.'
+      try {
+        const remote = await pullRemote(cfg)
+        if (remote !== null) {
+          const msg = 'Molnet innehåller redan data. Använd “Hämta molnprofiler” eller en ny tom synktjänst.'
+          setSyncStatus(msg)
+          return msg
+        }
+        const next = { ...household, sync: { ...cfg, active: true } }
+        await pushRemote(next.sync, next)
+        setHousehold(next)
+        const msg = `Molnhushållet är skapat med ${next.children.length} profiler.`
+        setSyncStatus(msg)
+        return msg
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Kunde inte skapa molnhushållet.'
+        setSyncStatus(msg)
+        return msg
+      }
+    },
+
+    replaceLocalFromCloud: async () => {
+      const cfg = household.sync
+      if (!cfg) return 'Ingen synk inställd.'
+      try {
+        const remote = await pullRemote(cfg)
+        if (!remote || remote.children.length === 0) {
+          const msg = 'Molnet saknar profiler. Skapa molnhushållet på huvudenheten först.'
+          setSyncStatus(msg)
+          return msg
+        }
+        const next = adoptRemoteHousehold(household, remote)
+        setHousehold(next)
+        setActiveChildId(undefined)
+        setScreen('profiles')
+        const msg = `Denna iPad använder nu molnets ${next.children.length} profiler.`
+        setSyncStatus(msg)
+        return msg
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Kunde inte hämta molnhushållet.'
+        setSyncStatus(msg)
+        return msg
+      }
+    },
+
+    resetForFreshCloudStart: () => {
+      setHousehold((h) => freshHouseholdForCloudStart(h))
+      setActiveChildId(undefined)
+      setScreen('profiles')
+      setSyncStatus('Ren start förberedd. Skapa nya profiler och publicera sedan huvudenheten.')
     },
 
     syncNow: async () => {
       if (!household.sync) return 'Ingen synk inställd.'
+      if (household.sync.active === false) return 'Välj först om denna iPad är huvudenhet eller ska hämta från molnet.'
       try {
         const remote = await pullRemote(household.sync)
         const merged = mergeHouseholds(household, remote)

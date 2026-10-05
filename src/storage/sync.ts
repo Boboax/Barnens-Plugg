@@ -20,6 +20,8 @@ import { migrate } from './db'
 export interface SyncConfig {
   endpoint: string
   secret: string
+  /** Äldre konfigurationer saknar fältet och räknas som aktiva. */
+  active?: boolean
 }
 
 /** Enhetshemligheter som ALDRIG lämnar enheten — varken i exportfilen
@@ -67,6 +69,36 @@ export function mergeHouseholds(local: Household, remote: Household | null): Hou
       ...(remote.chatLog ?? []).filter((e) => fromRemote.has(e.childId)),
     ],
     schemaVersion: Math.max(local.schemaVersion ?? 1, remote.schemaVersion ?? 1),
+  }
+}
+
+/** Anslut en ny enhet: molnets speldata ersätter lokalt speldata, medan
+    PIN, AI-nyckel, synkinställning och lokala skolmål stannar på enheten. */
+export function adoptRemoteHousehold(local: Household, remote: Household): Household {
+  return {
+    ...remote,
+    parentPinHash: local.parentPinHash,
+    chat: local.chat,
+    sync: local.sync ? { ...local.sync, active: true } : undefined,
+    blixtTargets: local.blixtTargets,
+    lastBackupAt: local.lastBackupAt,
+  }
+}
+
+/** Ren molnstart efter säkerhetskopia: all spelprogress tas bort, men
+    enhetshemligheter och inställningar bevaras. Synken pausas tills det nya
+    hushållet uttryckligen publiceras som huvudenhet. */
+export function freshHouseholdForCloudStart(local: Household): Household {
+  return {
+    schemaVersion: local.schemaVersion,
+    children: [],
+    rewards: [],
+    chatLog: [],
+    parentPinHash: local.parentPinHash,
+    chat: local.chat,
+    sync: local.sync ? { ...local.sync, active: false } : undefined,
+    blixtTargets: local.blixtTargets,
+    lastBackupAt: local.lastBackupAt,
   }
 }
 

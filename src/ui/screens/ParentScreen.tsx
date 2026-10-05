@@ -805,6 +805,7 @@ function SyncCard() {
   const [endpoint, setEndpoint] = useState(cfg?.endpoint ?? '')
   const [secret, setSecret] = useState(cfg?.secret ?? '')
   const [busy, setBusy] = useState(false)
+  const backupIsFresh = daysSinceBackup(store.household, nowISO()) === 0
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '9px 11px', borderRadius: 10, fontSize: 14, fontWeight: 700,
@@ -814,9 +815,9 @@ function SyncCard() {
     <div style={pcard}>
       <h4 style={h4}>☁️ Familjesynk (mellan enheter)</h4>
       <p style={{ margin: '0 0 10px', fontSize: 13.5, lineHeight: 1.55 }}>
-        Låter barnen fortsätta på en annan enhet. Kräver en egen liten synktjänst hos Cloudflare
-        (engångsuppsättning ~5 min — se guiden <b>docs/SYNC.md</b> i projektet). Nyaste versionen av
-        varje barn vinner; PIN och AI-nyckel synkas aldrig. Familjekoden sparas bara på den här enheten.
+        Låter barnen fortsätta på en annan enhet. Spara adressen och välj sedan uttryckligen om
+        denna iPad ska skapa det nya molnhushållet eller hämta ett befintligt. Ingen data skickas
+        medan uppsättningen väntar. PIN och AI-nyckel synkas aldrig.
       </p>
       <input
         style={inputStyle} type="url" placeholder="Synktjänstens adress (https://…workers.dev)"
@@ -831,20 +832,53 @@ function SyncCard() {
           className="btn btn-primary"
           disabled={!endpoint.trim() || !secret.trim()}
           onClick={() => store.setSyncConfig({ endpoint: endpoint.trim(), secret: secret.trim() })}
-        >Spara</button>
-        <button
-          className="btn btn-quiet"
-          disabled={!cfg || busy}
+        >Spara adress och kod</button>
+        {cfg?.active !== false && <button
+          className="btn btn-quiet" disabled={busy}
           onClick={() => { setBusy(true); void store.syncNow().finally(() => setBusy(false)) }}
-        >{busy ? 'Synkar …' : 'Synka nu ⟳'}</button>
+        >{busy ? 'Synkar …' : 'Synka nu ⟳'}</button>}
         {cfg && (
           <button className="btn btn-quiet" onClick={() => { store.setSyncConfig(null); setEndpoint(''); setSecret('') }}>
             Slå av synk
           </button>
         )}
       </div>
+      {cfg?.active === false && <div style={{ marginTop: 12, padding: 12, border: '2px solid #D8C692', borderRadius: 12, background: '#FFF9E8' }}>
+        <strong>Första anslutningen</strong>
+        <p style={{ margin: '6px 0 10px', fontSize: 13, lineHeight: 1.5 }}>
+          På huvudenheten skapar du molnhushållet. På övriga iPads ersätter du gamla lokala profiler med molnets profiler.
+        </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn btn-primary" disabled={busy || store.household.children.length === 0}
+            onClick={() => { setBusy(true); void store.initializeCloudFromLocal().finally(() => setBusy(false)) }}>
+            Skapa molnet från denna iPad
+          </button>
+          <button className="btn btn-quiet" disabled={busy || !backupIsFresh}
+            onClick={() => {
+              if (!window.confirm('Molnprofilerna ersätter alla lokala profiler på denna iPad. Fortsätt bara om du nyss har exporterat en säkerhetskopia.')) return
+              setBusy(true); void store.replaceLocalFromCloud().finally(() => setBusy(false))
+            }}>
+            Hämta molnprofiler hit
+          </button>
+        </div>
+        {!backupIsFresh && <small>Exportera en säkerhetskopia idag för att aktivera hämtningen.</small>}
+      </div>}
+      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #E4DDCF' }}>
+        <strong>Ren start med nya profiler</strong>
+        <p style={{ margin: '6px 0 8px', fontSize: 13, lineHeight: 1.5 }}>
+          Raderar lokal progression, mynt, husdjur och belöningar. PIN, AI-inställningar och den sparade synkadressen behålls. Synken pausas tills nya profiler skapats.
+        </p>
+        <button className="btn btn-quiet" disabled={!backupIsFresh || busy}
+          onClick={() => {
+            if (!window.confirm('Detta raderar ALLA lokala barnprofiler och all lokal spelprogress. Säkerhetskopian påverkas inte. Vill du börja om?')) return
+            store.resetForFreshCloudStart()
+          }}>
+          Nollställ för ny molnstart
+        </button>
+        {!backupIsFresh && <small style={{ display: 'block', marginTop: 5 }}>Exportera en säkerhetskopia idag innan en ren start tillåts.</small>}
+      </div>
       <p style={{ margin: '10px 0 0', fontWeight: 700, fontSize: 13 }}>
-        {cfg ? (store.syncStatus ?? 'Synk är på — hämtar vid start, laddar upp efter ändringar.') : 'Synk är av — all data bor bara på den här enheten.'}
+        {cfg ? (store.syncStatus ?? (cfg.active === false ? 'Uppsättningen väntar — ingen data skickas.' : 'Synk är på — hämtar vid start, laddar upp efter ändringar.')) : 'Synk är av — all data bor bara på den här enheten.'}
       </p>
     </div>
   )

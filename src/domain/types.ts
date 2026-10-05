@@ -401,7 +401,7 @@ export interface Household {
   chat?: { provider: 'gemini' | 'claude'; apiKey: string }
   /** Familjesynk via förälderns egen Cloudflare Worker (se docs/SYNC.md).
       Enhetshemlighet: följer ALDRIG med i export eller synkdata. */
-  sync?: { endpoint: string; secret: string }
+  sync?: { endpoint: string; secret: string; /** false tills första säkra uppsättningen är vald. */ active?: boolean }
   /** Skolans minutmål per blixttest (sätts i föräldraläget, standard 20). */
   blixtTargets?: Partial<Record<BlixtKind, number>>
   lastBackupAt?: string

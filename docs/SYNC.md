@@ -33,13 +33,20 @@ ska undvikas (den som laddas upp sist vinner för det barnet).
 5. **Kopiera Workerns adress** (ser ut som
    `https://plugg-sync.DITTKONTO.workers.dev`).
 
-## I appen (på varje enhet)
+## I appen
 
-Föräldraläget → **Säkerhet** → *Familjesynk*:
-skriv in Workerns adress + familjekoden → **Spara** → **Synka nu**.
+Den korta, säkra ordningen finns i **`docs/FAMILJESYNK-LATHUND.md`**.
 
-Därefter sköter appen sig själv: den hämtar vid varje start och laddar
-upp efter varje ändring. "Synka nu" finns kvar för manuell kontroll.
+På huvudenheten: skriv in adress + familjekod → **Spara adress och kod** →
+**Skapa molnet från denna iPad**. Appen vägrar skriva över ett moln som redan
+innehåller data.
+
+På övriga enheter: exportera först backup → skriv in samma adress + kod →
+**Spara adress och kod** → **Hämta molnprofiler hit**. Gamla lokala profiler
+skickas inte medan uppsättningen väntar och blandas därför inte in av misstag.
+
+Därefter sköter appen sig själv: den hämtar vid varje start och laddar upp
+efter varje ändring. **Synka nu** finns kvar för manuell kontroll.
 
 ## Bra att veta
 

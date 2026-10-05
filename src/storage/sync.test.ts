@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ChildProfile, Household } from '../domain/types'
-import { mergeHouseholds, stripDeviceSecrets } from './sync'
+import { adoptRemoteHousehold, freshHouseholdForCloudStart, mergeHouseholds, stripDeviceSecrets } from './sync'
 
 /* Familjesynkens krockregel: nyaste versionen av VARJE BARN vinner, och
    barnets belöningar + chattlogg följer sin vinnande sida. Enhetsfält
@@ -75,5 +75,32 @@ describe('familjesynk: sammanslagning per barn', () => {
     expect(stripped.parentPinHash).toBeUndefined()
     expect(stripped.chat).toBeUndefined()
     expect(stripped.sync).toBeUndefined()
+  })
+
+  it('kan ansluta en ny enhet utan att blanda in dess gamla profiler', () => {
+    const local = home([kid('gammal', '2026-08-01T10:00:00Z')], {
+      parentPinHash: 'lokal-pin', chat: { provider: 'gemini', apiKey: 'lokal-nyckel' },
+      sync: { endpoint: 'https://x', secret: 'kod', active: false }, blixtTargets: { tabeller: 18 },
+    })
+    const remote = home([kid('moln', '2026-08-02T10:00:00Z')])
+    const adopted = adoptRemoteHousehold(local, remote)
+    expect(adopted.children.map((child) => child.id)).toEqual(['moln'])
+    expect(adopted.parentPinHash).toBe('lokal-pin')
+    expect(adopted.chat?.apiKey).toBe('lokal-nyckel')
+    expect(adopted.sync?.active).toBe(true)
+    expect(adopted.blixtTargets?.tabeller).toBe(18)
+  })
+
+  it('förbereder en ren molnstart utan att synka raderingen automatiskt', () => {
+    const local = home([kid('a', '2026-08-01T10:00:00Z')], {
+      petHome: { owned: {}, equipped: {} }, parentPinHash: 'pin',
+      sync: { endpoint: 'https://x', secret: 'kod', active: true },
+    })
+    const fresh = freshHouseholdForCloudStart(local)
+    expect(fresh.children).toEqual([])
+    expect(fresh.rewards).toEqual([])
+    expect(fresh.petHome).toBeUndefined()
+    expect(fresh.parentPinHash).toBe('pin')
+    expect(fresh.sync?.active).toBe(false)
   })
 })
