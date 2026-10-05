@@ -112,9 +112,12 @@ const bosses: Record<BossId, BossConfig> = {
 }
 
 const defaultPlayback: Record<BossPoseSequence, BossAnimation> = {
-  attack: { frames: [0, 1, 2], timing: [0, 360, 700] },
-  hit: { frames: [0, 3, 4], timing: [0, 620, 930] },
-  defeat: { frames: [3, 4, 5], timing: [0, 330, 720] },
+  // Håll varje målade pose länge nog för att den ska kunna läsas på en iPad.
+  // BattleScreen lämnar scenen först efter 1 260 ms, så den sista bilden i
+  // respektive följd hinner alltid visas i stället för att kapas av.
+  attack: { frames: [0, 1, 2], timing: [0, 390, 780] },
+  hit: { frames: [0, 3, 4], timing: [0, 520, 930] },
+  defeat: { frames: [3, 4, 5], timing: [0, 360, 800] },
 }
 
 const defaultManualFrames: Record<BossPoseSequence, number[]> = {

@@ -181,7 +181,11 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
         else store.finishStar(momentId!, victory)
         setFinished(true)
       } else setIndex(next)
-    }, 900)
+    // Bossarnas poseföljder behöver få spela klart innan nästa fråga visas.
+    // Särskilt träffsekvensens sista bild ligger vid 930 ms; 1 260 ms ger
+    // även den bilden ett lugnt, synligt avslut utan att ändra uppgifternas
+    // tidtagning eller stridens regler.
+    }, 1260)
   }
 
   if (finished) {
