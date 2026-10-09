@@ -1,0 +1,138 @@
+/* ============================================================
+   Världsbosstriden: hjälten till vänster, uppgiften i mitten, bossen
+   till höger — och anfallen flyger över hela scenen mellan dem.
+   Bossen är huvudpersonen och lika stor som förr (240 px på iPad
+   landskap); hjälten står i samma skala. Text sitter på egna plattor.
+   ============================================================ */
+
+.battle-duel-layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(140px, 190px) minmax(0, 1fr) minmax(190px, 250px);
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  z-index: 2;
+}
+.battle-duel-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* ---------- Hjälten ---------- */
+
+.battle-hero {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  height: 280px;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .5));
+}
+/* Stridsposerna är kvadratiska rutor där figuren upptar ungefär tre
+   fjärdedelar; de ritas större och får sticka ut ur kolumnen så att
+   hjälten håller samma storlek som i profilbilden. */
+.battle-hero:not(.battle-hero--profile) { width: 300px; max-width: none; height: 300px; margin-inline: -50px; }
+.battle-hero--idle { animation: battle-breathe 3.6s ease-in-out infinite; transform-origin: center bottom; }
+.battle-hero--attack { animation: battle-lunge .55s ease-out both; }
+.battle-hero--block { animation: battle-brace .35s ease-out both; }
+.battle-hero--victory { animation: battle-cheer .9s ease-out both; }
+
+/* ---------- Bossen ---------- */
+
+.battle-boss {
+  display: block;
+  height: 240px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45)) drop-shadow(0 0 14px rgba(255, 180, 60, .3));
+}
+.battle-boss--idle { animation: float-soft 3s ease-in-out infinite; }
+.battle-boss--hit { animation: battle-recoil .5s ease-out .5s both; }
+.battle-boss--defeat { filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45)) saturate(.8); }
+.battle-boss--emoji { font-size: 96px; line-height: 1; height: auto; }
+
+/* ---------- Anfallen över scenen ---------- */
+
+.battle-projectile {
+  position: absolute;
+  top: 42%;
+  z-index: 6;
+  width: 120px;
+  height: 80px;
+  margin-top: -40px;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+.battle-projectile img { width: 100%; height: 100%; object-fit: contain; }
+/* Hjältens anfall: lyfter från hjältens hand och landar på bossen. */
+.battle-projectile--from-hero { left: 12%; animation: battle-fly-right .48s cubic-bezier(.35, .1, .6, 1) .14s both; }
+/* Bossens anfall: laddas upp först (bossens rutor), flyger sedan mot hjälten. */
+.battle-projectile--from-boss { left: 80%; animation: battle-fly-left .5s cubic-bezier(.35, .1, .6, 1) .62s both; }
+
+/* CSS-reserv tills de målade projektilerna finns. */
+.battle-projectile__fx { display: block; }
+.battle-projectile__fx--pil {
+  width: 110px; height: 6px; border-radius: 3px;
+  background: linear-gradient(90deg, rgba(255, 230, 160, 0), #C9A46A 45%, #FFF2C2);
+  box-shadow: 0 0 12px 3px rgba(255, 220, 120, .65);
+  position: relative;
+}
+.battle-projectile__fx--pil::after {
+  content: ''; position: absolute; right: -10px; top: -7px;
+  border-left: 16px solid #FFE8A0; border-top: 10px solid transparent; border-bottom: 10px solid transparent;
+  filter: drop-shadow(0 0 6px #FFE08A);
+}
+.battle-projectile__fx--svardsvag {
+  width: 60px; height: 90px; border-radius: 50%;
+  border-right: 10px solid #DDF1FF;
+  box-shadow: 8px 0 18px -4px rgba(150, 210, 255, .9);
+  filter: drop-shadow(0 0 8px #9FD8FF);
+}
+.battle-projectile__fx--trollkula, .battle-projectile__fx--boss {
+  width: 54px; height: 54px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #FFFFFF 0 12%, #E5C7FF 30%, #8A5BD6 62%, rgba(80, 40, 160, 0) 72%);
+  box-shadow: 0 0 22px 8px rgba(170, 120, 255, .55);
+}
+.battle-projectile__fx--boss {
+  background: radial-gradient(circle at 60% 35%, #FFFFFF 0 12%, var(--tint) 45%, rgba(0, 0, 0, 0) 72%);
+  box-shadow: 0 0 22px 8px color-mix(in srgb, var(--tint) 60%, transparent);
+}
+
+/* Nedslaget vid bossen respektive hjälten. */
+.battle-impact {
+  position: absolute; top: 42%; z-index: 6; width: 140px; height: 140px; margin: -70px 0 0 -70px;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 245, 210, .95) 0 18%, rgba(255, 200, 90, .55) 40%, rgba(255, 160, 40, 0) 70%);
+  animation: battle-impact .45s ease-out both;
+}
+.battle-impact--at-boss { left: 88%; animation-delay: .6s; }
+.battle-impact--at-hero { left: 10%; animation-delay: 1.1s; }
+
+@keyframes battle-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.01, 1.025); } }
+@keyframes battle-lunge { 0% { transform: translateX(0); } 35% { transform: translateX(18px); } 100% { transform: translateX(0); } }
+@keyframes battle-brace { 0% { transform: translateX(0); } 60% { transform: translateX(-10px); } 100% { transform: translateX(-4px); } }
+@keyframes battle-cheer { 0% { transform: translateY(0); } 40% { transform: translateY(-16px); } 100% { transform: translateY(0); } }
+@keyframes battle-recoil { 0% { transform: translateX(0); } 30% { transform: translateX(16px) rotate(2deg); } 100% { transform: translateX(0); } }
+@keyframes battle-fly-right { 0% { left: 12%; opacity: 0; } 12% { opacity: 1; } 92% { opacity: 1; } 100% { left: 84%; opacity: 0; } }
+@keyframes battle-fly-left { 0% { left: 80%; opacity: 0; } 12% { opacity: 1; } 92% { opacity: 1; } 100% { left: 8%; opacity: 0; } }
+@keyframes battle-impact { 0% { transform: scale(.3); opacity: 0; } 30% { opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+
+@media (max-width: 760px) {
+  .battle-duel-layout { grid-template-columns: minmax(90px, 120px) minmax(0, 1fr) minmax(110px, 150px); gap: 8px; }
+  .battle-hero { height: 180px; }
+  .battle-hero:not(.battle-hero--profile) { width: 190px; height: 190px; margin-inline: -35px; }
+  .battle-boss { height: 160px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .battle-hero, .battle-boss { animation: none !important; }
+  .battle-projectile, .battle-impact { display: none; }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Boss, Moment, Task } from '../../domain/types'
 import { momentById } from '../../domain/curriculum'
 import { worldById } from '../../domain/worlds'
@@ -18,6 +18,12 @@ import { worldTheme } from '../worldThemes'
 import { EndCard } from './SessionScreen'
 import { useDocumentBackground } from '../useDocumentBackground'
 import { useStore } from '../store'
+import { bossGiftForWorld } from '../../domain/world-gifts'
+import { BossSprite, type BossAction } from '../components/battle/BossSprite'
+import { HeroSprite, type HeroAction } from '../components/battle/HeroSprite'
+import { Projectile } from '../components/battle/Projectile'
+import { WorldGiftChest } from '../components/WorldGiftChest'
+import '../../styles/battle.css'
 
 /* ============================================================
    Fyra slags "prov" — alla utan klocka, fel straffas aldrig,
@@ -31,27 +37,6 @@ import { useStore } from '../store'
      årskurserna. Frågor från hela årets läroplan; vinst öppnar nästa år.
    - 'star': diamantnivån (nivå 8–10) efter att en nod är klar.
    ============================================================ */
-
-/* Bossfiguren: målad bild (per boss.id) med svävande idle, skakning vid
-   träff och besegrad-pose när sista skölden knäcks. Reserv: bossens emoji. */
-function BossFigure({ boss, state }: { boss: Boss; state: 'idle' | 'traffad' | 'besegrad' }) {
-  const [broken, setBroken] = useState(false)
-  const base = import.meta.env.BASE_URL
-  const src = state === 'besegrad' ? `${base}art/boss/${boss.id}-besegrad.webp` : `${base}art/boss/${boss.id}.webp`
-  const anim = state === 'traffad' ? 'shake-hard' : state === 'besegrad' ? 'pop-big' : 'float-soft'
-  if (broken) return <span className={anim} style={{ fontSize: 84, lineHeight: 1, display: 'inline-block' }}>{boss.emoji}</span>
-  return (
-    <img
-      src={src} alt={boss.name} className={anim} onError={() => setBroken(true)}
-      style={{
-        height: 240, width: 'auto', objectFit: 'contain', display: 'block',
-        filter: state === 'besegrad'
-          ? 'drop-shadow(0 6px 10px rgba(0,0,0,.45))'
-          : 'drop-shadow(0 6px 10px rgba(0,0,0,.45)) drop-shadow(0 0 14px rgba(255,180,60,.35))',
-      }}
-    />
-  )
-}
 
 /* Årsväktaren: ritad väktarande (kåpa, lysande ögon, runsköld med årets
    tecken) i årets egen färgton — ingen målad bild behövs, samma stil som
@@ -105,6 +90,31 @@ function GuardianFigure({ guardian, state }: { guardian: YearGuardian; state: 'i
   )
 }
 
+/* Väntan efter varje svar innan nästa uppgift. Världsbosstriden väntar
+   längre så att anfallet hinner flyga över scenen och bossens målade
+   rutor hinner läsas; kollen, väktaren och diamanten behåller sitt tempo. */
+const ANSWER_PAUSE_MS = 900
+const BOSS_ANSWER_PAUSE_MS = 1260
+/** Bossens besegrad-följd och hjältens seger hinner synas före slutkortet. */
+const BOSS_DEFEAT_MS = 1500
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false)
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = (): void => setReduced(query.matches)
+    update()
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
+  return reduced
+}
+
+/** Vad hjälten och bossen gör just nu i världsbosstriden. key ändras vid
+    varje svar, så att samma anfall kan spelas flera gånger i rad. */
+interface Duel { hero: HeroAction; boss: BossAction; key: number }
+const DUEL_IDLE: Duel = { hero: 'idle', boss: 'idle', key: 0 }
+
 /* Pis varierade hejarop under kunskapskollen — samma rad varje gång blev platt. */
 const PI_CHECK_CHEERS = ['Bra jobbat!', 'En stjärna till!', 'Du är på gång!', 'Pi ser att du tänker!', 'Wow, snyggt!', 'Så nära målet nu!']
 
@@ -132,10 +142,15 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
   const [flash, setFlash] = useState<'hit' | 'miss' | null>(null)
   const [finished, setFinished] = useState(false)
   const [introDone, setIntroDone] = useState(false)
+  const [duel, setDuel] = useState<Duel>(DUEL_IDLE)
+  const duelKey = useRef(0)
+  // Bossreliken visas en gång efter vunnen världsboss, före slutkortet.
+  const [relicSeen, setRelicSeen] = useState(false)
+  const reducedMotion = usePrefersReducedMotion()
 
   // Direkt omförsök (obegränsade försök är kollens princip — som väktaren).
   const retry = (): void => {
-    setIndex(0); setCorrect(0); setFlash(null); setFinished(false)
+    setIndex(0); setCorrect(0); setFlash(null); setFinished(false); setDuel(DUEL_IDLE)
     setRound((r) => r + 1)
   }
 
@@ -202,12 +217,27 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
     setFlash(result.correct ? 'hit' : 'miss')
     if (result.correct) friendly ? sfx.ratt() : sfx.skold()
     else friendly ? sfx.klick() : sfx.bossFniss()
+    const bossFight = kind === 'boss'
+    if (bossFight) {
+      duelKey.current += 1
+      setDuel(result.correct
+        ? { hero: 'attack', boss: 'hit', key: duelKey.current }
+        : { hero: 'block', boss: 'attack', key: duelKey.current })
+    }
     window.setTimeout(() => {
       setFlash(null)
       const next = index + 1
-      if (next >= tasks.length || nextCorrect >= needed) finishBattle(nextCorrect >= needed)
-      else setIndex(next)
-    }, 900)
+      const victory = nextCorrect >= needed
+      if (next < tasks.length && !victory) {
+        if (bossFight) setDuel((d) => ({ ...d, hero: 'idle', boss: 'idle' }))
+        setIndex(next)
+      } else if (bossFight && victory) {
+        // Låt bossen falla och hjälten fira innan slutkortet tar över.
+        duelKey.current += 1
+        setDuel({ hero: 'victory', boss: 'defeat', key: duelKey.current })
+        window.setTimeout(() => finishBattle(true), reducedMotion ? 300 : BOSS_DEFEAT_MS)
+      } else finishBattle(victory)
+    }, bossFight ? BOSS_ANSWER_PAUSE_MS : ANSWER_PAUSE_MS)
   }
 
   if (finished) {
@@ -225,6 +255,18 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
         : <EndCard title={`${guardian.name} står emot … än!`} text={`${correct} av ${total} rätt — du behövde ${needed}. Träna lite till och kom tillbaka starkare — väktaren väntar tålmodigt!`} onDone={() => store.go('home')} buttonText="Tillbaka till kartan" />
     }
     if (kind === 'boss' && boss && world) {
+      // Bossreliken: en unik, kosmetisk trofé (lägret och kartan) — sparas
+      // innan den visas, så den inte kan försvinna om appen stängs.
+      const relic = bossGiftForWorld(world.id)
+      if (won && relic && !relicSeen) {
+        return (
+          <RelicReveal
+            gift={relic}
+            onShown={() => store.claimWorldGift(relic.id)}
+            onClose={() => setRelicSeen(true)}
+          />
+        )
+      }
       // Världsbossen är trofé-klimaxen när HELA världen är klar.
       return won
         ? <EndCard title={`${boss.name} är besegrad!`} text={`"${boss.defeatLine}"`} onDone={() => store.go('home')} celebrate grand grandBanner={`⚔ ${world.name.toUpperCase()} ÄR ERÖVRAD ⚔`} grandSub="Hela världen är din — vilken bedrift!" />
@@ -243,6 +285,75 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
     ? `radial-gradient(ellipse 95% 80% at 50% 34%, hsl(${guardian.hue} 38% 26%) 0%, hsl(${guardian.hue} 34% 14%) 55%, #0D0B14 100%)`
     : undefined
   const bgImg = worldId ? `${import.meta.env.BASE_URL}art/${friendly ? 'world' : 'arena'}/${worldId}.webp` : undefined
+
+  // Uppgiften och sidopanelen (Pi, bossen, väktaren eller kristallen med
+  // sköldar) delas av båda layouterna nedan.
+  const taskColumn = (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginBottom: 4 }}>
+        {Array.from({ length: total }).map((_, i) => (
+          <span key={i} style={{
+            width: 11, height: 11, borderRadius: '50%',
+            background: i < index ? 'var(--primary)' : i === index ? 'var(--sun)' : '#E4DECE',
+            boxShadow: i === index ? '0 0 0 3px rgba(255,201,77,.4)' : undefined,
+          }} />
+        ))}
+      </div>
+      <div style={{ textAlign: 'center', fontSize: 12.5, fontWeight: 800, color: 'var(--muted)', marginBottom: 4 }}>
+        Fråga {index + 1} av {total}
+      </div>
+      <TaskRunner key={`${index}-${tasks[index].ref.seed}`} task={tasks[index]} mode="prov" onComplete={handleComplete} />
+    </div>
+  )
+  const sidePanel = (
+    <>
+      {/* Höger: Pi (kollen) eller bossen/kristallen. */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <div className="card" style={{ fontSize: 12.5, fontWeight: 800, textAlign: 'center', padding: '8px 12px', color: '#3A302A' }}>
+          {friendly
+            ? (flash === 'hit'
+                ? <><Icon name="stjarna" size={15} style={{ marginRight: 5 }} />{PI_CHECK_CHEERS[correct % PI_CHECK_CHEERS.length]}</>
+                : flash === 'miss' ? 'Nästan — fortsätt!' : 'Visa vad du lärt dig!')
+            // Bossen/väktaren får personlighet: replikerna roteras efter
+            // knäckta sköldar, så striden känns levande.
+            : (flash === 'hit'
+                ? <><Icon name="skold" size={15} style={{ marginRight: 5 }} />{correct > 0 && foe?.taunts?.length ? `"${foe.taunts[(correct - 1) % foe.taunts.length]}"` : 'En sköld knäcktes!'}</>
+                : flash === 'miss' ? '"Hihi! Inte den här gången!"' : `"${foe?.taunt ?? ''}"`)}
+        </div>
+        <div className={friendly ? undefined : 'boss-enter'} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {flash === 'hit' && !friendly && kind !== 'boss' && (
+            <>
+              <span key={`flash-${correct}`} className="hit-flash" />
+              {Array.from({ length: 8 }).map((_, s) => (
+                <span key={`shard-${correct}-${s}`} className="shard-spoke" style={{ transform: `rotate(${s * 45}deg)` }}>
+                  <i style={{ animationDelay: `${s * 0.012}s` }} />
+                </span>
+              ))}
+            </>
+          )}
+          {friendly
+            ? <Pi mood={flash === 'hit' || won ? 'hejar' : flash === 'miss' ? 'funderar' : 'glad'} size={132} />
+            : kind === 'guardian' && guardian
+              ? <GuardianFigure guardian={guardian} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
+            : kind === 'boss' && boss
+              ? <BossSprite boss={boss} action={duel.boss} actionKey={duel.key} reducedMotion={reducedMotion} />
+              : <span className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'} style={{ display: 'inline-block', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.45))' }}><Icon name="kristall" size={92} /></span>}
+        </div>
+        {/* Framsteg: stjärnor för kollen, sköldar för boss/diamant. */}
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 200 }}>
+          {Array.from({ length: needed }).map((_, i) => (
+            <Icon key={i} name={friendly ? 'stjarna' : 'skold'} size={22}
+              style={{ opacity: friendly ? (i < filled ? 1 : 0.28) : (i < needed - filled ? 1 : 0.25), filter: (friendly ? i < filled : i < needed - filled) ? undefined : 'grayscale(1)', transition: 'opacity .3s, filter .3s' }} />
+          ))}
+        </div>
+        <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--muted)', textAlign: 'center', maxWidth: 200 }}>
+          {friendly
+            ? `Samla ${needed} stjärnor så är noden klar!`
+            : `Varje rätt svar knäcker en sköld — knäck ${needed} så ${kind === 'boss' ? 'faller bossen' : kind === 'guardian' ? 'öppnar väktaren porten' : 'är diamanten din'}!`}
+        </div>
+      </div>
+    </>
+  )
 
   return (
     <div className="screen-fade" style={{
@@ -299,71 +410,51 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
         <span className="chip" style={{ color: 'var(--muted)' }}>{friendly ? 'Pi hejar på dig!' : 'Pi vilar under striden'}</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(180px, 230px)', gridAutoRows: 'minmax(0, 1fr)', gap: 12, flex: 1, minHeight: 0, position: 'relative', zIndex: 2 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginBottom: 4 }}>
-            {Array.from({ length: total }).map((_, i) => (
-              <span key={i} style={{
-                width: 11, height: 11, borderRadius: '50%',
-                background: i < index ? 'var(--primary)' : i === index ? 'var(--sun)' : '#E4DECE',
-                boxShadow: i === index ? '0 0 0 3px rgba(255,201,77,.4)' : undefined,
-              }} />
-            ))}
+      {kind === 'boss' && boss ? (
+        // Världsbossen: hjälten till vänster, uppgiften i mitten, bossen till
+        // höger. Anfallen flyger över hela scenen (pointer-events: none, så
+        // de aldrig stör uppgiften de passerar).
+        <div className="battle-duel-layout">
+          <div className="battle-duel-side">
+            <HeroSprite hero={child.hero} action={duel.hero} actionKey={duel.key} reducedMotion={reducedMotion} />
           </div>
-          <div style={{ textAlign: 'center', fontSize: 12.5, fontWeight: 800, color: 'var(--muted)', marginBottom: 4 }}>
-            Fråga {index + 1} av {total}
-          </div>
-          <TaskRunner key={`${index}-${tasks[index].ref.seed}`} task={tasks[index]} mode="prov" onComplete={handleComplete} />
+          {taskColumn}
+          {sidePanel}
+          {!reducedMotion && duel.hero === 'attack' && (
+            <>
+              <Projectile key={`hero-${duel.key}`} from="hero" hero={child.hero} bossId={boss.id} />
+              <span key={`impact-boss-${duel.key}`} className="battle-impact battle-impact--at-boss" aria-hidden="true" />
+            </>
+          )}
+          {!reducedMotion && duel.boss === 'attack' && (
+            <>
+              <Projectile key={`boss-${duel.key}`} from="boss" hero={child.hero} bossId={boss.id} />
+              <span key={`impact-hero-${duel.key}`} className="battle-impact battle-impact--at-hero" aria-hidden="true" />
+            </>
+          )}
         </div>
-
-        {/* Höger: Pi (kollen) eller bossen/kristallen. */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <div className="card" style={{ fontSize: 12.5, fontWeight: 800, textAlign: 'center', padding: '8px 12px', color: '#3A302A' }}>
-            {friendly
-              ? (flash === 'hit'
-                  ? <><Icon name="stjarna" size={15} style={{ marginRight: 5 }} />{PI_CHECK_CHEERS[correct % PI_CHECK_CHEERS.length]}</>
-                  : flash === 'miss' ? 'Nästan — fortsätt!' : 'Visa vad du lärt dig!')
-              // Bossen/väktaren får personlighet: replikerna roteras efter
-              // knäckta sköldar, så striden känns levande.
-              : (flash === 'hit'
-                  ? <><Icon name="skold" size={15} style={{ marginRight: 5 }} />{correct > 0 && foe?.taunts?.length ? `"${foe.taunts[(correct - 1) % foe.taunts.length]}"` : 'En sköld knäcktes!'}</>
-                  : flash === 'miss' ? '"Hihi! Inte den här gången!"' : `"${foe?.taunt ?? ''}"`)}
-          </div>
-          <div className={friendly ? undefined : 'boss-enter'} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {flash === 'hit' && !friendly && (
-              <>
-                <span key={`flash-${correct}`} className="hit-flash" />
-                {Array.from({ length: 8 }).map((_, s) => (
-                  <span key={`shard-${correct}-${s}`} className="shard-spoke" style={{ transform: `rotate(${s * 45}deg)` }}>
-                    <i style={{ animationDelay: `${s * 0.012}s` }} />
-                  </span>
-                ))}
-              </>
-            )}
-            {friendly
-              ? <Pi mood={flash === 'hit' || won ? 'hejar' : flash === 'miss' ? 'funderar' : 'glad'} size={132} />
-              : kind === 'guardian' && guardian
-                ? <GuardianFigure guardian={guardian} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
-              : kind === 'boss' && boss
-                ? <BossFigure boss={boss} state={won ? 'besegrad' : flash === 'hit' ? 'traffad' : 'idle'} />
-                : <span className={flash === 'hit' ? 'shake-hard' : flash === 'miss' ? 'pop-big' : 'float-soft'} style={{ display: 'inline-block', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.45))' }}><Icon name="kristall" size={92} /></span>}
-          </div>
-          {/* Framsteg: stjärnor för kollen, sköldar för boss/diamant. */}
-          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 200 }}>
-            {Array.from({ length: needed }).map((_, i) => (
-              <Icon key={i} name={friendly ? 'stjarna' : 'skold'} size={22}
-                style={{ opacity: friendly ? (i < filled ? 1 : 0.28) : (i < needed - filled ? 1 : 0.25), filter: (friendly ? i < filled : i < needed - filled) ? undefined : 'grayscale(1)', transition: 'opacity .3s, filter .3s' }} />
-            ))}
-          </div>
-          <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--muted)', textAlign: 'center', maxWidth: 200 }}>
-            {friendly
-              ? `Samla ${needed} stjärnor så är noden klar!`
-              : `Varje rätt svar knäcker en sköld — knäck ${needed} så ${kind === 'boss' ? 'faller bossen' : kind === 'guardian' ? 'öppnar väktaren porten' : 'är diamanten din'}!`}
-          </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(180px, 230px)', gridAutoRows: 'minmax(0, 1fr)', gap: 12, flex: 1, minHeight: 0, position: 'relative', zIndex: 2 }}>
+          {taskColumn}
+          {sidePanel}
         </div>
-      </div>
+      )}
     </div>
   )
+}
+
+/* Bossreliken efter vunnen världsboss: sparas när den visas. */
+function RelicReveal({ gift, onShown, onClose }: {
+  gift: Parameters<typeof WorldGiftChest>[0]['gift']
+  onShown(): void
+  onClose(): void
+}) {
+  useEffect(() => {
+    onShown()
+    sfx.skatt()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return <WorldGiftChest gift={gift} title="Bossreliken är din!" subtitle="En unik trofé som bara den här bossen bär." onClose={onClose} />
 }
 
 /* Nodens seger: momentet klart. Pi hejar och REKOMMENDERAR diamanten innan
