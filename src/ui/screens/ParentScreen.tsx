@@ -434,6 +434,9 @@ function BlixtTargets() {
 function ChildSettings({ child }: { child: ChildProfile }) {
   const store = useStore()
   const [confirmRedo, setConfirmRedo] = useState(false)
+  // Borttagning bekräftas i två steg — den går inte att ångra (bara via en
+  // exportfil som läses in före nästa synk).
+  const [removeStep, setRemoveStep] = useState<0 | 1 | 2>(0)
   return (
     <div style={pcard}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -525,6 +528,40 @@ function ChildSettings({ child }: { child: ChildProfile }) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Ta bort profilen — t.ex. en gammal kopia av ett syskon som numera
+          spelar på egen platta. Synkas: profilen försvinner på alla plattor. */}
+      <div style={{ borderTop: '1px solid #E4DDCF', marginTop: 12, paddingTop: 10 }}>
+        {removeStep === 0 && (
+          <button onClick={() => setRemoveStep(1)}
+            style={{ fontSize: 13, fontWeight: 700, padding: '7px 12px', borderRadius: 10, background: '#EDEAE2', color: '#8B3A2E', fontFamily: 'inherit' }}>
+            Ta bort profilen …
+          </button>
+        )}
+        {removeStep === 1 && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 800, color: '#B4552E', width: '100%' }}>
+              {child.name}s profil, framsteg, belöningar och chattlogg tas bort från den här plattan
+              {store.household.sync ? ' och, via familjesynken, från alla plattor' : ''}. Exportera en säkerhetskopia först om du vill kunna ångra.
+            </span>
+            <button onClick={() => setRemoveStep(2)}
+              style={{ fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 10, background: '#E2574C', color: '#fff', fontFamily: 'inherit' }}>Ja, ta bort {child.name}</button>
+            <button onClick={() => setRemoveStep(0)}
+              style={{ fontSize: 13.5, fontWeight: 700, padding: '8px 14px', borderRadius: 10, background: '#EDEAE2', color: '#2A2F3A', fontFamily: 'inherit' }}>Avbryt</button>
+          </div>
+        )}
+        {removeStep === 2 && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 800, color: '#B4552E', width: '100%' }}>
+              Helt säker? Det här går inte att ångra i appen.
+            </span>
+            <button onClick={() => { store.removeChild(child.id); setRemoveStep(0) }}
+              style={{ fontSize: 13.5, fontWeight: 800, padding: '8px 16px', borderRadius: 10, background: '#B4302A', color: '#fff', fontFamily: 'inherit' }}>Ta bort för gott</button>
+            <button onClick={() => setRemoveStep(0)}
+              style={{ fontSize: 13.5, fontWeight: 700, padding: '8px 14px', borderRadius: 10, background: '#EDEAE2', color: '#2A2F3A', fontFamily: 'inherit' }}>Avbryt</button>
+          </div>
+        )}
       </div>
     </div>
   )

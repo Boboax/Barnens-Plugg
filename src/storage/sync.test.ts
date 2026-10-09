@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ChildProfile, Household } from '../domain/types'
 import { mergeHouseholds, stripDeviceSecrets, syncRound } from './sync'
+import { migrate } from './db'
 
 /* Familjesynkens krockregel: nyaste versionen av VARJE BARN vinner, och
    barnets belöningar + chattlogg följer sin vinnande sida. Enhetsfält
@@ -81,6 +82,36 @@ describe('familjesynk: sammanslagning per barn', () => {
     const local = home([kid('a', '2026-08-02T10:00:00Z')])
     expect(mergeHouseholds(local, home([kid('a', '2026-08-01T10:00:00Z')]))).toBe(local)
     expect(mergeHouseholds(local, home([kid('a', '2026-08-02T10:00:00Z')]))).toBe(local)
+  })
+})
+
+describe('familjesynk: borttagna profiler', () => {
+  it('en profil som tagits bort lokalt kommer inte tillbaka från molnet', () => {
+    const local = home([kid('a', '2026-08-01T10:00:00Z')], { removedChildIds: ['gammal'] })
+    const remote = home([kid('a', '2026-08-01T10:00:00Z'), kid('gammal', '2026-08-05T10:00:00Z')])
+    const merged = mergeHouseholds(local, remote)
+    expect(merged.children.map((c) => c.id)).toEqual(['a'])
+    expect(merged.removedChildIds).toEqual(['gammal'])
+  })
+
+  it('en borttagning på en annan platta tas bort här också, med belöningar och chatt', () => {
+    const reward = { id: 'r', childId: 'b', title: 'x', emoji: 'bok', target: { type: 'sessions' as const, count: 3 },
+      createdAt: '2026-08-01', baseline: { momentsMastered: 0, activeDays: 0 } }
+    const local = home([kid('a', '2026-08-01T10:00:00Z'), kid('b', '2026-08-09T10:00:00Z')], {
+      rewards: [reward], chatLog: [{ at: '1', childId: 'b', role: 'child', text: 'hej' }],
+    })
+    const remote = home([kid('a', '2026-08-01T10:00:00Z')], { removedChildIds: ['b'] })
+    const merged = mergeHouseholds(local, remote)
+    expect(merged.children.map((c) => c.id)).toEqual(['a'])
+    expect(merged.rewards).toEqual([])
+    expect(merged.chatLog).toEqual([])
+    // Ingen ny borttagning och inget nyare → samma objekt nästa gång.
+    expect(mergeHouseholds(merged, remote)).toBe(merged)
+  })
+
+  it('en äldre exportfil kan inte väcka liv i en borttagen profil', () => {
+    const file = home([kid('a', '2026-08-01T10:00:00Z'), kid('gammal', '2026-08-01T10:00:00Z')], { removedChildIds: ['gammal'] })
+    expect(migrate(file).children.map((c) => c.id)).toEqual(['a'])
   })
 })
 

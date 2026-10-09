@@ -104,6 +104,9 @@ export function migrate(data: Household): Household {
     // UI:t på children.map(child.name) direkt efter import.
     children: (Array.isArray(data.children) ? data.children : [])
       .filter((c) => c && typeof c === 'object' && c.skills && typeof c.name === 'string')
+      // Borttagna profiler (removedChildIds) kommer aldrig tillbaka, inte
+      // heller via en äldre exportfil som läses in ovanpå.
+      .filter((c) => !(data.removedChildIds ?? []).includes(c.id))
       .map((c) => ({
         ...c,
         // backfillSplitAddSub: markera nya rena add/sub-noder klara för barn som
