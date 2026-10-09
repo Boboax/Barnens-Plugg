@@ -69,6 +69,8 @@ Testadresserna har ett testläge som barnens app aldrig får (det avgörs när C
 
 - **Profilvalet → Skapa testfamilj:** tre testbarn (FK, åk 2, åk 4) med diagnosen gjord, tidigare
   årskurser klara och dagens pass avklarat. FK-barnets groda väntar bakom stenen direkt.
+- **I striden → 🧪 Vinn direkt / Förlora direkt:** hoppar till segerskärmen eller
+  förlustkortet, med samma erövring och upplåsning som en riktig strid.
 - **Kartan → 🧪 Test:** +200 mynt, ny lägertid, börja om lägret, och starta kunskapskoll,
   diamantnivå, valfri årsväktare, valfri världsboss eller blixtpass med ett tryck.
 - **Ta bort testbarnen** på profilvalet tar bara bort testbarnen.
@@ -100,9 +102,10 @@ går bra. Samma barn på två iPads exakt samtidigt ska undvikas.
 ### Steg 1 — Synktjänsten i Cloudflare (en gång)
 
 1. **Lagring:** *Storage & Databases* → **KV** → **Create a namespace** → namn `plugg-sync`.
-2. **Workern:** *Workers & Pages* → **Create** → *Create Worker* → namn `plugg-sync` →
-   **Deploy**. Tryck **Edit code**, radera exempelkoden, klistra in hela filen
-   `cloud/sync-worker.js` från repot → **Deploy**.
+2. **Workern:** *Workers & Pages* → **Create application** → välj **Start with Hello World!**
+   (inte "Import a repository" och inte Pages) → namn `plugg-sync` → **Deploy**. Tryck
+   **Edit code**, radera exempelkoden, klistra in hela filen `cloud/sync-worker.js` från
+   repot → **Deploy**.
 3. **Koppla lagringen:** Workerns sida → *Settings* → *Bindings* → **Add** → *KV namespace* →
    Variable name `PLUGG_KV`, namespace `plugg-sync` → spara.
 4. **Familjekoden:** *Settings* → *Variables and Secrets* → **Add** → Type *Secret*,

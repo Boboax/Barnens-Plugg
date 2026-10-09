@@ -179,6 +179,22 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
   const needed = epic ? WORLDBOSS_SHIELDS_TO_WIN : kind === 'check' ? CHECK_CORRECT_TO_WIN : STAR_CORRECT_TO_WIN
   const won = correct >= needed
 
+  // Avslutar striden som om den spelats klart: samma finish-anrop som en
+  // riktig vinst/förlust, så segerskärm, erövring och upplåsning prövas på
+  // riktigt. Inga svar bokförs. Bara i testläget (förhandsbyggen).
+  const finishBattle = (victory: boolean): void => {
+    if (kind === 'check') store.finishCheck(momentId!, victory)
+    else if (kind === 'boss') store.finishWorldBoss(worldId!, victory)
+    else if (kind === 'guardian') store.finishGuardian(year!, victory)
+    else store.finishStar(momentId!, victory)
+    setFinished(true)
+  }
+  const testEnd = (victory: boolean): void => {
+    if (!__TESTLAGE__) return
+    setCorrect(victory ? needed : 0)
+    finishBattle(victory)
+  }
+
   const handleComplete = (result: TaskResult): void => {
     store.recordAnswer(tasks[index], result.correct, result.elapsedMs, kind === 'star' ? 'stjarna' : kind === 'check' ? 'koll' : kind === 'guardian' ? 'vaktare' : 'boss', result.given, result.scratchPng)
     const nextCorrect = correct + (result.correct ? 1 : 0)
@@ -189,14 +205,8 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
     window.setTimeout(() => {
       setFlash(null)
       const next = index + 1
-      if (next >= tasks.length || nextCorrect >= needed) {
-        const victory = nextCorrect >= needed
-        if (kind === 'check') store.finishCheck(momentId!, victory)
-        else if (kind === 'boss') store.finishWorldBoss(worldId!, victory)
-        else if (kind === 'guardian') store.finishGuardian(year!, victory)
-        else store.finishStar(momentId!, victory)
-        setFinished(true)
-      } else setIndex(next)
+      if (next >= tasks.length || nextCorrect >= needed) finishBattle(nextCorrect >= needed)
+      else setIndex(next)
     }, 900)
   }
 
@@ -270,6 +280,12 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6, flexWrap: 'wrap', position: 'relative', zIndex: 3 }}>
         <button className="chip" onClick={() => store.go('home')}>{friendly ? 'Avbryt' : 'Fly (försök igen senare)'}</button>
+        {__TESTLAGE__ && (
+          <span style={{ display: 'flex', gap: 6 }}>
+            <button className="chip" onClick={() => testEnd(true)}>🧪 Vinn direkt</button>
+            <button className="chip" onClick={() => testEnd(false)}>🧪 Förlora direkt</button>
+          </span>
+        )}
         {/* Explicit color krävs: `color` ärvs som BERÄKNAT värde från body
             (mörk ink) — att sätta --ink på behållaren räcker inte. Utan den
             blev rubriken mörk-på-mörk över väktarens valvsal. */}
