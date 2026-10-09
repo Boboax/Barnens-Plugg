@@ -16,6 +16,7 @@ Här är kopplingen mellan forskning och implementation.
 | **Growth mindset-feedback** | Dweck; Mueller & Dweck (1998): beröm processen, inte personen | "Bra kämpat — varje försök gör dig starkare", aldrig "vad smart du är" |
 | **Ingen tidspress på bossar/koll** | Boaler (2014): tidspress är starkt kopplad till matteångest | Bossen och nodens kunskapskoll har inga klockor; sköldarna är bossens, fel svar bestraffas inte |
 | **Belöna träning, inte fart** | Deci m.fl.; yttre belöningar för hastighet urholkar noggrannhet | Belöningar kopplas till moment/pass/terminsmål — aldrig poäng eller tid |
+| **Mynt för vanan, aldrig för prestation** | Deci, Koestner & Ryan (1999): förväntade, prestationskopplade belöningar tränger undan inre motivation; belöning för att *delta* gör det i liten grad | Kvällslägrets mynt: 20 för dagens första avslutade pass, oavsett antal rätt. Inget i boden kostar mer än en veckas träning (140). Allt är kosmetiskt (`engine/pet-home.ts`, `domain/camp.ts`) |
 | **Rimlighet & självkontroll** | Ingår i Lgr22:s centrala innehåll | Egna moment: "Är det rimligt?", "Kontrollera svaret", "Överslagsräkning"; slarvfelsdetektorn särskiljer slarv från kunskapslucka |
 | **Korta pass** | Uppmärksamhetsspann; distributed practice | Dagens pass ≈ 15 min: uppvärmning → nytt → blandat; tidsgräns per dag |
 | **Inga syskonjämförelser** | Social jämförelse demotiverar den som halkar efter | Varje barn ser bara sina egna mål och streaks; jämförelsen finns bara i föräldravyn |
@@ -105,8 +106,9 @@ innan nästa tema ens börjar. En grind PER ÅRSKURS följer spiralen.
   behärskade OCH när barnet bevisligen kommit längre (behärskat stoff i
   senare år) — diagnosens orörda moment OVANFÖR fronten har exakt samma
   form och är riktiga luckor som ska tränas. Av samma skäl hämtar
-  uppvärmning, blandat-delen och skattkistan aldrig från fjärranår: en
-  åk 5-elev ska inte repetera förskoleklassens taluppdelning.
+  uppvärmning och blandat-delen aldrig från fjärranår: en åk 5-elev ska
+  inte repetera förskoleklassens taluppdelning. (Skattkistan gav förr en
+  bonusuppgift med samma regel; sedan okt 2026 ger den en världsgåva.)
 
 **Varför inte årskurstak utan väktare?** Ett osynligt tak känns som ett
 stopp; en väktare är ett MÅL. Att erövra sitt läsår ger samma "jag klarade
@@ -161,3 +163,36 @@ AI-nyckel och familjekoden själv lämnar aldrig enheten
 varje barn vinner (`mergeHouseholds`), så syskon kan spela på olika enheter
 samtidigt. Samma barn på två enheter exakt samtidigt stöds inte (sist
 uppladdad vinner) — det är en medveten förenkling, inte en bugg.
+
+## Kvällslägret och myntekonomin (okt 2026)
+
+Efter dagens pass kan barnet besöka Kvällslägret: hitta en vän (första
+vännen hittas i världen barnet just tränade i), klappa den, klä sin hjälte
+och köpa saker till lägret. Det är en klassisk yttre belöningsloop, och
+forskningen varnar för att sådana kan tränga undan lusten att räkna om de
+blir målet (Deci, Koestner & Ryan 1999). Därför gäller fasta gränser, beslutade
+med föräldern som en avgränsning av princip 3 i CLAUDE.md:
+
+- **Mynt ges för vanan:** 20 mynt för dagens första *avslutade* pass, per
+  lokal kalenderdag. Aldrig för rätt svar, aldrig för fart, aldrig fler
+  pass = fler mynt. Ett avbrutet pass ger inget; ett svagt men avslutat
+  pass ger lika mycket som ett felfritt.
+- **Inget kostar mer än en veckas träning** (140 mynt). Priset står
+  neutralt ("Kostar 60 mynt"), aldrig som en nedräkning att jaga.
+- **Allt är kosmetiskt och kan inte förloras.** Djuren svälter inte och
+  blir aldrig ledsna om barnet är borta; godbitar är gratis. Inget i lägret
+  påverkar rating, upplåsning eller rättning, och inget går att köpa som
+  hjälper i matten.
+- **Lägret är en kort kvällsstund, inte en egen spelplats:** 3 minuter per
+  dag, och bara efter dagens pass. Tiden är klocktid och drar inte av
+  mattetiden; den kan inte fyllas på med fler pass. Efter att dagens
+  mattetid tagit slut kan barnet säga godnatt i lägret om lägertid finns
+  kvar — ett mjukt avslut, inte mer skärmtid.
+- **Skattkistan** efter ett starkt pass (≥80 %, ≥6 uppgifter, inte i det
+  fokuserade flödet) ger en beständig, kosmetisk världsgåva i stället för
+  den tidigare bonusuppgiften — kistan ska vara en överraskning, inte mer
+  arbete.
+
+Barnens beteende under testperioden avgör nästa steg (planen:
+`docs/PLAN-LAGER.md`, etapp 2): fler vänner vid barnets egna milstolpar och
+djur som växer med det barnet behärskar.
