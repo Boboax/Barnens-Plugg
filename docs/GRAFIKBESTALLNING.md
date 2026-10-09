@@ -15,6 +15,11 @@ bossarnas stridsrutor på grenen `feature/character-battle-prototype`).
 - Leverera gärna i omgångar: **etapp 3 först** (13 bilder + 7 bossreliker),
   sedan lägret och etapp 2 (1 + 24 bilder). En commit per omgång räcker.
 - Avvik inte från filnamnen; koden letar efter exakt dessa.
+- **Redan gjort? Hoppa över det.** Finns en bild redan på `grafik/leverans`,
+  eller har du redan genererat den tidigare i vårt samarbete, behöver den
+  inte göras om — leverera den befintliga med rätt filnamn i stället, och
+  lägg bara tid på det som saknas. Skriv i commit-meddelandet vilka filer
+  som är nya och vilka som är återanvända.
 
 ## Referensbilder (läs dem i repot innan du ritar)
 
