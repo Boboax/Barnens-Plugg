@@ -411,5 +411,10 @@ export interface Household {
   sync?: { endpoint: string; secret: string }
   /** Skolans minutmål per blixttest (sätts i föräldraläget, standard 20). */
   blixtTargets?: Partial<Record<BlixtKind, number>>
+  /** Id:n på barnprofiler som föräldern tagit bort. Synkas med hushållet
+      så att en borttagen profil inte kommer tillbaka från molnet eller en
+      annan platta (sammanslagningen är annars en union av barnen).
+      Optionellt = bakåtkompatibelt. */
+  removedChildIds?: string[]
   lastBackupAt?: string
 }

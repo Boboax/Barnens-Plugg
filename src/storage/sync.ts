@@ -45,10 +45,16 @@ const childStamp = (c: ChildProfile): string =>
  */
 export function mergeHouseholds(local: Household, remote: Household | null): Household {
   if (!remote || !Array.isArray(remote.children)) return local
+  // Borttagna profiler är borta på BÅDA sidor — annars väcker molnet (eller
+  // en annan platta) liv i ett barn som föräldern tagit bort.
+  const localRemoved = local.removedChildIds ?? []
+  const removed = new Set([...localRemoved, ...(remote.removedChildIds ?? [])])
+  const newlyRemoved = removed.size > localRemoved.length
   const byId = new Map<string, ChildProfile>()
-  for (const c of local.children) byId.set(c.id, c)
+  for (const c of local.children) if (!removed.has(c.id)) byId.set(c.id, c)
   const fromRemote = new Set<string>()
   for (const rc of remote.children) {
+    if (removed.has(rc.id)) continue
     const lc = byId.get(rc.id)
     if (!lc || childStamp(rc) > childStamp(lc)) {
       byId.set(rc.id, rc)
@@ -58,18 +64,20 @@ export function mergeHouseholds(local: Household, remote: Household | null): Hou
   // Inget nyare i molnet → samma objekt tillbaka. Då kan UI:t slå ihop med
   // en funktionell uppdatering utan att trigga en ny sparning/uppladdning.
   const schemaVersion = Math.max(local.schemaVersion ?? 1, remote.schemaVersion ?? 1)
-  if (fromRemote.size === 0 && schemaVersion === local.schemaVersion) return local
+  if (fromRemote.size === 0 && !newlyRemoved && schemaVersion === local.schemaVersion) return local
+  const kept = (childId: string): boolean => !removed.has(childId)
   return {
     ...local,
     children: [...byId.values()],
     rewards: [
-      ...(local.rewards ?? []).filter((r) => !fromRemote.has(r.childId)),
+      ...(local.rewards ?? []).filter((r) => !fromRemote.has(r.childId) && kept(r.childId)),
       ...(remote.rewards ?? []).filter((r) => fromRemote.has(r.childId)),
     ],
     chatLog: [
-      ...(local.chatLog ?? []).filter((e) => !fromRemote.has(e.childId)),
+      ...(local.chatLog ?? []).filter((e) => !fromRemote.has(e.childId) && kept(e.childId)),
       ...(remote.chatLog ?? []).filter((e) => fromRemote.has(e.childId)),
     ],
+    removedChildIds: removed.size > 0 ? [...removed] : undefined,
     schemaVersion,
   }
 }

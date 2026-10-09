@@ -77,6 +77,9 @@ interface StoreValue {
 
   // Barnhantering
   addChild(input: { name: string; color: string; birthYear: number; schoolYear: SchoolYear; dailyLimitMinutes: number }): void
+  /** Ta bort en barnprofil för gott (föräldraläget, dubbelbekräftat).
+      Id:t sparas i removedChildIds så att synken inte väcker liv i den. */
+  removeChild(id: string): void
   updateChild(id: string, patch: Partial<Pick<ChildProfile, 'name' | 'color' | 'dailyLimitMinutes' | 'chatEnabled' | 'schoolYear' | 'hero'>>): void
 
   // Träning
@@ -359,6 +362,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         petProgress: emptyPetProgress(),
       }
       setHousehold((h) => ({ ...h, children: [...h.children, child] }))
+    },
+
+    removeChild: (id) => {
+      setHousehold((h) => ({
+        ...h,
+        children: h.children.filter((c) => c.id !== id),
+        rewards: h.rewards.filter((r) => r.childId !== id),
+        chatLog: h.chatLog.filter((e) => e.childId !== id),
+        removedChildIds: [...new Set([...(h.removedChildIds ?? []), id])],
+      }))
+      if (activeChildId === id) {
+        resetNamePool()
+        setActiveChildId(undefined)
+      }
     },
 
     updateChild: (id, patch) => patchChild(id, (c) => {
