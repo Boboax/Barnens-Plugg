@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ChildProfile, Household } from '../domain/types'
-import { mergeHouseholds, stripDeviceSecrets } from './sync'
+import { mergeHouseholds, stripDeviceSecrets, syncRound } from './sync'
 
 /* Familjesynkens krockregel: nyaste versionen av VARJE BARN vinner, och
    barnets belöningar + chattlogg följer sin vinnande sida. Enhetsfält
@@ -75,5 +75,57 @@ describe('familjesynk: sammanslagning per barn', () => {
     expect(stripped.parentPinHash).toBeUndefined()
     expect(stripped.chat).toBeUndefined()
     expect(stripped.sync).toBeUndefined()
+  })
+
+  it('inget nyare i molnet → samma objekt (ingen onödig sparning eller runda)', () => {
+    const local = home([kid('a', '2026-08-02T10:00:00Z')])
+    expect(mergeHouseholds(local, home([kid('a', '2026-08-01T10:00:00Z')]))).toBe(local)
+    expect(mergeHouseholds(local, home([kid('a', '2026-08-02T10:00:00Z')]))).toBe(local)
+  })
+})
+
+describe('familjesynk: synkrundan hämtar alltid före uppladdning', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  /** Ett låtsasmoln: GET ger det som senast laddades upp, PUT sparar. */
+  function fakeCloud(initial: Household | null) {
+    let stored = initial === null ? 'null' : JSON.stringify(initial)
+    vi.stubGlobal('window', globalThis)
+    vi.stubGlobal('fetch', async (_url: string, init?: { method?: string; body?: string }) => {
+      if (init?.method === 'PUT') stored = init.body ?? 'null'
+      return new Response(init?.method === 'PUT' ? 'ok' : stored, { status: 200 })
+    })
+    return { read: () => JSON.parse(stored) as Household | null }
+  }
+  const cfg = { endpoint: 'https://plugg-sync.test', secret: 'kod' }
+
+  it('en nyss påkopplad platta skriver aldrig över syskonens profiler i molnet', async () => {
+    // Molnet har redan barn a och b (från deras egna plattor).
+    const cloud = fakeCloud(home([kid('a', '2026-08-01T10:00:00Z'), kid('b', '2026-08-01T11:00:00Z')]))
+    // Barn c:s platta har bara c lokalt och kopplar på synken.
+    const tabletC = home([kid('c', '2026-08-02T09:00:00Z')], { parentPinHash: 'pin', sync: { ...cfg } })
+    const { merged } = await syncRound(cfg, tabletC)
+    expect(merged.children.map((c) => c.id).sort()).toEqual(['a', 'b', 'c'])
+    expect(cloud.read()!.children.map((c) => c.id).sort()).toEqual(['a', 'b', 'c'])
+    // Enhetshemligheterna lämnade aldrig plattan.
+    expect(cloud.read()!.parentPinHash).toBeUndefined()
+    expect(cloud.read()!.sync).toBeUndefined()
+  })
+
+  it('första plattan mot ett tomt moln laddar upp sina profiler', async () => {
+    const cloud = fakeCloud(null)
+    await syncRound(cfg, home([kid('a', '2026-08-01T10:00:00Z')]))
+    expect(cloud.read()!.children.map((c) => c.id)).toEqual(['a'])
+  })
+
+  it('hämtningen misslyckas (fel kod) → inget laddas upp', async () => {
+    let puts = 0
+    vi.stubGlobal('window', globalThis)
+    vi.stubGlobal('fetch', async (_url: string, init?: { method?: string }) => {
+      if (init?.method === 'PUT') puts++
+      return new Response('Fel familjekod', { status: 401 })
+    })
+    await expect(syncRound(cfg, home([kid('a', '2026-08-01T10:00:00Z')]))).rejects.toThrow('Fel familjekod')
+    expect(puts).toBe(0)
   })
 })

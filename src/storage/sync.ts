@@ -55,6 +55,10 @@ export function mergeHouseholds(local: Household, remote: Household | null): Hou
       fromRemote.add(rc.id)
     }
   }
+  // Inget nyare i molnet → samma objekt tillbaka. Då kan UI:t slå ihop med
+  // en funktionell uppdatering utan att trigga en ny sparning/uppladdning.
+  const schemaVersion = Math.max(local.schemaVersion ?? 1, remote.schemaVersion ?? 1)
+  if (fromRemote.size === 0 && schemaVersion === local.schemaVersion) return local
   return {
     ...local,
     children: [...byId.values()],
@@ -66,7 +70,7 @@ export function mergeHouseholds(local: Household, remote: Household | null): Hou
       ...(local.chatLog ?? []).filter((e) => !fromRemote.has(e.childId)),
       ...(remote.chatLog ?? []).filter((e) => fromRemote.has(e.childId)),
     ],
-    schemaVersion: Math.max(local.schemaVersion ?? 1, remote.schemaVersion ?? 1),
+    schemaVersion,
   }
 }
 
@@ -100,4 +104,21 @@ export async function pushRemote(cfg: SyncConfig, household: Household): Promise
     body: JSON.stringify(stripDeviceSecrets(household)),
   })
   if (!res.ok) throw new Error(`Synktjänsten svarade ${res.status}.`)
+}
+
+/**
+ * En synkrunda: HÄMTA molnet, slå ihop, ladda upp det sammanslagna.
+ * Varje uppladdning går hit — aldrig rakt upp med enbart lokal data.
+ * Förr laddade appen upp enhetens hushåll fem sekunder efter en ändring
+ * utan att först hämta; en nyss påkopplad platta (eller en som startat
+ * offline) skrev då över molnet med sina egna profiler och syskonens
+ * framsteg från andra plattor försvann ur molnet.
+ * Returnerar molnets version så att anroparen kan slå in den i sitt
+ * aktuella tillstånd (det kan ha ändrats under nätverksanropet).
+ */
+export async function syncRound(cfg: SyncConfig, local: Household): Promise<{ remote: Household | null; merged: Household }> {
+  const remote = await pullRemote(cfg)
+  const merged = mergeHouseholds(local, remote)
+  await pushRemote(cfg, merged)
+  return { remote, merged }
 }
