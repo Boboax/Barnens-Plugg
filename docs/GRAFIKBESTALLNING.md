@@ -6,14 +6,14 @@ bossarnas stridsrutor på grenen `feature/character-battle-prototype`).
 
 ## Leverans
 
-- **37 bilder**, listade nedan med exakta filnamn.
+- **45 bilder**, listade nedan med exakta filnamn.
 - **Format:** PNG med transparent bakgrund (alfa), storlek enligt listan.
 - **Var:** committa alla filer till mappen `leverans/` på en ny gren
   `grafik/leverans`, skapad från `main`. **Inte** till `main` och inte
   till `public/` — Claude hämtar bilderna därifrån, konverterar till webp,
   kontrollerar storlek och tar in dem i appen.
-- Leverera gärna i två omgångar: **etapp 3 först** (13 bilder), sedan
-  etapp 2 (24 bilder). En commit per omgång räcker.
+- Leverera gärna i omgångar: **etapp 3 först** (13 bilder + 7 bossreliker),
+  sedan lägret och etapp 2 (1 + 24 bilder). En commit per omgång räcker.
 - Avvik inte från filnamnen; koden letar efter exakt dessa.
 
 ## Referensbilder (läs dem i repot innan du ritar)
@@ -146,6 +146,84 @@ Referens: https://boboax.github.io/Barnens-Plugg/art/boss/procentspoket.webp
 
 ```
 The attack of the boss in the attached image (Procentspöket): a ghostly pale-blue wisp shaped like a percent sign (%), semi-transparent with a faint misty tail, flying horizontally to the LEFT (towards a hero on the left), with its trail on the right side. Same painterly style and colour palette as the boss. Child-friendly: dramatic but never scary or gory. Nothing else in the image.
+```
+
+
+## Etapp 3 · Bossrelikerna (7) — måste kännas EPISKA
+
+Varje världsboss lämnar en unik relik när den besegras. Det här är spelets
+största trofé: legendarisk, glänsande, magisk — men barnvänlig.
+Gemensamt för alla sju: ensamt föremål i centrum, svag tre-kvarts vinkel,
+tydlig magisk aura och små ljusgnistor runt föremålet, rik detaljerad
+målning (mer detaljerad än lägrets föremål), transparent bakgrund, ingen text.
+
+### `relic-dalen-sigill.png` — 1024×1024
+
+Referens: https://boboax.github.io/Barnens-Plugg/art/boss/vaxlartrollet.webp (bossens färger och tema)
+
+```
+A legendary relic dropped by the defeated boss in the attached image (Växlartrollets brosigill): a heavy ancient bronze-and-gold bridge seal: a round medallion with a stone bridge arching over a river engraved on it, the number 10 in glowing runes around the rim, a broken troll chain link hanging from it. Epic treasure feel: rich gold and gem details, a strong glowing magical aura in the boss's colours, small floating light sparks around it, dramatic rim light. One single object, centered, three-quarter view, transparent background, no text, child-friendly and wondrous rather than scary.
+```
+
+### `relic-skogen-relik.png` — 1024×1024
+
+Referens: https://boboax.github.io/Barnens-Plugg/art/boss/tabelldraken.webp (bossens färger och tema)
+
+```
+A legendary relic dropped by the defeated boss in the attached image (Tabelldrakens guldskala): a single large dragon scale of polished gold and emerald, shaped like a shield, with a glowing multiplication table (×) pattern etched across it like a treasure map. Epic treasure feel: rich gold and gem details, a strong glowing magical aura in the boss's colours, small floating light sparks around it, dramatic rim light. One single object, centered, three-quarter view, transparent background, no text, child-friendly and wondrous rather than scary.
+```
+
+### `relic-brak-relik.png` — 1024×1024
+
+Referens: https://boboax.github.io/Barnens-Plugg/art/boss/brakbjorren.webp (bossens färger och tema)
+
+```
+A legendary relic dropped by the defeated boss in the attached image (Bråkbjörnens guldkvart): a perfect quarter slice of a giant golden honey cake turned into solid gold, with glowing fraction marks (¼) on its crust and a drop of shining honey. Epic treasure feel: rich gold and gem details, a strong glowing magical aura in the boss's colours, small floating light sparks around it, dramatic rim light. One single object, centered, three-quarter view, transparent background, no text, child-friendly and wondrous rather than scary.
+```
+
+### `relic-monster-relik.png` — 1024×1024
+
+Referens: https://boboax.github.io/Barnens-Plugg/art/boss/monsterormen.webp (bossens färger och tema)
+
+```
+A legendary relic dropped by the defeated boss in the attached image (Mönsterormens skimrande fjäll): an iridescent serpent scale whose colours repeat in an endless glowing spiral pattern (green, teal, violet), set in a delicate silver frame like a pendant. Epic treasure feel: rich gold and gem details, a strong glowing magical aura in the boss's colours, small floating light sparks around it, dramatic rim light. One single object, centered, three-quarter view, transparent background, no text, child-friendly and wondrous rather than scary.
+```
+
+### `relic-former-relik.png` — 1024×1024
+
+Referens: https://boboax.github.io/Barnens-Plugg/art/boss/stenjatten.webp (bossens färger och tema)
+
+```
+A legendary relic dropped by the defeated boss in the attached image (Stenjätten Kants prism): an ancient crystal prism with perfect geometric facets (triangle, square, hexagon) splitting light into a small rainbow, resting on a carved runestone base. Epic treasure feel: rich gold and gem details, a strong glowing magical aura in the boss's colours, small floating light sparks around it, dramatic rim light. One single object, centered, three-quarter view, transparent background, no text, child-friendly and wondrous rather than scary.
+```
+
+### `relic-diagram-relik.png` — 1024×1024
+
+Referens: https://boboax.github.io/Barnens-Plugg/art/boss/plottrig.webp (bossens färger och tema)
+
+```
+A legendary relic dropped by the defeated boss in the attached image (Plottrigs kartkompass): an ornate brass explorer compass whose glass face shows a tiny glowing bar chart instead of a needle, with ink-blue tentacle-shaped filigree around the rim. Epic treasure feel: rich gold and gem details, a strong glowing magical aura in the boss's colours, small floating light sparks around it, dramatic rim light. One single object, centered, three-quarter view, transparent background, no text, child-friendly and wondrous rather than scary.
+```
+
+### `relic-samband-relik.png` — 1024×1024
+
+Referens: https://boboax.github.io/Barnens-Plugg/art/boss/procentspoket.webp (bossens färger och tema)
+
+```
+A legendary relic dropped by the defeated boss in the attached image (Procentspökets hundraprocentiga sigill): a translucent ghost-blue crystal seal shaped like a perfect circle with a glowing 100% engraved in the middle, a soft ghostly mist swirling around it. Epic treasure feel: rich gold and gem details, a strong glowing magical aura in the boss's colours, small floating light sparks around it, dramatic rim light. One single object, centered, three-quarter view, transparent background, no text, child-friendly and wondrous rather than scary.
+```
+
+## Kvällslägret · Vännernas lya (1)
+
+Vännerna bor i en mysig lya tills barnet köper husdjurstältet; då flyttar
+de in i tältet. Lyan är en målad bakgrund (inte transparent).
+
+### `pet-den-interior.png` — 1536×1024 (liggande, ogenomskinlig)
+
+Referens: https://boboax.github.io/Barnens-Plugg/art/camp/pet-tent-interior-v1.webp och https://boboax.github.io/Barnens-Plugg/art/camp/evening-camp.webp
+
+```
+A cosy hollow under the roots of a huge old tree at the edge of the evening camp, seen from inside at the animals' eye level: soft moss floor, curling roots forming the walls and ceiling, a few fireflies and tiny glowing mushrooms, warm campfire light spilling in through the opening on the left and the lake under moonlight visible outside. Four natural nesting spots on the floor (two in the back, two in the front, left and right) where small pets could sleep. Same painterly style, palette and lighting as the attached camp images. No animals, no people, no text. Opaque background (this is a backdrop).
 ```
 
 ## Etapp 2 · Frog: stadier
