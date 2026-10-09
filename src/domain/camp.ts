@@ -7,8 +7,10 @@ import type { ChildProfile } from './types'
    mer än 140, alltså högst en veckas träning. Dyrare varor gör butiken
    till målet i stället för träningen (Deci & Ryan — se PLAN-LAGER).
 
-   Upplåsningarna är tills vidare referensgrenens. De byts mot barnets
-   egna milstolpar (första årsväktaren, första blixten …) i etapp 2.
+   Hela boden är öppen så snart lägret är upplåst (barnet har hittat sin
+   första vän) — förälderns beslut okt 2026. Världsknutna upplåsningar gav
+   det yngsta barnet en halvtom bod i åratal. Det enda som väntar på
+   barnets resa är följeslagarmantlarna: de kräver rätt vän i lägret.
    ============================================================ */
 
 /** 'tent' har ingen flyttbar plats — tältet står alltid vid elden. */
@@ -16,10 +18,7 @@ export type CampKind = 'bed' | 'rug' | 'light' | 'toy' | 'storage' | 'tent'
 
 export type CampUnlock =
   | { kind: 'always' }
-  | { kind: 'pet-count'; count: number }
   | { kind: 'pet-species'; species: string }
-  | { kind: 'world-seen'; worldId: string }
-  | { kind: 'world-conquered'; worldId: string }
 
 export interface CampCatalogItem {
   id: string
@@ -44,14 +43,14 @@ export const CAMP_CATALOG: readonly CampCatalogItem[] = [
   {
     id: 'moon-bed', name: 'Månkudde', price: 60, kind: 'bed', art: 'moon-bed',
     description: 'En mjuk plats under en broderad måne.',
-    unlock: { kind: 'world-seen', worldId: 'monsterskogen' }, maxOwned: 'pets',
+    unlock: { kind: 'always' }, maxOwned: 'pets',
   },
   {
     // Tältet ritas i lägret FÖRST när det är köpt — barnet ska inte köpa
     // något det redan ser (granskningen, punkt C).
     id: 'pet-tent', name: 'Husdjurstält', price: 100, kind: 'tent', art: 'pet-tent',
     description: 'Ett eget litet krypin med öppen dörr.',
-    unlock: { kind: 'pet-count', count: 1 }, maxOwned: 1,
+    unlock: { kind: 'always' }, maxOwned: 1,
   },
   {
     id: 'sun-rug', name: 'Solmatta', price: 40, kind: 'rug', art: 'camp-rug',
@@ -66,17 +65,17 @@ export const CAMP_CATALOG: readonly CampCatalogItem[] = [
   {
     id: 'star-lights', name: 'Stjärnlyktor', price: 80, kind: 'light', art: 'star-lights',
     description: 'Fem stjärnor som lyser tillsammans.',
-    unlock: { kind: 'world-conquered', worldId: 'monsterskogen' }, maxOwned: 1,
+    unlock: { kind: 'always' }, maxOwned: 1,
   },
   {
     id: 'play-log', name: 'Lekstock', price: 60, kind: 'toy', art: 'play-log',
     description: 'En tunnel och en hängande leksak.',
-    unlock: { kind: 'pet-count', count: 1 }, maxOwned: 2,
+    unlock: { kind: 'always' }, maxOwned: 2,
   },
   {
     id: 'treasure-chest', name: 'Skattkista', price: 80, kind: 'storage', art: 'treasure-chest',
     description: 'En plats för lägrets små skatter.',
-    unlock: { kind: 'world-conquered', worldId: 'monsterskogen' }, maxOwned: 1,
+    unlock: { kind: 'always' }, maxOwned: 1,
   },
 ]
 
@@ -114,10 +113,7 @@ export function isCampUnlockMet(unlock: CampUnlock, child: ChildProfile): boolea
   const pets = child.petProgress.pets
   switch (unlock.kind) {
     case 'always': return true
-    case 'pet-count': return pets.length >= unlock.count
     case 'pet-species': return pets.some((pet) => pet.species === unlock.species)
-    case 'world-seen': return child.seenWorlds?.includes(unlock.worldId) ?? false
-    case 'world-conquered': return child.conqueredWorlds?.includes(unlock.worldId) ?? false
   }
 }
 
@@ -129,7 +125,8 @@ export const ownsCampItem = (child: ChildProfile, itemId: string): boolean =>
   child.petProgress.items.some((owned) => owned.itemId === itemId)
 
 /* Mantlarna är ett eget lager över hjältebilden och syns bara i lägret
-   (striden får dem i etapp 3). Följeslagarmantlarna kräver rätt vän. */
+   (striden får dem i etapp 3). Alla är öppna utom följeslagarmantlarna,
+   som kräver rätt vän i lägret. */
 export interface Outfit {
   id: string
   name: string
@@ -143,11 +140,11 @@ export const OUTFITS: readonly Outfit[] = [
   { id: 'traveller', name: 'Resenärens mantel', color: '#33694c', trim: '#c9ac68', price: 0, unlock: { kind: 'always' } },
   {
     id: 'starlight', name: 'Stjärnmantel', color: '#544078', trim: '#e4cba0', price: 80,
-    unlock: { kind: 'world-seen', worldId: 'monsterskogen' },
+    unlock: { kind: 'always' },
   },
   {
     id: 'sunset', name: 'Solnedgångsmantel', color: '#a74f32', trim: '#f0bf63', price: 100,
-    unlock: { kind: 'world-conquered', worldId: 'monsterskogen' },
+    unlock: { kind: 'always' },
   },
   {
     id: 'moss-companion', name: 'Skogsgrodans mantel', color: '#477044', trim: '#b9d47a', price: 120,

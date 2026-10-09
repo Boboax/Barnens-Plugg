@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ChildProfile, Household } from '../domain/types'
-import { CAMP_CATALOG, OUTFITS } from '../domain/camp'
+import { CAMP_CATALOG, OUTFITS, isCampUnlockMet } from '../domain/camp'
 import { HOME_VISIT_SECONDS, emptyPetProgress, type CampPet } from '../domain/pet-home'
 import { changeCamp } from './camp'
 import { migrate } from '../storage/db'
@@ -62,8 +62,6 @@ describe('Kvällslägret: köp', () => {
     const c = kid()
     expect(changeCamp(c, buy('okänd', 'x'), at)).toBe(c)
     expect(changeCamp(c, buy('camp-lantern', ''), at)).toBe(c)
-    // Stjärnlyktorna kräver en erövrad värld.
-    expect(changeCamp(c, buy('star-lights', 'x'), at)).toBe(c)
   })
 
   it('kräver dagens lägertid och minst en vän', () => {
@@ -184,5 +182,20 @@ describe('Kvällslägret: garderoben', () => {
     expect(changeCamp(poor, { type: 'outfit', outfitId: 'starlight' }, at)).toBe(poor)
     const late = kid({ visit: { day: today, seconds: HOME_VISIT_SECONDS } })
     expect(changeCamp(late, { type: 'outfit', outfitId: 'starlight' }, at)).toBe(late)
+  })
+})
+
+describe('Kvällslägret: hela boden öppen', () => {
+  it('allt i boden kan köpas så snart lägret är upplåst, även för det yngsta barnet', () => {
+    const fk = { ...kid({ coins: 1000 }), schoolYear: 'F' as const, seenWorlds: [], conqueredWorlds: [] }
+    for (const item of CAMP_CATALOG) expect(isCampUnlockMet(item.unlock, fk)).toBe(true)
+    const stars = changeCamp(fk, buy('star-lights', 'x'), at)
+    expect(stars.petProgress.items.map((i) => i.itemId)).toEqual(['star-lights'])
+  })
+
+  it('bara följeslagarmantlarna väntar på rätt vän', () => {
+    const fk = { ...kid(), seenWorlds: [], conqueredWorlds: [] }
+    const locked = OUTFITS.filter((o) => !isCampUnlockMet(o.unlock, fk)).map((o) => o.id)
+    expect(locked).toEqual(['dune-companion', 'reef-companion'])
   })
 })
