@@ -21,8 +21,10 @@ Barnens app ligger kvar på GitHub Pages (`boboax.github.io/Barnens-Plugg/`) och
 
 ### Engångsuppsättning
 
-1. dash.cloudflare.com → **Workers & Pages** → **Create** → fliken **Pages** →
-   **Connect to Git**.
+1. dash.cloudflare.com → **Workers & Pages** → **Create**. Cloudflare visar först sitt nyare
+   Workers-flöde ("Create and deploy") — det saknar fälten nedan. Leta i stället efter fliken
+   **Pages** eller länken *"Looking to deploy Pages? Get started"* → **Import an existing Git
+   repository**.
 2. Logga in med GitHub och ge Cloudflare åtkomst till repot `boboax/Barnens-Plugg`
    (räcker att välja just det repot).
 3. Inställningar för bygget:
@@ -46,6 +48,9 @@ Barnens app ligger kvar på GitHub Pages (`boboax.github.io/Barnens-Plugg/`) och
 
 ### Så använder du det
 
+- Adressen till `main` står överst i projektet. Är namnet `barnens-plugg` upptaget lägger
+  Cloudflare till ett suffix (t.ex. `barnens-plugg-abc.pages.dev`); använd det namnet nedan.
+- En gren får sin testadress först när något pushas till den EFTER att kopplingen gjorts.
 - Varje gren får en egen, fast adress. Snedstreck blir bindestreck, till exempel:
   `https://feature-lager-etapp-0-1.barnens-plugg.pages.dev`
   Adresserna står under projektet → **Deployments**.
