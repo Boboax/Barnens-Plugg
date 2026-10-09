@@ -39,7 +39,7 @@ export function CampShop({ child, canInteract, tab, onTab, selectedId, onSelect,
 
       {tab === 'shop' ? (
         <>
-          <p>Sortimentet växer med dina vänner och äventyr. Bäddar finns till varje vän, andra saker köps en gång.</p>
+          <p>Allt i boden går att köpa när du har råd. Bäddar finns till varje vän, lyktor och lekstockar två av, andra saker en.</p>
           <div className="camp-shop-grid">
             {forSale.map((item) => {
               const owned = items.filter((i) => i.itemId === item.id).length
