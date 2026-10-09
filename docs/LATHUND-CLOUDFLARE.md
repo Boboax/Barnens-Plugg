@@ -45,6 +45,10 @@ Barnens app ligger kvar på GitHub Pages (`boboax.github.io/Barnens-Plugg/`) och
    | `NODE_VERSION` | `22` | Samma Node-version som appen byggs med i GitHub. |
 
 5. **Save and Deploy.** Första bygget tar 1–2 minuter.
+6. Står det *"This project is disconnected from your Git account"* i projektet: installera
+   Cloudflares GitHub-app på repot via `https://github.com/apps/cloudflare-workers-and-pages`
+   → **Configure** → kontot `boboax` → *Only select repositories* → `Barnens-Plugg` → **Save**.
+   Utan den bygger Cloudflare bara första gången och aldrig grenarnas testadresser.
 
 ### Så använder du det
 
