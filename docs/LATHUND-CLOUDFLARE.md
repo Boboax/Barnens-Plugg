@@ -7,7 +7,7 @@ Två saker som båda görs i Cloudflare-panelen (dash.cloudflare.com):
 - **Del B — familjesynk:** barnens profiler i ditt eget moln, så att de kan fortsätta på
   vilken iPad som helst.
 
-Gör del A och B oberoende av varandra. Ordningen spelar ingen roll.
+Del A och B är oberoende av varandra. Ordningen spelar ingen roll.
 
 > Cloudflare byter ibland namn och plats på menyerna. Stämmer inte en knapp exakt, leta
 > efter närmaste motsvarighet — stegen i sak är desamma.
@@ -92,41 +92,37 @@ går bra. Samma barn på två iPads exakt samtidigt ska undvikas.
 5. **Kopiera adressen,** till exempel `https://plugg-sync.DITTKONTO.workers.dev`.
    Kontroll: öppnar du adressen i en webbläsare ska det stå *Fel familjekod*. Då lever den.
 
-### Steg 2 — Välj huvud-iPad
+### Steg 2 — Kolla var profilerna finns
 
-Profilerna känns igen på ett internt id, **inte** på namnet. Har du skapat "Ella" separat på två
-iPads är det två olika profiler för appen, och efter synk syns båda. Därför:
+Profilerna känns igen på ett internt id, **inte** på namnet. Det avgör hur du gör:
 
-- Välj **en** huvud-iPad per barn: den där barnet har kommit längst. Enklast är en iPad för alla.
-- Framsteg som bara finns på en annan iPad, i en separat skapad profil, går inte att slå ihop.
-  De finns kvar i den iPadens exportfil om du vill spara dem.
+- **Varje barn har bara spelat på sin egen iPad** (profilen skapades där): inga dubbletter
+  kan uppstå. Gå direkt till steg 3 och koppla på iPadarna i valfri ordning.
+- **Samma barn finns som separat skapad profil på flera iPads** (till exempel både på sin egen
+  och på din): efter synken syns barnet två gånger, och de två profilernas framsteg går inte
+  att slå ihop. Bestäm vilken som är den riktiga och följ steg 4 för den iPad som har kopian.
 
-### Steg 3 — Huvud-iPaden först
+### Steg 3 — Koppla på varje iPad
+
+På varje iPad, en i taget:
 
 1. Föräldraläge → Säkerhet → **Exportera nu.** Spara filen i Filer (skyddsnät).
 2. *Familjesynk*: skriv in adressen och familjekoden → **Spara** → **Synka nu.**
-3. Statusraden ska säga till exempel *Synkat! 3 barn i molnet.* Kontrollera att antalet stämmer.
+3. Statusraden visar till exempel *Synkat! 2 barn i molnet.* Antalet växer för varje iPad
+   du kopplar på, tills alla barn finns med.
 
-### Steg 4 — Övriga iPads, en i taget
+Appen hämtar alltid molnet och slår ihop innan den laddar upp, så ordningen spelar ingen roll
+och ingen iPad kan skriva över en annans profiler.
 
-Välj det fall som passar varje iPad:
+### Steg 4 — Bara om ett barn finns dubbelt
 
-**a) Helt ny iPad, eller utan profiler:**
-Installera appen, sätt en föräldra-PIN, gå till Familjesynk → skriv adress och kod → **Spara** →
-tryck **Synka nu direkt.** Statusraden visar *Synkat! 3 barn i molnet.* och barnens profiler dyker upp.
+Gäller iPaden som har den profil du *inte* vill behålla:
 
-**b) iPad som redan har egna profiler för samma barn (skapade där):**
-1. **Exportera nu** på den iPaden först (om du vill spara dess framsteg).
-2. Läs in huvud-iPadens exportfil: Säkerhet → **Läs in kopia** → välj filen (AirDrop eller Filer).
-   De lokala profilerna ersätts med huvud-iPadens, med samma id.
-3. Exportfilen innehåller aldrig PIN eller synkinställning. Sätt PIN igen om appen ber om det.
-4. Familjesynk → adress och kod → **Spara** → **Synka nu direkt.**
-
-> **Varför "direkt"?** I dagens version laddar appen upp den här iPadens data fem sekunder
-> efter att du tryckt *Spara*, innan den har hämtat molnet. Hinner det gå, skrivs molnet över
-> med iPadens lokala data. Det rättar sig när huvud-iPaden startar nästa gång (den har kvar allt
-> och laddar upp igen), men tryck *Synka nu* inom några sekunder så slipper du det.
-> Det här rättas i etapp 4 av planen.
+1. **Exportera nu** på den iPaden (om du vill spara kopians framsteg).
+2. Läs in exportfilen från iPaden som har den riktiga profilen: Säkerhet → **Läs in kopia**.
+   Alla lokala profiler på den här iPaden ersätts med filens, med rätt id.
+3. Exportfilen innehåller aldrig PIN eller synkinställning. Sätt PIN igen om appen ber om det
+   och skriv in synkadressen och koden igen → **Spara** → **Synka nu.**
 
 ### Steg 5 — Kontrollera
 
@@ -137,9 +133,11 @@ Låt ett barn göra en uppgift på iPad 1. Stäng appen på iPad 2 helt och öpp
 
 - **Öppna appen med internet** när det går. Appen hämtar vid start och laddar upp efter varje
   ändring. Startar en iPad helt utan nät spelar barnet lokalt; nästa gång nätet finns slås det ihop.
-- **Ett barn på en iPad i taget.** Spelar samma barn på två iPads samtidigt vinner den som
-  laddar upp sist, för just det barnet.
-- **Exportera ibland ändå,** till exempel en gång i månaden från huvud-iPaden. Molnet är
+- **Ett barn på en iPad i taget.** Med varsin iPad händer det knappast, men spelar samma barn
+  på två iPads samtidigt vinner den senaste versionen av just det barnet.
+- **Alla profiler syns på alla iPads** efter synken (det är så ett barn kan fortsätta på en
+  annan iPad). Ett barn kan alltså trycka på ett syskons profil i profilvalet.
+- **Exportera ibland ändå,** till exempel en gång i månaden från valfri iPad (efter synk innehåller filen alla barn). Molnet är
   bekvämlighet, exportfilen är livlinan.
 - **Uppdatera alla iPads ungefär samtidigt** när en större nyhet kommer (som Kvällslägret).
   Äldre versioner klarar nyare data, men det är enklast om alla kör samma.
@@ -150,8 +148,8 @@ Låt ett barn göra en uppgift på iPad 1. Stäng appen på iPad 2 helt och öpp
 |---|---|
 | *Fel familjekod* | Koden i appen och `SYNC_SECRET` i Cloudflare skiljer sig. Skriv in den igen på båda ställen. |
 | *Kunde inte nå synktjänsten (offline?)* | Inget nät, eller fel adress. Kontrollera adressen i en webbläsare. |
-| Dubbla profiler med samma namn | Två separat skapade profiler. Läs in huvud-iPadens exportfil på den iPad som har dubbletten (steg 4b) och synka. |
-| Vill börja om helt | Cloudflare → KV → `plugg-sync` → ta bort posten `household`. Synka sedan från huvud-iPaden igen. |
+| Dubbla profiler med samma namn | Två separat skapade profiler för samma barn. Följ steg 4. |
+| Vill börja om helt | Cloudflare → KV → `plugg-sync` → ta bort posten `household`. Tryck sedan **Synka nu** på varje iPad. |
 | Vill stänga av | Familjesynk → **Slå av synk** på varje iPad. Data finns kvar lokalt. Radera KV-posten om du vill tömma molnet. |
 
 Gratisnivån räcker med god marginal (1 000 skrivningar per dag; appen gör en per avslutad aktivitet).

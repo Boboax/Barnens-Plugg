@@ -38,8 +38,13 @@ ska undvikas (den som laddas upp sist vinner för det barnet).
 Föräldraläget → **Säkerhet** → *Familjesynk*:
 skriv in Workerns adress + familjekoden → **Spara** → **Synka nu**.
 
-Därefter sköter appen sig själv: den hämtar vid varje start och laddar
-upp efter varje ändring. "Synka nu" finns kvar för manuell kontroll.
+Därefter sköter appen sig själv: den hämtar vid varje start, och efter
+varje ändring kör den en synkrunda — hämta, slå ihop, ladda upp. Den laddar
+aldrig upp utan att först ha hämtat, så en nyss påkopplad platta kan inte
+skriva över de andras profiler. "Synka nu" finns kvar för manuell kontroll.
+
+Steg för steg för hela familjen (och vad som gäller vid dubbla profiler):
+se `docs/LATHUND-CLOUDFLARE.md`, del B.
 
 ## Bra att veta
 

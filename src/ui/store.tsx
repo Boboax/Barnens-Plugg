@@ -14,7 +14,7 @@ import { activeDayCount, masteredCount, updateStreak } from '../engine/rewards'
 import { resetNamePool, setNamePool } from '../generators/helpers'
 import { emptyPetProgress } from '../domain/pet-home'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
-import { mergeHouseholds, pullRemote, pushRemote, type SyncConfig } from '../storage/sync'
+import { mergeHouseholds, pullRemote, pushRemote, syncRound, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
 import { adoptPet, completePetPractice, spendHomeTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
@@ -202,8 +202,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [household.chat?.provider, household.chat?.apiKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Autospar: varje förändring efter inladdning skrivs ner. Med synk på
-  // laddas hushållet dessutom upp — samlat (debounce) så ett helt pass blir
-  // en enda uppladdning i stället för en per svar.
+  // körs dessutom en synkrunda — samlat (debounce) så ett helt pass blir
+  // en enda runda i stället för en per svar. Rundan HÄMTAR och slår ihop
+  // före uppladdningen (storage/sync.ts:syncRound), så en platta aldrig
+  // skriver över molnet med enbart sina egna profiler — inte heller precis
+  // efter att synken slagits på, eller om appen startade offline.
   useEffect(() => {
     if (!loaded) return
     void saveHousehold(household)
@@ -211,9 +214,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const cfg = household.sync
     window.clearTimeout(syncPushTimer.current)
     syncPushTimer.current = window.setTimeout(() => {
-      pushRemote(cfg, household)
-        .then(() => setSyncStatus(`Uppladdad ${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`))
-        .catch(() => setSyncStatus('Uppladdning misslyckades — försöker igen vid nästa ändring.'))
+      syncRound(cfg, household)
+        .then(({ remote }) => {
+          // Slå in molnets nyare barn i det AKTUELLA tillståndet (det kan ha
+          // ändrats under nätverksanropet). Inget nytt → samma objekt → ingen
+          // ny sparning och ingen ny runda.
+          setHousehold((cur) => mergeHouseholds(cur, remote))
+          setSyncStatus(`Synkad ${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`)
+        })
+        .catch(() => setSyncStatus('Synken misslyckades — försöker igen vid nästa ändring.'))
     }, 5000)
   }, [household, loaded])
 
@@ -654,10 +663,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     syncNow: async () => {
       if (!household.sync) return 'Ingen synk inställd.'
       try {
-        const remote = await pullRemote(household.sync)
-        const merged = mergeHouseholds(household, remote)
-        setHousehold(merged)
-        await pushRemote(household.sync, merged)
+        const { remote, merged } = await syncRound(household.sync, household)
+        setHousehold((cur) => mergeHouseholds(cur, remote))
         const msg = `Synkat! ${merged.children.length} barn${merged.children.length === 1 ? '' : ''} i molnet.`
         setSyncStatus(msg)
         return msg
