@@ -199,3 +199,14 @@ describe('Kvällslägret: hela boden öppen', () => {
     expect(locked).toEqual(['dune-companion', 'reef-companion'])
   })
 })
+
+describe('Kvällslägret: lek', () => {
+  it('lek sparas som minne, kostar inget och går inte medan vännen sover', () => {
+    let c = kid()
+    c = changeCamp(c, { type: 'care', petId: 'first-pet', activity: 'play' }, at)
+    expect(c.petProgress.pets[0].care?.lastPlayedAt).toBe(at.toISOString())
+    expect(c.petProgress.coins).toBe(200)
+    c = changeCamp(c, { type: 'care', petId: 'first-pet', activity: 'rest' }, at)
+    expect(changeCamp(c, { type: 'care', petId: 'first-pet', activity: 'play' }, at)).toBe(c)
+  })
+})

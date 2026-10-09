@@ -22,7 +22,7 @@ import { bossGiftForWorld } from '../../domain/world-gifts'
 import { BossSprite, type BossAction } from '../components/battle/BossSprite'
 import { HeroSprite, type HeroAction } from '../components/battle/HeroSprite'
 import { Projectile } from '../components/battle/Projectile'
-import { WorldGiftChest } from '../components/WorldGiftChest'
+import { RelicReveal } from '../components/battle/RelicReveal'
 import '../../styles/battle.css'
 
 /* ============================================================
@@ -261,7 +261,8 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
       if (won && relic && !relicSeen) {
         return (
           <RelicReveal
-            gift={relic}
+            relic={relic}
+            bossName={boss.name}
             onShown={() => store.claimWorldGift(relic.id)}
             onClose={() => setRelicSeen(true)}
           />
@@ -441,20 +442,6 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
       )}
     </div>
   )
-}
-
-/* Bossreliken efter vunnen världsboss: sparas när den visas. */
-function RelicReveal({ gift, onShown, onClose }: {
-  gift: Parameters<typeof WorldGiftChest>[0]['gift']
-  onShown(): void
-  onClose(): void
-}) {
-  useEffect(() => {
-    onShown()
-    sfx.skatt()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  return <WorldGiftChest gift={gift} title="Bossreliken är din!" subtitle="En unik trofé som bara den här bossen bär." onClose={onClose} />
 }
 
 /* Nodens seger: momentet klart. Pi hejar och REKOMMENDERAR diamanten innan

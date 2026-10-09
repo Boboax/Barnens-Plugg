@@ -6,11 +6,45 @@ import { worldById } from '../../../domain/worlds'
 import { PetSounds } from '../../pet-sounds'
 import { PetSprite } from './PetSprite'
 import { campImage, itemImage } from './campArt'
+import { DEN_ART_READY, DenScene } from './DenScene'
 
-/* Stationen "Vännerna": en stund med ett husdjur — klappa, ge en godbit
-   eller säga godnatt. Allt är gratis och inget kan gå förlorat; djuren
-   har det alltid bra, även när barnet inte är här (inget dåligt samvete
-   för en sexåring). Har barnet köpt tältet sker det inne i tältet. */
+/* Stationen "Vännerna": en stund med ett husdjur — klappa, ge en godbit,
+   leka eller säga godnatt. Allt är gratis och inget kan gå förlorat;
+   djuren har det alltid bra, även när barnet inte är här (inga behov,
+   inga mätare som sjunker — inget dåligt samvete för en sexåring).
+   Vännerna bor i en lya under trädrötterna tills barnet köper tältet,
+   då flyttar de in där. */
+
+/* Varierade repliker: samma rad varje gång blir platt. */
+const REACTIONS: Record<PetCareActivity, ((name: string) => string)[]> = {
+  pet: [
+    (n) => `${n} njuter av din klapp och känner sig trygg.`,
+    (n) => `${n} blundar och lutar sig mot din hand.`,
+    (n) => `${n} gör en liten glad hoppsa!`,
+    (n) => `${n} kurrar nöjt. Ni är bästa vänner.`,
+  ],
+  feed: [
+    (n) => `${n} mumsar glatt på sin godbit.`,
+    (n) => `${n} smaskar och slickar sig om munnen.`,
+    (n) => `${n} sparar en smula till senare.`,
+  ],
+  play: [
+    (n) => `${n} hoppar högt och vill leka igen!`,
+    (n) => `${n} gömmer sig och tittar fram. Tittut!`,
+    (n) => `${n} springer i cirklar av glädje.`,
+  ],
+  wake: [(n) => `${n} vaknar, sträcker på sig och är glad att se dig.`],
+  rest: [(n) => `${n} sover tryggt i sin sovhörna.`],
+}
+
+const daysBetween = (fromIso: string, to: Date): number =>
+  Math.max(1, Math.floor((to.getTime() - new Date(fromIso).getTime()) / 86_400_000) + 1)
+
+const whenText = (iso: string | undefined, now: Date): string | undefined => {
+  if (!iso) return undefined
+  const days = Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000)
+  return days <= 0 ? 'idag' : days === 1 ? 'igår' : `för ${days} dagar sedan`
+}
 
 /** Sovhörnorna i tältbilden, i samma ordning som bäddplatserna bed-1..4. */
 const CORNERS = [
@@ -33,6 +67,9 @@ interface Props {
   pets: CampPet[]
   items: CampItemInstance[]
   hasTent: boolean
+  /** Namnet på en leksak barnet äger (lekstock, världsgåva) — leken blir då
+      med den. Utan leksak leker vännen tittut. */
+  toyName?: string
   canInteract: boolean
   onCare(petId: string, activity: PetCareActivity): void
   onRename(petId: string, name: string): void
@@ -40,7 +77,7 @@ interface Props {
   onPacking(): void
 }
 
-export function PetHouse({ pets, items, hasTent, canInteract, onCare, onRename, onBed, onPacking }: Props) {
+export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, onRename, onBed, onPacking }: Props) {
   const [selectedId, setSelectedId] = useState(pets[0]?.id)
   const [moment, setMoment] = useState<{ petId: string; activity: PetCareActivity; key: number } | null>(null)
   const [muted, setMuted] = useState(readMuted)
@@ -72,7 +109,7 @@ export function PetHouse({ pets, items, hasTent, canInteract, onCare, onRename, 
   const busy = moment !== null
 
   const care = (activity: PetCareActivity): void => {
-    if (!canInteract || busy || (resting && (activity === 'pet' || activity === 'feed'))) return
+    if (!canInteract || busy || (resting && activity !== 'rest' && activity !== 'wake')) return
     onCare(pet.id, activity)
     setMoment({ petId: pet.id, activity, key: Date.now() })
     if (activity === 'rest') sounds.current?.stop()
@@ -95,18 +132,22 @@ export function PetHouse({ pets, items, hasTent, canInteract, onCare, onRename, 
     setMoment(null)
   }
 
+  const lines = moment ? REACTIONS[moment.activity] : []
   const response = resting
     ? `${pet.name} sover tryggt i sin sovhörna.`
     : moment?.petId === pet.id
-      ? {
-        feed: `${pet.name} mumsar glatt på sin godbit.`,
-        wake: `${pet.name} vaknar och är glad att se dig.`,
-        pet: `${pet.name} njuter av din klapp och känner sig trygg.`,
-        rest: `${pet.name} sover tryggt i sin sovhörna.`,
-      }[moment.activity]
+      ? lines[moment.key % lines.length](pet.name)
       : canInteract
-        ? 'En godbit, en klapp eller en mysig tupplur. Du väljer.'
+        ? 'En klapp, en godbit, en lek eller en mysig tupplur. Du väljer.'
         : 'Vännerna har det bra. Kom tillbaka efter nästa övningspass.'
+  const now = new Date()
+  const memories = [
+    `Ni har varit vänner i ${daysBetween(pet.foundAt, now)} ${daysBetween(pet.foundAt, now) === 1 ? 'dag' : 'dagar'}.`,
+    `Ni hittade varandra i ${worldById(pet.foundInWorldId).name}.`,
+    pet.care?.lastPlayedAt && `Senaste leken: ${whenText(pet.care.lastPlayedAt, now)}.`,
+    pet.care?.lastFedAt && `Senaste godbiten: ${whenText(pet.care.lastFedAt, now)}.`,
+    toyName && `Älsklingsleksak: ${toyName.toLowerCase()}.`,
+  ].filter((m): m is string => Boolean(m))
 
   return (
     <section className="pet-house" aria-label="En stund med dina vänner">
@@ -118,11 +159,13 @@ export function PetHouse({ pets, items, hasTent, canInteract, onCare, onRename, 
       </div>
 
       <div className="pet-house-room">
-        <img
-          className="pet-house-backdrop"
-          src={campImage(hasTent ? 'pet-tent-interior-v1' : 'evening-camp')}
-          alt={hasTent ? 'Ett ombonat husdjurstält med lyktor och fyra sovhörnor' : 'Lägret vid sjön i skymningen'}
-        />
+        {hasTent || DEN_ART_READY ? (
+          <img
+            className="pet-house-backdrop"
+            src={campImage(hasTent ? 'pet-tent-interior-v1' : 'pet-den-interior-v1')}
+            alt={hasTent ? 'Ett ombonat husdjurstält med lyktor och fyra sovhörnor' : 'En mysig lya under trädrötterna'}
+          />
+        ) : <DenScene />}
         <div className="pet-house-firelight" aria-hidden="true" />
         {pets.slice(0, CORNERS.length).map((p, i) => {
           const index = cornerIndex(p, i)
@@ -133,7 +176,7 @@ export function PetHouse({ pets, items, hasTent, canInteract, onCare, onRename, 
           return (
             <button
               key={p.id}
-              className={`pet-house-resident ${index > 1 ? 'pet-house-front' : ''}`}
+              className={`pet-house-resident ${index > 1 ? 'pet-house-front' : ''}${moment?.petId === p.id && moment.activity === 'play' ? ' pet-house-playing' : ''}`}
               style={{ left: `${corner.x}%`, top: `${corner.y}%` }}
               aria-label={`Välj ${p.name}`}
               aria-pressed={pet.id === p.id}
@@ -148,6 +191,9 @@ export function PetHouse({ pets, items, hasTent, canInteract, onCare, onRename, 
               )}
               {moment?.petId === p.id && moment.activity === 'feed' && (
                 <div className="pet-food-bowl" aria-hidden="true"><i /><i /><i /></div>
+              )}
+              {moment?.petId === p.id && moment.activity === 'play' && toyName && (
+                <span key={moment.key} className="pet-play-ball" aria-hidden="true" />
               )}
             </button>
           )
@@ -177,11 +223,18 @@ export function PetHouse({ pets, items, hasTent, canInteract, onCare, onRename, 
             <button className="chip" disabled={!canInteract || busy || resting} onClick={() => care('feed')}>
               Ge en godbit
             </button>
+            <button className="chip" disabled={!canInteract || busy || resting} onClick={() => care('play')}>
+              {toyName ? `Lek med ${toyName.toLowerCase()}` : 'Lek tittut'}
+            </button>
             <button className="chip" disabled={!canInteract || busy} onClick={() => care(resting ? 'wake' : 'rest')}>
               {resting ? 'Väck försiktigt' : 'Säg godnatt'}
             </button>
           </div>
           <p className="pet-house-response" role="status">{response}</p>
+          <div className="pet-memories" aria-label={`Minnesboken om ${pet.name}`}>
+            <span className="camp-eyebrow">Minnesboken</span>
+            <ul>{memories.map((m) => <li key={m}>{m}</li>)}</ul>
+          </div>
           <p className="camp-note">Godbitarna är gratis. Dina vänner har det alltid bra, även när du inte är här.</p>
 
           <details>

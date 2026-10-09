@@ -93,8 +93,8 @@ function applyAction(
     case 'care': {
       const pet = p.pets.find((v) => v.id === action.petId)
       if (!pet) return undefined
-      // En sovande vän väcks inte av en godbit — först "Väck försiktigt".
-      if (pet.care?.resting && (action.activity === 'feed' || action.activity === 'pet')) return undefined
+      // En sovande vän väcks inte av en godbit eller lek — först "Väck försiktigt".
+      if (pet.care?.resting && action.activity !== 'rest' && action.activity !== 'wake') return undefined
       return { ...p, pets: p.pets.map((v) => (v.id === pet.id ? withCare(v, action.activity, at) : v)) }
     }
 
@@ -120,6 +120,7 @@ function withCare(pet: CampPet, activity: PetCareActivity, at: Date): CampPet {
   if (activity === 'rest') care.resting = true
   else if (activity === 'wake') care.resting = false
   else if (activity === 'feed') care.lastFedAt = at.toISOString()
+  else if (activity === 'play') care.lastPlayedAt = at.toISOString()
   else care.lastPettedAt = at.toISOString()
   return { ...pet, care }
 }

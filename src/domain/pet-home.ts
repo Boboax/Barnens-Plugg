@@ -36,7 +36,7 @@ export const FIRST_PET_SPECIES: PetSpeciesId = 'woodland-frog'
 export const petSpecies = (id: string): PetSpecies =>
   PET_SPECIES.find((s) => s.id === id) ?? PET_SPECIES[0]
 
-export type PetCareActivity = 'pet' | 'feed' | 'rest' | 'wake'
+export type PetCareActivity = 'pet' | 'feed' | 'play' | 'rest' | 'wake'
 
 export interface CampPet {
   id: string
@@ -49,7 +49,7 @@ export interface CampPet {
   bedPoint?: string
   /** Omsorg är minnen, inte behov: djuren svälter aldrig och inget går
       förlorat om barnet är borta en vecka. Fälten styr bara repliker. */
-  care?: { resting?: boolean; lastFedAt?: string; lastPettedAt?: string }
+  care?: { resting?: boolean; lastFedAt?: string; lastPettedAt?: string; lastPlayedAt?: string }
 }
 
 /** Ett ägt föremål. `id` är köpets id (purchaseId) — det gör köpet

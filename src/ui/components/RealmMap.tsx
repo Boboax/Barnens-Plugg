@@ -8,7 +8,7 @@ import { Pi } from './Pi'
 import { Ambience } from './Ambience'
 import { CloudSvg, Sprite, type SpriteName } from './WorldSprites'
 import { worldTheme } from '../worldThemes'
-import { giftById, type WorldGift } from '../../domain/world-gifts'
+import { giftById, ownedBossRelics, type WorldGift } from '../../domain/world-gifts'
 
 /* ============================================================
    Riket — den stora startkartan över hela Matteriket.
@@ -155,9 +155,10 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
   const ringUrl = `${import.meta.env.BASE_URL}art/tex/nodering.webp`
   // Världsgåvor ur skattkistan och bossreliker från världsbossarna pyntar
   // kartan. Rena dekorationer — påverkar aldrig dimman.
-  const mapGifts = (child.worldGifts ?? [])
-    .map(giftById)
-    .filter((gift): gift is WorldGift => gift?.kind === 'world' || gift?.kind === 'boss')
+  const mapGifts = [
+    ...(child.worldGifts ?? []).map(giftById).filter((gift): gift is WorldGift => gift?.kind === 'world'),
+    ...ownedBossRelics(child),
+  ]
   /* Dimma ("fog of war"): oupptäckta delar av riket ligger i moln. Sedan
      Expeditionsmodellen (årsgrindar i stället för världsboss-grind) är en
      värld ÖPPEN när den har något NÅBART moment — upplåst av årsgrinden eller

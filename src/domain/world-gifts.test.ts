@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { WORLD_GIFTS, bossGiftForWorld, eligibleChestGifts, giftsForWorld, unclaimedGifts } from './world-gifts'
+import { WORLD_GIFTS, bossGiftForWorld, eligibleChestGifts, giftsForWorld, ownedBossRelics, unclaimedGifts } from './world-gifts'
 import { WORLDS } from './worlds'
 
 describe('världsgåvor', () => {
@@ -45,5 +45,13 @@ describe('världsgåvor', () => {
     for (const world of WORLDS) {
       expect(eligibleChestGifts(world.id, [], [world.id]).some((gift) => gift.kind === 'boss')).toBe(false)
     }
+  })
+
+  it('reliker räknas för utdelade OCH för världar erövrade innan relikerna fanns', () => {
+    expect(ownedBossRelics({}).map((g) => g.id)).toEqual([])
+    expect(ownedBossRelics({ worldGifts: ['skogen-relik'] }).map((g) => g.id)).toEqual(['skogen-relik'])
+    expect(ownedBossRelics({ conqueredWorlds: ['talens-dal'] }).map((g) => g.id)).toEqual(['dalen-sigill'])
+    // Vardagsgåvor är aldrig reliker.
+    expect(ownedBossRelics({ worldGifts: ['dalen-blomfro'] })).toEqual([])
   })
 })

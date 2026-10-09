@@ -3,24 +3,37 @@ import type { ChildProfile } from '../../../domain/types'
 import type { PetCareActivity } from '../../../domain/pet-home'
 import { petSpecies } from '../../../domain/pet-home'
 import { ownsCampItem, ownsOutfit, outfitById, visibleOutfits } from '../../../domain/camp'
-import { giftById, type WorldGift } from '../../../domain/world-gifts'
-import { worldById } from '../../../domain/worlds'
+import { WORLDS, worldById } from '../../../domain/worlds'
+import { bossGiftForWorld, giftById, ownedBossRelics, type WorldGift } from '../../../domain/world-gifts'
+import { RelicArt } from '../battle/RelicArt'
+import '../../../styles/relics.css'
 import type { CampAction } from '../../../engine/camp'
 import { CampHero } from './CampHero'
 import { PetHouse } from './PetHouse'
 import { petStill } from './campArt'
 
-/* Lägrets stationer: vännerna (omsorg), garderoben (mantlar) och
-   Bokhörnan (minnen av var vännerna och gåvorna hittades).
-   Rustkammaren med vapen och bossreliker kommer med striden (etapp 3). */
+/* Lägrets stationer: vännerna (omsorg, i lyan eller tältet), garderoben
+   (mantlar), Bokhörnan (minnen av var vännerna och gåvorna hittades) och
+   Trofésalen (bossrelikerna — de besegrade bossarnas troféer). */
 
-export type StationId = 'friends' | 'wardrobe' | 'books'
+export type StationId = 'friends' | 'wardrobe' | 'books' | 'trophies'
+
+export const STATIONS: readonly StationId[] = ['friends', 'wardrobe', 'books', 'trophies']
 
 export const stationName = (id: StationId, child: ChildProfile): string => ({
-  friends: ownsCampItem(child, 'pet-tent') ? 'Husdjurstältet' : 'Vännerna',
+  friends: ownsCampItem(child, 'pet-tent') ? 'Husdjurstältet' : 'Lyan',
   wardrobe: 'Garderoben',
   books: 'Bokhörnan',
+  trophies: 'Trofésalen',
 })[id]
+
+/** Leksaken vännerna helst leker med: lekstocken, annars en leksak från
+    en världsgåva. */
+function favouriteToy(child: ChildProfile): string | undefined {
+  if (ownsCampItem(child, 'play-log')) return 'Lekstocken'
+  const toy = (child.worldGifts ?? []).map(giftById).find((g) => g?.kind === 'pet')
+  return toy?.name
+}
 
 interface Props {
   station: StationId
@@ -38,6 +51,7 @@ export function CampStations({ station, child, canInteract, onChange, onMessage,
         pets={child.petProgress.pets}
         items={child.petProgress.items}
         hasTent={ownsCampItem(child, 'pet-tent')}
+        toyName={favouriteToy(child)}
         canInteract={canInteract}
         onCare={(petId, activity: PetCareActivity) => onChange({ type: 'care', petId, activity })}
         onRename={(petId, name) => onChange({ type: 'rename', petId, name })}
@@ -49,7 +63,34 @@ export function CampStations({ station, child, canInteract, onChange, onMessage,
   if (station === 'wardrobe') {
     return <Wardrobe child={child} canInteract={canInteract} onChange={onChange} onMessage={onMessage} />
   }
+  if (station === 'trophies') return <TrophyHall child={child} />
   return <BookCorner child={child} />
+}
+
+/** En piedestal per värld. Erövrade reliker lyser; de andra står som
+    mörka silhuetter, så barnet ser vad som väntar längre fram. */
+function TrophyHall({ child }: { child: ChildProfile }) {
+  const owned = new Set(ownedBossRelics(child).map((r) => r.id))
+  return (
+    <section className="camp-panel trophy-hall">
+      <p>Varje världsboss du besegrar lämnar en legendarisk relik. Här står de, en för varje värld.</p>
+      <div className="trophy-hall__row">
+        {WORLDS.map((world) => {
+          const relic = bossGiftForWorld(world.id)
+          if (!relic) return null
+          const won = owned.has(relic.id)
+          return (
+            <article key={world.id} className={`trophy-pedestal trophy-pedestal--${won ? 'won' : 'locked'}`}>
+              <RelicArt relic={relic} size={96} dim={!won} />
+              <div className="trophy-pedestal__plinth" aria-hidden="true" />
+              <strong className="display">{won ? relic.name : '???'}</strong>
+              <small>{won ? relic.description : `Besegra ${world.boss.name} i ${world.name}.`}</small>
+            </article>
+          )
+        })}
+      </div>
+    </section>
+  )
 }
 
 /** Barnet provar fritt; inget köps förrän det trycker på knappen. */

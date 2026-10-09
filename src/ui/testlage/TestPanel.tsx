@@ -46,6 +46,9 @@ export function TestPanel({ child }: { child: ChildProfile }) {
                 encounter: { species: 'woodland-frog', worldId: momentId ? momentById(momentId).worldId : 'talens-dal' } },
             }))}>Börja om: grodan bakom stenen</button>
             <button className="btn btn-quiet" onClick={() => go(() => store.go('pet-home'))}>Öppna lägret</button>
+            <button className="btn btn-quiet" onClick={() => patch((c) => ({ ...c, conqueredWorlds: WORLDS.map((w) => w.id) }))}>
+              Erövra alla världar (alla reliker)
+            </button>
           </div>
 
           <h4 style={H}>Nuvarande moment{momentId ? `: ${momentById(momentId).title}` : ''}</h4>

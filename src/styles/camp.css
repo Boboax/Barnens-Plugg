@@ -303,6 +303,26 @@
 .pet-house-care details .chip { margin: 5px; }
 .pet-house-care details p { font-size: 13px; }
 
+/* Lek: vännen hoppar (och leksaken studsar, om barnet har en). */
+.pet-house-playing .pet-house-animal { animation: pet-play-hop .55s ease-in-out 3; transform-origin: center bottom; }
+.pet-play-ball {
+  position: absolute; left: 70%; bottom: 10%; width: 18%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 35% 30%, #FFF2C2, #E8763A 60%, #9B3E1C);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, .45);
+  animation: pet-play-ball 1.65s ease-out both;
+}
+.pet-memories { margin: 6px 0 2px; padding: 10px 14px; border-radius: 12px; background: #F6ECCE; color: #493721; }
+.pet-memories .camp-eyebrow { color: #8A6A38; }
+.pet-memories ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 2px; font-size: 14px; font-weight: 700; }
+.pet-den-firefly { animation: pet-den-firefly 3.4s ease-in-out infinite; filter: drop-shadow(0 0 6px #E3EEA1); }
+@keyframes pet-play-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-22%) rotate(-4deg); } }
+@keyframes pet-play-ball {
+  0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 1; }
+  35% { transform: translate(-60%, -90%); } 60% { transform: translate(-120%, 0); }
+  80% { transform: translate(-150%, -40%); } 100% { transform: translate(-170%, 0); opacity: 0; }
+}
+@keyframes pet-den-firefly { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+
 /* ---------- Husdjurets poser (4×4-atlas, 16 målade bildrutor) ---------- */
 
 .pet-sprite {
@@ -376,6 +396,7 @@
   .camp-fireflies i { opacity: .35; }
   .pet-sprite { background-position: 0 0; }
   .pet-house-hearts { opacity: 1; }
+  .pet-den-firefly { opacity: .7; }
 }
 
 /* ---------- Mindre skärmar (iPad porträtt och telefon) ---------- */

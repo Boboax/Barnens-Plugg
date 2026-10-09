@@ -7,6 +7,8 @@
    delas bara ut av världsbossen (etapp 3), aldrig av kistan.
    ============================================================ */
 
+import type { ChildProfile } from './types'
+
 export type WorldGiftKind = 'world' | 'pet' | 'camp' | 'boss'
 
 export interface WorldGift {
@@ -82,4 +84,15 @@ export function eligibleChestGifts(
 
 export function bossGiftForWorld(worldId: string): WorldGift | undefined {
   return WORLD_GIFTS.find((gift) => gift.worldId === worldId && gift.kind === 'boss')
+}
+
+/**
+ * Bossreliker barnet äger: utdelade (worldGifts) ELLER från en värld som
+ * erövrades innan relikerna fanns (conqueredWorlds) — en trofé man redan
+ * vunnit ska aldrig saknas i trofésalen.
+ */
+export function ownedBossRelics(child: Pick<ChildProfile, 'worldGifts' | 'conqueredWorlds'>): WorldGift[] {
+  const claimed = new Set(child.worldGifts ?? [])
+  const conquered = new Set(child.conqueredWorlds ?? [])
+  return WORLD_GIFTS.filter((g) => g.kind === 'boss' && (claimed.has(g.id) || conquered.has(g.worldId)))
 }

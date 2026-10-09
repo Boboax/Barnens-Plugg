@@ -9,7 +9,7 @@ import { useStore } from '../store'
 import { useDocumentBackground } from '../useDocumentBackground'
 import { CampView } from '../components/camp/CampView'
 import { CampShop, type ShopTab } from '../components/camp/CampShop'
-import { CampStations, stationName, type StationId } from '../components/camp/CampStations'
+import { CampStations, STATIONS, stationName, type StationId } from '../components/camp/CampStations'
 import { petStill, worldImage } from '../components/camp/campArt'
 import '../../styles/camp.css'
 
@@ -189,7 +189,7 @@ function Camp({ child }: { child: ChildProfile }) {
         <div className="camp-workspace">
           <nav className="camp-navigation" aria-label="Platser i lägret">
             <button className="chip" aria-current={view === 'camp' ? 'page' : undefined} onClick={() => open('camp')}>Vid elden</button>
-            {(['friends', 'wardrobe', 'books'] as const).map((id) => (
+            {STATIONS.map((id) => (
               <button key={id} className="chip" aria-current={view === id ? 'page' : undefined} onClick={() => open(id)}>
                 {stationName(id, child)}
               </button>
