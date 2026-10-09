@@ -8,6 +8,7 @@ import { Pi } from './Pi'
 import { Ambience } from './Ambience'
 import { CloudSvg, Sprite, type SpriteName } from './WorldSprites'
 import { worldTheme } from '../worldThemes'
+import { giftById, type WorldGift } from '../../domain/world-gifts'
 
 /* ============================================================
    Riket — den stora startkartan över hela Matteriket.
@@ -152,6 +153,11 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
   const zooming = useRef(false)
   const artUrl = `${import.meta.env.BASE_URL}art/riket.webp`
   const ringUrl = `${import.meta.env.BASE_URL}art/tex/nodering.webp`
+  // Världsgåvor ur skattkistan som pyntar kartan (bossreliker kommer med
+  // striden i etapp 3). Rena dekorationer — påverkar aldrig dimman.
+  const mapGifts = (child.worldGifts ?? [])
+    .map(giftById)
+    .filter((gift): gift is WorldGift => gift?.kind === 'world')
   /* Dimma ("fog of war"): oupptäckta delar av riket ligger i moln. Sedan
      Expeditionsmodellen (årsgrindar i stället för världsboss-grind) är en
      värld ÖPPEN när den har något NÅBART moment — upplåst av årsgrinden eller
@@ -339,6 +345,31 @@ export function RealmMap({ child, currentWorldId, onPick }: RealmMapProps) {
           {artOk && <Ambience scene="riket" />}
 
           {/* Regionernas knappar (och sprites i SVG-reserven). */}
+          {mapGifts.map((gift) => {
+            const region = REGIONS.find((r) => r.worldId === gift.worldId)
+            if (!region) return null
+            const pos = artOk ? region.art : region.svg
+            return (
+              <span
+                key={gift.id}
+                role="img"
+                aria-label={`Världsgåva: ${gift.name}`}
+                className="float-soft"
+                style={{
+                  // Vänster om regionringen och ovanpå den: ringen, Pi och
+                  // etiketten upptar övriga sidor. Släpper igenom tryck.
+                  position: 'absolute', zIndex: 4, pointerEvents: 'none',
+                  left: `calc(${pos.x}% - 64px)`, top: `calc(${pos.y}% - 16px)`,
+                  width: 32, height: 32, display: 'grid', placeItems: 'center', fontSize: 19,
+                  borderRadius: '50%', border: '1px solid rgba(255,255,255,.75)',
+                  background: 'rgba(30,55,55,.78)', boxShadow: '0 0 14px rgba(170,245,210,.8)',
+                }}
+              >
+                {gift.emoji}
+              </span>
+            )
+          })}
+
           {REGIONS.map((region) => {
             const world = WORLDS.find((w) => w.id === region.worldId)!
             const theme = worldTheme(region.worldId)

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ChildProfile, SkillState } from '../domain/types'
 import { MOMENTS, momentById, momentsInWorld } from '../domain/curriculum'
+import { emptyPetProgress } from '../domain/pet-home'
 import { WORLDS } from '../domain/worlds'
 import { hasGenerator } from '../generators'
 import { expectedSuccess, practiceLevel, updateRating, variedLevel } from './rating'
@@ -22,7 +23,7 @@ const makeProfile = (overrides: Partial<ChildProfile> = {}): ChildProfile => {
     skills: recomputeAvailability(skills),
     answers: [],
     diagnosis: { passesDone: 0, passesTotal: 2, done: false, probes: [] },
-    dailyLimitMinutes: 20, usageSeconds: {}, chatEnabled: false,
+    dailyLimitMinutes: 20, usageSeconds: {}, chatEnabled: false, petProgress: emptyPetProgress(),
     streak: { days: 0, lastActiveDate: '' },
     ...overrides,
   }

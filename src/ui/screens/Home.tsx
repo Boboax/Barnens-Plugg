@@ -11,11 +11,12 @@ import { blixtTarget, unlockedBlixtTests, blixtLevel, blixtTier, blixtMaxTier, b
 import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
 import { Avatar } from '../components/Avatar'
-import { Icon, type IconName, BelongIcon, isBelongIcon } from '../components/Icon'
+import { Icon, type IconName, BelongIcon, isBelongIcon, ObjektIcon } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { RealmMap } from '../components/RealmMap'
 import { Ambience } from '../components/Ambience'
 import { SoundToggle } from '../components/SoundToggle'
+import { TestPanel } from '../testlage/TestPanel'
 import { worldTheme } from '../worldThemes'
 import { speak, stopSpeaking, ttsAvailable } from '../../tts'
 import { todayISO, useStore } from '../store'
@@ -305,6 +306,13 @@ function HomeInner({ child }: { child: ChildProfile }) {
         <span style={{ display: 'flex', gap: 8 }}>
           <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
           <SoundToggle />
+          {/* Kvällslägret: alltid nåbart, men lägertid finns först efter
+              dagens pass (engine/pet-home) — knappen frestar aldrig bort
+              från träningen. */}
+          <button className="chip" onClick={() => store.go('pet-home')}>
+            <ObjektIcon name="groda" size={22} /> Kvällslägret
+          </button>
+          {__TESTLAGE__ && <TestPanel child={child} />}
         </span>
         {/* Titelskylt: snidad plakett som hänger ned över kartan (jfr förlagan).
             Elementets proportion matchar bildens (600×328) → ingen förvrängning.

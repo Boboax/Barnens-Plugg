@@ -21,8 +21,10 @@ Barnens app ligger kvar på GitHub Pages (`boboax.github.io/Barnens-Plugg/`) och
 
 ### Engångsuppsättning
 
-1. dash.cloudflare.com → **Workers & Pages** → **Create** → fliken **Pages** →
-   **Connect to Git**.
+1. dash.cloudflare.com → **Workers & Pages** → **Create**. Cloudflare visar först sitt nyare
+   Workers-flöde ("Create and deploy") — det saknar fälten nedan. Leta i stället efter fliken
+   **Pages** eller länken *"Looking to deploy Pages? Get started"* → **Import an existing Git
+   repository**.
 2. Logga in med GitHub och ge Cloudflare åtkomst till repot `boboax/Barnens-Plugg`
    (räcker att välja just det repot).
 3. Inställningar för bygget:
@@ -43,9 +45,16 @@ Barnens app ligger kvar på GitHub Pages (`boboax.github.io/Barnens-Plugg/`) och
    | `NODE_VERSION` | `22` | Samma Node-version som appen byggs med i GitHub. |
 
 5. **Save and Deploy.** Första bygget tar 1–2 minuter.
+6. Står det *"This project is disconnected from your Git account"* i projektet: installera
+   Cloudflares GitHub-app på repot via `https://github.com/apps/cloudflare-workers-and-pages`
+   → **Configure** → kontot `boboax` → *Only select repositories* → `Barnens-Plugg` → **Save**.
+   Utan den bygger Cloudflare bara första gången och aldrig grenarnas testadresser.
 
 ### Så använder du det
 
+- Adressen till `main` står överst i projektet. Är namnet `barnens-plugg` upptaget lägger
+  Cloudflare till ett suffix (t.ex. `barnens-plugg-abc.pages.dev`); använd det namnet nedan.
+- En gren får sin testadress först när något pushas till den EFTER att kopplingen gjorts.
 - Varje gren får en egen, fast adress. Snedstreck blir bindestreck, till exempel:
   `https://feature-lager-etapp-0-1.barnens-plugg.pages.dev`
   Adresserna står under projektet → **Deployments**.
@@ -53,6 +62,18 @@ Barnens app ligger kvar på GitHub Pages (`boboax.github.io/Barnens-Plugg/`) och
   öppna appen två gånger om du lagt den på hemskärmen).
 - Öppna adressen i Safari på iPaden. Vill du testa som barnen gör: **Dela → Lägg till på
   hemskärmen.** Den hamnar som en egen ikon bredvid barnens app.
+
+### Testläget (bara på testadresserna)
+
+Testadresserna har ett testläge som barnens app aldrig får (det avgörs när Cloudflare bygger):
+
+- **Profilvalet → Skapa testfamilj:** tre testbarn (FK, åk 2, åk 4) med diagnosen gjord, tidigare
+  årskurser klara och dagens pass avklarat. FK-barnets groda väntar bakom stenen direkt.
+- **I striden → 🧪 Vinn direkt / Förlora direkt:** hoppar till segerskärmen eller
+  förlustkortet, med samma erövring och upplåsning som en riktig strid.
+- **Kartan → 🧪 Test:** +200 mynt, ny lägertid, börja om lägret, och starta kunskapskoll,
+  diamantnivå, valfri årsväktare, valfri världsboss eller blixtpass med ett tryck.
+- **Ta bort testbarnen** på profilvalet tar bara bort testbarnen.
 
 ### Viktigt att veta
 
@@ -81,9 +102,10 @@ går bra. Samma barn på två iPads exakt samtidigt ska undvikas.
 ### Steg 1 — Synktjänsten i Cloudflare (en gång)
 
 1. **Lagring:** *Storage & Databases* → **KV** → **Create a namespace** → namn `plugg-sync`.
-2. **Workern:** *Workers & Pages* → **Create** → *Create Worker* → namn `plugg-sync` →
-   **Deploy**. Tryck **Edit code**, radera exempelkoden, klistra in hela filen
-   `cloud/sync-worker.js` från repot → **Deploy**.
+2. **Workern:** *Workers & Pages* → **Create application** → välj **Start with Hello World!**
+   (inte "Import a repository" och inte Pages) → namn `plugg-sync` → **Deploy**. Tryck
+   **Edit code**, radera exempelkoden, klistra in hela filen `cloud/sync-worker.js` från
+   repot → **Deploy**.
 3. **Koppla lagringen:** Workerns sida → *Settings* → *Bindings* → **Add** → *KV namespace* →
    Variable name `PLUGG_KV`, namespace `plugg-sync` → spara.
 4. **Familjekoden:** *Settings* → *Variables and Secrets* → **Add** → Type *Secret*,

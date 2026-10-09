@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { setMusicScene, pauseMusic, unlockAudio, installAudioLifecycle } from '../sound'
 import { Pi } from './components/Pi'
 import { Splash } from './components/Splash'
@@ -11,6 +11,11 @@ import { ProfileSelect } from './screens/ProfileSelect'
 import { SessionScreen } from './screens/SessionScreen'
 import { TimeUp } from './screens/TimeUp'
 import { useStore } from './store'
+
+// Kvällslägret laddas för sig: det öppnas högst en gång om dagen och ska
+// inte göra appens första start (kartan, passet) tyngre. PWA:n precachar
+// ändå filen, så lägret fungerar offline.
+const PetHomeScreen = lazy(() => import('./screens/PetHomeScreen').then((m) => ({ default: m.PetHomeScreen })))
 
 /** Skärmar där aktiv träningstid tickar mot dagens gräns. */
 const TIMED_SCREENS = new Set(['session', 'check', 'boss', 'star', 'guardian', 'blixt', 'diagnosis'])
@@ -129,6 +134,9 @@ export function App() {
       case 'diagnosis': return <DiagnosisScreen />
       case 'parent': return <ParentScreen />
       case 'time-up': return <TimeUp />
+      case 'pet-home': return (
+        <Suspense fallback={null}><PetHomeScreen key={activeChild?.id} /></Suspense>
+      )
     }
   })()
 

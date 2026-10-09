@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ChildProfile, Household } from '../domain/types'
+import { emptyPetProgress } from '../domain/pet-home'
 import { mergeHouseholds, stripDeviceSecrets, syncRound } from './sync'
+import { changeCamp } from '../engine/camp'
 import { migrate } from './db'
 
 /* Familjesynkens krockregel: nyaste versionen av VARJE BARN vinner, och
@@ -12,7 +14,7 @@ const kid = (id: string, updatedAt: string, name = id): ChildProfile => ({
   createdAt: '2026-01-01T00:00:00Z', updatedAt,
   skills: {}, answers: [],
   diagnosis: { passesDone: 0, passesTotal: 2, done: false, probes: [] },
-  dailyLimitMinutes: 20, usageSeconds: {}, chatEnabled: false,
+  dailyLimitMinutes: 20, usageSeconds: {}, chatEnabled: false, petProgress: emptyPetProgress(),
   streak: { days: 0, lastActiveDate: '' },
 })
 
@@ -76,6 +78,39 @@ describe('familjesynk: sammanslagning per barn', () => {
     expect(stripped.parentPinHash).toBeUndefined()
     expect(stripped.chat).toBeUndefined()
     expect(stripped.sync).toBeUndefined()
+  })
+
+  it('föremål köpta i lägret på enhet A finns på enhet B efter sammanslagning', () => {
+    // Lägret bor på barnet, så köpet reser med barnets nyaste version.
+    const at = new Date(2026, 8, 9, 18)
+    const camper = (id: string): ChildProfile => ({
+      ...kid(id, '2026-09-09T10:00:00Z'),
+      petProgress: {
+        ...emptyPetProgress(), coins: 100, lastPracticeDay: '2026-09-09',
+        pets: [{ id: 'p', name: 'Mossa', species: 'woodland-frog', foundAt: 'x', foundInWorldId: 'talens-dal' }],
+      },
+    })
+    const deviceA = home([camper('a'), camper('b')])
+    const deviceB = home([camper('a'), camper('b')])
+
+    // På A köper barn a en lykta och ställer fram den (store.patchChild stämplar updatedAt).
+    let a = changeCamp(deviceA.children[0], { type: 'buy', itemId: 'camp-lantern', purchaseId: 'lykta-1' }, at)
+    a = changeCamp(a, { type: 'place', instanceId: 'lykta-1', point: 'light-1' }, at)
+    const afterBuy = { ...deviceA, children: [{ ...a, updatedAt: '2026-09-09T18:00:00Z' }, deviceA.children[1]] }
+    // Samtidigt på B: syskonet b byter namn på sin vän.
+    const b = changeCamp(deviceB.children[1], { type: 'rename', petId: 'p', name: 'Groddis' }, at)
+    const localB = { ...deviceB, children: [deviceB.children[0], { ...b, updatedAt: '2026-09-09T18:01:00Z' }] }
+
+    // A laddar upp (enhetshemligheter strippade, JSON över nätet), B hämtar.
+    const uploaded = migrate(JSON.parse(JSON.stringify(stripDeviceSecrets(afterBuy))) as Household)
+    const merged = mergeHouseholds(localB, uploaded)
+    const mergedA = merged.children.find((c) => c.id === 'a')!
+    expect(mergedA.petProgress.items).toEqual([
+      { id: 'lykta-1', itemId: 'camp-lantern', boughtAt: at.toISOString(), point: 'light-1' },
+    ])
+    expect(mergedA.petProgress.coins).toBe(60)
+    // Syskonets ändring på B finns kvar — krockregeln gäller per barn.
+    expect(merged.children.find((c) => c.id === 'b')!.petProgress.pets[0].name).toBe('Groddis')
   })
 
   it('inget nyare i molnet → samma objekt (ingen onödig sparning eller runda)', () => {

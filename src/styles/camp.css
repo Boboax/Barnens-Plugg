@@ -1,0 +1,411 @@
+/* ============================================================
+   Kvällslägret. Målad nattscen med rörelse i små lager (eld,
+   eldflugor, djurens poser) — aldrig hela bilden som gungar.
+   Text på målade ytor sitter alltid på egna plattor (CLAUDE.md).
+   Respekterar prefers-reduced-motion och barnets egen pausknapp.
+   ============================================================ */
+
+.camp-page { height: 100%; overflow: auto; background: #121c27; color: #f4e9cc; }
+.camp-page button:focus-visible,
+.camp-page input:focus-visible,
+.camp-page select:focus-visible { outline: 3px solid #ffd887; outline-offset: 3px; }
+.camp-page button:disabled { cursor: default; }
+
+.camp-topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: calc(12px + env(safe-area-inset-top)) 24px 12px;
+}
+.camp-topbar h1 { margin: 0; font-size: 32px; color: #f4d79b; text-shadow: 0 2px 2px #24130a; }
+.camp-topbar .chip { min-height: 44px; }
+.camp-wallet {
+  padding: 9px 16px; border: 2px solid #aa8751; border-radius: 24px;
+  background: #332c20; color: #f9d987; font-weight: 900; white-space: nowrap;
+}
+
+.camp-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #8a6f45; }
+.camp-note { font-size: 13px; color: #c1c5b4; }
+
+/* ---------- Välkomst och upptäckt (pergament: mörk text) ---------- */
+
+.camp-welcome { max-width: 480px; margin: 60px auto; padding: 30px; text-align: center; color: #35302e; }
+.camp-welcome h2 { font-size: 30px; }
+.camp-welcome p { line-height: 1.6; }
+
+.camp-discovery {
+  min-height: calc(100% - 75px); display: flex; align-items: center; justify-content: center; gap: 25px;
+  padding: 24px; background-color: #172531; background-size: cover; background-position: center;
+}
+.camp-find-scene { position: relative; width: 260px; height: 250px; flex-shrink: 0; }
+.camp-moss-stone {
+  position: absolute; left: 10%; bottom: 10%; width: 80%; height: 43%; z-index: 2;
+  border-radius: 55% 48% 30% 25%; border-top: 12px solid #627948;
+  background: radial-gradient(ellipse at 25% 20%, #a4ba6e, transparent 35%), var(--tex-stone, #6b6f68);
+  box-shadow: 0 12px 15px #10131677, inset -15px -10px 20px #25352677;
+}
+.camp-find-scene img { position: absolute; left: 14%; width: 180px; transition: transform .6s ease; }
+.camp-peeking { bottom: 25%; transform: translateY(28px); }
+.camp-found { bottom: 30%; transform: translateY(-15px); z-index: 3; filter: drop-shadow(0 0 20px #e9e9a688); }
+.camp-story {
+  max-width: 450px; padding: 28px; display: flex; flex-direction: column; align-items: center; gap: 14px;
+  text-align: center; color: #35302e;
+  background: linear-gradient(#fbf4e2f7, #f0e6cdf7); border: 1px solid #d3b878; border-radius: 22px;
+  box-shadow: 0 20px 60px #0007;
+}
+.camp-story h2 { margin: 0; font-size: 31px; line-height: 1.1; }
+.camp-story p { margin: 0; line-height: 1.6; }
+.camp-story form { display: flex; flex-direction: column; gap: 12px; width: 100%; font-weight: 800; }
+.camp-story input {
+  width: 100%; padding: 12px; border: 2px solid #bca77c; border-radius: 10px;
+  background: #fffaf0; color: #35302e; font: inherit; text-align: center;
+}
+
+/* ---------- Arbetsytan: navigering, rubrik, sidfot ---------- */
+
+.camp-workspace { max-width: 1400px; margin: auto; padding: 18px 26px 28px; }
+.camp-navigation { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.camp-navigation .chip { min-height: 44px; background: #23333c; border-color: #8d7856; color: #f5e6c8; }
+.camp-navigation [aria-current=page] { background: #b88946; border-color: #f8d289; color: #111c22; text-shadow: none; }
+.camp-view-heading { margin: 5px 0 16px; font-size: 34px; color: #ffe8ba; }
+.camp-view-heading:focus { outline: none; }
+.camp-discovery-call,
+.camp-placement-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0; padding: 14px 18px;
+  border: 1px solid #b39d69; border-radius: 12px; background: #dcd0ae; color: #263329;
+}
+.camp-discovery-call { width: 100%; justify-content: center; background: #e4c990; font: inherit; font-weight: 800; cursor: pointer; }
+.camp-footer {
+  max-width: 1200px; margin: auto; padding: 15px 3px 3px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.camp-footer p { margin: 0; min-height: 24px; font-weight: 700; font-size: 14px; color: #e2d9be; }
+.camp-footer > span { font-size: 12px; color: #c3c7b0; white-space: nowrap; }
+
+/* ---------- Lägerscenen ---------- */
+
+.camp-scene {
+  position: relative; max-width: 1200px; margin: auto; aspect-ratio: 1.5; overflow: hidden; isolation: isolate;
+  border: 1px solid #aa895a88; border-radius: 20px; background: #1a2332; box-shadow: 0 14px 40px #0006;
+}
+.camp-scene-background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.camp-glow {
+  position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(ellipse at 70% 60%, #ffb54630, transparent 30%);
+  animation: camp-glow 4s ease-in-out infinite alternate;
+}
+.camp-fire { position: absolute; left: 67%; top: 47%; width: 8%; height: 13%; pointer-events: none; filter: drop-shadow(0 0 12px #ff9a2b); }
+.camp-fire i {
+  position: absolute; left: 26%; bottom: 0; width: 48%; height: 83%; transform-origin: 50% 100%;
+  border-radius: 65% 15% 55% 45%;
+  background: linear-gradient(0deg, #fff8b6 2%, #ffd065 35%, #f88727 72%, #dd4d1300);
+  animation: camp-flame 1.9s ease-in-out infinite alternate;
+}
+.camp-fire i:nth-child(2) { left: 6%; width: 40%; height: 58%; animation-delay: -.8s; transform: rotate(-18deg); }
+.camp-fire i:nth-child(3) { left: 53%; width: 37%; height: 64%; animation-delay: -1.5s; }
+.camp-fire b {
+  position: absolute; bottom: 20%; left: 50%; width: 3px; height: 3px; border-radius: 50%; opacity: 0;
+  background: #ffd28a; animation: camp-ember 4s ease-out infinite;
+}
+.camp-fire b:nth-of-type(2) { left: 24%; animation-delay: 1.3s; }
+.camp-fire b:nth-of-type(3) { left: 70%; animation-delay: 2.6s; }
+.camp-fireflies { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.camp-fireflies i {
+  position: absolute; left: calc(12% + var(--i) * 9%); top: calc(32% + var(--i) * 4%);
+  width: 4px; height: 4px; border-radius: 50%; opacity: 0;
+  background: #e3eea1; box-shadow: 0 0 10px 3px #d7eda444;
+  animation: camp-firefly 7s ease-in-out infinite; animation-delay: calc(var(--i) * -1.3s);
+}
+
+.camp-tent {
+  position: absolute; left: 40%; top: 35%; width: 17%; z-index: 3;
+  padding: 0; border: 0; background: none; cursor: pointer; filter: drop-shadow(0 6px 4px #0007);
+}
+.camp-tent img { display: block; width: 100%; }
+
+.camp-placed,
+.camp-placement-preview {
+  position: absolute; z-index: 2; transform: translate(-50%, -85%); min-height: 44px;
+  padding: 0; border: 0; background: none; cursor: pointer; filter: drop-shadow(0 4px 3px #0006);
+}
+.camp-placed img { display: block; width: 100%; }
+.camp-placed:hover { filter: drop-shadow(0 0 6px #ffd695); }
+.camp-light img { animation: camp-glow 3s ease-in-out infinite alternate; }
+.camp-placement-preview { z-index: 3; opacity: .65; pointer-events: none; outline: 2px dashed #ffdf93; outline-offset: 5px; }
+
+.camp-pet {
+  position: absolute; z-index: 4; width: 13%; max-width: 155px; transform: translate(-50%, -80%);
+  padding: 0; border: none; background: none; cursor: pointer;
+}
+.camp-pet:disabled { opacity: 1; }
+/* Namnet på en egen mörk platta — bakgrunden varierar från eld till natt. */
+.camp-pet span {
+  display: inline-block; max-width: 145%; padding: 3px 9px; overflow-wrap: anywhere;
+  border: 1px solid #af915b; border-radius: 12px; background: #182823eb; color: #fbeac8;
+  font-size: clamp(11px, 1.3vw, 15px); font-weight: 800;
+}
+
+.camp-player { position: absolute; left: 55%; top: 43%; z-index: 3; width: 11%; height: 29%; padding: 0; border: 0; background: none; cursor: pointer; }
+.camp-hero { position: relative; width: 100%; height: 100%; aspect-ratio: 400 / 640; isolation: isolate; }
+.camp-hero > img { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; object-fit: contain; }
+.camp-cloak { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; filter: drop-shadow(0 5px 4px #0006); }
+
+.camp-placement-target {
+  position: absolute; z-index: 9; transform: translate(-50%, -50%); min-width: 44px; min-height: 44px;
+  border: 2px dashed #fce0a1; border-radius: 50%; background: #224635dc; color: #fff0cd; font-size: 26px; cursor: pointer;
+}
+.camp-placement-target span {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 110px; padding: 4px;
+  border-radius: 6px; background: #152825ed; font-size: 11px;
+}
+.camp-placement-target:disabled { background: #57484b; opacity: .7; }
+
+.camp-world-gifts {
+  position: absolute; right: 3%; bottom: 5%; z-index: 5; max-width: 43%;
+  display: flex; flex-wrap: wrap-reverse; justify-content: flex-end; align-items: flex-end; gap: 5px;
+}
+.camp-world-gift {
+  width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer;
+  border: 2px solid #b8893c; border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #fff7c7, #7a4d28 72%);
+  box-shadow: 0 4px 8px #0008, 0 0 13px #ffd45a66;
+}
+.camp-world-gift--pet { border-color: #91c8a8; background: radial-gradient(circle at 36% 30%, #e8fff2, #315d4b 72%); }
+.camp-world-gift span { font-size: 23px; filter: drop-shadow(0 2px 2px #0005); }
+
+/* ---------- Paneler: handelsbod och stationer ---------- */
+
+.camp-panel {
+  max-width: 1200px; margin: 18px auto 0; padding: 24px; line-height: 1.6;
+  border: 1px solid #8f795588; border-radius: 20px; background: linear-gradient(140deg, #293e3b, #1d2b36);
+}
+.camp-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.camp-tabs .chip { min-height: 44px; }
+.camp-tabs [aria-pressed=true] { background: #b88946; border-color: #f8d289; color: #111c22; text-shadow: none; }
+.camp-shop-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.camp-product {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 116px; padding: 14px;
+  border: 2px solid #a18c61; border-radius: 12px; background: #e8ddc5; color: #35302e; font: inherit; cursor: pointer;
+}
+.camp-product img { width: 100%; height: 100px; object-fit: contain; }
+.camp-product span { font-size: 14px; font-weight: 800; }
+.camp-product small { font-size: 12px; color: #5f4a26; }
+.camp-product[aria-pressed=true] { background: #f3d998; border-color: #fbd16e; box-shadow: 0 0 0 2px #c39b4b; }
+.camp-product:disabled { opacity: .6; }
+.camp-buy-confirm {
+  display: flex; align-items: center; gap: 25px; margin-top: 18px; padding: 20px;
+  border: 1px solid #b59862; border-radius: 14px; background: #203530;
+}
+.camp-buy-confirm > img { width: 180px; max-height: 180px; object-fit: contain; }
+.camp-buy-confirm h3 { margin: 0; font-size: 26px; color: #ffe3ab; }
+.camp-buy-confirm button { margin: 5px; }
+
+.camp-wardrobe { display: grid; grid-template-columns: minmax(200px, 1fr) 1.5fr; gap: 30px; }
+.camp-wardrobe h3 { color: #ffe3ab; font-size: 26px; margin: 14px 0 6px; }
+.camp-wardrobe .btn, .camp-wardrobe .chip { margin: 5px; }
+.camp-fitting {
+  height: 430px; display: flex; flex-direction: column; align-items: center;
+  background: radial-gradient(ellipse at bottom, #5a644466, transparent 70%);
+}
+.camp-fitting .camp-hero { width: 260px; max-width: 100%; }
+.camp-fitting > span { margin-top: 12px; font-size: 13px; color: #e0cc9c; }
+.camp-outfits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.camp-outfit-option {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 15px;
+  border: 1px solid #9d8861; border-radius: 12px; background: #1e2d31; color: #efe0bf; font: inherit; cursor: pointer;
+}
+.camp-outfit-option[aria-pressed=true] { border: 2px solid #e4bd72; background: #3c4b3c; }
+.camp-outfit-option small { font-size: 12px; }
+.camp-fabric {
+  display: block; width: 50px; height: 70px; transform: rotate(-6deg);
+  border: 3px solid; border-radius: 16px 16px 5px 5px; box-shadow: inset 6px 0 8px #0003;
+}
+
+.camp-library h3 { color: #ffe3ab; }
+.camp-book-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 18px; }
+.camp-book {
+  padding: 20px; color: #493721; background: var(--tex-parchment, none) center / cover, #ead9b9;
+  border: 1px solid #a08655; border-left: 8px solid #704b31; border-radius: 3px 14px 14px 3px;
+}
+.camp-book img { width: 100%; height: 140px; object-fit: contain; }
+.camp-book h3 { font-size: 23px; line-height: 1.2; color: #493721; }
+.camp-book span { font-size: 12px; }
+.camp-gift-library { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px; }
+.camp-gift-library article {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px; text-align: center;
+  border: 1px solid #cbb687; border-radius: 13px; background: #f6ecce; color: #35302e; box-shadow: 0 3px 9px #0002;
+}
+.camp-gift-library article > span { font-size: 38px; }
+.camp-gift-library small { color: #6b5b40; font-weight: 700; line-height: 1.3; }
+
+/* ---------- Vännerna (omsorg, ev. inne i tältet) ---------- */
+
+.pet-house { max-width: 1200px; margin: auto; }
+.pet-house-toolbar { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.pet-house-toolbar p { margin: 0 0 16px; color: #d5d6c5; }
+.pet-house-toolbar .chip { flex-shrink: 0; min-height: 44px; }
+.pet-house-room {
+  position: relative; aspect-ratio: 1.5; overflow: hidden; isolation: isolate;
+  border: 1px solid #ad854e; border-radius: 22px; background: #39231c;
+}
+.pet-house-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pet-house-firelight {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 48% 38%, #ffbe4233, transparent 48%);
+  animation: camp-glow 4s ease-in-out infinite alternate;
+}
+.pet-house-resident {
+  position: absolute; z-index: 2; width: 19%; aspect-ratio: 1; transform: translate(-50%, -86%);
+  padding: 0; border: 0; border-radius: 45%; background: none; cursor: pointer;
+}
+.pet-house-resident.pet-house-front { z-index: 3; width: 25%; }
+.pet-house-resident:hover .pet-house-animal,
+.pet-house-resident:focus-visible .pet-house-animal { filter: drop-shadow(0 0 5px #ffdca0); }
+.pet-house-bed { position: absolute; left: -12.5%; bottom: -17%; width: 125%; height: 75%; object-fit: contain; filter: drop-shadow(0 5px 3px #0006); }
+.pet-house-animal { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pet-house-hearts {
+  position: absolute; inset: -12% 0 auto; pointer-events: none; color: #ffb7ac;
+  font-size: clamp(18px, 3vw, 38px); text-shadow: 0 2px 4px #652938;
+  animation: house-affection 2.2s ease-out both;
+}
+.pet-house-hearts i { position: relative; top: -15px; font-style: normal; }
+.pet-food-bowl {
+  position: absolute; left: 29%; bottom: -3%; width: 42%; height: 16%;
+  border-top: 4px solid #c4965b; border-radius: 15% 15% 50% 50%;
+  background: linear-gradient(#815632, #4a2c1d); box-shadow: 0 4px 6px #0008;
+}
+.pet-food-bowl i {
+  position: absolute; top: -55%; left: 9%; width: 23%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 30% 20%, #deb27a, #986335 70%);
+}
+.pet-food-bowl i:nth-child(2) { left: 36%; background: radial-gradient(circle at 30% 20%, #e3be7a, #ab763d 70%); }
+.pet-food-bowl i:nth-child(3) { left: 63%; }
+.pet-house-friends { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 18px 0 0; }
+.pet-house-friends .chip { min-height: 44px; }
+.pet-house-friends [aria-pressed=true] { background: #d5b778; color: #222e29; text-shadow: none; }
+.pet-house-care {
+  display: grid; grid-template-columns: minmax(150px, 260px) 1fr; align-items: center; gap: 30px;
+  margin-top: 22px; padding: 26px;
+  border: 1px solid #8b7b5355; border-radius: 20px; background: linear-gradient(125deg, #30473d, #1a2d32);
+}
+.pet-house-closeup { width: 100%; aspect-ratio: 1; }
+.pet-house-care h3 { margin: 4px 0 10px; font-size: 38px; color: #ffe3ab; }
+.pet-house-care p { line-height: 1.6; color: #d3d5c5; }
+.pet-house-care .camp-eyebrow { color: #c8b784; }
+.pet-house-response { min-height: 3em; }
+.pet-care-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.pet-care-actions .chip { min-height: 44px; padding: 10px 16px; }
+.pet-house-care summary { padding: 10px 0; color: #e2cca0; cursor: pointer; }
+.pet-house-care label { display: block; margin: 10px 0; }
+.pet-house-care input,
+.pet-house-care select {
+  display: block; width: 100%; max-width: 360px; min-height: 44px; padding: 9px;
+  border: 1px solid #a28d63; border-radius: 8px; background: #f1e5ce; color: #24332c; font: inherit;
+}
+.pet-house-care details .chip { margin: 5px; }
+.pet-house-care details p { font-size: 13px; }
+
+/* ---------- Husdjurets poser (4×4-atlas, 16 målade bildrutor) ---------- */
+
+.pet-sprite {
+  width: 100%; aspect-ratio: 1; background-repeat: no-repeat; background-size: 100% 100%; background-position: 0 0;
+  filter: drop-shadow(0 5px 3px #0006);
+}
+/* Vilan: stillbild större delen av tiden, sedan en kort rörelsesekvens. */
+.pet-sprite-ready { background-size: 400% 400%; animation: pet-pose-idle 6s step-end infinite; }
+.pet-sprite-dune-fox { animation-duration: 7.3s; }
+.pet-sprite-reef-axolotl { animation-duration: 6.7s; }
+.pet-sprite-ready.pet-sprite-greeting { animation: pet-pose-greeting 2.2s step-end 1; }
+.pet-sleep-pose { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 5px 3px #0006); }
+
+@keyframes pet-pose-idle {
+  0%, 100% { background-position: 0 0; }
+  60.00% { background-position: 0% 0%; }
+  62.50% { background-position: 33.33% 0%; }
+  65.00% { background-position: 66.67% 0%; }
+  67.50% { background-position: 100% 0%; }
+  70.00% { background-position: 0% 33.33%; }
+  72.50% { background-position: 33.33% 33.33%; }
+  75.00% { background-position: 66.67% 33.33%; }
+  77.50% { background-position: 100% 33.33%; }
+  80.00% { background-position: 0% 66.67%; }
+  82.50% { background-position: 33.33% 66.67%; }
+  85.00% { background-position: 66.67% 66.67%; }
+  87.50% { background-position: 100% 66.67%; }
+  90.00% { background-position: 0% 100%; }
+  92.50% { background-position: 33.33% 100%; }
+  95.00% { background-position: 66.67% 100%; }
+  97.50% { background-position: 100% 100%; }
+}
+@keyframes pet-pose-greeting {
+  0%, 100% { background-position: 0 0; }
+  0.00% { background-position: 0% 0%; }
+  6.25% { background-position: 33.33% 0%; }
+  12.50% { background-position: 66.67% 0%; }
+  18.75% { background-position: 100% 0%; }
+  25.00% { background-position: 0% 33.33%; }
+  31.25% { background-position: 33.33% 33.33%; }
+  37.50% { background-position: 66.67% 33.33%; }
+  43.75% { background-position: 100% 33.33%; }
+  50.00% { background-position: 0% 66.67%; }
+  56.25% { background-position: 33.33% 66.67%; }
+  62.50% { background-position: 66.67% 66.67%; }
+  68.75% { background-position: 100% 66.67%; }
+  75.00% { background-position: 0% 100%; }
+  81.25% { background-position: 33.33% 100%; }
+  87.50% { background-position: 66.67% 100%; }
+  93.75% { background-position: 100% 100%; }
+}
+@keyframes camp-glow { from { opacity: .55; } to { opacity: 1; } }
+@keyframes camp-flame { from { transform: scale(.86, 1.04) rotate(-5deg); opacity: .8; } to { transform: scale(1.08, .88) rotate(6deg); opacity: 1; } }
+@keyframes camp-ember { 10% { opacity: .8; } 100% { transform: translate(13px, -65px); opacity: 0; } }
+@keyframes camp-firefly {
+  0%, 100% { opacity: 0; transform: translate(0, 0); }
+  40% { opacity: .65; }
+  70% { opacity: .2; transform: translate(20px, -16px); }
+}
+@keyframes house-affection {
+  0% { opacity: 0; transform: translateY(5px) scale(.8); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-35px) scale(1.1); }
+}
+
+/* Barnets egen pausknapp ("Pausa rörelser") och systemets val. */
+.camp-still *, .camp-still *::before, .camp-still *::after { animation-play-state: paused !important; transition: none !important; }
+.camp-still .pet-sprite { animation: none !important; background-position: 0 0; }
+@media (prefers-reduced-motion: reduce) {
+  .camp-page *, .camp-page *::before, .camp-page *::after { animation: none !important; transition: none !important; }
+  .camp-fireflies i { opacity: .35; }
+  .pet-sprite { background-position: 0 0; }
+  .pet-house-hearts { opacity: 1; }
+}
+
+/* ---------- Mindre skärmar (iPad porträtt och telefon) ---------- */
+
+@media (max-width: 900px) {
+  .camp-workspace { padding: 15px; }
+  .camp-shop-grid { grid-template-columns: repeat(3, 1fr); }
+  .camp-book-grid { grid-template-columns: repeat(2, 1fr); }
+  .camp-wardrobe { gap: 16px; }
+  .camp-fitting { height: 350px; }
+}
+@media (max-width: 600px) {
+  .camp-topbar { flex-wrap: wrap; padding-left: 12px; padding-right: 12px; gap: 6px; }
+  .camp-topbar h1 { font-size: 24px; }
+  .camp-motion-toggle { order: 4; }
+  .camp-workspace { padding: 10px; }
+  .camp-view-heading { font-size: 28px; }
+  .camp-scene { border-radius: 14px; }
+  .camp-footer { flex-direction: column; align-items: start; gap: 5px; }
+  .camp-panel { padding: 14px; }
+  .camp-shop-grid, .camp-book-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .camp-buy-confirm { flex-direction: column; align-items: stretch; gap: 8px; }
+  .camp-buy-confirm > img { height: 120px; align-self: center; }
+  .camp-wardrobe { grid-template-columns: 1fr; }
+  .camp-fitting { height: 300px; }
+  .camp-placement-target span { width: 72px; }
+  .camp-world-gift { width: 36px; height: 36px; }
+  .camp-discovery { flex-direction: column; gap: 0; }
+  .camp-find-scene { height: 175px; }
+  .camp-welcome { margin: 25px 16px; }
+  .pet-house-care { grid-template-columns: 1fr; gap: 8px; padding: 20px; }
+  .pet-house-closeup { width: 180px; margin: auto; }
+}

@@ -1,5 +1,6 @@
-import type { Household } from '../domain/types'
+import type { ChildProfile, Household } from '../domain/types'
 import { PROFILE_SCHEMA_VERSION } from '../domain/types'
+import { emptyPetProgress } from '../domain/pet-home'
 import { grantedYears, repairDiagnosisBossReady, backfillSplitAddSub, backfillLateNewMoments, backfillSeenWorlds } from '../engine/progress'
 import { blixtBlockedMoments } from '../engine/blixt'
 
@@ -80,7 +81,31 @@ export async function requestPersistentStorage(): Promise<boolean> {
   return false
 }
 
-/** Migrering mellan schemaversioner. En version hittills = ingen åtgärd. */
+/** v1 → v2: varje barn får ett läger (tomt om det saknas). Fyller fält för
+    fält, så ett halvt petProgress (handredigerad fil) också blir helt.
+    Körs för ALLA barn vid varje inläsning, inte bara när schemaVersion är 1:
+    en platta som ännu kör v1-appen (PWA:er ligger lätt en version efter)
+    kan skapa ett nytt syskon och via synkens max(schemaVersion) ladda upp
+    det under versionsnummer 2 — utan läger. Idempotent. */
+function withPetProgress(c: ChildProfile): ChildProfile {
+  const p = (c.petProgress ?? {}) as Partial<ChildProfile['petProgress']>
+  const empty = emptyPetProgress()
+  if (p.pets && p.items && typeof p.coins === 'number' && typeof p.lastPracticeDay === 'string') return c
+  return {
+    ...c,
+    petProgress: {
+      ...empty,
+      ...p,
+      coins: typeof p.coins === 'number' ? p.coins : empty.coins,
+      lastPracticeDay: typeof p.lastPracticeDay === 'string' ? p.lastPracticeDay : empty.lastPracticeDay,
+      pets: Array.isArray(p.pets) ? p.pets : empty.pets,
+      items: Array.isArray(p.items) ? p.items : empty.items,
+    },
+  }
+}
+
+/** Migrering mellan schemaversioner (kedjan längst ner) + idempotenta
+    reparationer som körs vid varje inläsning/import. */
 export function migrate(data: Household): Household {
   // Normalisera saknade toppnivå-arrayer FÖRST — äldre eller handredigerade
   // kopior kan sakna rewards/chatLog, och UI:t gör h.rewards.map(...) /
@@ -107,6 +132,7 @@ export function migrate(data: Household): Household {
       // Borttagna profiler (removedChildIds) kommer aldrig tillbaka, inte
       // heller via en äldre exportfil som läses in ovanpå.
       .filter((c) => !(data.removedChildIds ?? []).includes(c.id))
+      .map(withPetProgress)
       .map((c) => ({
         ...c,
         // backfillSplitAddSub: markera nya rena add/sub-noder klara för barn som
@@ -130,7 +156,9 @@ export function migrate(data: Household): Household {
     chatLog: Array.isArray(data.chatLog) ? data.chatLog : [],
   }
   if (base.schemaVersion === PROFILE_SCHEMA_VERSION) return base
-  // Framtida schema-migreringar kedjas här (v1→v2→v3 …).
+  // Schema-migreringar kedjas här (v1→v2→v3 …).
+  // v1 → v2: Kvällslägret. Ifyllnaden görs av withPetProgress ovan (för
+  // alla barn, se kommentaren där) — här stämplas bara versionen.
   return { ...base, schemaVersion: PROFILE_SCHEMA_VERSION }
 }
 

@@ -3,6 +3,7 @@ import { Avatar } from '../components/Avatar'
 import { Icon, HeroImg } from '../components/Icon'
 import { SoundToggle } from '../components/SoundToggle'
 import { useStore } from '../store'
+import { isTestChild, testFamily } from '../testlage/testFamily'
 
 /* Startskärmen: den målade valvbakgrunden (public/art/startbg.webp) med
    titel, Pi och spelarval på en mjuk mörkscrim så texten är läsbar mot
@@ -73,6 +74,17 @@ export function ProfileSelect() {
             ))}
           </div>
         </>
+      )}
+
+      {/* Testläget: bara på testadresserna (förhandsbyggen), aldrig hos barnen. */}
+      {__TESTLAGE__ && (
+        <div className="card" style={{ position: 'relative', zIndex: 1, marginTop: 18, padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <strong>🧪 Testläge</strong>
+          <button className="btn btn-quiet" onClick={() => store.testlageAddChildren(testFamily(new Date()))}>Skapa testfamilj</button>
+          {children.some(isTestChild) && (
+            <button className="btn btn-quiet" onClick={() => store.testlageRemoveChildren(isTestChild)}>Ta bort testbarnen</button>
+          )}
+        </div>
       )}
 
       <span style={{ position: 'fixed', left: 18, bottom: 'calc(16px + env(safe-area-inset-bottom))', zIndex: 2 }}><SoundToggle openUp /></span>

@@ -12,9 +12,12 @@ import { applyDiagnosisResult, diagnosisPassesForAge } from '../engine/diagnosis
 import { blixtMaxTier, blixtBlockedMoments } from '../engine/blixt'
 import { activeDayCount, masteredCount, updateStreak } from '../engine/rewards'
 import { resetNamePool, setNamePool } from '../generators/helpers'
+import { emptyPetProgress } from '../domain/pet-home'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { mergeHouseholds, pullRemote, pushRemote, syncRound, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
+import { adoptPet, completePetPractice, spendHomeTime } from '../engine/pet-home'
+import { changeCamp, type CampAction } from '../engine/camp'
 
 /* ============================================================
    Appens tillstånd: hushållet + navigering + tidsbokföring.
@@ -25,7 +28,7 @@ import { hashPin, verifyPin } from '../storage/pin'
 
 export type Screen =
   | 'profiles' | 'home' | 'session' | 'check' | 'boss' | 'star' | 'guardian'
-  | 'blixt' | 'diagnosis' | 'parent' | 'time-up'
+  | 'blixt' | 'diagnosis' | 'parent' | 'time-up' | 'pet-home'
 
 export const KID_COLORS = ['#FF7A6E', '#3FBF87', '#4A56C6', '#E8A13C', '#8C6BC8', '#2FA8C7'] as const
 
@@ -99,6 +102,21 @@ interface StoreValue {
   markWorldSeen(worldId: string): void
   /** Nollställ den transienta frysdags-skylten efter att Home visat den. */
   clearStreakToast(): void
+
+  // Kvällslägret (kosmetiskt — rör aldrig skills, se engine/camp.ts)
+  /** Avslutat pass: dagens mynt + ev. upptäckt i världen barnet tränade i. */
+  completePetPractice(completed: number, planned: number, worldId: string): void
+  adoptPet(name: string): void
+  /** Bokför lägertid i klumpar (PetHomeScreen samlar sekunderna). */
+  spendHomeTime(seconds: number): void
+  changeCamp(action: CampAction): void
+  /** Lägg en världsgåva i barnets samling. Idempotent. */
+  claimWorldGift(giftId: string): void
+
+  // Testläget (bara i förhandsbyggen, __TESTLAGE__ — se ui/testlage/)
+  testlageAddChildren(children: ChildProfile[]): void
+  testlageRemoveChildren(isTest: (c: ChildProfile) => boolean): void
+  testlagePatchActiveChild(fn: (c: ChildProfile) => ChildProfile): void
   finishReview(momentId: string, passed: boolean): void
   recordDiagnosisProbe(momentId: string, level: number, correct: boolean): void
   finishDiagnosisPass(converged: boolean): void
@@ -341,6 +359,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         usageSeconds: {},
         chatEnabled: false,
         streak: { days: 0, lastActiveDate: '' },
+        petProgress: emptyPetProgress(),
       }
       setHousehold((h) => ({ ...h, children: [...h.children, child] }))
     },
@@ -486,6 +505,47 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!activeChildId) return
       patchChild(activeChildId, (c) =>
         c.seenWorlds?.includes(worldId) ? c : { ...c, seenWorlds: [...(c.seenWorlds ?? []), worldId] })
+    },
+
+    completePetPractice: (completed, planned, worldId) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => completePetPractice(c, completed, planned, worldId, new Date()))
+    },
+
+    adoptPet: (name) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => adoptPet(c, name, new Date()))
+    },
+
+    spendHomeTime: (seconds) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => spendHomeTime(c, seconds, new Date()))
+    },
+
+    changeCamp: (action) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => changeCamp(c, action, new Date()))
+    },
+
+    claimWorldGift: (giftId) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) =>
+        c.worldGifts?.includes(giftId) ? c : { ...c, worldGifts: [...(c.worldGifts ?? []), giftId] })
+    },
+
+    // Vakten sitter här, inte bara i UI:t: i barnens bygge (__TESTLAGE__
+    // false) gör testfunktionerna ingenting även om något skulle anropa dem.
+    testlageAddChildren: (children) => {
+      if (!__TESTLAGE__) return
+      setHousehold((h) => ({ ...h, children: [...h.children, ...children] }))
+    },
+    testlageRemoveChildren: (isTest) => {
+      if (!__TESTLAGE__) return
+      setHousehold((h) => ({ ...h, children: h.children.filter((c) => !isTest(c)) }))
+    },
+    testlagePatchActiveChild: (fn) => {
+      if (!__TESTLAGE__ || !activeChildId) return
+      patchChild(activeChildId, fn)
     },
 
     redoDiagnosis: (id) => patchChild(id, (c) => {

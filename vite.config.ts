@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'node:child_process'
 import pkg from './package.json'
+import { testlageEnabled } from './src/testlage-flag'
 
 // Versionsstämpel: paketversion + git-hash + byggtid — så att man alltid
 // kan se exakt vilken version en platta kör (PWA:er ligger lätt en version efter).
@@ -29,6 +30,8 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(`${appVersion} (${gitSha})`),
     __BUILD_TIME__: JSON.stringify(buildTime),
+    // Snabbknappar för test — bara på Cloudflares testadresser (se src/testlage-flag.ts).
+    __TESTLAGE__: JSON.stringify(testlageEnabled(process.env)),
   },
   plugins: [
     react(),

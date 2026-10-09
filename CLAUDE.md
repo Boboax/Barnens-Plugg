@@ -24,7 +24,10 @@ uttryckligen förstått avvägningen (dokumenterad i `docs/PEDAGOGIK.md`).
    `docs/PEDAGOGIK.md`).
 3. **Belöningar kopplas till behärskade moment och träningsvana — aldrig till
    poäng, hastighet eller jämförelse mellan syskonen.** Syskon ser aldrig
-   varandras framsteg (bara föräldravyn gör det).
+   varandras framsteg (bara föräldravyn gör det). Kvällslägrets mynt
+   (okt 2026): bara för dagens första AVSLUTADE pass (20/dag, oavsett antal
+   rätt), inget i boden dyrare än en veckas träning (140), allt kosmetiskt.
+   Se `docs/PEDAGOGIK.md` → Kvällslägret.
 4. **Fel svar möts alltid vänligt**: missuppfattningsspecifik ledtråd +
    pedagogisk förklaring. Growth mindset-språk ("bra kämpat"), aldrig "vad
    smart du är".
@@ -48,6 +51,8 @@ src/storage/      IndexedDB + localStorage-reserv, PIN-hash, export/import.
 src/chat/         ChatProvider-gränssnitt (fas 5). Pi "sover" tills vidare.
 src/sound.ts      Web Audio-syntetiserad musik/effekter. Inga ljudfiler.
 src/ui/           React. store.tsx är enda bryggan motor↔UI↔lagring.
+                  screens/PetHomeScreen + components/camp/ = Kvällslägret
+                  (lägervy, stationer, handelsbod). testlage/ = testläget.
 docs/             ARKITEKTUR, PEDAGOGIK (forskningsgrund), GUARDRAILS (fas 5).
 ```
 
@@ -117,6 +122,21 @@ publikt för Pages på gratisplanen.
   AKTIVITETSBASERAD (pekning inom 90 s + synlig flik krävs för att ticka;
   Pi somnar efter 2,5 min) — försvaga aldrig det till ren klocktid, då
   öppnas "låt timern rinna ut"-kryphålet igen.
+- **Kvällslägret bor på barnet** (`child.petProgress`: mynt, vänner,
+  föremål, mantlar) — aldrig på hushållet, så det följer synkens krockregel.
+  Alla ändringar går via `engine/camp.ts` och `engine/pet-home.ts` (rena
+  funktioner som returnerar SAMMA objekt vid nej, så patchChild inte stämplar
+  updatedAt). Lägertiden räknas i en ref och sparas var 15:e sekund — skriv
+  aldrig hushållet varje sekund. `pet-home` står medvetet INTE i
+  `TIMED_SCREENS` (egen klocka, 3 min/dag).
+- **Bildbudgeten:** PWA:n precachar ALLT i `public/`. `src/art-budget.test.ts`
+  faller om `public/art` passerar 12 MB. Nya bilder som webp, aldrig
+  PNG-sekvenser; studier och demobilder hör inte hemma i `public/`.
+- **Testläget** (`__TESTLAGE__`, `src/testlage-flag.ts`) finns bara i
+  Cloudflares förhandsbyggen av andra grenar än main (eller `TESTLAGE=1`
+  lokalt). Barnens bygge får det aldrig — vakta varje ny testknapp bakom
+  flaggan både i UI och i store, och kontrollera att texten saknas i
+  `dist/` efter `npm run build`.
 - **Kladdbilder är stora**: ringbuffert på 20 per barn (`store.tsx`). Öka inte
   utan att tänka på iPadens lagringskvot.
 - **Animationer**: respektera `prefers-reduced-motion` (konfetti och CSS gör
