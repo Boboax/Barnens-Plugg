@@ -63,6 +63,16 @@ Barnens app ligger kvar på GitHub Pages (`boboax.github.io/Barnens-Plugg/`) och
 - Öppna adressen i Safari på iPaden. Vill du testa som barnen gör: **Dela → Lägg till på
   hemskärmen.** Den hamnar som en egen ikon bredvid barnens app.
 
+### Testläget (bara på testadresserna)
+
+Testadresserna har ett testläge som barnens app aldrig får (det avgörs när Cloudflare bygger):
+
+- **Profilvalet → Skapa testfamilj:** tre testbarn (FK, åk 2, åk 4) med diagnosen gjord, tidigare
+  årskurser klara och dagens pass avklarat. FK-barnets groda väntar bakom stenen direkt.
+- **Kartan → 🧪 Test:** +200 mynt, ny lägertid, börja om lägret, och starta kunskapskoll,
+  diamantnivå, valfri årsväktare, valfri världsboss eller blixtpass med ett tryck.
+- **Ta bort testbarnen** på profilvalet tar bara bort testbarnen.
+
 ### Viktigt att veta
 
 - **Testkopian har egen lagring.** Profiler du skapar där syns inte i barnens app och tvärtom.

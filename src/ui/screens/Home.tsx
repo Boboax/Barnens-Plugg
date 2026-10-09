@@ -16,6 +16,7 @@ import { Pi } from '../components/Pi'
 import { RealmMap } from '../components/RealmMap'
 import { Ambience } from '../components/Ambience'
 import { SoundToggle } from '../components/SoundToggle'
+import { TestPanel } from '../testlage/TestPanel'
 import { worldTheme } from '../worldThemes'
 import { speak, stopSpeaking, ttsAvailable } from '../../tts'
 import { todayISO, useStore } from '../store'
@@ -311,6 +312,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
           <button className="chip" onClick={() => store.go('pet-home')}>
             <ObjektIcon name="groda" size={22} /> Kvällslägret
           </button>
+          {__TESTLAGE__ && <TestPanel child={child} />}
         </span>
         {/* Titelskylt: snidad plakett som hänger ned över kartan (jfr förlagan).
             Elementets proportion matchar bildens (600×328) → ingen förvrängning.

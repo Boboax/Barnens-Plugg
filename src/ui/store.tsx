@@ -109,6 +109,11 @@ interface StoreValue {
   changeCamp(action: CampAction): void
   /** Lägg en världsgåva i barnets samling. Idempotent. */
   claimWorldGift(giftId: string): void
+
+  // Testläget (bara i förhandsbyggen, __TESTLAGE__ — se ui/testlage/)
+  testlageAddChildren(children: ChildProfile[]): void
+  testlageRemoveChildren(isTest: (c: ChildProfile) => boolean): void
+  testlagePatchActiveChild(fn: (c: ChildProfile) => ChildProfile): void
   finishReview(momentId: string, passed: boolean): void
   recordDiagnosisProbe(momentId: string, level: number, correct: boolean): void
   finishDiagnosisPass(converged: boolean): void
@@ -509,6 +514,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!activeChildId) return
       patchChild(activeChildId, (c) =>
         c.worldGifts?.includes(giftId) ? c : { ...c, worldGifts: [...(c.worldGifts ?? []), giftId] })
+    },
+
+    // Vakten sitter här, inte bara i UI:t: i barnens bygge (__TESTLAGE__
+    // false) gör testfunktionerna ingenting även om något skulle anropa dem.
+    testlageAddChildren: (children) => {
+      if (!__TESTLAGE__) return
+      setHousehold((h) => ({ ...h, children: [...h.children, ...children] }))
+    },
+    testlageRemoveChildren: (isTest) => {
+      if (!__TESTLAGE__) return
+      setHousehold((h) => ({ ...h, children: h.children.filter((c) => !isTest(c)) }))
+    },
+    testlagePatchActiveChild: (fn) => {
+      if (!__TESTLAGE__ || !activeChildId) return
+      patchChild(activeChildId, fn)
     },
 
     redoDiagnosis: (id) => patchChild(id, (c) => {
