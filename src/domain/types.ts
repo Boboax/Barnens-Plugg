@@ -4,10 +4,13 @@
    Detta är projektets ryggrad — alla moduler (motor, generatorer,
    lagring, UI, chatt) talar genom de här typerna. Ändringar här
    påverkar sparade profiler: bumpa PROFILE_SCHEMA_VERSION och
-   skriv en migrering i storage/migrations.ts vid brytande ändring.
+   skriv en migrering i storage/db.ts:migrate() vid brytande ändring.
    ============================================================ */
 
-export const PROFILE_SCHEMA_VERSION = 1
+import type { PetProgress } from './pet-home'
+
+/** v2 (okt 2026): Kvällslägret — varje barn bär obligatoriskt petProgress. */
+export const PROFILE_SCHEMA_VERSION = 2
 
 // ---------- Läroplan ----------
 
@@ -348,6 +351,16 @@ export interface ChildProfile {
       där barnet redan har framsteg, så befintliga barn slipper gamla ankomster.
       Styr även dimman på rikeskartan (öppen-men-osedd värld avslöjas). */
   seenWorlds?: string[]
+
+  /** Kvällslägret: mynt, husdjur och ägda föremål (domain/pet-home.ts).
+      Obligatoriskt sedan schema v2 — migreringen ger gamla barn ett tomt
+      läger. Allt är kosmetiskt och läses aldrig av motorn. */
+  petProgress: PetProgress
+
+  /** Beständiga, kosmetiska världsgåvor från skattkistor (domain/world-
+      gifts.ts). Påverkar aldrig matte, rating eller upplåsning.
+      Optionellt = bakåtkompatibelt. */
+  worldGifts?: string[]
 }
 
 /** Målade hjältefigurer (public/art/hero/*). Nyckeln bor lokalt per barn. */

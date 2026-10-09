@@ -3,6 +3,7 @@ import { Pi } from '../components/Pi'
 import { Icon } from '../components/Icon'
 import { useStore } from '../store'
 import { useDocumentBackground } from '../useDocumentBackground'
+import { homeSecondsLeft } from '../../engine/pet-home'
 
 /* Tiden är slut — vänligt och bestämt. Sköts av appens kod, inte av AI.
    En förälder kan bevilja extratid här med PIN — beslutet ligger alltså
@@ -56,6 +57,12 @@ export function TimeUp() {
         Vi ses imorgon, då väntar äventyret igen!
       </p>
       <button className="btn btn-primary" onClick={store.leaveChild}>Hejdå Pi!</button>
+      {/* Lägret har en egen kort klocka som inte drar av mattetiden — en
+          kvällsstund med vännerna är ett mjukt avslut, inte mer skärmtid
+          (3 min, kan inte fyllas på). */}
+      {child && homeSecondsLeft(child, new Date()) > 0 && (
+        <button className="btn btn-quiet" onClick={() => store.go('pet-home')}>Säg godnatt i Kvällslägret</button>
+      )}
 
       {/* Föräldrautväg: mer tid idag kräver PIN. Diskret så barnet inte tjatar. */}
       {!showParent ? (
