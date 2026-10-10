@@ -6,6 +6,7 @@ import { yearLabel } from '../../domain/guardians'
 import { BLIXT_TESTS } from '../../engine/blixt'
 import { currentMomentId } from '../../engine/progress'
 import { petDay } from '../../engine/pet-home'
+import { emptyPetProgress } from '../../domain/pet-home'
 import { useStore } from '../store'
 
 /* Testpanelen på kartan: hoppa direkt till strider och läger utan att
@@ -45,6 +46,11 @@ export function TestPanel({ child }: { child: ChildProfile }) {
               petProgress: { ...c.petProgress, pets: [], items: [], lastPracticeDay: petDay(new Date()), visit: undefined,
                 encounter: { species: 'woodland-frog', worldId: momentId ? momentById(momentId).worldId : 'talens-dal' } },
             }))}>Börja om: grodan bakom stenen</button>
+            {/* Som ett barn som aldrig tränat sedan lägret kom: ingen vän,
+                inget dagens pass — knappen på kartan ska då vara borta. */}
+            <button className="btn btn-quiet" onClick={() => patch((c) => ({
+              ...c, petProgress: { ...emptyPetProgress(), coins: c.petProgress.coins },
+            }))}>Börja om från noll (ingen vän)</button>
             <button className="btn btn-quiet" onClick={() => go(() => store.go('pet-home'))}>Öppna lägret</button>
             <button className="btn btn-quiet" onClick={() => patch((c) => ({ ...c, conqueredWorlds: WORLDS.map((w) => w.id) }))}>
               Erövra alla världar (alla reliker)

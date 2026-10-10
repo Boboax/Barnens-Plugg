@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Task } from '../../domain/types'
+import { momentById } from '../../domain/curriculum'
 import {
-  BLIXT_SECONDS, BLIXT_UNTIMED_COUNT, BLIXT_UNTIMED_PASS,
+  BLIXT_GATE, BLIXT_SECONDS, BLIXT_UNTIMED_COUNT, BLIXT_UNTIMED_PASS,
   blixtConfig, blixtTarget, blixtTask, blixtTimed,
 } from '../../engine/blixt'
 import { sfx } from '../../sound'
@@ -66,6 +67,10 @@ export function BlixtScreen() {
       const elapsedMs = Date.now() - roundStartedAt.current
       const newRecord = correct > bestBefore.current
       store.recordBlixtResult(kind, correct, cleared, timed ? undefined : elapsedMs)
+      // En spelad blixtrunda räknas som dagens träning för Kvällslägret,
+      // klarad eller ej — barn bakom blixtgrinden kan annars följa gula
+      // knappen en hel kväll utan att vännen någonsin dyker upp.
+      store.completePetPractice(1, 1, momentById(BLIXT_GATE[kind]).worldId)
       // Personligt rekord firas ALLTID — även under målet (självförbättring,
       // aldrig jämförelse). Förr fick "NYTT REKORD!" ett ledset ljud när målet
       // missades — text och ljud krockade.

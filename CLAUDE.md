@@ -25,8 +25,8 @@ uttryckligen förstått avvägningen (dokumenterad i `docs/PEDAGOGIK.md`).
 3. **Belöningar kopplas till behärskade moment och träningsvana — aldrig till
    poäng, hastighet eller jämförelse mellan syskonen.** Syskon ser aldrig
    varandras framsteg (bara föräldravyn gör det). Kvällslägrets mynt
-   (okt 2026): bara för dagens första AVSLUTADE pass (20/dag, oavsett antal
-   rätt), inget i boden dyrare än en veckas träning (140), allt kosmetiskt.
+   (okt 2026): bara för dagens första AVSLUTADE pass — övningspass, blixt,
+   koll, boss eller väktare, vinst som förlust (20/dag, oavsett antal rätt), inget i boden dyrare än en veckas träning (140), allt kosmetiskt.
    Se `docs/PEDAGOGIK.md` → Kvällslägret.
 4. **Fel svar möts alltid vänligt**: missuppfattningsspecifik ledtråd +
    pedagogisk förklaring. Growth mindset-språk ("bra kämpat"), aldrig "vad

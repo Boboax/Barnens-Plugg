@@ -60,9 +60,18 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
       : task.answer.choices.find((c) => c.correct)?.text ?? ''
 
   return (
+    // Egen scroll, samma mönster som TaskRunner: body scrollar aldrig, så ett
+    // högt exempel (graf + svar + förklaring på iPad) klippte annars bort
+    // "Nu provar jag själv!" — barnet kom inte vidare (förälderns foto, okt 2026).
+    // margin:auto på innerdiven centrerar kort innehåll; justifyContent:center
+    // hade gjort toppen oåtkomlig vid overflow.
     <div className="screen-fade" style={{
-      flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', gap: 14, padding: '10px 20px',
+      flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+      display: 'flex', flexDirection: 'column',
+    }}>
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      gap: 14, padding: '10px 20px 24px', margin: 'auto', width: '100%',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Pi mood="glad" size={64} />
@@ -100,6 +109,7 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
       ) : (
         <button className="btn btn-ok" onClick={onDone}>Nu provar jag själv!</button>
       )}
+    </div>
     </div>
   )
 }

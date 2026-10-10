@@ -168,7 +168,10 @@ uppladdad vinner) — det är en medveten förenkling, inte en bugg.
 
 Efter dagens pass kan barnet besöka Kvällslägret: hitta en vän (första
 vännen hittas i världen barnet just tränade i), klappa den, klä sin hjälte
-och köpa saker till lägret. Det är en klassisk yttre belöningsloop, och
+och köpa saker till lägret. Lägret syns inte alls förrän första vännen
+väntar bakom stenen efter första avslutade övningspasset (beslut med
+föräldern okt 2026): en upptäckt väcker nyfikenhet, en låst knapp blir
+något att vänta vid. Det är en klassisk yttre belöningsloop, och
 forskningen varnar för att sådana kan tränga undan lusten att räkna om de
 blir målet (Deci, Koestner & Ryan 1999). Därför gäller fasta gränser, beslutade
 med föräldern som en avgränsning av princip 3 i CLAUDE.md:
@@ -176,7 +179,11 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
 - **Mynt ges för vanan:** 20 mynt för dagens första *avslutade* pass, per
   lokal kalenderdag. Aldrig för rätt svar, aldrig för fart, aldrig fler
   pass = fler mynt. Ett avbrutet pass ger inget; ett svagt men avslutat
-  pass ger lika mycket som ett felfritt.
+  pass ger lika mycket som ett felfritt. Pass betyder här ALL träning som
+  spelas till slut: övningspass, blixtrunda, kunskapskoll, bosstrid eller
+  årsväktare — vinst som förlust. (Förr räknades bara övningspass, men gula
+  knappen leder ibland till en grind i stället, och ett barn bakom
+  blixtgrinden kunde följa appens råd en hel kväll utan att vännen kom.)
 - **Inget kostar mer än en veckas träning** (140 mynt). Priset står
   neutralt ("Kostar 60 mynt"), aldrig som en nedräkning att jaga.
 - **Allt är kosmetiskt och kan inte förloras.** Djuren svälter inte och
