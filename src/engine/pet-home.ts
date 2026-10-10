@@ -25,6 +25,8 @@ const withProgress = (child: ChildProfile, patch: Partial<PetProgress>): ChildPr
 
 /**
  * Ett AVSLUTAT pass ger dagens mynt — det första per lokal kalenderdag,
+ * och "pass" är all träning som spelats till slut: övningspass, blixtrunda,
+ * koll, boss eller väktare (de senare anropar med completed = planned = 1).
  * oavsett antal rätt (vana, inte prestation). Avbrutna eller tomma pass
  * ger inget. Klockan bakåt ger inget (jämförelsen är `>=` på datumsträngen).
  *

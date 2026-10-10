@@ -179,7 +179,11 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
 - **Mynt ges för vanan:** 20 mynt för dagens första *avslutade* pass, per
   lokal kalenderdag. Aldrig för rätt svar, aldrig för fart, aldrig fler
   pass = fler mynt. Ett avbrutet pass ger inget; ett svagt men avslutat
-  pass ger lika mycket som ett felfritt.
+  pass ger lika mycket som ett felfritt. Pass betyder här ALL träning som
+  spelas till slut: övningspass, blixtrunda, kunskapskoll, bosstrid eller
+  årsväktare — vinst som förlust. (Förr räknades bara övningspass, men gula
+  knappen leder ibland till en grind i stället, och ett barn bakom
+  blixtgrinden kunde följa appens råd en hel kväll utan att vännen kom.)
 - **Inget kostar mer än en veckas träning** (140 mynt). Priset står
   neutralt ("Kostar 60 mynt"), aldrig som en nedräkning att jaga.
 - **Allt är kosmetiskt och kan inte förloras.** Djuren svälter inte och

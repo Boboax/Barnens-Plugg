@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Boss, Moment, Task } from '../../domain/types'
-import { momentById } from '../../domain/curriculum'
+import { MOMENTS, momentById } from '../../domain/curriculum'
 import { worldById } from '../../domain/worlds'
 import { guardianForYear, yearLabel, type YearGuardian } from '../../domain/guardians'
 import {
@@ -187,6 +187,14 @@ export function BattleScreen({ kind }: { kind: 'check' | 'boss' | 'star' | 'guar
     else if (kind === 'boss') store.finishWorldBoss(worldId!, victory)
     else if (kind === 'guardian') store.finishGuardian(year!, victory)
     else store.finishStar(momentId!, victory)
+    // En strid spelad till slut — vinst som förlust — är dagens träning lika
+    // väl som ett övningspass: följer barnet gula knappen till en koll eller
+    // väktare ska vännen och dagsmynten inte utebli (princip 3: vanan, inte
+    // resultatet). Väktaren hör inte till en värld; vännen hittas då i
+    // världen för stridens första uppgift.
+    const foundIn = worldId
+      ?? MOMENTS.find((m) => m.generatorId === tasks[0]?.ref.generatorId)?.worldId
+    if (foundIn) store.completePetPractice(1, 1, foundIn)
     setFinished(true)
   }
   const testEnd = (victory: boolean): void => {
