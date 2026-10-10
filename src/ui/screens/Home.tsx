@@ -306,12 +306,16 @@ function HomeInner({ child }: { child: ChildProfile }) {
         <span style={{ display: 'flex', gap: 8 }}>
           <button className="chip" onClick={store.leaveChild}>← Byt spelare</button>
           <SoundToggle />
-          {/* Kvällslägret: alltid nåbart, men lägertid finns först efter
-              dagens pass (engine/pet-home) — knappen frestar aldrig bort
+          {/* Kvällslägret syns först när första vännen väntar bakom stenen
+              (efter första avslutade övningspasset) — lägret är en upptäckt,
+              inte en låst dörr att vänta vid. Lägertid finns ändå bara efter
+              dagens pass (engine/pet-home), så knappen frestar aldrig bort
               från träningen. */}
-          <button className="chip" onClick={() => store.go('pet-home')}>
-            <ObjektIcon name="groda" size={22} /> Kvällslägret
-          </button>
+          {(child.petProgress.pets.length > 0 || child.petProgress.encounter) && (
+            <button className="chip" onClick={() => store.go('pet-home')}>
+              <ObjektIcon name="groda" size={22} /> Kvällslägret
+            </button>
+          )}
           {__TESTLAGE__ && <TestPanel child={child} />}
         </span>
         {/* Titelskylt: snidad plakett som hänger ned över kartan (jfr förlagan).
