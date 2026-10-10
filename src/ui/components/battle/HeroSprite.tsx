@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react'
 import type { HeroKind } from '../../../domain/types'
 
 /* Hjälten i världsbosstriden, till vänster och vänd mot bossen.
-   Poser: anfall (rätt svar), försvar (bossen anfaller), seger. I vila visas
-   profilbilden tills ChatGPT:s vilopose levereras (docs/GRAFIKBESTALLNING.md);
-   lägg då hjältens id i IDLE_READY. */
+   Poser: vila, anfall (rätt svar), försvar (bossen anfaller), seger. En
+   hjälte utan målad vilopose faller tillbaka på profilbilden — lägg en ny
+   hjältes id i IDLE_READY när dess vilopose finns. */
 
 export type HeroAction = 'idle' | 'attack' | 'block' | 'victory'
 
 /** Hjältar som har en målad vilopose i art/hero/poses/{id}-idle.webp. */
-const IDLE_READY: ReadonlySet<HeroKind> = new Set()
+const IDLE_READY: ReadonlySet<HeroKind> = new Set(['bagskytt', 'riddare', 'trollkarl'])
 
 /** Försvaret tas när bossens anfall närmar sig, inte direkt vid felsvaret. */
 const BLOCK_DELAY_MS = 620
@@ -26,7 +26,7 @@ export function HeroSprite({ hero = 'bagskytt', action, actionKey, reducedMotion
   const base = `${import.meta.env.BASE_URL}art/hero/`
 
   useEffect(() => {
-    for (const p of ['attack', 'block', 'victory']) new Image().src = `${base}poses/${hero}-${p}.webp`
+    for (const p of ['idle', 'attack', 'block', 'victory']) new Image().src = `${base}poses/${hero}-${p}.webp`
   }, [base, hero])
 
   useEffect(() => {

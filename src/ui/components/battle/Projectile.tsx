@@ -1,12 +1,23 @@
 import type { HeroKind } from '../../../domain/types'
 
 /* Anfallen som flyger över skärmen: hjältens från vänster till höger,
-   bossens från höger till vänster. Tills de målade projektilerna finns
-   (docs/GRAFIKBESTALLNING.md, proj-*.png) ritas de som ljuseffekter i CSS;
-   en levererad bild läggs i art/battle/ och registreras i PROJECTILE_ART. */
+   bossens från höger till vänster. Målade projektiler ligger i art/battle/;
+   saknas en bild (ny boss eller hjälte) ritas anfallet som en ljuseffekt i
+   CSS, så striden aldrig står utan anfall. */
 
 /** Levererade projektilbilder, nyckel = filnamnets del efter "proj-". */
-const PROJECTILE_ART: Readonly<Record<string, string>> = {}
+const PROJECTILE_ART: Readonly<Record<string, string>> = {
+  pil: 'proj-pil.webp',
+  svardsvag: 'proj-svardsvag.webp',
+  trollkula: 'proj-trollkula.webp',
+  vaxlartrollet: 'proj-vaxlartrollet.webp',
+  tabelldraken: 'proj-tabelldraken.webp',
+  brakbjorren: 'proj-brakbjorren.webp',
+  monsterormen: 'proj-monsterormen.webp',
+  stenjatten: 'proj-stenjatten.webp',
+  plottrig: 'proj-plottrig.webp',
+  procentspoket: 'proj-procentspoket.webp',
+}
 
 const HERO_PROJECTILE: Record<HeroKind, string> = { bagskytt: 'pil', riddare: 'svardsvag', trollkarl: 'trollkula' }
 

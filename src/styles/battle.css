@@ -65,14 +65,14 @@
   position: absolute;
   top: 42%;
   z-index: 6;
-  width: 120px;
-  height: 80px;
-  margin-top: -40px;
+  width: 170px;
+  height: 100px;
+  margin-top: -50px;
   pointer-events: none;
   display: grid;
   place-items: center;
 }
-.battle-projectile img { width: 100%; height: 100%; object-fit: contain; }
+.battle-projectile img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .45)); }
 /* Hjältens anfall: lyfter från hjältens hand och landar på bossen. */
 .battle-projectile--from-hero { left: 12%; animation: battle-fly-right .48s cubic-bezier(.35, .1, .6, 1) .14s both; }
 /* Bossens anfall: laddas upp först (bossens rutor), flyger sedan mot hjälten. */
