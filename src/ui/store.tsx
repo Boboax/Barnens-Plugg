@@ -16,7 +16,7 @@ import { emptyPetProgress } from '../domain/pet-home'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { mergeHouseholds, pullRemote, pushRemote, syncRound, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
-import { adoptPet, completePetPractice, spendHomeTime } from '../engine/pet-home'
+import { adoptPet, completePetPractice, homeSecondsLeft, spendHomeTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
 
 /* ============================================================
@@ -248,11 +248,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }))
   }
 
+  // Barn som redan mött sin väntande första vän i den här app-sessionen.
+  const firstFriendShown = useRef(new Set<string>())
+
   const value: StoreValue = useMemo(() => ({
     household, loaded, screen, activeChild, parentUnlocked,
     hasPin: Boolean(household.parentPinHash),
 
-    go: setScreen,
+    go: (next) => {
+      // Första vännen möter barnet direkt efter passet: på väg tillbaka till
+      // kartan (eller kvällsskärmen) går vi till stenen i stället. En knapp
+      // på kartan märkte barnen inte. En gång per app-session — väljer barnet
+      // "Vi ses snart igen" studsar det inte tillbaka; knappen finns kvar.
+      const p = activeChild?.petProgress
+      if (activeChild && (next === 'home' || next === 'time-up') && p?.encounter && p.pets.length === 0
+        && homeSecondsLeft(activeChild, new Date()) > 0 && !firstFriendShown.current.has(activeChild.id)) {
+        next = 'pet-home'
+      }
+      if (next === 'pet-home' && activeChild) firstFriendShown.current.add(activeChild.id)
+      setScreen(next)
+    },
 
     selectChild: (id) => {
       const child = household.children.find((c) => c.id === id)
