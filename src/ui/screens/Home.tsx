@@ -11,7 +11,7 @@ import { blixtTarget, unlockedBlixtTests, blixtLevel, blixtTier, blixtMaxTier, b
 import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
 import { Avatar } from '../components/Avatar'
-import { Icon, type IconName, BelongIcon, isBelongIcon, ObjektIcon } from '../components/Icon'
+import { Icon, type IconName, BelongIcon, isBelongIcon } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { RealmMap } from '../components/RealmMap'
 import { Ambience } from '../components/Ambience'
@@ -313,7 +313,10 @@ function HomeInner({ child }: { child: ChildProfile }) {
               från träningen. */}
           {(child.petProgress.pets.length > 0 || child.petProgress.encounter) && (
             <button className="chip" onClick={() => store.go('pet-home')}>
-              <ObjektIcon name="groda" size={22} /> Kvällslägret
+              {/* Tältet från handelsboden — samma bild, ingen ny fil att precacha. */}
+              <img src={`${import.meta.env.BASE_URL}art/camp/items/pet-tent.webp`} alt="" width={26} height={26}
+                style={{ display: 'inline-block', verticalAlign: 'middle', objectFit: 'contain', flexShrink: 0, margin: '-3px 0' }} />
+              Kvällslägret
             </button>
           )}
           {__TESTLAGE__ && <TestPanel child={child} />}
