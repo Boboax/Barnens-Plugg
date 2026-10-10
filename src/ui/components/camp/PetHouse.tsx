@@ -53,6 +53,9 @@ const CORNERS = [
   { x: 25, y: 78, name: 'Främre vänstra hörnet' },
   { x: 75, y: 78, name: 'Främre högra hörnet' },
 ]
+/** Lyans målade mossbäddar ligger på andra ställen än tältets hörnor —
+    samma fyra platser (bed-1..4), bara flyttade så vännen sitter PÅ bädden. */
+const DEN_SPOTS = [{ x: 37, y: 47 }, { x: 71, y: 46 }, { x: 24, y: 70 }, { x: 75, y: 70 }]
 const cornerIndex = (pet: CampPet, fallback: number): number => {
   const i = Number(pet.bedPoint?.replace('bed-', '')) - 1
   return i >= 0 && i < CORNERS.length ? i : fallback
@@ -169,7 +172,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
         <div className="pet-house-firelight" aria-hidden="true" />
         {pets.slice(0, CORNERS.length).map((p, i) => {
           const index = cornerIndex(p, i)
-          const corner = CORNERS[index]
+          const corner = hasTent ? CORNERS[index] : DEN_SPOTS[index]
           // Bädden som står på vännens sovplats i lägret syns även här.
           const owned = items.find((item) => item.point === (p.bedPoint ?? `bed-${i + 1}`))
           const bed = owned && catalogItem(owned.itemId)

@@ -1,9 +1,9 @@
 /* Vännernas lya under trädrötterna — där de bor tills barnet köper
-   husdjurstältet. Ritad i SVG tills ChatGPT:s målade lya levereras
-   (pet-den-interior.png → art/camp/pet-den-interior-v1.webp); sätt då
-   DEN_ART_READY till true. Samma fyra sovhörnor som tältet (bed-1..4). */
+   husdjurstältet. Den målade lyan (art/camp/pet-den-interior-v1.webp) är
+   levererad; SVG-versionen nedan är kvar som reserv om bilden byts ut och
+   DEN_ART_READY sätts till false igen. Samma fyra sovhörnor som tältet. */
 
-export const DEN_ART_READY = false
+export const DEN_ART_READY = true
 
 const MUSHROOMS = [
   { x: 120, y: 520, s: 1 }, { x: 175, y: 540, s: .7 }, { x: 1330, y: 500, s: 1.1 },

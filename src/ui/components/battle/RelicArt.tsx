@@ -1,11 +1,13 @@
 import type { WorldGift } from '../../../domain/world-gifts'
 
-/* Bossrelikens bild. Tills ChatGPT:s målade reliker levereras
-   (docs/GRAFIKBESTALLNING.md, relic-*.png → art/relics/*.webp) visas
-   relikens tecken i ett gyllene medaljong-sigill. Lägg relikens id i
-   RELIC_ART_READY när bilden finns. */
+/* Bossrelikens målade bild (art/relics/relic-<id>.webp). En relik utan
+   bild — en ny värld innan grafiken finns — visas som relikens tecken i
+   ett gyllene medaljong-sigill. Lägg relikens id i RELIC_ART_READY när
+   bilden finns. */
 
-const RELIC_ART_READY: ReadonlySet<string> = new Set()
+const RELIC_ART_READY: ReadonlySet<string> = new Set([
+  'dalen-sigill', 'skogen-relik', 'brak-relik', 'monster-relik', 'former-relik', 'diagram-relik', 'samband-relik',
+])
 
 export function RelicArt({ relic, size, dim = false }: { relic: WorldGift; size: number; dim?: boolean }) {
   if (RELIC_ART_READY.has(relic.id)) {
