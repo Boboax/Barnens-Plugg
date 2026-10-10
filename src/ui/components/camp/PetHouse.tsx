@@ -7,6 +7,7 @@ import { PetSounds } from '../../pet-sounds'
 import { PetSprite } from './PetSprite'
 import { campImage, itemImage } from './campArt'
 import { DEN_ART_READY, DenScene } from './DenScene'
+import { TreatBowl } from './TreatBowl'
 
 /* Stationen "Vännerna": en stund med ett husdjur — klappa, ge en godbit,
    leka eller säga godnatt. Allt är gratis och inget kan gå förlorat;
@@ -87,6 +88,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState('')
   const sounds = useRef<PetSounds | null>(null)
+  const closeupRef = useRef<HTMLDivElement>(null)
 
   // Tysta lätena när appen göms, och släpp ljudkontexten när stationen stängs.
   useEffect(() => {
@@ -141,7 +143,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
     : moment?.petId === pet.id
       ? lines[moment.key % lines.length](pet.name)
       : canInteract
-        ? 'En klapp, en godbit, en lek eller en mysig tupplur. Du väljer.'
+        ? 'En klapp, en godbit ur skålen, en lek eller en mysig tupplur. Du väljer.'
         : 'Vännerna har det bra. Kom tillbaka efter nästa övningspass.'
   const now = new Date()
   const memories = [
@@ -212,8 +214,36 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
       )}
 
       <div className="pet-house-care">
-        <div className="pet-house-closeup" aria-hidden="true">
-          <PetSprite species={pet.species} greeting={moment?.petId === pet.id} resting={resting} />
+        <div className="pet-house-closeup-column">
+          {/* Reaktionen syns HÄR, där barnet tittar och trycker — rummet
+              ovanför ligger ofta utanför skärmen på iPaden. */}
+          <div
+            ref={closeupRef}
+            className={`pet-house-closeup${moment?.petId === pet.id ? ` pet-house-closeup--${moment.activity}` : ''}`}
+            aria-hidden="true"
+          >
+            <div className="closeup-body">
+              <PetSprite species={pet.species} greeting={moment?.petId === pet.id} resting={resting} />
+            </div>
+            {moment?.petId === pet.id && moment.activity === 'feed' && (
+              <span key={moment.key} className="closeup-fx closeup-fx--mums">
+                <b>Mums!</b><i /><i /><i /><i />
+              </span>
+            )}
+            {moment?.petId === pet.id && moment.activity === 'pet' && (
+              <span key={moment.key} className="closeup-fx closeup-fx--hearts">
+                <i>♥</i><i>♥</i><i>♥</i><i>♥</i><i>♥</i>
+              </span>
+            )}
+            {resting && <span className="closeup-fx closeup-fx--zzz"><i>z</i><i>z</i><i>Z</i></span>}
+          </div>
+          <TreatBowl
+            species={pet.species}
+            petName={pet.name}
+            targetRef={closeupRef}
+            disabled={!canInteract || busy || resting}
+            onFeed={() => care('feed')}
+          />
         </div>
         <div>
           <span className="camp-eyebrow">En stund med din vän</span>
@@ -222,9 +252,6 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
           <div className="pet-care-actions">
             <button className="btn btn-primary" disabled={!canInteract || busy || resting} onClick={() => care('pet')}>
               ♡ Klappa {pet.name}
-            </button>
-            <button className="chip" disabled={!canInteract || busy || resting} onClick={() => care('feed')}>
-              Ge en godbit
             </button>
             <button className="chip" disabled={!canInteract || busy || resting} onClick={() => care('play')}>
               {toyName ? `Lek med ${toyName.toLowerCase()}` : 'Lek tittut'}

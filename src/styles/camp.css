@@ -286,7 +286,73 @@
   margin-top: 22px; padding: 26px;
   border: 1px solid #8b7b5355; border-radius: 20px; background: linear-gradient(125deg, #30473d, #1a2d32);
 }
-.pet-house-closeup { width: 100%; aspect-ratio: 1; }
+.pet-house-closeup { position: relative; width: 100%; aspect-ratio: 1; }
+.pet-house-closeup-column { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+/* Närbildens reaktioner: vännen tuggar, får hjärtan, sover. */
+.closeup-body { width: 100%; height: 100%; transform-origin: center bottom; }
+/* Kroppen runt sprite-atlasen rör sig — atlasens egna poser fortsätter. */
+.pet-house-closeup--feed .closeup-body { animation: closeup-chew .32s ease-in-out 4; }
+.pet-house-closeup--pet .closeup-body { animation: closeup-hop .5s ease-out 2; }
+.closeup-fx { position: absolute; inset: 0; pointer-events: none; }
+.closeup-fx--mums b {
+  /* Egen pergamentplatta — texten sitter över en mörk panel och djurbilden. */
+  position: absolute; left: 62%; top: 4%; padding: 4px 12px; border-radius: 999px;
+  background: linear-gradient(#FBF4E2, #F0E6CD); color: #35302E; font-size: 18px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .35); animation: closeup-pop 1.9s ease-out both;
+}
+.closeup-fx--mums i {
+  position: absolute; left: 50%; top: 46%; width: 9px; height: 9px; border-radius: 40%;
+  background: #D9A35B; animation: closeup-crumb .9s ease-out both;
+}
+.closeup-fx--mums i:nth-of-type(2) { --dx: 34px; animation-delay: .1s; }
+.closeup-fx--mums i:nth-of-type(3) { --dx: -38px; animation-delay: .35s; background: #B97C3A; }
+.closeup-fx--mums i:nth-of-type(4) { --dx: 18px; animation-delay: .6s; }
+.closeup-fx--hearts i {
+  position: absolute; bottom: 45%; font-style: normal; font-size: 34px; color: #FF6B8A;
+  text-shadow: 0 0 2px #fff, 0 2px 8px rgba(0, 0, 0, .35); animation: closeup-heart 1.8s ease-out both;
+}
+.closeup-fx--hearts i:nth-child(1) { left: 18%; }
+.closeup-fx--hearts i:nth-child(2) { left: 38%; font-size: 44px; animation-delay: .15s; }
+.closeup-fx--hearts i:nth-child(3) { left: 62%; animation-delay: .3s; }
+.closeup-fx--hearts i:nth-child(4) { left: 28%; font-size: 26px; animation-delay: .55s; }
+.closeup-fx--hearts i:nth-child(5) { left: 72%; font-size: 28px; animation-delay: .7s; }
+.closeup-fx--zzz i {
+  position: absolute; left: 66%; top: 18%; font-style: normal; font-weight: 900; font-size: 22px; color: #FBF4E2;
+  animation: closeup-zzz 3s ease-in-out infinite;
+}
+.closeup-fx--zzz i:nth-child(2) { animation-delay: 1s; font-size: 28px; }
+.closeup-fx--zzz i:nth-child(3) { animation-delay: 2s; font-size: 34px; }
+@keyframes closeup-chew { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.05, .93); } }
+@keyframes closeup-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-9%) scale(1.04); } }
+@keyframes closeup-pop { 0% { opacity: 0; transform: scale(.5); } 15% { opacity: 1; transform: scale(1.1); } 25% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes closeup-crumb { 0% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(var(--dx, -20px), 70px) rotate(90deg); } }
+@keyframes closeup-heart { 0% { opacity: 0; transform: translateY(10px) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-120px) scale(1.15); } }
+@keyframes closeup-zzz { 0% { opacity: 0; transform: translate(0, 0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(28px, -60px); } }
+
+/* Godbitsskålen: dra en godbit till vännen. */
+.treat-bowl { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.treat-bowl__dish {
+  display: flex; justify-content: center; gap: 4px; width: 112px; height: 40px; padding-top: 2px;
+  border-radius: 0 0 56px 56px / 0 0 40px 40px; background: linear-gradient(#C98A4B, #8A5527);
+  box-shadow: inset 0 6px 0 #6B3F1B, 0 4px 10px rgba(0, 0, 0, .35); font-size: 20px;
+}
+.treat-bowl__dish i { font-style: normal; }
+.treat-bowl__treat {
+  /* Själva godbiten ligger överst i skålen och är stor nog för ett barnfinger. */
+  position: absolute; top: -26px; z-index: 30; width: 60px; height: 60px; padding: 0;
+  border: 0; border-radius: 50%; background: radial-gradient(circle, #FFF3D0aa 0%, transparent 70%);
+  font-size: 38px; line-height: 60px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.treat-bowl__treat--rest { animation: treat-wiggle 2.4s ease-in-out infinite; }
+.treat-bowl__treat--drag { cursor: grabbing; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .45)); }
+.treat-bowl__treat--fly { transition: transform .38s cubic-bezier(.3, .2, .5, 1), opacity .38s; opacity: 0; }
+.treat-bowl__treat--back { transition: transform .26s ease-out; }
+.treat-bowl__treat:disabled { cursor: default; animation: none; opacity: .45; }
+.treat-bowl__treat--fly:disabled { opacity: 0; }
+.treat-bowl small { min-height: 1.3em; color: #e2cca0; font-weight: 700; font-size: 13px; text-align: center; }
+.treat-bowl--off .treat-bowl__dish { opacity: .6; }
+@keyframes treat-wiggle { 0%, 80%, 100% { rotate: 0deg; } 85% { rotate: -12deg; } 90% { rotate: 10deg; } 95% { rotate: -5deg; } }
 .pet-house-care h3 { margin: 4px 0 10px; font-size: 38px; color: #ffe3ab; }
 .pet-house-care p { line-height: 1.6; color: #d3d5c5; }
 .pet-house-care .camp-eyebrow { color: #c8b784; }
@@ -397,6 +463,7 @@
   .pet-sprite { background-position: 0 0; }
   .pet-house-hearts { opacity: 1; }
   .pet-den-firefly { opacity: .7; }
+  .closeup-fx--mums b, .closeup-fx--hearts i { opacity: 1; }
 }
 
 /* ---------- Mindre skärmar (iPad porträtt och telefon) ---------- */
