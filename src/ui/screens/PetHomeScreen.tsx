@@ -160,7 +160,9 @@ function Camp({ child }: { child: ChildProfile }) {
 
   const showWorkspace = !discovering && pets.length > 0
   return (
-    <main className={`camp-page screen-fade ${moving ? '' : 'camp-still'}`}>
+    // Lyan är en lekscen som fyller skärmen — sidan scrollar då inte, så
+    // vännen och sakerna i rummet alltid syns samtidigt.
+    <main className={`camp-page screen-fade ${moving ? '' : 'camp-still'}${view === 'friends' && showWorkspace ? ' camp-page--stage' : ''}`}>
       <header className="wood-bar camp-topbar">
         <button className="chip" onClick={back}>← {view === 'camp' && !finding ? 'Till kartan' : 'Till lägret'}</button>
         <h1 className="display">Kvällslägret</h1>

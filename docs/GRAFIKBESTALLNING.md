@@ -430,3 +430,49 @@ Referens: https://raw.githubusercontent.com/Boboax/Barnens-Plugg/feature/charact
 ```
 The same a small lilac crystal dragon with violet crystal horns and spikes, amber eyes, small wings and a curled tail as in the attached reference, shown as a grown, confident companion: same size or slightly larger than the reference, proud calm pose, same markings and accessories, plus ONE small special detail: a tiny sparkling crystal crown and faint glitter on its wings. Not a different animal. Curled up asleep, eyes peacefully closed, cosy and calm. Same size and proportions as the awake version of this stage.
 ```
+
+## Tillägg (okt 2026) · Lyans lekscen (5)
+
+Lyan är nu en lekscen där barnet leker direkt med vännen. Fem saker i rummet
+ritas i dag enkelt i appen (emoji och CSS) och ska bytas mot målade bilder.
+Leverera dem på samma sätt som ovan: `leverans/` på grenen `grafik/leverans`,
+PNG med transparent bakgrund. Alla fem står på lyans mossgolv och ska passa
+i ljuset från https://boboax.github.io/Barnens-Plugg/art/camp/pet-den-interior-v1.webp
+(varmt lägereldsljus från vänster, svagt månljus från höger).
+
+### `den-hide-mushroom.png` — 1024×1024
+
+Ett av tittutens tre gömställen. En vän (stor som en liten groda) ska kunna
+gömma sig bakom det så att bara öronen sticker upp.
+
+```
+A cluster of two or three plump, friendly forest mushrooms with soft red-brown caps and cream spots, growing from a small tuft of moss — big enough for a small animal to hide behind. Seen from the front at a small animal's eye level. Same painterly style, palette and lighting as the attached den image. Transparent background, no ground shadow, no text, no animals.
+```
+
+### `den-hide-bush.png` — 1024×1024
+
+```
+A small round fern-and-leaf bush with lush green fronds and a few tiny glowing flowers, dense enough for a small animal to hide behind. Seen from the front at a small animal's eye level. Same painterly style, palette and lighting as the attached den image. Transparent background, no ground shadow, no text, no animals.
+```
+
+### `den-hide-log.png` — 1024×1024
+
+```
+A short, mossy hollow log lying on its side with a few tiny mushrooms and ivy on top, big enough for a small animal to hide behind. Seen from the front at a small animal's eye level. Same painterly style, palette and lighting as the attached den image. Transparent background, no ground shadow, no text, no animals.
+```
+
+### `den-toy-ball.png` — 512×512
+
+Bollen barnet kastar och vännen hämtar. Ska läsas tydligt även liten (ca 60 px).
+
+```
+A soft, slightly worn play ball for a small pet, woven from leather patches in warm orange and cream with simple stitched seams, round and friendly. Centered, whole ball visible. Same painterly style and lighting as the attached den image. Transparent background, no ground shadow, no text.
+```
+
+### `den-treat-bowl.png` — 768×512 (liggande)
+
+Godbitsskålen. Godbitarna själva läggs på av appen — skålen ska vara TOM.
+
+```
+An empty, shallow carved wooden bowl with a soft rim, warm honey-brown wood with a few carved leaf patterns, seen slightly from above so the inside is visible. Empty — no food in it. Same painterly style and lighting as the attached den image. Transparent background, no ground shadow, no text.
+```
