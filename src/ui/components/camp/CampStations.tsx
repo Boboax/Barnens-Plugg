@@ -10,7 +10,8 @@ import '../../../styles/relics.css'
 import type { CampAction } from '../../../engine/camp'
 import { CampHero } from './CampHero'
 import { PetHouse } from './PetHouse'
-import { petStill } from './campArt'
+import { petStageImage } from './campArt'
+import { petStage } from '../../../engine/pet-home'
 
 /* Lägrets stationer: vännerna (omsorg, i lyan eller tältet), garderoben
    (mantlar), Bokhörnan (minnen av var vännerna och gåvorna hittades) och
@@ -53,6 +54,7 @@ export function CampStations({ station, child, canInteract, onChange, onMessage,
         hasTent={ownsCampItem(child, 'pet-tent')}
         toyName={favouriteToy(child)}
         canInteract={canInteract}
+        stageOf={(pet) => petStage(child, pet)}
         onCare={(petId, activity: PetCareActivity) => onChange({ type: 'care', petId, activity })}
         onRename={(petId, name) => onChange({ type: 'rename', petId, name })}
         onBed={(petId, point) => onChange({ type: 'bed', petId, point })}
@@ -154,7 +156,7 @@ function BookCorner({ child }: { child: ChildProfile }) {
       <div className="camp-book-grid">
         {child.petProgress.pets.map((pet) => (
           <article className="camp-book" key={pet.id}>
-            <img src={petStill(pet.species)} alt="" />
+            <img src={petStageImage(pet.species, petStage(child, pet))} alt="" />
             <h3 className="display">{worldById(pet.foundInWorldId).name}</h3>
             <p>Här hittade du {pet.name}.</p>
             <span>{petSpecies(pet.species).name}</span>

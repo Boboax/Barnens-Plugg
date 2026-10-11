@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import type { CampItemInstance, CampPet, PetCareActivity } from '../../../domain/pet-home'
-import { petSpecies } from '../../../domain/pet-home'
+import type { CampItemInstance, CampPet, PetCareActivity, PetStage } from '../../../domain/pet-home'
+import { PET_STAGE_NAMES, petSpecies } from '../../../domain/pet-home'
 import { CAMP_CATALOG, catalogItem } from '../../../domain/camp'
 import { worldById } from '../../../domain/worlds'
 import { PetSounds } from '../../pet-sounds'
@@ -98,13 +98,15 @@ interface Props {
   /** Namnet på en leksak barnet äger — nämns i minnesboken. */
   toyName?: string
   canInteract: boolean
+  /** Vännens tillväxtstadium (räknas ur barnets lärande i engine/pet-home). */
+  stageOf(pet: CampPet): PetStage
   onCare(petId: string, activity: PetCareActivity): void
   onRename(petId: string, name: string): void
   onBed(petId: string, point: string): void
   onPacking(): void
 }
 
-export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, onRename, onBed, onPacking }: Props) {
+export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, onCare, onRename, onBed, onPacking }: Props) {
   const [selectedId, setSelectedId] = useState(pets[0]?.id)
   const [mode, setMode] = useState<Mode>('free')
   const [reaction, setReaction] = useState<{ kind: Reaction; key: number } | null>(null)
@@ -435,7 +437,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
               onClick={() => select(p)}
             >
               {bed?.kind === 'bed' && <img className="den-friend__bed" src={itemImage(bed)} alt="" draggable={false} />}
-              <PetSprite species={p.species} resting={p.care?.resting} />
+              <PetSprite species={p.species} stage={stageOf(p)} resting={p.care?.resting} />
             </button>
           )
         })}
@@ -454,7 +456,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
             >
               {/* Ett öra sticker fram bakom rätt gömställe — en ledtråd för den som tittar noga. */}
               {here && !peek.found && (
-                <span className="den-hide__peeker" style={{ top: `${s.peekTop}%` }}><PetSprite species={pet.species} /></span>
+                <span className="den-hide__peeker" style={{ top: `${s.peekTop}%` }}><PetSprite species={pet.species} stage={stageOf(pet)} /></span>
               )}
               <img className="den-hide__prop" src={campImage(s.art)} alt="" draggable={false} />
             </button>
@@ -480,7 +482,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
           }}
         >
           <div className={`den-pet__body${reaction ? ` den-pet__body--${reaction.kind}` : ''}`}>
-            <PetSprite species={pet.species} greeting={reaction !== null && reaction.kind !== 'run'} resting={resting} />
+            <PetSprite species={pet.species} stage={stageOf(pet)} greeting={reaction !== null && reaction.kind !== 'run'} resting={resting} />
           </div>
           {mums > 0 && <span key={mums} className="den-mums" aria-hidden="true"><b>Mums!</b><i /><i /><i /></span>}
           {resting && <span className="den-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span>}
@@ -558,7 +560,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
             <div className="den-book__card">
               <span className="camp-eyebrow">Minnesboken</span>
               <h3 className="display">{pet.name}</h3>
-              <p>{petSpecies(pet.species).name} från {worldById(pet.foundInWorldId).name}</p>
+              <p>{petSpecies(pet.species).name} från {worldById(pet.foundInWorldId).name} · {PET_STAGE_NAMES[stageOf(pet)]}</p>
               <ul>{memories.map((m) => <li key={m}>{m}</li>)}</ul>
               {editing ? (
                 <form onSubmit={(e) => {

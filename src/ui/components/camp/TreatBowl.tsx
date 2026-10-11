@@ -15,6 +15,8 @@ const BASIC: Record<PetSpeciesId, { img: string; name: string }> = {
   'woodland-frog': { img: treatArt('treat-blueberry'), name: 'Blåbär' },
   'dune-fox': { img: treatArt('treat-strawberry'), name: 'Jordgubbe' },
   'reef-axolotl': { img: treatArt('treat-shrimp'), name: 'Räka' },
+  // Draken är en kräsen liten kristallvän — men jordgubbar säger den aldrig nej till.
+  'crystal-dragon': { img: treatArt('treat-strawberry'), name: 'Jordgubbe' },
 }
 
 export interface BowlTreat { id: string; img: string; name: string }

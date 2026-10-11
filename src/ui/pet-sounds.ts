@@ -20,6 +20,12 @@ const VOICES: Record<PetSpeciesId, (tone: Tone) => void> = {
     tone(0.2, 0.3, 1050, 620, 0.035)
     tone(0.02, 0.18, 1520, 2000, 0.007)
   },
+  // Draken: ett litet kristallklingande kvitter — två klara toner och en glittrig efterklang.
+  'crystal-dragon': (tone) => {
+    tone(0, 0.2, 1320, 1760, 0.035)
+    tone(0.16, 0.26, 1760, 1480, 0.03)
+    tone(0.05, 0.4, 2640, 2900, 0.008)
+  },
   // Axolotlen: fyra små bubblor uppåt.
   'reef-axolotl': (tone) => {
     for (let i = 0; i < 4; i++) tone(i * 0.12, 0.16, 280 + i * 90, 720 + i * 140, 0.04)

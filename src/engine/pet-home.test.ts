@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { ChildProfile } from '../domain/types'
 import { DAILY_PET_COINS, HOME_VISIT_SECONDS, emptyPetProgress } from '../domain/pet-home'
-import { adoptPet, completePetPractice, homeSecondsLeft, petDay, spendHomeTime } from './pet-home'
+import {
+  adoptPet, completePetPractice, friendsEarned, homeSecondsLeft, markPetGrowthSeen, nextFriendSpecies, petDay,
+  petGrewUnseen, petStage, spendHomeTime,
+} from './pet-home'
+import type { SkillState } from '../domain/types'
 
 /* Kvällslägrets vana: mynt för ett avslutat pass per dag, första vännen
    från världen barnet tränade i, och en lägertid som inte går att fylla på.
@@ -133,5 +137,98 @@ describe('Kvällslägret: lägertid', () => {
   it('ignorerar noll, negativa och trasiga tider', () => {
     const h = withFrog()
     for (const s of [0, -5, Number.NaN, Number.POSITIVE_INFINITY]) expect(spendHomeTime(h, s, at)).toBe(h)
+  })
+})
+
+/* ---------- Etapp 2: fler vänner och tillväxt ---------- */
+
+const mastered = (n: number, start = 0): Record<string, SkillState> => Object.fromEntries(
+  Array.from({ length: n }, (_, i) => [`m${start + i}`, {
+    momentId: `m${start + i}`, mastery: 'mastered', rating: 500, attempts: 10, correct: 9,
+    recentMisconceptions: [], bossAttempts: 1, starWon: false,
+  } satisfies SkillState]))
+
+/** Ett pass senare samma dag (eller en ny dag) — och döp den som väntar. */
+const passAndAdopt = (c: ChildProfile, name: string, when = at): ChildProfile =>
+  adoptPet(completePetPractice(c, 8, 8, 'brakberget', when), name, when)
+
+describe('Etapp 2: en ny vän per milstolpe', () => {
+  it('utan milstolpar kommer ingen ny vän, hur många pass det än blir', () => {
+    const h = withFrog()
+    expect(friendsEarned(h)).toBe(1)
+    expect(completePetPractice(h, 8, 8, 'brakberget', at)).toBe(h)
+    expect(completePetPractice(h, 8, 8, 'brakberget', nextDay).petProgress.encounter).toBeUndefined()
+  })
+
+  it('väktare, världsboss och blixt ger räv, axolotl och drake — i fast ordning', () => {
+    let c: ChildProfile = { ...withFrog(), conqueredYears: ['F'] }
+    expect(nextFriendSpecies(c)).toBe('dune-fox')
+    c = passAndAdopt(c, 'Saffran')
+    expect(c.petProgress.pets.map((p) => p.species)).toEqual(['woodland-frog', 'dune-fox'])
+    // Vännen kommer från världen barnet just tränade i, även samma dag (inga extra mynt).
+    expect(c.petProgress.pets[1].foundInWorldId).toBe('brakberget')
+    expect(c.petProgress.coins).toBe(DAILY_PET_COINS)
+    c = passAndAdopt({ ...c, blixt: { 'plus-minus-10': { best: 20, cleared: true, attempts: 1 } } } as ChildProfile, 'Pärla')
+    c = passAndAdopt({ ...c, conqueredWorlds: ['talens-dal'] }, 'Glimmer')
+    expect(c.petProgress.pets.map((p) => p.species)).toEqual(['woodland-frog', 'dune-fox', 'reef-axolotl', 'crystal-dragon'])
+    expect(nextFriendSpecies(c)).toBeUndefined()
+  })
+
+  it('skänkta fjärranår räknas inte som besegrad väktare', () => {
+    const tenYearOld: ChildProfile = { ...withFrog(), schoolYear: '4', conqueredYears: [] }
+    expect(friendsEarned(tenYearOld)).toBe(1)
+  })
+
+  it('den som redan passerat alla milstolpar får vännerna EN i taget', () => {
+    const veteran: ChildProfile = {
+      ...withFrog(), conqueredYears: ['1'], conqueredWorlds: ['talens-dal'],
+      blixt: { 'plus-minus-10': { best: 20, cleared: true, attempts: 1 } },
+    } as ChildProfile
+    const one = completePetPractice(veteran, 8, 8, 'talens-dal', at)
+    expect(one.petProgress.encounter?.species).toBe('dune-fox')
+    // En upptäckt väntar redan → nästa pass väcker ingen till.
+    expect(completePetPractice(one, 8, 8, 'talens-dal', at)).toBe(one)
+  })
+})
+
+describe('Etapp 2: vännerna växer med barnets lärande', () => {
+  it('en ny vän börjar som unge och växer med behärskade moment', () => {
+    const base: ChildProfile = { ...withFrog(), skills: mastered(5) }
+    const fox = passAndAdopt({ ...base, conqueredYears: ['F'] }, 'Saffran').petProgress.pets[1]
+    expect(fox.masteredAtFound).toBe(5)
+    const at = (n: number): ChildProfile => ({ ...base, skills: mastered(5 + n), petProgress: { ...base.petProgress, pets: [fox] } })
+    expect([0, 2, 3, 6, 7, 12, 13, 40].map((n) => petStage(at(n), fox))).toEqual([1, 1, 2, 2, 3, 3, 4, 4])
+  })
+
+  it('repetitionsmoment räknas — en vän krymper aldrig', () => {
+    const c: ChildProfile = { ...withFrog(), skills: mastered(4) }
+    const pet = c.petProgress.pets[0]
+    const review = { ...c.skills, m0: { ...c.skills.m0, mastery: 'needs-review' as const } }
+    expect(petStage({ ...c, skills: review }, pet)).toBe(petStage(c, pet))
+  })
+
+  it('en vän från före etapp 2 är redan vuxen och krymper inte', () => {
+    const c = withFrog()
+    const legacy = { ...c.petProgress.pets[0], masteredAtFound: undefined, seenStage: undefined }
+    expect(petStage(c, legacy)).toBe(3)
+    expect(petStage({ ...c, skills: mastered(20) }, legacy)).toBe(4)
+  })
+
+  it('"har växt!" visas en gång per nytt stadium', () => {
+    let c = withFrog()
+    const id = c.petProgress.pets[0].id
+    expect(petGrewUnseen(c, c.petProgress.pets[0])).toBe(false)
+    c = { ...c, skills: mastered(3) }
+    expect(petGrewUnseen(c, c.petProgress.pets[0])).toBe(true)
+    const seen = markPetGrowthSeen(c, id)
+    expect(petGrewUnseen(seen, seen.petProgress.pets[0])).toBe(false)
+    expect(markPetGrowthSeen(seen, id)).toBe(seen)
+  })
+
+  it('tillväxt och nya vänner ändrar aldrig skills eller svar', () => {
+    const c: ChildProfile = { ...withFrog(), skills: mastered(3), conqueredYears: ['F'] }
+    const after = markPetGrowthSeen(passAndAdopt(c, 'Saffran'), c.petProgress.pets[0].id)
+    expect(after.skills).toBe(c.skills)
+    expect(after.answers).toBe(c.answers)
   })
 })

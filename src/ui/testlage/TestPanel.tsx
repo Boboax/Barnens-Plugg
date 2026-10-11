@@ -5,8 +5,8 @@ import { WORLDS } from '../../domain/worlds'
 import { yearLabel } from '../../domain/guardians'
 import { BLIXT_TESTS } from '../../engine/blixt'
 import { currentMomentId } from '../../engine/progress'
-import { petDay } from '../../engine/pet-home'
-import { emptyPetProgress } from '../../domain/pet-home'
+import { masteredCount, petDay, petStage } from '../../engine/pet-home'
+import { PET_ORDER, emptyPetProgress } from '../../domain/pet-home'
 import { useStore } from '../store'
 
 /* Testpanelen på kartan: hoppa direkt till strider och läger utan att
@@ -51,6 +51,21 @@ export function TestPanel({ child }: { child: ChildProfile }) {
             <button className="btn btn-quiet" onClick={() => patch((c) => ({
               ...c, petProgress: { ...emptyPetProgress(), coins: c.petProgress.coins },
             }))}>Börja om från noll (ingen vän)</button>
+            {/* Etapp 2 utan att spela fram milstolparna. */}
+            <button className="btn btn-quiet" onClick={() => patch((c) => {
+              const species = PET_ORDER.find((s) => !c.petProgress.pets.some((p) => p.species === s))
+              return species ? { ...c, petProgress: { ...c.petProgress, encounter: { species, worldId: momentId ? momentById(momentId).worldId : 'talens-dal' } } } : c
+            })}>Väck nästa vän</button>
+            <button className="btn btn-quiet" onClick={() => patch((c) => ({
+              ...c,
+              petProgress: {
+                ...c.petProgress,
+                pets: c.petProgress.pets.map((p) => {
+                  const next = Math.min(4, petStage(c, p) + 1)
+                  return { ...p, masteredAtFound: masteredCount(c) - [0, 3, 7, 13][next - 1], seenStage: p.seenStage ?? petStage(c, p) }
+                }),
+              },
+            }))}>Vännerna växer ett steg</button>
             <button className="btn btn-quiet" onClick={() => go(() => store.go('pet-home'))}>Öppna lägret</button>
             <button className="btn btn-quiet" onClick={() => patch((c) => ({ ...c, conqueredWorlds: WORLDS.map((w) => w.id) }))}>
               Erövra alla världar (alla reliker)

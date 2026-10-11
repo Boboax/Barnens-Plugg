@@ -5,6 +5,7 @@ import { CAMP_POINTS, campPoint, catalogItem, ownsCampItem, type CampCatalogItem
 import { giftById, type WorldGift } from '../../../domain/world-gifts'
 import { CampHero } from './CampHero'
 import { PetSprite } from './PetSprite'
+import { petStage } from '../../../engine/pet-home'
 import { campImage, itemImage } from './campArt'
 
 /* Lägervyn: den målade kvällsscenen med elden, vännerna, hjälten och de
@@ -112,7 +113,7 @@ export function CampView(props: Props) {
               aria-label={`Hälsa på ${pet.name}`}
               onClick={() => props.onGreet(pet)}
             >
-              <PetSprite species={pet.species} greeting={greetingPetId === pet.id} resting={pet.care?.resting} />
+              <PetSprite species={pet.species} stage={petStage(child, pet)} greeting={greetingPetId === pet.id} resting={pet.care?.resting} />
               <span>{pet.name}</span>
             </button>
           )

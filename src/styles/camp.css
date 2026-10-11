@@ -340,14 +340,15 @@
 /* Sakerna i rummet längs nederkanten. */
 .den-prop { position: absolute; z-index: 7; bottom: 10px; }
 .den-prop--bowl { left: 14%; transform: translateX(-50%); bottom: 18px; }
-.den-prop--bowl /* Väljaren när vännen har favoritgodis: små runda knappar ovanför skålen. */
+/* Väljaren när vännen har favoritgodis: små runda knappar ovanför skålen. */
 .treat-bowl__choices { display: flex; gap: 6px; margin-bottom: 30px; }
 .treat-bowl__choices button {
   width: 44px; height: 44px; padding: 0; border: 2px solid #C9B489; border-radius: 50%;
   background: #FBF4E2; font-size: 24px; line-height: 1; box-shadow: 0 2px 6px rgba(0, 0, 0, .35); cursor: pointer;
 }
 .treat-bowl__choices button[aria-pressed=true] { background: #E8C27A; border-color: #8A6A38; transform: scale(1.1); }
-.treat-bowl small {
+/* Hjälptexten under skålen sitter över den målade bilden: egen platta, mörk text. */
+.den-prop--bowl .treat-bowl small {
   margin-top: 4px; padding: 3px 10px; border-radius: 999px; background: #FBF4E2; color: #35302E; font-size: 13px;
 }
 .den-prop--bowl .treat-bowl small:empty { display: none; }
@@ -485,6 +486,22 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
 .pet-sprite-reef-axolotl { animation-duration: 6.7s; }
 .pet-sprite-ready.pet-sprite-greeting { animation: pet-pose-greeting 2.2s step-end 1; }
 .pet-sleep-pose { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 5px 3px #0006); }
+.pet-sprite-crystal-dragon { animation-duration: 7.9s; }
+
+/* Etapp 2: tillväxtstadier. Bilderna fyller rutan (~97 %) medan den vuxna
+   atlasen fyller ~76 %, så stadierna skalas mot fötterna: ungen är liten,
+   följeslagaren lite större än en vuxen. */
+.pet-still {
+  display: block; width: 100%; aspect-ratio: 1; object-fit: contain; transform-origin: center bottom;
+  filter: drop-shadow(0 5px 3px #0006); animation: pet-breathe 3.4s ease-in-out infinite;
+}
+.pet-still--stage-1 { scale: .56; }
+.pet-still--stage-2 { scale: .7; }
+.pet-still--stage-4 { scale: .86; }
+.pet-still--sleeping { animation: none; }
+.pet-still--greeting { animation: pet-still-hop .5s ease-out 2; }
+@keyframes pet-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.02, .98); } }
+@keyframes pet-still-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-10%); } }
 
 @keyframes pet-pose-idle {
   0%, 100% { background-position: 0 0; }
@@ -581,3 +598,23 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
   .den-bubble { top: 62px; font-size: 15px; }
   .den-prop__icon { width: 50px; height: 50px; }
 }
+
+/* ---------- Etapp 2: "har växt!" ---------- */
+
+.camp-growth {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(40, 32, 18, .55), rgba(8, 10, 18, .82));
+}
+.camp-growth__card {
+  /* Pergament med mörk text — läsbart oavsett vad som ligger bakom. */
+  width: min(420px, 100%); padding: 22px 24px; border-radius: 22px; text-align: center;
+  background: linear-gradient(#FBF4E2, #F0E6CD); color: #35302E; box-shadow: 0 16px 40px rgba(0, 0, 0, .55);
+  animation: camp-growth-in .5s cubic-bezier(.2, .9, .3, 1.2) both;
+}
+.camp-growth__card img { display: block; width: 200px; height: 200px; margin: 6px auto; object-fit: contain; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .35)); }
+.camp-growth__card h2 { margin: 4px 0 6px; font-size: 32px; color: #4A3418; }
+.camp-growth__card p { margin: 0 0 14px; font-weight: 700; line-height: 1.45; }
+.camp-growth__card .camp-eyebrow { color: #8A6A38; }
+.camp-growth__actions { display: flex; justify-content: center; gap: 10px; }
+@keyframes camp-growth-in { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .camp-growth__card { animation: none; } }

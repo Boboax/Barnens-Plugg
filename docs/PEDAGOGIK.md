@@ -193,6 +193,15 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
   att fylla på, en mätare i förklädnad (okt 2026). Inget i lägret
   påverkar rating, upplåsning eller rättning, och inget går att köpa som
   hjälper i matten.
+- **Vännerna växer med barnets lärande (etapp 2, okt 2026):** fyra
+  stadier (unge, ung, vuxen, följeslagare) räknade ur antalet behärskade
+  moment sedan vännen hittades — aldrig ur poäng, fart eller mynt. Stadiet
+  sparas inte utan räknas fram, och ett moment som går till repetition
+  räknas fortfarande, så en vän krymper aldrig. Nya vänner kommer vid
+  barnets egna milstolpar (första riktigt besegrade årsväktaren, första
+  världsbossen, första klarade blixten) i fast ordning — groda, räv,
+  axolotl, drake — en i taget. Inget slumpas, så syskon får aldrig
+  "bättre tur" (princip 3).
 - **Lägret är en kvällsstund efter träningen:** 15 minuter per dag (höjt
   från 3 när lyan blev en lekscen, förälderns beslut okt 2026), och bara
   efter dagens pass. Tiden är lägrets egen klocka och drar inte av

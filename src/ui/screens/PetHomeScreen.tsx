@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChildProfile } from '../../domain/types'
-import { DAILY_PET_COINS, petSpecies, type CampPet } from '../../domain/pet-home'
+import { DAILY_PET_COINS, PET_STAGE_NAMES, petSpecies, type CampPet } from '../../domain/pet-home'
 import { catalogItem, type CampCatalogItem } from '../../domain/camp'
 import { worldById } from '../../domain/worlds'
-import { homeSecondsLeft } from '../../engine/pet-home'
+import { homeSecondsLeft, petGrewUnseen, petStage } from '../../engine/pet-home'
 import { speak, stopSpeaking } from '../../tts'
+import { fireConfetti } from '../fx/confetti'
 import { useStore } from '../store'
 import { useDocumentBackground } from '../useDocumentBackground'
 import { CampView } from '../components/camp/CampView'
 import { CampShop, type ShopTab } from '../components/camp/CampShop'
 import { CampStations, STATIONS, stationName, type StationId } from '../components/camp/CampStations'
-import { petStill, worldImage } from '../components/camp/campArt'
+import { petStageImage, worldImage } from '../components/camp/campArt'
 import '../../styles/camp.css'
 
 /* ============================================================
@@ -94,7 +95,9 @@ function Camp({ child }: { child: ChildProfile }) {
 
   const [view, setView] = useState<View>('camp')
   const [moving, setMoving] = useState(true)
-  const [finding, setFinding] = useState(false)
+  // En väntande upptäckt visas direkt när barnet kommer in (oftast direkt
+  // efter passet) — en knapp i lägret märktes inte.
+  const [finding, setFinding] = useState(encounter !== undefined)
   const [shopTab, setShopTab] = useState<ShopTab>('shop')
   const [selectedId, setSelectedId] = useState('')
   const [placingId, setPlacingId] = useState('')
@@ -162,6 +165,8 @@ function Camp({ child }: { child: ChildProfile }) {
   }
 
   const showWorkspace = !discovering && pets.length > 0
+  // "har växt!" — en vän i taget, och bara när barnet faktiskt är i lägret.
+  const grown = showWorkspace ? pets.find((pet) => petGrewUnseen(child, pet)) : undefined
   return (
     // Lyan är en lekscen som fyller skärmen — sidan scrollar då inte, så
     // vännen och sakerna i rummet alltid syns samtidigt.
@@ -174,6 +179,8 @@ function Camp({ child }: { child: ChildProfile }) {
         </button>
         <span className="camp-wallet" aria-label={`${coins} mynt`}>● {coins} mynt</span>
       </header>
+
+      {grown && <GrowthCard pet={grown} stage={petStage(child, grown)} onDone={() => store.markPetGrowthSeen(grown.id)} />}
 
       {discovering && encounter ? (
         <Discovery
@@ -261,6 +268,27 @@ function Camp({ child }: { child: ChildProfile }) {
   )
 }
 
+/** Firandet när en vän når ett nytt stadium. Kopplat till barnets lärande
+    (behärskade moment), aldrig till poäng eller tid — och säger det. */
+function GrowthCard({ pet, stage, onDone }: { pet: CampPet; stage: ReturnType<typeof petStage>; onDone(): void }) {
+  const text = `${pet.name} har växt! Nu är ${pet.name} ${PET_STAGE_NAMES[stage].toLowerCase()}. Varje sak du lär dig får din vän att växa.`
+  useEffect(() => { fireConfetti({ count: 90 }) }, [])
+  return (
+    <div className="camp-growth" role="dialog" aria-label={`${pet.name} har växt`}>
+      <div className="camp-growth__card">
+        <span className="camp-eyebrow">{PET_STAGE_NAMES[stage]}</span>
+        <img src={petStageImage(pet.species, stage)} alt="" />
+        <h2 className="display">{pet.name} har växt!</h2>
+        <p>{text.slice(text.indexOf('Nu är'))}</p>
+        <div className="camp-growth__actions">
+          <button className="chip" onClick={() => speak(text)}>Lyssna</button>
+          <button className="btn btn-primary" onClick={onDone}>Hurra!</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /** Upptäckten: något prasslar bakom en mossig sten i världen barnet just
     tränade i. Berättelsens "från" är barnets egen väg, inte artens. */
 function Discovery({ speciesId, worldId, onAdopt, onLater }: {
@@ -281,7 +309,8 @@ function Discovery({ speciesId, worldId, onAdopt, onLater }: {
     <section className="camp-discovery" style={{ backgroundImage: `url(${worldImage(world.id)})` }}>
       <div className="camp-find-scene" aria-hidden="true">
         <div className="camp-moss-stone" />
-        <img className={revealed ? 'camp-found' : 'camp-peeking'} src={petStill(species.id)} alt="" />
+        {/* En ny vän är alltid en unge — den växer med barnets lärande. */}
+        <img className={revealed ? 'camp-found' : 'camp-peeking'} src={petStageImage(species.id, 1)} alt="" />
       </div>
       <div className="camp-story">
         <span className="camp-eyebrow">En ny vän från {world.name}</span>

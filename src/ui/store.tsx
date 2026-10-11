@@ -16,7 +16,7 @@ import { emptyPetProgress } from '../domain/pet-home'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { mergeHouseholds, pullRemote, pushRemote, syncRound, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
-import { adoptPet, completePetPractice, homeSecondsLeft, spendHomeTime } from '../engine/pet-home'
+import { adoptPet, completePetPractice, homeSecondsLeft, markPetGrowthSeen, spendHomeTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
 
 /* ============================================================
@@ -106,6 +106,8 @@ interface StoreValue {
   // Kvällslägret (kosmetiskt — rör aldrig skills, se engine/camp.ts)
   /** Avslutat pass: dagens mynt + ev. upptäckt i världen barnet tränade i. */
   completePetPractice(completed: number, planned: number, worldId: string): void
+  /** Barnet har sett att vännen växt ("har växt!"-rutan visas inte igen). */
+  markPetGrowthSeen(petId: string): void
   adoptPet(name: string): void
   /** Bokför lägertid i klumpar (PetHomeScreen samlar sekunderna). */
   spendHomeTime(seconds: number): void
@@ -256,12 +258,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     hasPin: Boolean(household.parentPinHash),
 
     go: (next) => {
-      // Första vännen möter barnet direkt efter passet: på väg tillbaka till
+      // En ny vän möter barnet direkt efter passet: på väg tillbaka till
       // kartan (eller kvällsskärmen) går vi till stenen i stället. En knapp
-      // på kartan märkte barnen inte. En gång per app-session — väljer barnet
+      // på kartan märkte barnen inte. Gäller första vännen och milstolpe-
+      // vännerna (etapp 2). En gång per app-session — väljer barnet
       // "Vi ses snart igen" studsar det inte tillbaka; knappen finns kvar.
       const p = activeChild?.petProgress
-      if (activeChild && (next === 'home' || next === 'time-up') && p?.encounter && p.pets.length === 0
+      if (activeChild && (next === 'home' || next === 'time-up') && p?.encounter
         && homeSecondsLeft(activeChild, new Date()) > 0 && !firstFriendShown.current.has(activeChild.id)) {
         next = 'pet-home'
       }
@@ -525,6 +528,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     completePetPractice: (completed, planned, worldId) => {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => completePetPractice(c, completed, planned, worldId, new Date()))
+    },
+
+    markPetGrowthSeen: (petId) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => markPetGrowthSeen(c, petId))
     },
 
     adoptPet: (name) => {

@@ -11,8 +11,8 @@
    för rating, upplåsning eller rättning (princip 1, 3 och 5).
    ============================================================ */
 
-/** Arterna som har färdig grafik. Draken kommer i etapp 2 med sin atlas. */
-export type PetSpeciesId = 'woodland-frog' | 'dune-fox' | 'reef-axolotl'
+/** Lägrets fyra vänner. Draken kom med etapp 2 (okt 2026). */
+export type PetSpeciesId = 'woodland-frog' | 'dune-fox' | 'reef-axolotl' | 'crystal-dragon'
 
 export interface PetSpecies {
   id: PetSpeciesId
@@ -25,7 +25,18 @@ export const PET_SPECIES: readonly PetSpecies[] = [
   { id: 'woodland-frog', name: 'Skogsgroda', defaultName: 'Mossa' },
   { id: 'dune-fox', name: 'Sandräv', defaultName: 'Saffran' },
   { id: 'reef-axolotl', name: 'Korallaxolotl', defaultName: 'Pärla' },
+  { id: 'crystal-dragon', name: 'Kristalldrake', defaultName: 'Glimmer' },
 ]
+
+/** I vilken ordning vännerna kommer. Fast lista — inget slumpas — så att
+    syskon aldrig får "bättre tur" (princip 3) och berättelsen går att följa:
+    grodan efter första passet, sedan en ny vän för varje milstolpe. */
+export const PET_ORDER: readonly PetSpeciesId[] = ['woodland-frog', 'dune-fox', 'reef-axolotl', 'crystal-dragon']
+
+/** Vännens fyra tillväxtstadier. Stadiet sparas aldrig — det räknas fram
+    ur barnets behärskade moment (engine/pet-home: petStage). */
+export type PetStage = 1 | 2 | 3 | 4
+export const PET_STAGE_NAMES: Record<PetStage, string> = { 1: 'Unge', 2: 'Ung', 3: 'Vuxen', 4: 'Följeslagare' }
 
 /** Första vännen är skogsgrodan för alla: neutral, färdigritad och inte
     knuten till någon värld. VARIFRÅN den kommer bestäms av barnets egen
@@ -50,6 +61,12 @@ export interface CampPet {
   /** Omsorg är minnen, inte behov: djuren svälter aldrig och inget går
       förlorat om barnet är borta en vecka. Fälten styr bara repliker. */
   care?: { resting?: boolean; lastFedAt?: string; lastPettedAt?: string; lastPlayedAt?: string }
+  /** Antal behärskade moment när vännen hittades — tillväxten räknas från
+      här, så en ny vän alltid börjar som unge. Saknas = vän från före
+      etapp 2 (den börjar som vuxen och krymper aldrig). */
+  masteredAtFound?: number
+  /** Högsta stadiet barnet sett "har växt!"-rutan för (upprepas inte). */
+  seenStage?: number
 }
 
 /** Ett ägt föremål. `id` är köpets id (purchaseId) — det gör köpet
