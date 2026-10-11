@@ -380,12 +380,12 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
   transform: translate(-50%, -100%); cursor: pointer; isolation: isolate; animation: den-hide-in .4s ease-out both;
 }
 .den-hide__prop {
-  position: absolute; inset: 0; display: grid; place-items: end center; font-size: clamp(64px, 14vh, 130px);
-  line-height: 1; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .5));
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom;
+  pointer-events: none; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .5));
 }
 .den-hide__peeker {
   /* Bara örat/toppen av vännen sticker upp bakom gömstället. */
-  position: absolute; z-index: -1; left: 25%; top: 16%; width: 50%; aspect-ratio: 1;
+  position: absolute; z-index: -1; left: 25%; width: 50%; aspect-ratio: 1;
   animation: den-peek 2.6s ease-in-out infinite;
 }
 .den-hide__peeker .pet-sprite { width: 100%; height: 100%; }

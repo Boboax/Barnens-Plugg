@@ -42,11 +42,13 @@ const PET_HEIGHT = 40
 const BALL_HOME = { x: 36, y: 93 }
 /** Den målade lekbollen (ChatGPT-leveransen okt 2026). */
 const BALL_ART = { backgroundImage: `url(${campImage('den-toy-ball')})` }
-/** Tittutens tre gömställen. Ritas i appen tills målade bilder finns. */
+/** Tittutens tre målade gömställen. peekTop = var vännens huvud börjar
+    (procent av gömställets ruta) så att bara öronen och ögonen sticker
+    upp ovanför just den bildens överkant — stocken är lägre än svampen. */
 const HIDING_SPOTS = [
-  { x: 17, y: 66, emoji: '🍄', name: 'svampen' },
-  { x: 50, y: 60, emoji: '🌿', name: 'busken' },
-  { x: 83, y: 66, emoji: '🪵', name: 'stocken' },
+  { x: 17, y: 68, art: 'den-hide-mushroom', name: 'svampen', peekTop: -12 },
+  { x: 50, y: 62, art: 'den-hide-bush', name: 'busken', peekTop: 0 },
+  { x: 83, y: 68, art: 'den-hide-log', name: 'stocken', peekTop: 22 },
 ]
 
 type Reaction = 'hop' | 'spin' | 'wiggle' | 'giggle' | 'purr' | 'chew' | 'stretch' | 'run'
@@ -432,8 +434,10 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
               disabled={peek.found}
             >
               {/* Ett öra sticker fram bakom rätt gömställe — en ledtråd för den som tittar noga. */}
-              {here && !peek.found && <span className="den-hide__peeker"><PetSprite species={pet.species} /></span>}
-              <span className="den-hide__prop" aria-hidden="true">{s.emoji}</span>
+              {here && !peek.found && (
+                <span className="den-hide__peeker" style={{ top: `${s.peekTop}%` }}><PetSprite species={pet.species} /></span>
+              )}
+              <img className="den-hide__prop" src={campImage(s.art)} alt="" draggable={false} />
             </button>
           )
         })}
