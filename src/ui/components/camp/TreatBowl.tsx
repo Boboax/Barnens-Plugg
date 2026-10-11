@@ -10,13 +10,14 @@ import { campImage } from './campArt'
 
 /** Grundgodiset — gratis och alltid i skålen. Köpt favoritgodis
     (handelsboden) läggs till bredvid. */
-const BASIC: Record<PetSpeciesId, { emoji: string; name: string }> = {
-  'woodland-frog': { emoji: '🫐', name: 'Blåbär' },
-  'dune-fox': { emoji: '🍓', name: 'Jordgubbe' },
-  'reef-axolotl': { emoji: '🦐', name: 'Räka' },
+const treatArt = (name: string): string => `${import.meta.env.BASE_URL}art/camp/items/${name}.webp`
+const BASIC: Record<PetSpeciesId, { img: string; name: string }> = {
+  'woodland-frog': { img: treatArt('treat-blueberry'), name: 'Blåbär' },
+  'dune-fox': { img: treatArt('treat-strawberry'), name: 'Jordgubbe' },
+  'reef-axolotl': { img: treatArt('treat-shrimp'), name: 'Räka' },
 }
 
-export interface BowlTreat { id: string; emoji: string; name: string }
+export interface BowlTreat { id: string; img: string; name: string }
 
 /** Rörelse under detta räknas som ett tryck, inte ett drag. */
 const TAP_SLOP_PX = 8
@@ -38,7 +39,7 @@ export function TreatBowl({ species, petName, extras = [], targetRef, disabled, 
   /** special = köpt favoritgodis (vännen blir extra glad). */
   onFeed(treat: { name: string; special: boolean }): void
 }) {
-  const basic = BASIC[species] ?? { emoji: '🍪', name: 'Kaka' }
+  const basic = BASIC[species] ?? BASIC['woodland-frog']
   const choices: (BowlTreat & { special: boolean })[] = [
     { id: 'basic', ...basic, special: false },
     ...extras.map((t) => ({ ...t, special: true })),
@@ -113,7 +114,7 @@ export function TreatBowl({ species, petName, extras = [], targetRef, disabled, 
     setOffset({ x: 0, y: 0 })
   }
 
-  const treat = chosen.emoji
+  const treat = <img src={chosen.img} alt="" draggable={false} />
   return (
     <div className={`treat-bowl${disabled ? ' treat-bowl--off' : ''}`}>
       {choices.length > 1 && (
@@ -126,7 +127,7 @@ export function TreatBowl({ species, petName, extras = [], targetRef, disabled, 
               aria-label={c.name}
               disabled={phase !== 'rest'}
               onClick={() => setChosenId(c.id)}
-            >{c.emoji}</button>
+            ><img src={c.img} alt="" draggable={false} /></button>
           ))}
         </div>
       )}

@@ -5,7 +5,7 @@ import { CAMP_CATALOG, catalogItem } from '../../../domain/camp'
 import { worldById } from '../../../domain/worlds'
 import { PetSounds } from '../../pet-sounds'
 import { PetSprite } from './PetSprite'
-import { campImage, itemImage } from './campArt'
+import { campIcon, campImage, itemImage } from './campArt'
 import { DEN_ART_READY, DenScene } from './DenScene'
 import { TreatBowl } from './TreatBowl'
 
@@ -166,11 +166,11 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
 
   if (!pet) return null
 
-  // Köpt favoritgodis för den här vännens art, som emoji i godisskålen.
-  const treats = CAMP_CATALOG.filter((item) => item.kind === 'treat' && item.emoji
+  // Köpt favoritgodis för den här vännens art, i godisskålen.
+  const treats = CAMP_CATALOG.filter((item) => item.kind === 'treat'
     && item.unlock.kind === 'pet-species' && item.unlock.species === pet.species
     && items.some((owned) => owned.itemId === item.id))
-    .map((item) => ({ id: item.id, emoji: item.emoji!, name: item.name }))
+    .map((item) => ({ id: item.id, img: itemImage(item), name: item.name }))
 
   const say = (text: string): void => setBubble(text)
   // Ny reaktion: töm klassen en bildruta först så att samma animation kan
@@ -501,9 +501,9 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
               : <span className="den-pill den-pill--name">{pet.name}</span>}
           </div>
           <div className="den-hud__tools">
-            <button className="den-pill" onClick={() => setBookOpen(true)} aria-label={`Minnesboken om ${pet.name}`}>📖</button>
+            <button className="den-pill" onClick={() => setBookOpen(true)} aria-label={`Minnesboken om ${pet.name}`}><img className="den-icon" src={campIcon('icon-memory-book')} alt="" /></button>
             <button className="den-pill" aria-pressed={muted} onClick={toggleSound} aria-label={muted ? 'Slå på ljudet' : 'Stäng av ljudet'}>
-              {muted ? '🔇' : '🔊'}
+              <img className="den-icon" src={campIcon(muted ? 'icon-sound-off' : 'icon-sound-on')} alt="" />
             </button>
           </div>
         </div>
@@ -540,7 +540,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
           disabled={!canInteract || resting || (mode !== 'free' && mode !== 'peek')}
           onClick={mode === 'peek' ? stopPeek : startPeek}
         >
-          <span aria-hidden="true">🙈</span>
+          <img className="den-prop__icon" src={campIcon('icon-peekaboo')} alt="" draggable={false} />
           <small>{mode === 'peek' ? 'Sluta leka' : 'Tittut'}</small>
         </button>
         <button
@@ -549,7 +549,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
           disabled={!canInteract || !free}
           onClick={toggleNight}
         >
-          <span aria-hidden="true">{resting ? '🌙' : '🏮'}</span>
+          <img className="den-prop__icon" src={campIcon(resting ? 'icon-lantern-moon' : 'icon-lantern-lit')} alt="" draggable={false} />
           <small>{resting ? 'Väck' : 'Godnatt'}</small>
         </button>
 

@@ -9,11 +9,9 @@ import { itemImage } from './campArt'
 
 export type ShopTab = 'shop' | 'packing'
 
-/** Varans bild — godis ritas som emoji (ingen bildfil i budgeten). */
+/** Varans bild (godiset har egna målade bilder sedan okt 2026). */
 function ItemIcon({ item }: { item: CampCatalogItem }) {
-  return item.emoji
-    ? <span className="camp-product-emoji" aria-hidden="true">{item.emoji}</span>
-    : <img src={itemImage(item)} alt="" />
+  return <img src={itemImage(item)} alt="" />
 }
 
 interface Props {

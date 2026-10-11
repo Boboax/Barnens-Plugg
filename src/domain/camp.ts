@@ -33,8 +33,6 @@ export interface CampCatalogItem {
   unlock: CampUnlock
   /** 'pets' = en per husdjur (bäddar). */
   maxOwned: number | 'pets'
-  /** Godis ritas som emoji (ingen bildfil) — då används detta i stället för art. */
-  emoji?: string
 }
 
 export const CAMP_CATALOG: readonly CampCatalogItem[] = [
@@ -86,32 +84,32 @@ export const CAMP_CATALOG: readonly CampCatalogItem[] = [
      fylla på (en mätare i förklädnad), och lägret har medvetet inga behov
      (princip 3, PEDAGOGIK → Kvällslägret). Grundgodiset är gratis. */
   {
-    id: 'frog-fly-cake', name: 'Knaprig flugkaka', price: 30, kind: 'treat', art: '', emoji: '🪰',
+    id: 'frog-fly-cake', name: 'Knaprig flugkaka', price: 30, kind: 'treat', art: 'treat-frog-fly-cake',
     description: 'Grodans absoluta favorit. Krispig och lite kittlig.',
     unlock: { kind: 'pet-species', species: 'woodland-frog' }, maxOwned: 1,
   },
   {
-    id: 'frog-lily-nectar', name: 'Näckrosnektar', price: 50, kind: 'treat', art: '', emoji: '🪷',
+    id: 'frog-lily-nectar', name: 'Näckrosnektar', price: 50, kind: 'treat', art: 'treat-frog-lily-nectar',
     description: 'Söt nektar från dammens finaste näckros.',
     unlock: { kind: 'pet-species', species: 'woodland-frog' }, maxOwned: 1,
   },
   {
-    id: 'fox-honey-cake', name: 'Honungskaka', price: 30, kind: 'treat', art: '', emoji: '🍯',
+    id: 'fox-honey-cake', name: 'Honungskaka', price: 30, kind: 'treat', art: 'treat-fox-honey-cake',
     description: 'Räven slickar honungen ur varenda skrymsle.',
     unlock: { kind: 'pet-species', species: 'dune-fox' }, maxOwned: 1,
   },
   {
-    id: 'fox-cactus-fig', name: 'Kaktusfikon', price: 50, kind: 'treat', art: '', emoji: '🌵',
+    id: 'fox-cactus-fig', name: 'Kaktusfikon', price: 50, kind: 'treat', art: 'treat-fox-cactus-fig',
     description: 'Saftig frukt från ökenkaktusen — utan taggar.',
     unlock: { kind: 'pet-species', species: 'dune-fox' }, maxOwned: 1,
   },
   {
-    id: 'axolotl-mussel', name: 'Musselgodis', price: 30, kind: 'treat', art: '', emoji: '🦪',
+    id: 'axolotl-mussel', name: 'Musselgodis', price: 30, kind: 'treat', art: 'treat-axolotl-mussel',
     description: 'Små havsgodisar som axolotlen mumsar i ett nafs.',
     unlock: { kind: 'pet-species', species: 'reef-axolotl' }, maxOwned: 1,
   },
   {
-    id: 'axolotl-bubble-jelly', name: 'Bubbelgelé', price: 50, kind: 'treat', art: '', emoji: '🫧',
+    id: 'axolotl-bubble-jelly', name: 'Bubbelgelé', price: 50, kind: 'treat', art: 'treat-axolotl-bubble-jelly',
     description: 'Gelé som pirrar som bubblor i vattnet.',
     unlock: { kind: 'pet-species', species: 'reef-axolotl' }, maxOwned: 1,
   },
