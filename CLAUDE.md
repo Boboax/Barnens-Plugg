@@ -130,7 +130,7 @@ publikt för Pages på gratisplanen.
   aldrig hushållet varje sekund. `pet-home` står medvetet INTE i
   `TIMED_SCREENS` (egen klocka, 3 min/dag).
 - **Bildbudgeten:** PWA:n precachar ALLT i `public/`. `src/art-budget.test.ts`
-  faller om `public/art` passerar 12 MB. Nya bilder som webp, aldrig
+  faller om `public/art` passerar 20 MB (höjt från 12, okt 2026). Nya bilder som webp, aldrig
   PNG-sekvenser; studier och demobilder hör inte hemma i `public/`.
 - **Testläget** (`__TESTLAGE__`, `src/testlage-flag.ts`) finns bara i
   Cloudflares förhandsbyggen av andra grenar än main (eller `TESTLAGE=1`

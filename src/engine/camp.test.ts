@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ChildProfile, Household } from '../domain/types'
-import { CAMP_CATALOG, OUTFITS, isCampUnlockMet } from '../domain/camp'
+import { CAMP_CATALOG, OUTFITS, isCampUnlockMet, ownedTreats } from '../domain/camp'
 import { HOME_VISIT_SECONDS, emptyPetProgress, type CampPet } from '../domain/pet-home'
 import { changeCamp } from './camp'
 import { migrate } from '../storage/db'
@@ -186,9 +186,9 @@ describe('Kvällslägret: garderoben', () => {
 })
 
 describe('Kvällslägret: hela boden öppen', () => {
-  it('allt i boden kan köpas så snart lägret är upplåst, även för det yngsta barnet', () => {
+  it('allt utom godiset kan köpas så snart lägret är upplåst, även för det yngsta barnet', () => {
     const fk = { ...kid({ coins: 1000 }), schoolYear: 'F' as const, seenWorlds: [], conqueredWorlds: [] }
-    for (const item of CAMP_CATALOG) expect(isCampUnlockMet(item.unlock, fk)).toBe(true)
+    for (const item of CAMP_CATALOG.filter((i) => i.kind !== 'treat')) expect(isCampUnlockMet(item.unlock, fk)).toBe(true)
     const stars = changeCamp(fk, buy('star-lights', 'x'), at)
     expect(stars.petProgress.items.map((i) => i.itemId)).toEqual(['star-lights'])
   })
@@ -197,6 +197,34 @@ describe('Kvällslägret: hela boden öppen', () => {
     const fk = { ...kid(), seenWorlds: [], conqueredWorlds: [] }
     const locked = OUTFITS.filter((o) => !isCampUnlockMet(o.unlock, fk)).map((o) => o.id)
     expect(locked).toEqual(['dune-companion', 'reef-companion'])
+  })
+})
+
+describe('Kvällslägret: godis till vännerna', () => {
+  it('varje vän har två godissorter, och de syns först när den vännen bor i lägret', () => {
+    const treats = CAMP_CATALOG.filter((i) => i.kind === 'treat')
+    for (const species of ['woodland-frog', 'dune-fox', 'reef-axolotl']) {
+      expect(treats.filter((t) => t.unlock.kind === 'pet-species' && t.unlock.species === species)).toHaveLength(2)
+    }
+    const onlyFrog = kid()
+    expect(treats.filter((t) => isCampUnlockMet(t.unlock, onlyFrog)).map((t) => t.id))
+      .toEqual(['frog-fly-cake', 'frog-lily-nectar'])
+    // Rävens godis går inte att köpa förrän räven flyttat in.
+    expect(changeCamp(onlyFrog, buy('fox-honey-cake', 'h'), at)).toBe(onlyFrog)
+    const withFox = kid({ pets: [frog, fox] })
+    expect(changeCamp(withFox, buy('fox-honey-cake', 'h'), at).petProgress.coins).toBe(170)
+  })
+
+  it('godis köps en gång och finns sedan alltid i skålen — det tar aldrig slut', () => {
+    let c = changeCamp(kid(), buy('frog-fly-cake', 'f1'), at)
+    expect(ownedTreats(c, 'woodland-frog').map((t) => t.id)).toEqual(['frog-fly-cake'])
+    // Ett andra köp av samma godis nekas (finns redan för alltid).
+    expect(changeCamp(c, buy('frog-fly-cake', 'f2'), at)).toBe(c)
+    // Att mata förbrukar inget.
+    c = changeCamp(c, { type: 'care', petId: 'first-pet', activity: 'feed' }, at)
+    expect(ownedTreats(c, 'woodland-frog')).toHaveLength(1)
+    // Godis kan inte ställas fram i lägret.
+    expect(changeCamp(c, { type: 'place', instanceId: 'f1', point: 'toy-1' }, at)).toBe(c)
   })
 })
 

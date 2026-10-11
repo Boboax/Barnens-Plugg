@@ -148,6 +148,8 @@ function Camp({ child }: { child: ChildProfile }) {
     setSelectedId('')
     if (item.kind === 'tent') {
       setMessage('Tältet står vid elden! Tryck på det för att gå in.')
+    } else if (item.kind === 'treat') {
+      setMessage(`${item.name} ligger nu i godisskålen i ${stationName('friends', child)}. Den tar aldrig slut!`)
     } else {
       setShopTab('packing')
       setMessage(`${item.name} finns i packningen. Ställ fram den när du vill.`)

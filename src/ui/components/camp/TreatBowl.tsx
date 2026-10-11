@@ -8,12 +8,15 @@ import { campImage } from './campArt'
    (de minsta barnen, skärmläsare och tangentbord), och en godbit som släpps
    utanför glider snällt tillbaka — inget kan bli fel. */
 
-/** Varje art har sin egen favorit. */
-const TREATS: Record<PetSpeciesId, string> = {
-  'woodland-frog': '🫐',
-  'dune-fox': '🍓',
-  'reef-axolotl': '🦐',
+/** Grundgodiset — gratis och alltid i skålen. Köpt favoritgodis
+    (handelsboden) läggs till bredvid. */
+const BASIC: Record<PetSpeciesId, { emoji: string; name: string }> = {
+  'woodland-frog': { emoji: '🫐', name: 'Blåbär' },
+  'dune-fox': { emoji: '🍓', name: 'Jordgubbe' },
+  'reef-axolotl': { emoji: '🦐', name: 'Räka' },
 }
+
+export interface BowlTreat { id: string; emoji: string; name: string }
 
 /** Rörelse under detta räknas som ett tryck, inte ett drag. */
 const TAP_SLOP_PX = 8
@@ -24,14 +27,25 @@ const EAT_MS = 2200
 
 type Phase = 'rest' | 'drag' | 'fly' | 'back'
 
-export function TreatBowl({ species, petName, targetRef, disabled, onFeed }: {
+export function TreatBowl({ species, petName, extras = [], targetRef, disabled, onFeed }: {
   species: PetSpeciesId
   petName: string
-  /** Närbilden — där godbiten ska släppas. */
+  /** Köpt favoritgodis för den här arten. */
+  extras?: BowlTreat[]
+  /** Vännen — där godbiten ska släppas. */
   targetRef: RefObject<HTMLElement | null>
   disabled: boolean
-  onFeed(): void
+  /** special = köpt favoritgodis (vännen blir extra glad). */
+  onFeed(treat: { name: string; special: boolean }): void
 }) {
+  const basic = BASIC[species] ?? { emoji: '🍪', name: 'Kaka' }
+  const choices: (BowlTreat & { special: boolean })[] = [
+    { id: 'basic', ...basic, special: false },
+    ...extras.map((t) => ({ ...t, special: true })),
+  ]
+  // Senast köpta favoriten ligger överst — då syns det nya direkt.
+  const [chosenId, setChosenId] = useState(choices[choices.length - 1].id)
+  const chosen = choices.find((c) => c.id === chosenId) ?? choices[0]
   const [phase, setPhase] = useState<Phase>('rest')
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const start = useRef<{ x: number; y: number; id: number } | null>(null)
@@ -46,7 +60,8 @@ export function TreatBowl({ species, petName, targetRef, disabled, onFeed }: {
   const feed = (): void => {
     const treat = treatRef.current?.getBoundingClientRect()
     const target = targetRef.current?.getBoundingClientRect()
-    if (!treat || !target) { onFeed(); return }
+    const eaten = { name: chosen.name, special: chosen.special }
+    if (!treat || !target) { onFeed(eaten); return }
     // Offset räknas från godbitens viloplats i skålen.
     const homeX = treat.left + treat.width / 2 - offset.x
     const homeY = treat.top + treat.height / 2 - offset.y
@@ -54,7 +69,7 @@ export function TreatBowl({ species, petName, targetRef, disabled, onFeed }: {
     setPhase('fly')
     const fly = reduced ? 0 : FLY_MS
     timer.current = window.setTimeout(() => {
-      onFeed()
+      onFeed(eaten)
       // När vännen ätit klart ligger en ny godbit i skålen.
       timer.current = window.setTimeout(() => { setPhase('rest'); setOffset({ x: 0, y: 0 }) }, EAT_MS)
     }, fly)
@@ -98,9 +113,23 @@ export function TreatBowl({ species, petName, targetRef, disabled, onFeed }: {
     setOffset({ x: 0, y: 0 })
   }
 
-  const treat = TREATS[species] ?? '🍪'
+  const treat = chosen.emoji
   return (
     <div className={`treat-bowl${disabled ? ' treat-bowl--off' : ''}`}>
+      {choices.length > 1 && (
+        <div className="treat-bowl__choices" role="group" aria-label="Välj godis">
+          {choices.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              aria-pressed={c.id === chosen.id}
+              aria-label={c.name}
+              disabled={phase !== 'rest'}
+              onClick={() => setChosenId(c.id)}
+            >{c.emoji}</button>
+          ))}
+        </div>
+      )}
       <span className="treat-bowl__dish" style={{ backgroundImage: `url(${campImage('den-treat-bowl')})` }} aria-hidden="true">
         <i>{treat}</i><i>{treat}</i>
       </span>
@@ -120,7 +149,7 @@ export function TreatBowl({ species, petName, targetRef, disabled, onFeed }: {
       >
         {treat}
       </button>
-      <small>{disabled ? '' : `Dra en godbit till ${petName}`}</small>
+      <small>{disabled ? '' : choices.length > 1 ? `Dra ${chosen.name.toLowerCase()} till ${petName}` : `Dra en godbit till ${petName}`}</small>
     </div>
   )
 }

@@ -13,9 +13,11 @@ import { describe, expect, it } from 'vitest'
    lägret och bossanimationerna växte tyst från 3 till 31 MB. Taket gör
    att nästa tunga leverans syns här i stället för som en trasig
    installation på en platta. Höj det inte utan att först banta (webp,
-   färre bildrutor) — se docs/PLAN-LAGER.md, etapp 0. */
+   färre bildrutor) — se docs/PLAN-LAGER.md, etapp 0. Höjt från 12 till
+   20 MB på förälderns begäran (okt 2026) inför vännernas tillväxtbilder
+   (etapp 2); allt är redan webp, och 20 MB ryms gott i iPadens kvot. */
 
-const ART_LIMIT_MB = 12
+const ART_LIMIT_MB = 20
 
 function folderBytes(dir: string): number {
   return readdirSync(dir).reduce((sum, name) => {

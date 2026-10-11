@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CampItemInstance, CampPet, PetCareActivity } from '../../../domain/pet-home'
 import { petSpecies } from '../../../domain/pet-home'
-import { catalogItem } from '../../../domain/camp'
+import { CAMP_CATALOG, catalogItem } from '../../../domain/camp'
 import { worldById } from '../../../domain/worlds'
 import { PetSounds } from '../../pet-sounds'
 import { PetSprite } from './PetSprite'
@@ -69,6 +69,11 @@ const FEED_LINES = [
   (n: string) => `Mums! ${n} smaskar glatt.`,
   (n: string) => `${n} slickar sig om munnen. Mer?`,
   (n: string) => `${n} sparar en smula till senare.`,
+]
+const LOVE_LINES = [
+  (n: string, t: string) => `${n} ÄLSKAR ${t}! Mums mums!`,
+  (n: string, t: string) => `Wow! ${n} snurrar av glädje över ${t}.`,
+  (n: string, t: string) => `${t[0].toUpperCase()}${t.slice(1)} är ${n}s favorit!`,
 ]
 // UI-slump (vilken reaktion, var bollen landar) — påverkar aldrig motorn.
 const pick = <T,>(list: T[]): T => list[Math.floor(Math.random() * list.length)]
@@ -161,6 +166,12 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
 
   if (!pet) return null
 
+  // Köpt favoritgodis för den här vännens art, som emoji i godisskålen.
+  const treats = CAMP_CATALOG.filter((item) => item.kind === 'treat' && item.emoji
+    && item.unlock.kind === 'pet-species' && item.unlock.species === pet.species
+    && items.some((owned) => owned.itemId === item.id))
+    .map((item) => ({ id: item.id, emoji: item.emoji!, name: item.name }))
+
   const say = (text: string): void => setBubble(text)
   // Ny reaktion: töm klassen en bildruta först så att samma animation kan
   // starta om. (En ny React-nyckel på kroppen lämnade ibland kvar den gamla
@@ -241,12 +252,20 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
 
   /* ---------- Godbiten ---------- */
 
-  const feed = (): void => {
+  const feed = (treat: { name: string; special: boolean }): void => {
     care('feed')
-    react('chew')
     setMums(Date.now())
-    say(pick(FEED_LINES)(pet.name))
     sound()
+    if (treat.special) {
+      // Favoritgodiset: en extra glad snurr och hjärtan — samma omsorg,
+      // bara roligare att ge (inget mätbart, ingen mätare).
+      react('spin')
+      heartBurst()
+      say(pick(LOVE_LINES)(pet.name, treat.name.toLowerCase()))
+    } else {
+      react('chew')
+      say(pick(FEED_LINES)(pet.name))
+    }
   }
 
   /* ---------- Bollen: dra och släpp, vännen hämtar ---------- */
@@ -494,8 +513,10 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
         {/* Sakerna i rummet: skål, boll, tittut och lykta. */}
         <div className="den-prop den-prop--bowl">
           <TreatBowl
+            key={pet.id}
             species={pet.species}
             petName={pet.name}
+            extras={treats}
             targetRef={petRef}
             disabled={!canInteract || resting || !free}
             onFeed={feed}

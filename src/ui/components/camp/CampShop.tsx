@@ -9,6 +9,13 @@ import { itemImage } from './campArt'
 
 export type ShopTab = 'shop' | 'packing'
 
+/** Varans bild — godis ritas som emoji (ingen bildfil i budgeten). */
+function ItemIcon({ item }: { item: CampCatalogItem }) {
+  return item.emoji
+    ? <span className="camp-product-emoji" aria-hidden="true">{item.emoji}</span>
+    : <img src={itemImage(item)} alt="" />
+}
+
 interface Props {
   child: ChildProfile
   canInteract: boolean
@@ -25,8 +32,12 @@ export function CampShop({ child, canInteract, tab, onTab, selectedId, onSelect,
   const { coins, items } = child.petProgress
   const forSale = CAMP_CATALOG.filter((item) => isCampUnlockMet(item.unlock, child))
   const chosen = forSale.find((item) => item.id === selectedId)
-  // Tältet står alltid vid elden och kan inte packas undan.
-  const packable = items.filter((i) => catalogItem(i.itemId)?.kind !== 'tent')
+  // Tältet står alltid vid elden, och godiset ligger i lyans skål — inget
+  // av dem kan packas undan eller ställas fram.
+  const packable = items.filter((i) => {
+    const kind = catalogItem(i.itemId)?.kind
+    return kind !== 'tent' && kind !== 'treat'
+  })
 
   return (
     <section className="camp-panel camp-shop">
@@ -39,7 +50,7 @@ export function CampShop({ child, canInteract, tab, onTab, selectedId, onSelect,
 
       {tab === 'shop' ? (
         <>
-          <p>Allt i boden går att köpa när du har råd. Bäddar finns till varje vän, lyktor och lekstockar två av, andra saker en.</p>
+          <p>Allt i boden går att köpa när du har råd. Bäddar finns till varje vän, lyktor och lekstockar två av, andra saker en. Godiset är dina vänners favoriter — det köps en gång och tar aldrig slut.</p>
           <div className="camp-shop-grid">
             {forSale.map((item) => {
               const owned = items.filter((i) => i.itemId === item.id).length
@@ -53,22 +64,26 @@ export function CampShop({ child, canInteract, tab, onTab, selectedId, onSelect,
                   disabled={soldOut}
                   onClick={() => onSelect(item.id)}
                 >
-                  <img src={itemImage(item)} alt="" />
+                  <ItemIcon item={item} />
                   <span>{item.name}</span>
-                  <small>{soldOut ? 'Du har alla du behöver' : `${item.price} mynt · ${owned} av ${max}`}</small>
+                  <small>{soldOut
+                    ? (item.kind === 'treat' ? 'Finns i godisskålen' : 'Du har alla du behöver')
+                    : item.kind === 'treat' ? `${item.price} mynt` : `${item.price} mynt · ${owned} av ${max}`}</small>
                 </button>
               )
             })}
           </div>
           {chosen && (
             <div className="camp-buy-confirm">
-              <img src={itemImage(chosen)} alt="" />
+              <ItemIcon item={chosen} />
               <div>
                 <h3 className="display">{chosen.name}</h3>
                 <p>{chosen.description}</p>
                 <p>{chosen.kind === 'tent'
                   ? 'Tältet ställs upp vid elden, och vännerna kan bo där.'
-                  : 'Den hamnar i packningen. Ställ fram den när du vill.'}</p>
+                  : chosen.kind === 'treat'
+                    ? 'Godiset hamnar i godisskålen i lyan och tar aldrig slut.'
+                    : 'Den hamnar i packningen. Ställ fram den när du vill.'}</p>
                 <button className="btn btn-primary" disabled={!canInteract || coins < chosen.price} onClick={() => onBuy(chosen)}>
                   {coins < chosen.price ? `Kostar ${chosen.price} mynt` : `Köp · ${chosen.price} mynt`}
                 </button>

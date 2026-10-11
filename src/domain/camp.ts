@@ -13,8 +13,9 @@ import type { ChildProfile } from './types'
    barnets resa är följeslagarmantlarna: de kräver rätt vän i lägret.
    ============================================================ */
 
-/** 'tent' har ingen flyttbar plats — tältet står alltid vid elden. */
-export type CampKind = 'bed' | 'rug' | 'light' | 'toy' | 'storage' | 'tent'
+/** 'tent' har ingen flyttbar plats — tältet står alltid vid elden.
+    'treat' ställs inte heller fram: godiset hamnar i godisskålen i lyan. */
+export type CampKind = 'bed' | 'rug' | 'light' | 'toy' | 'storage' | 'tent' | 'treat'
 
 export type CampUnlock =
   | { kind: 'always' }
@@ -32,6 +33,8 @@ export interface CampCatalogItem {
   unlock: CampUnlock
   /** 'pets' = en per husdjur (bäddar). */
   maxOwned: number | 'pets'
+  /** Godis ritas som emoji (ingen bildfil) — då används detta i stället för art. */
+  emoji?: string
 }
 
 export const CAMP_CATALOG: readonly CampCatalogItem[] = [
@@ -77,7 +80,48 @@ export const CAMP_CATALOG: readonly CampCatalogItem[] = [
     description: 'En plats för lägrets små skatter.',
     unlock: { kind: 'always' }, maxOwned: 1,
   },
+  /* Godis: varje vän har två favoriter som syns i boden först när den
+     vännen bor i lägret. Köps EN gång och finns sedan alltid i godisskålen
+     — det tar aldrig slut. Förbrukningsvaror hade blivit ett behov att
+     fylla på (en mätare i förklädnad), och lägret har medvetet inga behov
+     (princip 3, PEDAGOGIK → Kvällslägret). Grundgodiset är gratis. */
+  {
+    id: 'frog-fly-cake', name: 'Knaprig flugkaka', price: 30, kind: 'treat', art: '', emoji: '🪰',
+    description: 'Grodans absoluta favorit. Krispig och lite kittlig.',
+    unlock: { kind: 'pet-species', species: 'woodland-frog' }, maxOwned: 1,
+  },
+  {
+    id: 'frog-lily-nectar', name: 'Näckrosnektar', price: 50, kind: 'treat', art: '', emoji: '🪷',
+    description: 'Söt nektar från dammens finaste näckros.',
+    unlock: { kind: 'pet-species', species: 'woodland-frog' }, maxOwned: 1,
+  },
+  {
+    id: 'fox-honey-cake', name: 'Honungskaka', price: 30, kind: 'treat', art: '', emoji: '🍯',
+    description: 'Räven slickar honungen ur varenda skrymsle.',
+    unlock: { kind: 'pet-species', species: 'dune-fox' }, maxOwned: 1,
+  },
+  {
+    id: 'fox-cactus-fig', name: 'Kaktusfikon', price: 50, kind: 'treat', art: '', emoji: '🌵',
+    description: 'Saftig frukt från ökenkaktusen — utan taggar.',
+    unlock: { kind: 'pet-species', species: 'dune-fox' }, maxOwned: 1,
+  },
+  {
+    id: 'axolotl-mussel', name: 'Musselgodis', price: 30, kind: 'treat', art: '', emoji: '🦪',
+    description: 'Små havsgodisar som axolotlen mumsar i ett nafs.',
+    unlock: { kind: 'pet-species', species: 'reef-axolotl' }, maxOwned: 1,
+  },
+  {
+    id: 'axolotl-bubble-jelly', name: 'Bubbelgelé', price: 50, kind: 'treat', art: '', emoji: '🫧',
+    description: 'Gelé som pirrar som bubblor i vattnet.',
+    unlock: { kind: 'pet-species', species: 'reef-axolotl' }, maxOwned: 1,
+  },
 ]
+
+/** Godiset en art kan få ur skålen (köpt), i katalogordning. */
+export const ownedTreats = (child: ChildProfile, species: string): CampCatalogItem[] =>
+  CAMP_CATALOG.filter((item) => item.kind === 'treat'
+    && item.unlock.kind === 'pet-species' && item.unlock.species === species
+    && ownsCampItem(child, item.id))
 
 export interface CampPoint {
   id: string

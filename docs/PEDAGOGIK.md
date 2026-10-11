@@ -187,7 +187,10 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
 - **Inget kostar mer än en veckas träning** (140 mynt). Priset står
   neutralt ("Kostar 60 mynt"), aldrig som en nedräkning att jaga.
 - **Allt är kosmetiskt och kan inte förloras.** Djuren svälter inte och
-  blir aldrig ledsna om barnet är borta; godbitar är gratis. Inget i lägret
+  blir aldrig ledsna om barnet är borta; grundgodbiten är gratis. Vännernas
+  favoritgodis (två per art, syns i boden när vännen bor i lägret) köps EN
+  gång och tar sedan aldrig slut — förbrukningsvaror hade blivit ett behov
+  att fylla på, en mätare i förklädnad (okt 2026). Inget i lägret
   påverkar rating, upplåsning eller rättning, och inget går att köpa som
   hjälper i matten.
 - **Lägret är en kort kvällsstund, inte en egen spelplats:** 3 minuter per
