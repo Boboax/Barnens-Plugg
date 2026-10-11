@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import type { PetSpeciesId } from '../../../domain/pet-home'
+import { campImage } from './campArt'
 
 /* Godbitsskålen under vännens närbild. Barnet DRAR en godbit till vännen
    och släpper den vid munnen — en handling med kroppen, inte en knapp, så
@@ -100,7 +101,7 @@ export function TreatBowl({ species, petName, targetRef, disabled, onFeed }: {
   const treat = TREATS[species] ?? '🍪'
   return (
     <div className={`treat-bowl${disabled ? ' treat-bowl--off' : ''}`}>
-      <span className="treat-bowl__dish" aria-hidden="true">
+      <span className="treat-bowl__dish" style={{ backgroundImage: `url(${campImage('den-treat-bowl')})` }} aria-hidden="true">
         <i>{treat}</i><i>{treat}</i>
       </span>
       <button

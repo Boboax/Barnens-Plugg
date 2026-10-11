@@ -40,6 +40,8 @@ const HOME = { x: 50, y: 82 }
 const PET_HEIGHT = 40
 /** Bollens viloplats i rummets nederkant. */
 const BALL_HOME = { x: 36, y: 93 }
+/** Den målade lekbollen (ChatGPT-leveransen okt 2026). */
+const BALL_ART = { backgroundImage: `url(${campImage('den-toy-ball')})` }
 /** Tittutens tre gömställen. Ritas i appen tills målade bilder finns. */
 const HIDING_SPOTS = [
   { x: 17, y: 66, emoji: '🍄', name: 'svampen' },
@@ -459,7 +461,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
           </div>
           {mums > 0 && <span key={mums} className="den-mums" aria-hidden="true"><b>Mums!</b><i /><i /><i /></span>}
           {resting && <span className="den-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span>}
-          {ball.phase === 'carried' && <span className="den-ball den-ball--carried" aria-hidden="true" />}
+          {ball.phase === 'carried' && <span className="den-ball den-ball--carried" style={BALL_ART} aria-hidden="true" />}
         </div>
 
         {hearts.map((h) => (
@@ -497,7 +499,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, onCare, o
         </div>
         <button
           className={`den-ball den-ball--${ball.phase}${ballReady ? ' den-ball--ready' : ''}`}
-          style={{ left: `${ball.x}%`, top: `${ball.y}%`, visibility: ball.phase === 'carried' ? 'hidden' : undefined }}
+          style={{ ...BALL_ART, left: `${ball.x}%`, top: `${ball.y}%`, visibility: ball.phase === 'carried' ? 'hidden' : undefined }}
           aria-label={`Kasta bollen till ${pet.name}`}
           disabled={!ballReady}
           onPointerDown={onBallDown}
