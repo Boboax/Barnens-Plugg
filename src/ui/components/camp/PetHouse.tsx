@@ -42,14 +42,37 @@ const PET_HEIGHT = 40
 const BALL_HOME = { x: 36, y: 93 }
 /** Den målade lekbollen (ChatGPT-leveransen okt 2026). */
 const BALL_ART = { backgroundImage: `url(${campImage('den-toy-ball')})` }
-/** Tittutens tre målade gömställen. peekTop = var vännens huvud börjar
+/** Tittutens målade gömställen. peekTop = var vännens huvud börjar
     (procent av gömställets ruta) så att bara öronen och ögonen sticker
-    upp ovanför just den bildens överkant — stocken är lägre än svampen. */
-const HIDING_SPOTS = [
-  { x: 17, y: 68, art: 'den-hide-mushroom', name: 'svampen', peekTop: -12 },
-  { x: 50, y: 62, art: 'den-hide-bush', name: 'busken', peekTop: 0 },
-  { x: 83, y: 68, art: 'den-hide-log', name: 'stocken', peekTop: 22 },
+    upp ovanför just den bildens överkant — stocken är lägre än svampen.
+    Det fjärde (från runda 4) är busken spegelvänd. */
+const HIDE_PROPS = [
+  { art: 'den-hide-mushroom', name: 'svampen', peekTop: -12, flip: false },
+  { art: 'den-hide-bush', name: 'busken', peekTop: 0, flip: false },
+  { art: 'den-hide-log', name: 'stocken', peekTop: 22, flip: false },
+  { art: 'den-hide-bush', name: 'den andra busken', peekTop: 0, flip: true },
 ]
+/** Platserna i rummet för tre respektive fyra gömställen. */
+const HIDE_SLOTS: Record<3 | 4, { x: number; y: number }[]> = {
+  3: [{ x: 17, y: 68 }, { x: 50, y: 62 }, { x: 83, y: 68 }],
+  4: [{ x: 14, y: 70 }, { x: 38, y: 62 }, { x: 62, y: 62 }, { x: 86, y: 70 }],
+}
+
+/**
+ * Tittut blir svårare för varje gång barnet hittar vännen (gömma-under-
+ * koppar): vännen visar sig först, duckar, och sedan byter gömställena
+ * plats — barnet följer rätt gömställe med blicken. Fler och snabbare
+ * byten, och från runda 4 ett fjärde gömställe. Ledtråden (örat) kommer
+ * först efter två fel, så det går alltid att lyckas till slut.
+ */
+function peekRound(round: number): { count: 3 | 4; swaps: number; swapMs: number } {
+  return {
+    count: round >= 4 ? 4 : 3,
+    swaps: Math.min(7, round - 1),
+    swapMs: Math.max(300, 780 - round * 70),
+  }
+}
+type PeekPhase = 'show' | 'shuffle' | 'guess'
 
 type Reaction = 'hop' | 'spin' | 'wiggle' | 'giggle' | 'purr' | 'chew' | 'stretch' | 'run'
 type Mode = 'free' | 'fetch' | 'peek'
@@ -117,7 +140,15 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
   const [lean, setLean] = useState(0)
   const [ball, setBall] = useState<{ x: number; y: number; phase: 'home' | 'drag' | 'fly' | 'carried' | 'return' }>(
     { ...BALL_HOME, phase: 'home' })
-  const [peek, setPeek] = useState<{ spot: number; wrong: number[]; found: boolean } | null>(null)
+  const [peek, setPeek] = useState<{
+    round: number; count: 3 | 4; slotOf: number[]; petProp: number; swapMs: number
+    wrong: number[]; found: boolean; phase: PeekPhase
+  } | null>(null)
+  // Rundan barnet nått i tittut under det här besöket — nästa lek fortsätter där.
+  const [peekLevel, setPeekLevel] = useState(1)
+  // Varje ny lek får en egen token, så att väntande byten från en avbruten
+  // lek aldrig rör den nya.
+  const peekToken = useRef(0)
   const [bookOpen, setBookOpen] = useState(false)
   const [muted, setMuted] = useState(readMuted)
   const [editing, setEditing] = useState(false)
@@ -323,33 +354,74 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
 
   /* ---------- Tittut: vännen gömmer sig, barnet letar ---------- */
 
+  const runPeekRound = (round: number): void => {
+    const token = ++peekToken.current
+    const alive = (): boolean => peekToken.current === token
+    const { count, swaps, swapMs } = peekRound(round)
+    const petProp = Math.floor(Math.random() * count)
+    setMode('peek')
+    setPetPos(HOME)
+    setPeek({ round, count, slotOf: Array.from({ length: count }, (_, i) => i), petProp, swapMs, wrong: [], found: false, phase: 'show' })
+    say(round === 1
+      ? `${pet.name} gömmer sig! Titta noga var.`
+      : round === 4 ? 'Nu blir det fyra gömställen. Titta noga!'
+      : `Svårare nu! Följ ${pet.name} med blicken.`)
+    // Vännen visar sig en stund, duckar — och sedan byter gömställena plats.
+    later(() => { if (alive()) setPeek((p) => p && { ...p, phase: swaps > 0 ? 'shuffle' : 'guess' }) }, 1500)
+    for (let k = 0; k < swaps; k++) {
+      later(() => {
+        if (!alive()) return
+        setPeek((p) => {
+          if (!p) return p
+          const a = Math.floor(Math.random() * p.count)
+          const b = (a + 1 + Math.floor(Math.random() * (p.count - 1))) % p.count
+          const slotOf = [...p.slotOf]
+          ;[slotOf[a], slotOf[b]] = [slotOf[b], slotOf[a]]
+          return { ...p, slotOf }
+        })
+      }, 1500 + 250 + k * (swapMs + 90))
+    }
+    if (swaps > 0) {
+      later(() => {
+        if (!alive()) return
+        setPeek((p) => p && { ...p, phase: 'guess' })
+        say(`Var är ${pet.name}?`)
+      }, 1500 + 250 + swaps * (swapMs + 90) + 150)
+    }
+  }
   const startPeek = (): void => {
     if (!canInteract || !free || resting) return
-    const spot = Math.floor(Math.random() * HIDING_SPOTS.length)
-    setMode('peek')
-    setPeek({ spot, wrong: [], found: false })
-    say(`${pet.name} gömmer sig! Var är ${pet.name}?`)
+    runPeekRound(peekLevel)
   }
   const guess = (i: number): void => {
-    if (!peek || peek.found) return
-    if (i !== peek.spot) {
-      setPeek({ ...peek, wrong: [...peek.wrong, i] })
-      say(pick(['Inte här … kanske där?', 'Hmm, tomt! Leta vidare.', `Där var inte ${pet.name}. Titta noga!`]))
+    if (!peek || peek.found || peek.phase !== 'guess') return
+    if (i !== peek.petProp) {
+      const wrong = [...peek.wrong, i]
+      setPeek({ ...peek, wrong })
+      say(wrong.length >= 2
+        ? `Titta — där kikar ${pet.name} fram!`
+        : pick(['Inte här … kanske där?', 'Hmm, tomt! Leta vidare.', `Där var inte ${pet.name}. Titta noga!`]))
       return
     }
     setPeek({ ...peek, found: true })
-    const s = HIDING_SPOTS[i]
+    const s = HIDE_SLOTS[peek.count][peek.slotOf[i]]
     // Vännen hoppar fram FRAMFÖR gömstället (lägre i rummet = närmare barnet).
     const found = { x: s.x, y: Math.min(94, s.y + 14) }
     setPetPos(found)
     react('hop')
-    say(`Tittut! Du hittade ${pet.name}!`)
+    // Hittad på första försöket → nästa runda blir svårare. Annars samma igen.
+    const next = peek.wrong.length === 0 ? peek.round + 1 : peek.round
+    say(peek.wrong.length === 0
+      ? `Tittut! Du hittade ${pet.name} direkt! Nästa gång blir det svårare.`
+      : `Tittut! Du hittade ${pet.name}!`)
     sound()
     heartBurst(found)
     care('play')
-    later(() => { setPetPos(HOME); setPeek(null); setMode('free') }, 1600)
+    setPeekLevel(next)
+    const token = peekToken.current
+    later(() => { if (peekToken.current === token) runPeekRound(next) }, 2200)
   }
-  const stopPeek = (): void => { setPeek(null); setMode('free'); setPetPos(HOME); say('') }
+  const stopPeek = (): void => { peekToken.current++; setPeek(null); setMode('free'); setPetPos(HOME); say('') }
 
   /* ---------- Lyktan: godnatt och god morgon ---------- */
 
@@ -443,22 +515,24 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
         })}
 
         {/* Tittutens gömställen syns bara under leken. */}
-        {mode === 'peek' && peek && HIDING_SPOTS.map((s, i) => {
-          const here = i === peek.spot
+        {mode === 'peek' && peek && HIDE_PROPS.slice(0, peek.count).map((s, i) => {
+          const here = i === peek.petProp
+          const slot = HIDE_SLOTS[peek.count][peek.slotOf[i]]
+          // Vännen syns bara medan den gömmer sig, och som ledtråd efter två fel.
+          const peeking = here && !peek.found && (peek.phase === 'show' || peek.wrong.length >= 2)
           return (
             <button
-              key={s.name}
-              className={`den-hide${peek.wrong.includes(i) ? ' den-hide--empty' : ''}${here && peek.wrong.length >= 2 ? ' den-hide--hint' : ''}`}
-              style={{ left: `${s.x}%`, top: `${s.y}%` }}
+              key={`${s.art}-${i}`}
+              className={`den-hide${peek.wrong.includes(i) ? ' den-hide--empty' : ''}${peeking && peek.phase === 'guess' ? ' den-hide--hint' : ''}`}
+              style={{ left: `${slot.x}%`, top: `${slot.y}%`, '--swap-ms': `${peek.swapMs}ms` } as React.CSSProperties}
               aria-label={`Titta bakom ${s.name}`}
               onClick={() => guess(i)}
-              disabled={peek.found}
+              disabled={peek.found || peek.phase !== 'guess'}
             >
-              {/* Ett öra sticker fram bakom rätt gömställe — en ledtråd för den som tittar noga. */}
-              {here && !peek.found && (
+              {peeking && (
                 <span className="den-hide__peeker" style={{ top: `${s.peekTop}%` }}><PetSprite species={pet.species} stage={stageOf(pet)} /></span>
               )}
-              <img className="den-hide__prop" src={campImage(s.art)} alt="" draggable={false} />
+              <img className={`den-hide__prop${s.flip ? ' den-hide__prop--flip' : ''}`} src={campImage(s.art)} alt="" draggable={false} />
             </button>
           )
         })}

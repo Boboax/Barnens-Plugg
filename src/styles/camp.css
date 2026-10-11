@@ -392,7 +392,11 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
 .den-hide {
   position: absolute; z-index: 6; width: 20%; aspect-ratio: 1; padding: 0; border: 0; background: none;
   transform: translate(-50%, -100%); cursor: pointer; isolation: isolate; animation: den-hide-in .4s ease-out both;
+  /* Bytena i tittut: gömställena glider till sina nya platser. */
+  transition: left var(--swap-ms, 600ms) ease-in-out, top var(--swap-ms, 600ms) ease-in-out;
 }
+.den-hide:disabled { cursor: default; }
+.den-hide__prop--flip { transform: scaleX(-1); }
 .den-hide__prop {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom;
   pointer-events: none; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .5));
@@ -497,9 +501,17 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
 }
 .pet-still--stage-1 { scale: .56; }
 .pet-still--stage-2 { scale: .7; }
-.pet-still--stage-4 { scale: .86; }
+.pet-still--stage-4 {
+  /* Följeslagaren: ett pulserande guldsken tills de målade åldrade
+     bilderna finns (beställda okt 2026) — mäktigare, inte bara större. */
+  scale: .86; animation: pet-breathe 3.4s ease-in-out infinite, pet-aura 2.8s ease-in-out infinite;
+}
 .pet-still--sleeping { animation: none; }
 .pet-still--greeting { animation: pet-still-hop .5s ease-out 2; }
+@keyframes pet-aura {
+  0%, 100% { filter: drop-shadow(0 5px 3px #0006) drop-shadow(0 0 6px rgba(255, 214, 120, .55)); }
+  50% { filter: drop-shadow(0 5px 3px #0006) drop-shadow(0 0 16px rgba(255, 214, 120, .95)); }
+}
 @keyframes pet-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.02, .98); } }
 @keyframes pet-still-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-10%); } }
 

@@ -581,3 +581,164 @@ A small brass hand bell ringing, with three soft curved sound lines next to it. 
 ```
 The same small brass hand bell, still and quiet, with a soft sleepy "shh" feeling: a tiny cloth wrapped around the clapper, no sound lines. Simple bold readable shape, soft painterly game-icon style matching the attached den image. Centered, transparent background, no text, no frame.
 ```
+
+
+## Tillägg 3 (okt 2026) · Vännerna åldras och blir mäktigare (24)
+
+De förra stadiebilderna (`*-stage-*.png`) blev nästan samma djur i olika
+storlek, så i appen ser det ut som att vännen bara skalas upp. Nu ska varje
+vän **åldras och bli mäktigare**: ungen är en riktig bebis, den unga en
+tonåring, och följeslagaren en äldre, stark och vis väktare med egna
+detaljer. Samma färger, mönster och accessoarer genom alla stadier — men
+tydligt olika ålder och kraft. **Ingen kopia i annan storlek.**
+
+Stadie 3 ("vuxen") finns redan och är referensbilden för varje art.
+
+**Storlek i bilden (viktigt):** alla bilder 1024×1024 med samma zoom, fötterna
+nära nederkanten. Figuren fyller ungefär **45 % av höjden som unge, 65 % som
+ung och 95 % som följeslagare** — då syns tillväxten utan att appen behöver
+skala bilderna. Sovbilden har samma storlek som vakenbilden i samma stadie.
+
+**Leverans:** `leverans/` på grenen `grafik/leverans`, PNG med transparent
+bakgrund, exakt dessa filnamn (nya namn — de gamla `*-stage-*` ska inte
+skrivas över). Stil och ljus enligt "Stil (gäller alla bilder)" ovan.
+
+
+### Skogsgrodan
+
+Referens (stadie 3): https://boboax.github.io/Barnens-Plugg/art/camp/woodland-frog-poster-v1.webp
+
+#### `woodland-frog-age-1.png` — 1024×1024
+```
+The same cheerful green woodland frog with yellow spots, big amber eyes and a red leaf scarf as in the attached reference, now shown as a tiny, round froglet just out of the pond: oversized head and huge eyes, very short stubby legs, a little leftover tadpole tail, softer and paler green skin, only a few faint spots, a tiny red leaf tied around its neck like a bib. Wobbly and clumsy, utterly cute. Sitting, facing slightly to the right, happy and gentle expression. The figure fills about 45 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `woodland-frog-age-1-sleep.png` — 1024×1024
+```
+The same cheerful green woodland frog with yellow spots, big amber eyes and a red leaf scarf as in the attached reference, now shown as a tiny, round froglet just out of the pond: oversized head and huge eyes, very short stubby legs, a little leftover tadpole tail, softer and paler green skin, only a few faint spots, a tiny red leaf tied around its neck like a bib. Wobbly and clumsy, utterly cute. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 45 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `woodland-frog-age-2.png` — 1024×1024
+```
+The same cheerful green woodland frog with yellow spots, big amber eyes and a red leaf scarf as in the attached reference, now shown as a lanky young frog, a teenager: long thin legs it has not grown into yet, spots getting darker, the red leaf scarf now properly tied, a small acorn-cap backpack, an eager adventurous pose ready to jump. Standing, facing slightly to the right, happy and gentle expression. The figure fills about 65 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `woodland-frog-age-2-sleep.png` — 1024×1024
+```
+The same cheerful green woodland frog with yellow spots, big amber eyes and a red leaf scarf as in the attached reference, now shown as a lanky young frog, a teenager: long thin legs it has not grown into yet, spots getting darker, the red leaf scarf now properly tied, a small acorn-cap backpack, an eager adventurous pose ready to jump. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 65 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `woodland-frog-age-4.png` — 1024×1024
+```
+The same cheerful green woodland frog with yellow spots, big amber eyes and a red leaf scarf as in the attached reference, now shown as an older, strong and wise forest guardian frog: broad shoulders and powerful legs, calm wise eyes, a short moss-and-fern cloak over its back fastened with a wooden clasp, faint glowing green leaf-runes along its back, a slim walking staff with a tiny lantern, an ornate version of the red leaf scarf. Heroic and confident, still warm and friendly — never scary. Standing tall, facing slightly to the right, happy and gentle expression. The figure fills about 95 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `woodland-frog-age-4-sleep.png` — 1024×1024
+```
+The same cheerful green woodland frog with yellow spots, big amber eyes and a red leaf scarf as in the attached reference, now shown as an older, strong and wise forest guardian frog: broad shoulders and powerful legs, calm wise eyes, a short moss-and-fern cloak over its back fastened with a wooden clasp, faint glowing green leaf-runes along its back, a slim walking staff with a tiny lantern, an ornate version of the red leaf scarf. Heroic and confident, still warm and friendly — never scary. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 95 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+
+### Sandräven
+
+Referens (stadie 3): https://boboax.github.io/Barnens-Plugg/art/camp/dune-fox-poster-v1.webp
+
+#### `dune-fox-age-1.png` — 1024×1024
+```
+The same sandy fennec fox with huge ears, cream fur and a teal bandana with a golden bell as in the attached reference, now shown as a tiny fluffy fox kit: a round ball of fluff, enormous floppy ears it cannot hold up yet, big shiny eyes, short stubby legs, a tiny teal bandana. Stumbling and adorable. Sitting, facing slightly to the right, happy and gentle expression. The figure fills about 45 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `dune-fox-age-1-sleep.png` — 1024×1024
+```
+The same sandy fennec fox with huge ears, cream fur and a teal bandana with a golden bell as in the attached reference, now shown as a tiny fluffy fox kit: a round ball of fluff, enormous floppy ears it cannot hold up yet, big shiny eyes, short stubby legs, a tiny teal bandana. Stumbling and adorable. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 45 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `dune-fox-age-2.png` — 1024×1024
+```
+The same sandy fennec fox with huge ears, cream fur and a teal bandana with a golden bell as in the attached reference, now shown as a slim young fox: ears now standing tall, longer legs and a longer tail, the teal bandana with the golden bell, alert and curious, mid-trot. Standing, facing slightly to the right, happy and gentle expression. The figure fills about 65 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `dune-fox-age-2-sleep.png` — 1024×1024
+```
+The same sandy fennec fox with huge ears, cream fur and a teal bandana with a golden bell as in the attached reference, now shown as a slim young fox: ears now standing tall, longer legs and a longer tail, the teal bandana with the golden bell, alert and curious, mid-trot. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 65 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `dune-fox-age-4.png` — 1024×1024
+```
+The same sandy fennec fox with huge ears, cream fur and a teal bandana with a golden bell as in the attached reference, now shown as a majestic desert guardian fox: a thick, flowing ruff of fur around the neck like a mane, a long elegant tail with a glowing golden tip, sun-gold markings on the forehead and paws that softly shine, desert jewellery (a golden circlet with a small teal gem), a proud noble stance. Powerful and wise, still warm and friendly — never scary. Standing tall, facing slightly to the right, happy and gentle expression. The figure fills about 95 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `dune-fox-age-4-sleep.png` — 1024×1024
+```
+The same sandy fennec fox with huge ears, cream fur and a teal bandana with a golden bell as in the attached reference, now shown as a majestic desert guardian fox: a thick, flowing ruff of fur around the neck like a mane, a long elegant tail with a glowing golden tip, sun-gold markings on the forehead and paws that softly shine, desert jewellery (a golden circlet with a small teal gem), a proud noble stance. Powerful and wise, still warm and friendly — never scary. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 95 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+
+### Axolotln
+
+Referens (stadie 3): https://boboax.github.io/Barnens-Plugg/art/camp/reef-axolotl-poster-v1.webp
+
+#### `reef-axolotl-age-1.png` — 1024×1024
+```
+The same turquoise axolotl with coral-pink frilly gills and tiny white spots as in the attached reference, now shown as a tiny baby axolotl: small and slightly translucent, very short stubby gill-buds, a big round head with huge eyes, tiny legs, a short tail. Bubbly and adorable. Sitting, facing slightly to the right, happy and gentle expression. The figure fills about 45 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `reef-axolotl-age-1-sleep.png` — 1024×1024
+```
+The same turquoise axolotl with coral-pink frilly gills and tiny white spots as in the attached reference, now shown as a tiny baby axolotl: small and slightly translucent, very short stubby gill-buds, a big round head with huge eyes, tiny legs, a short tail. Bubbly and adorable. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 45 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `reef-axolotl-age-2.png` — 1024×1024
+```
+The same turquoise axolotl with coral-pink frilly gills and tiny white spots as in the attached reference, now shown as a young axolotl: longer body and tail, gills fuller and fluffier, spots more visible, a small pearl on a string, playful pose. Standing, facing slightly to the right, happy and gentle expression. The figure fills about 65 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `reef-axolotl-age-2-sleep.png` — 1024×1024
+```
+The same turquoise axolotl with coral-pink frilly gills and tiny white spots as in the attached reference, now shown as a young axolotl: longer body and tail, gills fuller and fluffier, spots more visible, a small pearl on a string, playful pose. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 65 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `reef-axolotl-age-4.png` — 1024×1024
+```
+The same turquoise axolotl with coral-pink frilly gills and tiny white spots as in the attached reference, now shown as a grand reef guardian axolotl: large, feathery, softly glowing gills that look like a coral crown, bioluminescent spots that shine along its body, long flowing fins on the tail, a pearl necklace, a calm regal pose. Powerful and magical, still warm and friendly — never scary. Standing tall, facing slightly to the right, happy and gentle expression. The figure fills about 95 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `reef-axolotl-age-4-sleep.png` — 1024×1024
+```
+The same turquoise axolotl with coral-pink frilly gills and tiny white spots as in the attached reference, now shown as a grand reef guardian axolotl: large, feathery, softly glowing gills that look like a coral crown, bioluminescent spots that shine along its body, long flowing fins on the tail, a pearl necklace, a calm regal pose. Powerful and magical, still warm and friendly — never scary. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 95 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+
+### Kristalldraken
+
+Referens (stadie 3): https://raw.githubusercontent.com/Boboax/Barnens-Plugg/feature/etapp-2/public/art/camp/crystal-dragon-poster-v1.webp
+
+#### `crystal-dragon-age-1.png` — 1024×1024
+```
+The same small lilac crystal dragon with violet crystal horns and spikes, amber eyes, small wings and a curled tail as in the attached reference, now shown as a newly hatched baby dragon still sitting in half of a sparkling crystal eggshell: round body, tiny nub horns, little stubby wings it cannot use yet, huge eyes, a short curled tail. Sleepy-cute. Sitting, facing slightly to the right, happy and gentle expression. The figure fills about 45 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `crystal-dragon-age-1-sleep.png` — 1024×1024
+```
+The same small lilac crystal dragon with violet crystal horns and spikes, amber eyes, small wings and a curled tail as in the attached reference, now shown as a newly hatched baby dragon still sitting in half of a sparkling crystal eggshell: round body, tiny nub horns, little stubby wings it cannot use yet, huge eyes, a short curled tail. Sleepy-cute. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 45 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `crystal-dragon-age-2.png` — 1024×1024
+```
+The same small lilac crystal dragon with violet crystal horns and spikes, amber eyes, small wings and a curled tail as in the attached reference, now shown as a young dragon: longer neck and tail, wings bigger but still a bit too small, crystal horns starting to grow, a few crystal spikes along the back, a playful, bouncy pose. Standing, facing slightly to the right, happy and gentle expression. The figure fills about 65 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `crystal-dragon-age-2-sleep.png` — 1024×1024
+```
+The same small lilac crystal dragon with violet crystal horns and spikes, amber eyes, small wings and a curled tail as in the attached reference, now shown as a young dragon: longer neck and tail, wings bigger but still a bit too small, crystal horns starting to grow, a few crystal spikes along the back, a playful, bouncy pose. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 65 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `crystal-dragon-age-4.png` — 1024×1024
+```
+The same small lilac crystal dragon with violet crystal horns and spikes, amber eyes, small wings and a curled tail as in the attached reference, now shown as a grand crystal dragon: big wings spread proudly, tall glowing crystal horns, shining crystal plates on chest and back like armour, a long elegant tail with a crystal tip, a regal confident pose with a soft violet glow and sparkles. Powerful and majestic, still warm and friendly — never scary. Standing tall, facing slightly to the right, happy and gentle expression. The figure fills about 95 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
+
+#### `crystal-dragon-age-4-sleep.png` — 1024×1024
+```
+The same small lilac crystal dragon with violet crystal horns and spikes, amber eyes, small wings and a curled tail as in the attached reference, now shown as a grand crystal dragon: big wings spread proudly, tall glowing crystal horns, shining crystal plates on chest and back like armour, a long elegant tail with a crystal tip, a regal confident pose with a soft violet glow and sparkles. Powerful and majestic, still warm and friendly — never scary. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 95 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
+```
