@@ -353,6 +353,9 @@ export function TaskRunner({ task, mode, withScratch = true, onComplete, onNext,
               <>
                 {misconceptionHint() && <p style={{ margin: '4px 0', fontWeight: 700, color: ON_CARD_INK }}>{misconceptionHint()}</p>}
                 <p style={{ margin: '4px 0', fontSize: 15, color: ON_CARD_INK }}>{task.explanation}</p>
+                {/* Lösningsbilden (t.ex. tallinjehopp via tian) visar vägen — först nu,
+                    efter svaret, så den aldrig ger bort svaret medan barnet räknar. */}
+                {task.solution && <TaskVisualView key={`sol-${task.ref.seed}`} visual={task.solution} />}
                 <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 800, color: ON_CARD_MUTED, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
                   Rätt svar: {task.answer.kind === 'numeric'
                     ? `${String(task.answer.value).replace('.', ',').replace('-', '−')}${task.answer.unit ? ` ${task.answer.unit}` : ''}`

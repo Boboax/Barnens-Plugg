@@ -134,6 +134,15 @@ input, textarea { font-family: inherit; }
   }
 }
 
+/* Tallinjehopp (TaskVisualView: Tallinje). Bågen ritas fram, sedan dyker
+   "+3" och landningspricken upp. Fördröjningen sätts per hopp i komponenten
+   så att hoppen kommer ett i taget. Vid reducerad rörelse blir längden ~0
+   (regeln ovan) — bågarna syns då direkt, en i taget. */
+.hop-arc { stroke-dasharray: 1; stroke-dashoffset: 1; animation: hop-draw .6s ease-out both; }
+.hop-label, .hop-land { opacity: 0; animation: hop-pop .3s ease-out both; }
+@keyframes hop-draw { to { stroke-dashoffset: 0; } }
+@keyframes hop-pop { to { opacity: 1; } }
+
 /* ---------- Återkommande primitiver ---------- */
 
 /* Rubriker i serif — äventyrsboken. Matten förblir sans (se :root). */

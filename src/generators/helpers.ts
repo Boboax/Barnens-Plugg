@@ -13,6 +13,8 @@ export interface NumericSpec {
   unit?: string
   explanation: string
   visual?: TaskVisual
+  /** Lösningsbild till förklaringen (se Task.solution). */
+  solution?: TaskVisual
   /** felvärde → missuppfattning, för klassning av fria numeriska svar */
   misconceptions?: Record<number, MisconceptionTag>
 }
@@ -34,6 +36,24 @@ export function numericTask(spec: NumericSpec): Task {
     answer: { kind: 'numeric', value: spec.value, unit: spec.unit },
     explanation: spec.explanation,
     misconceptionMap,
+    ...(spec.solution ? { solution: spec.solution } : {}),
+  }
+}
+
+/**
+ * Tallinjehopp för + och − inom 20 (CRA: bilden mellan konkret och
+ * abstrakt). Över tiotalsgränsen går hoppet VIA TIAN — samma strategi som
+ * tiokamraterna och förklaringen lär ut ("8 + 5: först 2 till 10, sedan 3").
+ * Utanför 0–20 blir tallinjen för tät att läsa; då ingen lösningsbild.
+ */
+export function hopSolution(a: number, b: number, isAdd: boolean): TaskVisual | undefined {
+  const value = isAdd ? a + b : a - b
+  if (Math.max(a, value) > 20 || Math.min(a, value) < 0 || b === 0) return undefined
+  const ten = isAdd ? Math.ceil((a + 1) / 10) * 10 : Math.floor((a - 1) / 10) * 10
+  const crosses = isAdd ? a < ten && value > ten : a > ten && value < ten
+  return {
+    kind: 'tallinje', min: 0, max: Math.max(a, value) <= 10 ? 10 : 20,
+    hops: crosses ? [a, ten, value] : [a, value],
   }
 }
 

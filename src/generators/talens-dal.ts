@@ -1,7 +1,7 @@
 import type { DifficultyLevel, TaskGenerator } from '../domain/types'
 import { createRng } from './rng'
 import {
-  choiceTask, lerpInt, numericTask, pickName, pickThing, pickTwoNames, tiobas, tiobasOp, uniqueDistractors,
+  choiceTask, hopSolution, lerpInt, numericTask, pickName, pickThing, pickTwoNames, tiobas, tiobasOp, uniqueDistractors,
 } from './helpers'
 
 /* ============================================================
@@ -269,6 +269,7 @@ function makeAddSub(momentId: string, cfg: AddSubCfg): TaskGenerator {
         spokenPrompt: isAdd ? `Vad är ${a} plus ${b}?` : `Vad är ${a} minus ${b}?`,
         value,
         visual: level <= cfg.visualUpTo ? tiobasOp(isAdd ? '+' : '−', a, b) : { kind: 'ingen' },
+        solution: hopSolution(a, b, isAdd),
         explanation: isAdd
           ? (a % 10) + (b % 10) >= 10
             ? `Gå via tian: ${a} + ${10 - (a % 10)} = ${a + 10 - (a % 10)}, sedan ${b - (10 - (a % 10))} till = ${value}.`
@@ -391,6 +392,8 @@ const negativaTal = g('negativa-tal', (level, seed, rng) => {
       prompt: `Hur många grader skiljer det mellan ${from} °C och ${to} °C?`,
       value: to - from,
       visual: { kind: 'tallinje', min: -span, max: span, marks: [from, to] },
+      // Hoppet går via nollan — precis som förklaringen räknar.
+      solution: { kind: 'tallinje', min: -span, max: span, hops: from === 0 ? [from, to] : [from, 0, to] },
       explanation: `Från ${from} till 0 är det ${-from} steg, sedan ${to} till: ${-from} + ${to} = ${to - from}.`,
       misconceptions: { [Math.abs(to + from)]: 'fel-raknesatt' },
     })
@@ -403,6 +406,8 @@ const negativaTal = g('negativa-tal', (level, seed, rng) => {
     spokenPrompt: `Vad är ${a} minus ${b}?`,
     value: a - b,
     visual: { kind: 'tallinje', min: -span, max: span, highlight: a },
+    // Först ner till nollan, sedan vidare under den: där blir talen negativa.
+    solution: { kind: 'tallinje', min: -span, max: span, hops: a === 0 ? [a, a - b] : [a, 0, a - b] },
     explanation: `Gå ${b} steg åt vänster från ${a} — du hamnar under nollan, på ${a - b}.`,
     misconceptions: { [b - a]: 'fel-raknesatt' },
   })

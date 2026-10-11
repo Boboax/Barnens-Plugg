@@ -11,7 +11,7 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
   const inner = (() => {
     switch (visual.kind) {
       case 'tiobas': return <Tiobas groups={visual.groups} op={visual.op} />
-      case 'tallinje': return <Tallinje min={visual.min} max={visual.max} marks={visual.marks} highlight={visual.highlight} />
+      case 'tallinje': return <Tallinje min={visual.min} max={visual.max} marks={visual.marks} highlight={visual.highlight} hops={visual.hops} />
       case 'grupper': return <Grupper count={visual.groupCount} per={visual.itemsPerGroup} emoji={visual.emoji} />
       case 'foljd': return <Foljd items={visual.items} />
       case 'brak': return <Brak parts={visual.parts} filled={visual.filled} secondary={visual.secondary} />
@@ -86,7 +86,13 @@ function Tiobas({ groups, op = '+' }: { groups: { tens: number; ones: number; hu
   )
 }
 
-function Tallinje({ min, max, marks = [], highlight }: { min: number; max: number; marks?: number[]; highlight?: number }) {
+/* Tallinjen. Med `hops` ritas vägen som bågar som växer fram en i taget
+   (+3, sedan +2 …) — barnet ser hoppet via tian eller via nollan i stället
+   för att bara läsa om det. Animationen är CSS (global.css: hop-*) och står
+   still vid prefers-reduced-motion; bågarna syns då direkt. */
+function Tallinje({ min, max, marks = [], highlight, hops }: {
+  min: number; max: number; marks?: number[]; highlight?: number; hops?: number[]
+}) {
   const width = 480
   const pad = 24
   const x = (n: number): number => pad + ((n - min) / (max - min)) * (width - pad * 2)
@@ -94,22 +100,51 @@ function Tallinje({ min, max, marks = [], highlight }: { min: number; max: numbe
   const step = span <= 20 ? 1 : span <= 50 ? 5 : span <= 200 ? 10 : 100
   const ticks: number[] = []
   for (let n = Math.ceil(min / step) * step; n <= max; n += step) ticks.push(n)
+  // Plats ovanför linjen för bågarna när det finns hopp.
+  const top = hops && hops.length > 1 ? 52 : 0
+  const ly = 32 + top
   return (
-    <svg viewBox={`0 0 ${width} 64`} style={{ width: 460, maxWidth: '100%' }} aria-hidden="true">
-      <line x1={pad - 8} y1={32} x2={width - pad + 8} y2={32} stroke="var(--line)" strokeWidth={4} strokeLinecap="round" />
+    <svg viewBox={`0 0 ${width} ${64 + top}`} style={{ width: 460, maxWidth: '100%' }} aria-hidden="true">
+      <line x1={pad - 8} y1={ly} x2={width - pad + 8} y2={ly} stroke="var(--line)" strokeWidth={4} strokeLinecap="round" />
       {ticks.map((n) => (
         <g key={n}>
-          <line x1={x(n)} y1={26} x2={x(n)} y2={38} stroke="var(--muted)" strokeWidth={n % (step * 5) === 0 || span <= 20 ? 2.5 : 1.5} />
+          <line x1={x(n)} y1={ly - 6} x2={x(n)} y2={ly + 6} stroke="var(--muted)" strokeWidth={n % (step * 5) === 0 || span <= 20 ? 2.5 : 1.5} />
           {(span <= 20 || n % (step * 2) === 0) && (
-            <text x={x(n)} y={56} fontSize={12} fontWeight={700} fill="var(--muted)" textAnchor="middle">{n}</text>
+            <text x={x(n)} y={ly + 24} fontSize={12} fontWeight={700} fill="var(--muted)" textAnchor="middle">{n}</text>
           )}
         </g>
       ))}
+      {hops && hops.length > 1 && hops.slice(1).map((to, i) => {
+        const from = hops[i]
+        const x1 = x(from)
+        const x2 = x(to)
+        const h = Math.min(46, 16 + Math.abs(x2 - x1) * 0.35)
+        const diff = to - from
+        const delay = `${0.25 + i * 0.85}s`
+        return (
+          <g key={`h${i}`}>
+            <path
+              className="hop-arc"
+              d={`M ${x1} ${ly - 4} Q ${(x1 + x2) / 2} ${ly - 4 - h * 2} ${x2} ${ly - 4}`}
+              pathLength={1}
+              fill="none" stroke="var(--primary, #4A56C6)" strokeWidth={3.5} strokeLinecap="round"
+              style={{ animationDelay: delay }}
+            />
+            <text
+              className="hop-label"
+              x={(x1 + x2) / 2} y={ly - 10 - h} textAnchor="middle" fontSize={15} fontWeight={900}
+              fill="var(--primary, #4A56C6)" style={{ animationDelay: `${0.25 + i * 0.85 + 0.45}s` }}
+            >{diff > 0 ? `+${diff}` : `−${-diff}`}</text>
+            <circle className="hop-land" cx={x2} cy={ly} r={7} fill="var(--sun)" stroke="#fff" strokeWidth={2} style={{ animationDelay: `${0.25 + i * 0.85 + 0.6}s` }} />
+          </g>
+        )
+      })}
+      {hops && hops.length > 1 && <circle cx={x(hops[0])} cy={ly} r={8} fill="var(--coral)" stroke="#fff" strokeWidth={2.5} />}
       {marks.map((n) => (
-        <circle key={`m${n}`} cx={x(n)} cy={32} r={7} fill="var(--sun)" stroke="#fff" strokeWidth={2} />
+        <circle key={`m${n}`} cx={x(n)} cy={ly} r={7} fill="var(--sun)" stroke="#fff" strokeWidth={2} />
       ))}
       {highlight !== undefined && (
-        <circle cx={x(highlight)} cy={32} r={8} fill="var(--coral)" stroke="#fff" strokeWidth={2.5} />
+        <circle cx={x(highlight)} cy={ly} r={8} fill="var(--coral)" stroke="#fff" strokeWidth={2.5} />
       )}
     </svg>
   )

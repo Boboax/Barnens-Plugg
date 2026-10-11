@@ -106,7 +106,12 @@ export type TaskVisual =
   // op: räknesättet grupperna visar (default '+'). '−' ritar den andra gruppen
   // överstruken (tas bort) så bilden matchar en subtraktion, inte en addition.
   | { kind: 'tiobas'; groups: { tens: number; ones: number; hundreds?: number }[]; op?: '+' | '−' }
-  | { kind: 'tallinje'; min: number; max: number; marks?: number[]; highlight?: number }
+  | {
+      kind: 'tallinje'; min: number; max: number; marks?: number[]; highlight?: number
+      /** Hopp längs tallinjen: punkterna i den ordning man passerar dem,
+          t.ex. [8, 10, 13] för 8 + 5 via tian. Ritas som animerade bågar. */
+      hops?: number[]
+    }
   | { kind: 'grupper'; groupCount: number; itemsPerGroup: number; emoji: string }
   | { kind: 'foljd'; items: string[] } // mönsterföljd (objekt-nycklar) + '?' på slutet
   | { kind: 'brak'; parts: number; filled: number; secondary?: { parts: number; filled: number } }
@@ -161,6 +166,10 @@ export interface Task {
     | { kind: 'choice'; choices: Choice[] }
   /** Förklaring som visas efter fel svar (pedagogisk, inte bara facit). */
   explanation: string
+  /** Lösningsbild som visas MED förklaringen (efter fel svar och i Pis
+      exempel) — aldrig medan barnet räknar, eftersom den visar vägen till
+      svaret. T.ex. tallinjehopp via tian. */
+  solution?: TaskVisual
   /** Vilka missuppfattningar ett numeriskt felsvar ska matchas mot: värde → tagg. */
   misconceptionMap?: Record<number, MisconceptionTag>
 }

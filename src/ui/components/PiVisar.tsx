@@ -98,6 +98,8 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
           fontSize: 26, fontWeight: 900, color: 'var(--mint)',
           border: '3px solid var(--mint)', borderRadius: 14, padding: '4px 22px', background: 'var(--card)',
         }}>{answerText}</div>
+        {/* Pi visar vägen: tallinjehoppen växer fram ett i taget. */}
+        {task.solution && <TaskVisualView key={`sol-${step}`} visual={task.solution} />}
         <p style={{
           margin: 0, fontSize: 15, fontWeight: 700, textAlign: 'center', maxWidth: 460,
           background: '#FFF8E6', border: '2px solid #F2E3B8', borderRadius: 12, padding: '10px 14px', color: 'var(--sun-ink)',
