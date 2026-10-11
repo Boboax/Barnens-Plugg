@@ -476,3 +476,108 @@ Godbitsskålen. Godbitarna själva läggs på av appen — skålen ska vara TOM.
 ```
 An empty, shallow carved wooden bowl with a soft rim, warm honey-brown wood with a few carved leaf patterns, seen slightly from above so the inside is visible. Empty — no food in it. Same painterly style and lighting as the attached den image. Transparent background, no ground shadow, no text.
 ```
+
+## Tillägg 2 (okt 2026) · Godis och ikoner i lyan (15)
+
+Lyan ritar i dag godiset och sina knappar som emoji. De ska bytas mot målade
+bilder i samma stil som lyan, bollen och godisskålen. Leverera som förut:
+`leverans/` på grenen `grafik/leverans`, PNG med transparent bakgrund, exakt
+dessa filnamn. Referenser för stil och ljus:
+- Lyan: https://boboax.github.io/Barnens-Plugg/art/camp/pet-den-interior-v1.webp
+- Godisskålen: https://boboax.github.io/Barnens-Plugg/art/camp/den-treat-bowl.webp
+- Bollen: https://boboax.github.io/Barnens-Plugg/art/camp/den-toy-ball.webp
+
+**Gemensamt för all mat:** en enda godbit per bild, centrerad, liten nog att
+ligga i godisskålen och tydlig även när den visas i 40 px. Aptitlig, varm och
+lekfull — som ett godis i en barnbok. Inga djur, ingen text, ingen tallrik.
+
+### Grundgodiset (gratis, alltid i skålen)
+
+### `treat-blueberry.png` — 512×512
+```
+Three plump, glossy wild blueberries with a tiny green leaf, grouped together as one small treat. Soft painterly digital fantasy illustration, warm campfire light from the left and faint cool moonlight from the right, matching the attached den image. Centered, transparent background, no ground shadow, no text.
+```
+
+### `treat-strawberry.png` — 512×512
+```
+One ripe, juicy wild strawberry with a fresh green top and tiny golden seeds. Soft painterly digital fantasy illustration, warm campfire light from the left and faint cool moonlight from the right, matching the attached den image. Centered, transparent background, no ground shadow, no text.
+```
+
+### `treat-shrimp.png` — 512×512
+```
+One small, cute curled pink shrimp treat, friendly and appetising (not realistic or scary), with a soft sheen. Soft painterly digital fantasy illustration, warm campfire light from the left and faint cool moonlight from the right, matching the attached den image. Centered, transparent background, no ground shadow, no text.
+```
+
+### Favoritgodiset (köps i handelsboden)
+
+### `treat-frog-fly-cake.png` — 512×512
+Grodans favorit. Ska vara gulligt och roligt, inte äckligt.
+```
+A small round crunchy honey-coloured biscuit shaped like a cute cartoon fly with tiny translucent sugar-glass wings and two little candy eyes — a playful frog treat, charming and appetising, not a real insect. Soft painterly digital fantasy illustration matching the attached den image. Centered, transparent background, no ground shadow, no text.
+```
+
+### `treat-frog-lily-nectar.png` — 512×512
+```
+A tiny pink water-lily flower used as a cup, filled with glowing golden nectar, with a single dewdrop on one petal. Soft painterly digital fantasy illustration matching the attached den image. Centered, transparent background, no ground shadow, no text.
+```
+
+### `treat-fox-honey-cake.png` — 512×512
+```
+A small round golden honey cake with honey dripping down its sides and a little wooden honey dipper resting against it. Soft painterly digital fantasy illustration matching the attached den image. Centered, transparent background, no ground shadow, no text.
+```
+
+### `treat-fox-cactus-fig.png` — 512×512
+```
+A ripe desert cactus fig cut in half, showing the juicy magenta inside with tiny seeds — smooth skin, no spines. Soft painterly digital fantasy illustration matching the attached den image. Centered, transparent background, no ground shadow, no text.
+```
+
+### `treat-axolotl-mussel.png` — 512×512
+```
+A small open seashell shaped like a mussel holding a round, glossy pearl-like candy, with a few tiny water droplets. Soft painterly digital fantasy illustration matching the attached den image. Centered, transparent background, no ground shadow, no text.
+```
+
+### `treat-axolotl-bubble-jelly.png` — 512×512
+```
+A wobbly, translucent turquoise jelly treat with little bubbles trapped inside and two small bubbles floating above it. Soft painterly digital fantasy illustration matching the attached den image. Centered, transparent background, no ground shadow, no text.
+```
+
+### Ikoner för lyans knappar
+
+**Gemensamt för ikonerna:** målade spelikoner som står på lyans golv eller
+sitter på en pergamentknapp. En tydlig, enkel form som barn känner igen i
+44–60 px. Mjuk, varm målarstil som lyan. Ingen text, ingen ram, ingen platta
+bakom — appen lägger själv en ljus platta under.
+
+### `icon-peekaboo.png` — 512×512
+Knappen som startar tittut.
+```
+A small leafy fern bush with two big curious cartoon eyes peeking out between the leaves — a playful hide-and-seek symbol for children. Simple bold readable shape, soft painterly game-icon style matching the attached den image. Centered, transparent background, no text, no frame.
+```
+
+### `icon-lantern-lit.png` — 512×512
+Godnatt-knappen (lyktan är tänd — tryck för att släcka och säga godnatt).
+```
+A small old wooden camp lantern with a warm glowing flame inside and a soft golden halo. Simple bold readable shape, soft painterly game-icon style matching the attached den image. Centered, transparent background, no text, no frame.
+```
+
+### `icon-lantern-moon.png` — 512×512
+Väck-knappen (natt — tryck för att väcka vännen).
+```
+The same small wooden camp lantern, now dark, with a sleepy crescent moon and two tiny stars floating above it. Simple bold readable shape, soft painterly game-icon style matching the attached den image. Centered, transparent background, no text, no frame.
+```
+
+### `icon-memory-book.png` — 512×512
+Minnesboken om vännen.
+```
+A small cosy leather-bound book with a pressed leaf and a little paw print on the cover and a ribbon bookmark. Simple bold readable shape, soft painterly game-icon style matching the attached den image. Centered, transparent background, no text, no frame.
+```
+
+### `icon-sound-on.png` — 512×512
+```
+A small brass hand bell ringing, with three soft curved sound lines next to it. Simple bold readable shape, soft painterly game-icon style matching the attached den image. Centered, transparent background, no text, no frame.
+```
+
+### `icon-sound-off.png` — 512×512
+```
+The same small brass hand bell, still and quiet, with a soft sleepy "shh" feeling: a tiny cloth wrapped around the clapper, no sound lines. Simple bold readable shape, soft painterly game-icon style matching the attached den image. Centered, transparent background, no text, no frame.
+```
