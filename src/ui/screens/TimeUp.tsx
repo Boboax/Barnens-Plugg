@@ -59,7 +59,7 @@ export function TimeUp() {
       <button className="btn btn-primary" onClick={store.leaveChild}>Hejdå Pi!</button>
       {/* Lägret har en egen kort klocka som inte drar av mattetiden — en
           kvällsstund med vännerna är ett mjukt avslut, inte mer skärmtid
-          (3 min, kan inte fyllas på). */}
+          (15 min/dag, kan inte fyllas på). */}
       {child && homeSecondsLeft(child, new Date()) > 0 && (
         <button className="btn btn-quiet" onClick={() => store.go('pet-home')}>Säg godnatt i Kvällslägret</button>
       )}

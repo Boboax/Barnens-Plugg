@@ -84,8 +84,12 @@ export interface PetProgress {
     gör att inget i boden kostar mer än en veckas träning. */
 export const DAILY_PET_COINS = 20
 
-/** Lägret är en kort kvällsstund efter passet, inte en egen spelplats. */
-export const HOME_VISIT_SECONDS = 180
+/** Lägertid per dag, bara efter dagens pass. Höjd från 3 till 15 minuter
+    på förälderns begäran (okt 2026) när lyan blev en lekscen. Tiden är
+    lägrets EGEN klocka: den drar aldrig av mattetiden, och mattetiden tickar
+    inte i lägret (pet-home står inte i TIMED_SCREENS) — så passets arbetstid
+    kan aldrig "väntas ut" här. */
+export const HOME_VISIT_SECONDS = 15 * 60
 
 export const emptyPetProgress = (): PetProgress => ({
   coins: 0,

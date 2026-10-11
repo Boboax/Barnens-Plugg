@@ -18,8 +18,9 @@ import '../../styles/camp.css'
 
    Barnet hittar en vän i världen det just tränat i, och kan sedan klappa
    den, klä sin hjälte och ställa fram saker från handelsboden. Lägret är
-   rent kosmetiskt (princip 3) och har en egen, kort klocka (3 min/dag)
-   som INTE drar av matte-tiden — skärmen står därför inte i TIMED_SCREENS.
+   rent kosmetiskt (princip 3) och har en egen klocka (15 min/dag) som
+   INTE drar av matte-tiden — skärmen står därför inte i TIMED_SCREENS, och
+   mattetiden står still medan barnet är här (ingen "vänta ut passet").
    ============================================================ */
 
 type View = 'camp' | 'shop' | StationId

@@ -128,7 +128,9 @@ publikt för Pages på gratisplanen.
   funktioner som returnerar SAMMA objekt vid nej, så patchChild inte stämplar
   updatedAt). Lägertiden räknas i en ref och sparas var 15:e sekund — skriv
   aldrig hushållet varje sekund. `pet-home` står medvetet INTE i
-  `TIMED_SCREENS` (egen klocka, 3 min/dag).
+  `TIMED_SCREENS` (egen klocka, 15 min/dag — mattetiden står still i
+  lägret, så arbetstiden kan aldrig väntas ut där; lägg den ALDRIG i
+  `TIMED_SCREENS` och låt aldrig lägertid räknas som mattetid).
 - **Bildbudgeten:** PWA:n precachar ALLT i `public/`. `src/art-budget.test.ts`
   faller om `public/art` passerar 20 MB (höjt från 12, okt 2026). Nya bilder som webp, aldrig
   PNG-sekvenser; studier och demobilder hör inte hemma i `public/`.

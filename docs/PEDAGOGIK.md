@@ -193,9 +193,11 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
   att fylla på, en mätare i förklädnad (okt 2026). Inget i lägret
   påverkar rating, upplåsning eller rättning, och inget går att köpa som
   hjälper i matten.
-- **Lägret är en kort kvällsstund, inte en egen spelplats:** 3 minuter per
-  dag, och bara efter dagens pass. Tiden är klocktid och drar inte av
-  mattetiden; den kan inte fyllas på med fler pass. Efter att dagens
+- **Lägret är en kvällsstund efter träningen:** 15 minuter per dag (höjt
+  från 3 när lyan blev en lekscen, förälderns beslut okt 2026), och bara
+  efter dagens pass. Tiden är lägrets egen klocka och drar inte av
+  mattetiden — och mattetiden står still i lägret, så passets arbetstid kan
+  aldrig väntas ut där. Lägertiden kan inte fyllas på med fler pass. Efter att dagens
   mattetid tagit slut kan barnet säga godnatt i lägret om lägertid finns
   kvar — ett mjukt avslut, inte mer skärmtid.
 - **Skattkistan** efter ett starkt pass (≥80 %, ≥6 uppgifter, inte i det

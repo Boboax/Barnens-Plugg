@@ -104,6 +104,15 @@ describe('Kvällslägret: lägertid', () => {
     expect(homeSecondsLeft(withFrog(), nextDay)).toBe(0)
   })
 
+  it('är 15 minuter och rör aldrig mattetiden', () => {
+    expect(HOME_VISIT_SECONDS).toBe(15 * 60)
+    const before = withFrog()
+    const after = spendHomeTime(before, 10 * 60, at)
+    expect(homeSecondsLeft(after, at)).toBe(5 * 60)
+    // Bara lägrets egen klocka ändras — mattetiden (usageSeconds) är orörd.
+    expect(after.usageSeconds).toBe(before.usageSeconds)
+  })
+
   it('kan inte fyllas på genom återbesök eller fler pass samma dag', () => {
     const h = spendHomeTime(withFrog(), HOME_VISIT_SECONDS, at)
     expect(homeSecondsLeft(h, at)).toBe(0)
