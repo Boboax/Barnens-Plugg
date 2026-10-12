@@ -188,7 +188,9 @@ function Camp({ child }: { child: ChildProfile }) {
           speciesId={encounter.species}
           worldId={encounter.worldId}
           onAdopt={(name) => { store.adoptPet(name); setFinding(false) }}
-          onLater={back}
+          // "Vi ses snart igen": utan vän finns inget läger att stanna i —
+          // tillbaka till kartan. Med vänner stängs bara upptäckten.
+          onLater={() => { setFinding(false); if (pets.length === 0) leave() }}
         />
       ) : !showWorkspace ? (
         <section className="camp-welcome card">
