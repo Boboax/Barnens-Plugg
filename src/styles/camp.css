@@ -273,7 +273,7 @@
 .den-pet--hidden { opacity: 0; pointer-events: none; }
 .den-pet--found { z-index: 8; }
 .den-pet__body { width: 100%; height: 100%; transform-origin: center bottom; }
-.den-pet__body .pet-sprite, .den-pet__body .pet-sleep-pose { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.den-pet__body .pet-sprite, .den-pet__body .pet-still, .den-pet__body .pet-strip { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .den-pet__body--hop { animation: den-hop .5s ease-out 2; }
 .den-pet__body--spin { animation: den-spin .8s ease-in-out; }
 .den-pet__body--wiggle { animation: den-wiggle .25s ease-in-out 4; }
@@ -314,7 +314,7 @@
   transform: translate(-50%, -82%); cursor: pointer;
 }
 .den-friend--front { z-index: 4; width: 17%; }
-.den-friend .pet-sprite, .den-friend .pet-sleep-pose { position: relative; width: 100%; height: 100%; object-fit: contain; }
+.den-friend .pet-sprite, .den-friend .pet-still, .den-friend .pet-strip { position: relative; width: 100%; height: 100%; object-fit: contain; }
 .den-friend__bed { position: absolute; left: -12.5%; bottom: -17%; width: 125%; height: 75%; object-fit: contain; }
 
 /* Övre raden och pratbubblan — alltid på pergament (kontrast mot bilden). */
@@ -489,7 +489,6 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
 .pet-sprite-dune-fox { animation-duration: 7.3s; }
 .pet-sprite-reef-axolotl { animation-duration: 6.7s; }
 .pet-sprite-ready.pet-sprite-greeting { animation: pet-pose-greeting 2.2s step-end 1; }
-.pet-sleep-pose { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 5px 3px #0006); }
 .pet-sprite-crystal-dragon { animation-duration: 7.9s; }
 
 /* Etapp 2: tillväxtstadier. Bilderna fyller rutan (~97 %) medan den vuxna
@@ -503,13 +502,43 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
    16-rutors atlas. En sovande vän andas långsamt — aldrig helt stilla.
    (Pausknappen och prefers-reduced-motion stänger av allt, se nedan.) */
 .pet-still {
-  display: block; width: 100%; aspect-ratio: 1; object-fit: contain; transform-origin: center bottom;
+  position: relative; display: block; width: 100%; aspect-ratio: 1; transform-origin: center bottom;
   filter: drop-shadow(0 5px 3px #0006);
 }
+.pet-still img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+/* Magen andas: samma bild en gång till, maskad till nedre halvan med en
+   mjuk övergång (ingen synlig skarv), som sväller och sjunker långsamt. */
+.pet-still__belly {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 62%);
+  mask-image: linear-gradient(to bottom, transparent 42%, #000 62%);
+  transform-origin: 50% 88%; animation: pet-belly 3.2s ease-in-out infinite;
+}
+.pet-still--sleeping .pet-still__belly { animation-duration: 4.6s; }
+.pet-still--stage-1 .pet-still__belly { animation-duration: 2.4s; }
+@keyframes pet-belly { 0%, 100% { transform: scale(1, 1); } 45% { transform: scale(1.04, 1.025); } }
+
+/* Målade bildrutor per handling: fyra rutor i en vågrät remsa. */
+.pet-strip {
+  display: block; width: 100%; aspect-ratio: 1; background-repeat: no-repeat; background-size: 400% 100%;
+  background-position: 0 0; filter: drop-shadow(0 5px 3px #0006);
+}
+.pet-strip--idle { animation: pet-strip-idle 3.6s step-end infinite; }
+.pet-strip--sleep { animation: pet-strip-idle 5.2s step-end infinite; }
+.pet-strip--eat { animation: pet-strip-run .9s steps(4) 3; }
+.pet-strip--pet { animation: pet-strip-run 1.6s steps(4) 2; }
+.pet-strip--play { animation: pet-strip-run .48s steps(4) infinite; }
+.pet-strip--happy { animation: pet-strip-run 1s steps(4) 2; }
+/* Vila: ruta 1 länge (andas in/ut i rutorna 2–3), en blinkning (ruta 4) ibland. */
+@keyframes pet-strip-idle {
+  0% { background-position: 0% 0; } 30% { background-position: 33.333% 0; }
+  55% { background-position: 66.667% 0; } 80% { background-position: 0% 0; }
+  92% { background-position: 100% 0; } 96% { background-position: 0% 0; }
+}
+@keyframes pet-strip-run { from { background-position: 0% 0; } to { background-position: 133.333% 0; } }
 .pet-still--stage-1 { scale: .56; animation: pet-baby 3.2s ease-in-out infinite; }
 .pet-still--stage-2 { scale: .7; animation: pet-young 4.4s ease-in-out infinite; }
 .pet-still--stage-4 { scale: .86; animation: pet-elder 6s ease-in-out infinite, pet-aura 2.8s ease-in-out infinite; }
-.pet-still--sleeping, .pet-sleep-pose { animation: pet-sleep-breathe 4.2s ease-in-out infinite; transform-origin: center bottom; }
+.pet-still--sleeping { animation: pet-sleep-breathe 4.2s ease-in-out infinite; transform-origin: center bottom; }
 .pet-still--stage-4.pet-still--sleeping { animation: pet-sleep-breathe 4.8s ease-in-out infinite, pet-aura 4s ease-in-out infinite; }
 .pet-still--greeting { animation: pet-still-hop .5s ease-out 2; }
 

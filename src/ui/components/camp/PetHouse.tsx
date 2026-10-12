@@ -4,7 +4,7 @@ import { PET_STAGE_NAMES, petSpecies } from '../../../domain/pet-home'
 import { CAMP_CATALOG, catalogItem } from '../../../domain/camp'
 import { worldById } from '../../../domain/worlds'
 import { PetSounds } from '../../pet-sounds'
-import { PetSprite } from './PetSprite'
+import { PetSprite, type PetAction } from './PetSprite'
 import { campIcon, campImage, itemImage } from './campArt'
 import { DEN_ART_READY, DenScene } from './DenScene'
 import { TreatBowl } from './TreatBowl'
@@ -76,6 +76,12 @@ type PeekPhase = 'show' | 'shuffle' | 'guess'
 
 type Reaction = 'hop' | 'spin' | 'wiggle' | 'giggle' | 'purr' | 'chew' | 'stretch' | 'run'
 type Mode = 'free' | 'fetch' | 'peek'
+
+/** Vilken målad rörelse varje reaktion spelar (PetSprite: bildrutor per handling). */
+const REACTION_ACTION: Record<Reaction, PetAction> = {
+  hop: 'happy', spin: 'happy', wiggle: 'happy', giggle: 'happy', stretch: 'idle',
+  purr: 'pet', chew: 'eat', run: 'play',
+}
 
 const TAP_REACTIONS: { kind: Reaction; line: (n: string) => string }[] = [
   { kind: 'hop', line: (n) => `${n} gör en glad hoppsa!` },
@@ -556,7 +562,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
           }}
         >
           <div className={`den-pet__body${reaction ? ` den-pet__body--${reaction.kind}` : ''}`}>
-            <PetSprite species={pet.species} stage={stageOf(pet)} greeting={reaction !== null && reaction.kind !== 'run'} resting={resting} />
+            <PetSprite species={pet.species} stage={stageOf(pet)} action={reaction ? REACTION_ACTION[reaction.kind] : mode === 'fetch' ? 'play' : 'idle'} resting={resting} />
           </div>
           {mums > 0 && <span key={mums} className="den-mums" aria-hidden="true"><b>Mums!</b><i /><i /><i /></span>}
           {resting && <span className="den-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span>}
