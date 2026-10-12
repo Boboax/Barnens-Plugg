@@ -94,21 +94,44 @@ export function nextFriendSpecies(child: ChildProfile): PetSpeciesId | undefined
   return PET_ORDER.find((s) => !pets.some((pet) => pet.species === s))
 }
 
-/** Tillväxt sedan vännen hittades, i behärskade moment: 0–2 unge,
-    3–6 ung, 7–12 vuxen, 13+ följeslagare (startvärden enligt planen). */
-const STAGE_FROM = [0, 3, 7, 13] as const
+/** Tillväxt sedan vännen hittades, i behärskade moment: 0–4 unge,
+    5–11 ung, 12–24 vuxen, 25+ följeslagare. Höjt från 3/7/13 på förälderns
+    begäran (okt 2026): följeslagaren ska vara ett långt mål — ungefär ett
+    halvårs träning — inte något en tioåring når efter några pass. */
+export const STAGE_FROM = [0, 5, 12, 25] as const
 
 /**
- * Vännens stadium. Räknas vid varje rendering och sparas aldrig, så det
- * kan inte bli fel i synk eller backa (behärskade moment tas aldrig bort).
- * En vän från före etapp 2 (saknar masteredAtFound) var redan vuxen i
- * barnets ögon och börjar därför på stadie 3 — den växer, men krymper aldrig.
+ * Vännens stadium. Räknas vid varje rendering, så det aldrig kan bli fel i
+ * synken. Det kan aldrig sjunka under det barnet redan sett (seenStage) —
+ * en vän krymper aldrig, inte ens om gränserna höjs. En vän från före
+ * etapp 2 som ännu inte fått sin startpunkt (settleLegacyPets) är vuxen.
  */
 export function petStage(child: ChildProfile, pet: CampPet): PetStage {
-  const legacy = pet.masteredAtFound === undefined
-  const growth = masteredCount(child) - (pet.masteredAtFound ?? 0)
-  const fromGrowth = (STAGE_FROM.filter((n) => growth >= n).length || 1) as PetStage
-  return legacy ? (Math.max(3, fromGrowth) as PetStage) : fromGrowth
+  if (pet.masteredAtFound === undefined) return Math.max(3, pet.seenStage ?? 3) as PetStage
+  const growth = masteredCount(child) - pet.masteredAtFound
+  const fromGrowth = STAGE_FROM.filter((n) => growth >= n).length || 1
+  return Math.max(fromGrowth, pet.seenStage ?? 1) as PetStage
+}
+
+/**
+ * Vänner från före etapp 2 får en startpunkt: vuxen JUST NU, och sedan
+ * växer de med det barnet lär sig härifrån. Förr räknades alla moment
+ * barnet någonsin behärskat — även de diagnosen placerade det på — så en
+ * tioåringens groda blev följeslagare direkt. Har barnet redan sett sin
+ * vän som följeslagare får den behålla det (en vän krymper aldrig).
+ * Samma objekt om inget behöver ändras.
+ */
+export function settleLegacyPets(child: ChildProfile): ChildProfile {
+  const p = child.petProgress
+  if (!p.pets.some((pet) => pet.masteredAtFound === undefined)) return child
+  const count = masteredCount(child)
+  return withProgress(child, {
+    pets: p.pets.map((pet) => {
+      if (pet.masteredAtFound !== undefined) return pet
+      const keep = pet.seenStage === 4 ? 4 : 3
+      return { ...pet, masteredAtFound: count - STAGE_FROM[keep - 1], seenStage: keep }
+    }),
+  })
 }
 
 /** Har vännen vuxit sedan barnet senast såg den? (för "har växt!"-rutan) */

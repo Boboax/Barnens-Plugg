@@ -16,7 +16,7 @@ import { emptyPetProgress } from '../domain/pet-home'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { mergeHouseholds, pullRemote, pushRemote, syncRound, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
-import { adoptPet, completePetPractice, homeSecondsLeft, markPetGrowthSeen, spendHomeTime } from '../engine/pet-home'
+import { adoptPet, completePetPractice, homeSecondsLeft, markPetGrowthSeen, settleLegacyPets, spendHomeTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
 
 /* ============================================================
@@ -197,6 +197,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           setSyncStatus(e instanceof Error ? e.message : 'Kunde inte nå synktjänsten (offline?)')
         }
+      }
+      // Vänner från före etapp 2 får sin startpunkt för tillväxten (en gång).
+      if (h.children.some((c) => settleLegacyPets(c) !== c)) {
+        h = { ...h, children: h.children.map((c) => {
+          const settled = settleLegacyPets(c)
+          return settled === c ? c : { ...settled, updatedAt: new Date().toISOString() }
+        }) }
       }
       setHousehold(h)
       setLoaded(true)

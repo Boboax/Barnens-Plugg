@@ -195,9 +195,14 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
   hjälper i matten.
 - **Vännerna växer med barnets lärande (etapp 2, okt 2026):** fyra
   stadier (unge, ung, vuxen, följeslagare) räknade ur antalet behärskade
-  moment sedan vännen hittades — aldrig ur poäng, fart eller mynt. Stadiet
-  sparas inte utan räknas fram, och ett moment som går till repetition
-  räknas fortfarande, så en vän krymper aldrig. Nya vänner kommer vid
+  moment sedan vännen hittades — aldrig ur poäng, fart eller mynt: ung vid
+  5, vuxen vid 12 och följeslagare vid 25 (höjt från 3/7/13 efter förälderns
+  invändning: följeslagaren ska vara ett halvårsmål, inte något en tioåring
+  når efter några pass). Vänner från före etapp 2 räknas som vuxna och växer
+  bara med det barnet lär sig därefter — moment som diagnosen placerade
+  barnet på räknas aldrig. Ett moment som går till repetition räknas
+  fortfarande, och stadiet kan aldrig sjunka under det barnet redan sett,
+  så en vän krymper aldrig. Nya vänner kommer vid
   barnets egna milstolpar (första riktigt besegrade årsväktaren, första
   världsbossen, första klarade blixten) i fast ordning — groda, räv,
   axolotl, drake — en i taget. Inget slumpas, så syskon får aldrig
