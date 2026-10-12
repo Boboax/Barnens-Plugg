@@ -494,25 +494,62 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
 
 /* Etapp 2: tillväxtstadier. Bilderna fyller rutan (~97 %) medan den vuxna
    atlasen fyller ~76 %, så stadierna skalas mot fötterna: ungen är liten,
-   följeslagaren lite större än en vuxen. */
+   följeslagaren lite större än en vuxen.
+
+   Varje ålder rör sig på sitt eget sätt, så att de stadier som ännu bara
+   har en målad bild ändå känns levande (förälderns önskan okt 2026):
+   ungen vinglar och studsar ostadigt, den unga är pigg och hoppig,
+   följeslagaren andas lugnt och värdigt i sitt sken. Den vuxna har sin
+   16-rutors atlas. En sovande vän andas långsamt — aldrig helt stilla.
+   (Pausknappen och prefers-reduced-motion stänger av allt, se nedan.) */
 .pet-still {
   display: block; width: 100%; aspect-ratio: 1; object-fit: contain; transform-origin: center bottom;
-  filter: drop-shadow(0 5px 3px #0006); animation: pet-breathe 3.4s ease-in-out infinite;
+  filter: drop-shadow(0 5px 3px #0006);
 }
-.pet-still--stage-1 { scale: .56; }
-.pet-still--stage-2 { scale: .7; }
-.pet-still--stage-4 {
-  /* Följeslagaren: ett pulserande guldsken tills de målade åldrade
-     bilderna finns (beställda okt 2026) — mäktigare, inte bara större. */
-  scale: .86; animation: pet-breathe 3.4s ease-in-out infinite, pet-aura 2.8s ease-in-out infinite;
-}
-.pet-still--sleeping { animation: none; }
+.pet-still--stage-1 { scale: .56; animation: pet-baby 3.2s ease-in-out infinite; }
+.pet-still--stage-2 { scale: .7; animation: pet-young 4.4s ease-in-out infinite; }
+.pet-still--stage-4 { scale: .86; animation: pet-elder 6s ease-in-out infinite, pet-aura 2.8s ease-in-out infinite; }
+.pet-still--sleeping, .pet-sleep-pose { animation: pet-sleep-breathe 4.2s ease-in-out infinite; transform-origin: center bottom; }
+.pet-still--stage-4.pet-still--sleeping { animation: pet-sleep-breathe 4.8s ease-in-out infinite, pet-aura 4s ease-in-out infinite; }
 .pet-still--greeting { animation: pet-still-hop .5s ease-out 2; }
+
+/* Ungen: ostadig liten studs, vinglar åt sidorna, ett tultande steg. */
+@keyframes pet-baby {
+  0%, 100% { transform: translate(0, 0) rotate(0) scale(1, 1); }
+  8% { transform: translate(0, 0) rotate(0) scale(1.07, .92); }
+  16% { transform: translate(0, -9%) rotate(-3deg) scale(.95, 1.07); }
+  24% { transform: translate(0, 0) rotate(0) scale(1.08, .91); }
+  32% { transform: translate(0, 0) rotate(0) scale(1, 1); }
+  48% { transform: translate(-2%, 0) rotate(-6deg) scale(1, 1); }
+  58% { transform: translate(2%, 0) rotate(6deg) scale(1, 1); }
+  68% { transform: translate(0, 0) rotate(-2deg) scale(1.02, .98); }
+  78% { transform: translate(0, 0) rotate(0) scale(1, 1); }
+}
+/* Den unga: andas, lutar sig nyfiket åt sidan, och ett pigg dubbelhopp. */
+@keyframes pet-young {
+  0%, 100% { transform: translate(0, 0) rotate(0) scale(1, 1); }
+  14% { transform: translate(0, 0) rotate(0) scale(1.02, .98); }
+  28% { transform: translate(-3%, 0) rotate(-5deg) scale(1, 1); }
+  40% { transform: translate(-3%, 0) rotate(-5deg) scale(1, 1); }
+  50% { transform: translate(0, 0) rotate(0) scale(1, 1); }
+  66% { transform: translate(0, 0) rotate(0) scale(1.05, .94); }
+  72% { transform: translate(0, -12%) rotate(2deg) scale(.97, 1.05); }
+  78% { transform: translate(0, 0) rotate(0) scale(1.05, .95); }
+  84% { transform: translate(0, -7%) rotate(-2deg) scale(.98, 1.03); }
+  90% { transform: translate(0, 0) rotate(0) scale(1.03, .97); }
+}
+/* Följeslagaren: djupa, lugna andetag och en långsam, värdig gungning. */
+@keyframes pet-elder {
+  0%, 100% { transform: rotate(0) scale(1, 1); }
+  25% { transform: rotate(-1.5deg) scale(1.025, .985); }
+  50% { transform: rotate(0) scale(1, 1); }
+  75% { transform: rotate(1.5deg) scale(1.025, .985); }
+}
+@keyframes pet-sleep-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.012, 1.03); } }
 @keyframes pet-aura {
   0%, 100% { filter: drop-shadow(0 5px 3px #0006) drop-shadow(0 0 6px rgba(255, 214, 120, .55)); }
   50% { filter: drop-shadow(0 5px 3px #0006) drop-shadow(0 0 16px rgba(255, 214, 120, .95)); }
 }
-@keyframes pet-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.02, .98); } }
 @keyframes pet-still-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-10%); } }
 
 @keyframes pet-pose-idle {

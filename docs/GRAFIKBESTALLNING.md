@@ -742,3 +742,42 @@ The same small lilac crystal dragon with violet crystal horns and spikes, amber 
 ```
 The same small lilac crystal dragon with violet crystal horns and spikes, amber eyes, small wings and a curled tail as in the attached reference, now shown as a grand crystal dragon: big wings spread proudly, tall glowing crystal horns, shining crystal plates on chest and back like armour, a long elegant tail with a crystal tip, a regal confident pose with a soft violet glow and sparkles. Powerful and majestic, still warm and friendly — never scary. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 95 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
 ```
+
+## Tillägg 4 (okt 2026) · Rörelser för varje ålder (12)
+
+Den vuxna vännen har en rörelseatlas med 16 bildrutor (blinkar, tittar,
+puffar, myser) — se https://boboax.github.io/Barnens-Plugg/art/camp/woodland-frog-motion-v1.webp.
+Unge, ung och följeslagare har i dag bara EN bild var och känns därför
+stela. Leverera för varje ålder ett **poseark**: en bild med fyra poser i ett
+2×2-rutnät. Appen bygger sedan rörelsen av poserna (blinkar, tittar åt
+sidan, blir glad), på samma sätt som den vuxna.
+
+**Förutsättning:** gör detta EFTER Tillägg 3 (`*-age-*.png`) och använd den
+vakna åldersbilden som referens, så att djuret är exakt detsamma.
+
+**Format:** `{art}-age-{1|2|4}-poses.png`, 2048×2048, transparent bakgrund,
+fyra lika stora rutor (1024×1024 var). Djuret står på exakt samma plats och i
+samma storlek i alla fyra rutor — fötterna på samma höjd, samma vinkel —
+bara ansikte, huvud och lite av kroppen ändras. Ingen text, inga ramar eller
+linjer mellan rutorna.
+
+| Ruta | Pose |
+|---|---|
+| Uppe till vänster | Grundpose (samma som åldersbilden) |
+| Uppe till höger | Blinkar — ögonen glatt stängda, i övrigt identisk |
+| Nere till vänster | Tittar nyfiket åt sidan, huvudet lite vridet |
+| Nere till höger | Glad — munnen öppen i ett leende, lite upprest |
+
+Rörelsen ska passa åldern: ungen får gärna vara lite vinglig och klumpig
+(öronen/gälarna åt olika håll), den unga pigg, följeslagaren lugn och värdig.
+
+**Filer (12):**
+`woodland-frog-age-1-poses.png`, `woodland-frog-age-2-poses.png`, `woodland-frog-age-4-poses.png`,
+`dune-fox-age-1-poses.png`, `dune-fox-age-2-poses.png`, `dune-fox-age-4-poses.png`,
+`reef-axolotl-age-1-poses.png`, `reef-axolotl-age-2-poses.png`, `reef-axolotl-age-4-poses.png`,
+`crystal-dragon-age-1-poses.png`, `crystal-dragon-age-2-poses.png`, `crystal-dragon-age-4-poses.png`.
+
+Prompt (byt art och ålder, och bifoga den vakna åldersbilden):
+```
+Using the attached image of this exact character at this exact age as the reference, create one 2048×2048 image divided into a 2×2 grid of four equal 1024×1024 cells with a transparent background and no lines between them. The character is identical in every cell — same size, same position, feet at the same height, same angle — only the face, head and a little of the body change: top-left the normal pose (same as the reference); top-right blinking with eyes happily closed, otherwise identical; bottom-left looking curiously to the side with the head slightly turned; bottom-right happy with an open-mouthed smile, standing a little taller. Match the character's age in how it moves (baby: slightly wobbly and clumsy; young: lively; guardian: calm and dignified). Same painterly style and lighting as the reference. No text, no frames.
+```
