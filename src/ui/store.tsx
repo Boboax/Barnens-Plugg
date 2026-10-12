@@ -16,7 +16,7 @@ import { emptyPetProgress } from '../domain/pet-home'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { mergeHouseholds, pullRemote, pushRemote, syncRound, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
-import { adoptPet, completePetPractice, homeSecondsLeft, markPetGrowthSeen, settleLegacyPets, spendHomeTime } from '../engine/pet-home'
+import { adoptPet, completePetPractice, dismissFreshStart, homeSecondsLeft, markPetGrowthSeen, restartPetGrowth, spendHomeTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
 
 /* ============================================================
@@ -108,6 +108,8 @@ interface StoreValue {
   completePetPractice(completed: number, planned: number, worldId: string): void
   /** Barnet har sett att vännen växt ("har växt!"-rutan visas inte igen). */
   markPetGrowthSeen(petId: string): void
+  /** Barnet har läst rutan "växer upp med dig". */
+  dismissPetFreshStart(petId: string): void
   adoptPet(name: string): void
   /** Bokför lägertid i klumpar (PetHomeScreen samlar sekunderna). */
   spendHomeTime(seconds: number): void
@@ -198,10 +200,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           setSyncStatus(e instanceof Error ? e.message : 'Kunde inte nå synktjänsten (offline?)')
         }
       }
-      // Vänner från före etapp 2 får sin startpunkt för tillväxten (en gång).
-      if (h.children.some((c) => settleLegacyPets(c) !== c)) {
+      // Vänner från innan tillväxtreglerna startas om som ungar (en gång).
+      if (h.children.some((c) => restartPetGrowth(c) !== c)) {
         h = { ...h, children: h.children.map((c) => {
-          const settled = settleLegacyPets(c)
+          const settled = restartPetGrowth(c)
           return settled === c ? c : { ...settled, updatedAt: new Date().toISOString() }
         }) }
       }
@@ -535,6 +537,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     completePetPractice: (completed, planned, worldId) => {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => completePetPractice(c, completed, planned, worldId, new Date()))
+    },
+
+    dismissPetFreshStart: (petId) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => dismissFreshStart(c, petId))
     },
 
     markPetGrowthSeen: (petId) => {

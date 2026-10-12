@@ -100,43 +100,57 @@ export function nextFriendSpecies(child: ChildProfile): PetSpeciesId | undefined
     halvårs träning — inte något en tioåring når efter några pass. */
 export const STAGE_FROM = [0, 5, 12, 25] as const
 
+/** Aktuell version av tillväxtreglerna (CampPet.growthV). */
+export const GROWTH_VERSION = 2
+
 /**
  * Vännens stadium. Räknas vid varje rendering, så det aldrig kan bli fel i
- * synken. Det kan aldrig sjunka under det barnet redan sett (seenStage) —
- * en vän krymper aldrig, inte ens om gränserna höjs. En vän från före
- * etapp 2 som ännu inte fått sin startpunkt (settleLegacyPets) är vuxen.
+ * synken, och kan aldrig sjunka under det barnet redan sett (seenStage) —
+ * en vän krymper aldrig, inte ens om gränserna höjs. En vän som ännu inte
+ * startats om enligt dagens regler (restartPetGrowth) visas som unge.
  */
 export function petStage(child: ChildProfile, pet: CampPet): PetStage {
-  if (pet.masteredAtFound === undefined) return Math.max(3, pet.seenStage ?? 3) as PetStage
+  if (pet.growthV !== GROWTH_VERSION || pet.masteredAtFound === undefined) return 1
   const growth = masteredCount(child) - pet.masteredAtFound
   const fromGrowth = STAGE_FROM.filter((n) => growth >= n).length || 1
   return Math.max(fromGrowth, pet.seenStage ?? 1) as PetStage
 }
 
 /**
- * Vänner från före etapp 2 får en startpunkt: vuxen JUST NU, och sedan
- * växer de med det barnet lär sig härifrån. Förr räknades alla moment
- * barnet någonsin behärskat — även de diagnosen placerade det på — så en
- * tioåringens groda blev följeslagare direkt. Har barnet redan sett sin
- * vän som följeslagare får den behålla det (en vän krymper aldrig).
- * Samma objekt om inget behöver ändras.
+ * Förälderns beslut (okt 2026): ALLA vänner växer upp tillsammans med
+ * barnet — även de som fanns innan tillväxten byggdes. En sådan vän startas
+ * om EN gång som unge, med tillväxten räknad från nu (moment som diagnosen
+ * placerade barnet på räknas aldrig), och barnet får en vänlig ruta som
+ * förklarar varför ("växer upp med dig") så att det inte känns som att
+ * vännen krympt. Samma objekt om inget behöver ändras.
  */
-export function settleLegacyPets(child: ChildProfile): ChildProfile {
+export function restartPetGrowth(child: ChildProfile): ChildProfile {
   const p = child.petProgress
-  if (!p.pets.some((pet) => pet.masteredAtFound === undefined)) return child
+  if (!p.pets.some((pet) => pet.growthV !== GROWTH_VERSION)) return child
   const count = masteredCount(child)
   return withProgress(child, {
     pets: p.pets.map((pet) => {
-      if (pet.masteredAtFound !== undefined) return pet
-      const keep = pet.seenStage === 4 ? 4 : 3
-      return { ...pet, masteredAtFound: count - STAGE_FROM[keep - 1], seenStage: keep }
+      if (pet.growthV === GROWTH_VERSION) return pet
+      // Hittad som unge under etapp 2:s första dag (startpunkt finns, aldrig
+      // sedd som vuxen) — behåll startpunkten, ingen ruta behövs.
+      const shownAsAdult = pet.masteredAtFound === undefined || (pet.seenStage ?? 1) >= 3
+      return shownAsAdult
+        ? { ...pet, masteredAtFound: count, seenStage: 1, growthV: GROWTH_VERSION, freshStart: true }
+        : { ...pet, growthV: GROWTH_VERSION }
     }),
   })
 }
 
+/** Barnet har läst rutan om omstarten. */
+export function dismissFreshStart(child: ChildProfile, petId: string): ChildProfile {
+  const p = child.petProgress
+  if (!p.pets.some((pet) => pet.id === petId && pet.freshStart)) return child
+  return withProgress(child, { pets: p.pets.map((pet) => (pet.id === petId ? { ...pet, freshStart: undefined } : pet)) })
+}
+
 /** Har vännen vuxit sedan barnet senast såg den? (för "har växt!"-rutan) */
 export const petGrewUnseen = (child: ChildProfile, pet: CampPet): boolean =>
-  petStage(child, pet) > (pet.seenStage ?? (pet.masteredAtFound === undefined ? 3 : 1))
+  petStage(child, pet) > (pet.seenStage ?? 1)
 
 /** Barnet har sett att vännen växt. Samma objekt om inget ändras. */
 export function markPetGrowthSeen(child: ChildProfile, petId: string): ChildProfile {
@@ -164,6 +178,7 @@ export function adoptPet(child: ChildProfile, name: string, at: Date): ChildProf
     // Tillväxten räknas härifrån: varje ny vän börjar som unge.
     masteredAtFound: masteredCount(child),
     seenStage: 1,
+    growthV: GROWTH_VERSION,
   }
   return withProgress(child, { pets: [...p.pets, pet], encounter: undefined })
 }

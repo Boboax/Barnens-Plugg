@@ -165,8 +165,10 @@ function Camp({ child }: { child: ChildProfile }) {
   }
 
   const showWorkspace = !discovering && pets.length > 0
-  // "har växt!" — en vän i taget, och bara när barnet faktiskt är i lägret.
-  const grown = showWorkspace ? pets.find((pet) => petGrewUnseen(child, pet)) : undefined
+  // Omstarten först ("växer upp med dig"), sedan "har växt!" — en vän och
+  // en ruta i taget, och bara när barnet faktiskt är i lägret.
+  const fresh = showWorkspace ? pets.find((pet) => pet.freshStart) : undefined
+  const grown = showWorkspace && !fresh ? pets.find((pet) => petGrewUnseen(child, pet)) : undefined
   return (
     // Lyan är en lekscen som fyller skärmen — sidan scrollar då inte, så
     // vännen och sakerna i rummet alltid syns samtidigt.
@@ -180,6 +182,7 @@ function Camp({ child }: { child: ChildProfile }) {
         <span className="camp-wallet" aria-label={`${coins} mynt`}>● {coins} mynt</span>
       </header>
 
+      {fresh && <FreshStartCard pet={fresh} onDone={() => store.dismissPetFreshStart(fresh.id)} />}
       {grown && <GrowthCard pet={grown} stage={petStage(child, grown)} onDone={() => store.markPetGrowthSeen(grown.id)} />}
 
       {discovering && encounter ? (
@@ -267,6 +270,27 @@ function Camp({ child }: { child: ChildProfile }) {
         </div>
       )}
     </main>
+  )
+}
+
+/** När en vän som funnits länge startas om som unge (förälderns beslut okt
+    2026): sägs som något fint — vännen växer nu upp TILLSAMMANS med barnet
+    — så att det aldrig känns som att den krympt eller att barnet gjort fel. */
+function FreshStartCard({ pet, onDone }: { pet: CampPet; onDone(): void }) {
+  const text = `${pet.name} vill växa upp tillsammans med dig! Från och med nu växer ${pet.name} när du lär dig nya saker i matten. Just nu är ${pet.name} en liten unge — lär dig fem nya saker, så blir ${pet.name} större.`
+  return (
+    <div className="camp-growth" role="dialog" aria-label={`${pet.name} växer upp med dig`}>
+      <div className="camp-growth__card">
+        <span className="camp-eyebrow">{PET_STAGE_NAMES[1]}</span>
+        <img src={petStageImage(pet.species, 1)} alt="" />
+        <h2 className="display">{pet.name} växer upp med dig!</h2>
+        <p>{text.slice(text.indexOf('Från och med'))}</p>
+        <div className="camp-growth__actions">
+          <button className="chip" onClick={() => speak(text)}>Lyssna</button>
+          <button className="btn btn-primary" onClick={onDone}>Vad roligt!</button>
+        </div>
+      </div>
+    </div>
   )
 }
 

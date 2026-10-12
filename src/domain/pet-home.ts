@@ -61,12 +61,17 @@ export interface CampPet {
   /** Omsorg är minnen, inte behov: djuren svälter aldrig och inget går
       förlorat om barnet är borta en vecka. Fälten styr bara repliker. */
   care?: { resting?: boolean; lastFedAt?: string; lastPettedAt?: string; lastPlayedAt?: string }
-  /** Antal behärskade moment när vännen hittades — tillväxten räknas från
-      här, så en ny vän alltid börjar som unge. Saknas = vän från före
-      etapp 2 (den börjar som vuxen och krymper aldrig). */
+  /** Antal behärskade moment när tillväxten startade — den räknas härifrån,
+      så en vän alltid börjar som unge. */
   masteredAtFound?: number
   /** Högsta stadiet barnet sett "har växt!"-rutan för (upprepas inte). */
   seenStage?: number
+  /** 2 = tillväxten följer reglerna från okt 2026 (alla vänner börjar som
+      unge). Saknas = vän från innan; den startas om som unge vid nästa
+      laddning (restartPetGrowth). */
+  growthV?: number
+  /** Väntande ruta "{namn} växer upp med dig!" efter omstarten. */
+  freshStart?: boolean
 }
 
 /** Ett ägt föremål. `id` är köpets id (purchaseId) — det gör köpet

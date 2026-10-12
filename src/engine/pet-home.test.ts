@@ -3,7 +3,7 @@ import type { ChildProfile } from '../domain/types'
 import { DAILY_PET_COINS, HOME_VISIT_SECONDS, emptyPetProgress } from '../domain/pet-home'
 import {
   adoptPet, completePetPractice, friendsEarned, homeSecondsLeft, markPetGrowthSeen, nextFriendSpecies, petDay,
-  petGrewUnseen, petStage, settleLegacyPets, spendHomeTime,
+  dismissFreshStart, petGrewUnseen, petStage, restartPetGrowth, spendHomeTime,
 } from './pet-home'
 import type { SkillState } from '../domain/types'
 
@@ -207,28 +207,46 @@ describe('Etapp 2: vännerna växer med barnets lärande', () => {
     expect(petStage({ ...c, skills: review }, pet)).toBe(petStage(c, pet))
   })
 
-  it('en vän från före etapp 2 är vuxen — och växer bara med det barnet lär sig härifrån', () => {
+  it('befintliga vänner startas om som ungar och växer med det barnet lär sig härifrån', () => {
     const c = withFrog()
-    const legacy = { ...c.petProgress.pets[0], masteredAtFound: undefined, seenStage: undefined }
-    // Tioåringen med 40 behärskade moment (många från diagnosen) får INTE en följeslagare direkt.
+    // Grodan från före tillväxten (ingen startpunkt), hos en tioåring med 40 behärskade moment.
+    const legacy = { ...c.petProgress.pets[0], masteredAtFound: undefined, seenStage: undefined, growthV: undefined }
     const veteran: ChildProfile = { ...c, skills: mastered(40), petProgress: { ...c.petProgress, pets: [legacy] } }
-    expect(petStage(veteran, legacy)).toBe(3)
-    const settled = settleLegacyPets(veteran)
-    const frog = settled.petProgress.pets[0]
-    expect(petStage(settled, frog)).toBe(3)
-    expect(petGrewUnseen(settled, frog)).toBe(false)
-    // 12 nya behärskade moment senare (25 sedan "vuxen-starten" på 12) → följeslagare.
-    expect(petStage({ ...settled, skills: mastered(40 + 12) }, frog)).toBe(3)
-    expect(petStage({ ...settled, skills: mastered(40 + 13) }, frog)).toBe(4)
-    expect(settleLegacyPets(settled)).toBe(settled)
+    const restarted = restartPetGrowth(veteran)
+    const frog = restarted.petProgress.pets[0]
+    expect(petStage(restarted, frog)).toBe(1)
+    expect(frog.freshStart).toBe(true)
+    expect(petGrewUnseen(restarted, frog)).toBe(false)
+    // Diagnosens moment räknas inte — men fem NYA behärskade gör grodan ung.
+    expect(petStage({ ...restarted, skills: mastered(44) }, frog)).toBe(1)
+    expect(petStage({ ...restarted, skills: mastered(45) }, frog)).toBe(2)
+    expect(petStage({ ...restarted, skills: mastered(65) }, frog)).toBe(4)
+    expect(restartPetGrowth(restarted)).toBe(restarted)
   })
 
-  it('en vän barnet redan sett som följeslagare får behålla det — en vän krymper aldrig', () => {
+  it('även en vän som visats som vuxen eller följeslagare i går startas om — med rutan', () => {
     const c = withFrog()
-    const seenCompanion = { ...c.petProgress.pets[0], masteredAtFound: undefined, seenStage: 4 }
-    const kid4: ChildProfile = { ...c, skills: mastered(15), petProgress: { ...c.petProgress, pets: [seenCompanion] } }
-    expect(petStage(settleLegacyPets(kid4), settleLegacyPets(kid4).petProgress.pets[0])).toBe(4)
-    // Och höjda gränser kan aldrig ta ett sett stadium ifrån vännen.
+    const shownCompanion = { ...c.petProgress.pets[0], masteredAtFound: 3, seenStage: 4, growthV: undefined }
+    const kid4: ChildProfile = { ...c, skills: mastered(15), petProgress: { ...c.petProgress, pets: [shownCompanion] } }
+    const restarted = restartPetGrowth(kid4)
+    expect(petStage(restarted, restarted.petProgress.pets[0])).toBe(1)
+    expect(restarted.petProgress.pets[0].freshStart).toBe(true)
+    const read = dismissFreshStart(restarted, shownCompanion.id)
+    expect(read.petProgress.pets[0].freshStart).toBeUndefined()
+    expect(dismissFreshStart(read, shownCompanion.id)).toBe(read)
+  })
+
+  it('en vän som hittades som unge behåller sin startpunkt och får ingen ruta', () => {
+    const c = { ...withFrog(), skills: mastered(2) }
+    const youngOne = { ...c.petProgress.pets[0], masteredAtFound: 0, seenStage: 1, growthV: undefined }
+    const restarted = restartPetGrowth({ ...c, petProgress: { ...c.petProgress, pets: [youngOne] } })
+    expect(restarted.petProgress.pets[0].masteredAtFound).toBe(0)
+    expect(restarted.petProgress.pets[0].freshStart).toBeFalsy()
+    expect(petStage(restarted, restarted.petProgress.pets[0])).toBe(1)
+  })
+
+  it('ett stadium barnet sett försvinner aldrig, inte ens om gränserna höjs', () => {
+    const c = withFrog()
     const grownYoung = { ...c.petProgress.pets[0], masteredAtFound: 0, seenStage: 2 }
     expect(petStage({ ...c, skills: mastered(3) }, grownYoung)).toBe(2)
   })
