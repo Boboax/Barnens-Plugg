@@ -94,9 +94,9 @@ export const MOMENT_INTROS: Record<string, MomentIntro> = {
     visual: { kind: 'tallinje', min: 0, max: 20, hops: [14, 17] },
   },
   'klockan-hel-halv': {
-    idea: 'Den korta visaren visar timmen. När den långa visaren pekar rakt upp är klockan hel, och när den pekar rakt ner är klockan halv.',
-    say: 'Lång visare uppåt: hel. Lång visare nedåt: halv.',
-    visual: { kind: 'klocka', hours: 3, minutes: 0 },
+    idea: 'Korta visaren visar timmen. Långa visaren rakt upp: klockan är hel. Rakt ner: klockan är halv — halvvägs till nästa timme, så halv fyra är mellan tre och fyra.',
+    say: 'Lång visare uppåt: hel. Nedåt: halv. Halv fyra kommer före fyra.',
+    visual: { kind: 'klocka', hours: 3, minutes: 30 },
   },
   'tiotalsovergang-20': {
     idea: 'När du går förbi tio, gå via tian. 8 + 5: först 2 till tio (tiokamraten!), sedan de 3 som är kvar — 13.',
@@ -120,8 +120,8 @@ export const MOMENT_INTROS: Record<string, MomentIntro> = {
     visual: { kind: 'tiobas', groups: [{ tens: 4, ones: 7 }] },
   },
   'klockan-kvart': {
-    idea: 'En timme kan delas i fyra kvartar, som en tårta i fyra bitar. Kvart över: den långa visaren pekar på 3. Kvart i: den pekar på 9.',
-    visual: { kind: 'klocka', hours: 2, minutes: 15 },
+    idea: 'En timme är fyra kvartar, som en tårta i fyra bitar. Långa visaren på 3: kvart över — en kvart har gått. På 9: kvart i — en kvart kvar till nästa timme.',
+    visual: { kind: 'klocka', hours: 2, minutes: 45 },
   },
   'add-sub-0-100': {
     idea: 'Räkna tiotal för sig och ental för sig. 34 + 25: tre tiotal och två tiotal blir fem, fyra och fem ental blir nio — 59.',
@@ -174,8 +174,8 @@ export const MOMENT_INTROS: Record<string, MomentIntro> = {
     visual: { kind: 'tiobas', groups: [{ hundreds: 2, tens: 3, ones: 4 }] },
   },
   'klockan-minuter': {
-    idea: 'Varje siffra på urtavlan är fem minuter för den långa visaren. Räkna i femsteg: 1 är 5 minuter, 2 är 10, 3 är 15 …',
-    visual: { kind: 'klocka', hours: 4, minutes: 20 },
+    idea: 'För långa visaren är varje siffra fem minuter: 1 är 5, 2 är 10, 4 är 20. Nära halv säger vi fem i halv (25) och fem över halv (35). Efter halv räknar vi hur mycket som är kvar.',
+    visual: { kind: 'klocka', hours: 4, minutes: 25 },
   },
   'mult-div-samband': {
     idea: 'Gånger och delat hör ihop. Vet du att 6 × 7 = 42, vet du också att 42 delat med 7 är 6.',

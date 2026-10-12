@@ -77,6 +77,28 @@ const klockText = (h: number, m: number): string => {
   return `${min[60 - m] ?? 60 - m} i ${next}`
 }
 
+/**
+ * Förklaringen efter fel svar säger VARFÖR just den här tiden heter som den
+ * heter — förr stod samma rad för alla tider ("den korta visaren pekar på
+ * timmen …"), vilket aldrig förklarade det svåra: att "halv fyra" är 3:30
+ * (halvvägs TILL fyra), att "kvart i" och "fem i halv" räknar mot nästa
+ * timme, och att den långa visaren räknas i femsteg.
+ */
+function klockForklaring(h: number, m: number): string {
+  const names = ['tolv', 'ett', 'två', 'tre', 'fyra', 'fem', 'sex', 'sju', 'åtta', 'nio', 'tio', 'elva'] as const
+  const hh = names[h % 12]
+  const next = names[(h + 1) % 12]
+  const svar = klockText(h, m)
+  if (m === 0) return `Långa visaren pekar rakt upp — då är klockan hel. Korta visaren pekar på ${h}: ${svar}.`
+  if (m === 30) return `Långa visaren pekar rakt ner — en halv timme har gått sedan ${hh}. Korta visaren står mitt emellan ${h} och ${(h % 12) + 1}. Halv betyder halvvägs TILL nästa timme: ${svar}.`
+  if (m === 15) return `Långa visaren pekar på 3 — en kvart (15 minuter) har gått sedan ${hh}: ${svar}.`
+  if (m === 45) return `Långa visaren pekar på 9 — en kvart är kvar till ${next}: ${svar}.`
+  if (m === 25) return `Långa visaren pekar på 5, det är 25 minuter — fem minuter innan halv: ${svar}.`
+  if (m === 35) return `Långa visaren pekar på 7, det är 35 minuter — fem minuter efter halv: ${svar}.`
+  if (m < 30) return `Långa visaren pekar på ${m / 5}. Räkna femsteg: ${m} minuter har gått sedan ${hh}: ${svar}.`
+  return `Långa visaren pekar på ${m / 5}, det är ${m} minuter — ${60 - m} minuter kvar till ${next}: ${svar}.`
+}
+
 function makeKlocka(momentId: string, minutePool: (level: DifficultyLevel, rng: Rng) => number): TaskGenerator {
   const id = `gen.${momentId}`
   return {
@@ -98,7 +120,7 @@ function makeKlocka(momentId: string, minutePool: (level: DifficultyLevel, rng: 
         correct,
         distractors: [...new Set(wrongs)].slice(0, 3).map((w) => [w, null] as [string, null]),
         visual: { kind: 'klocka', hours: h, minutes: m },
-        explanation: `Den korta visaren pekar på timmen, den långa på minuterna: ${correct}.`,
+        explanation: klockForklaring(h, m),
       })
     },
   }
