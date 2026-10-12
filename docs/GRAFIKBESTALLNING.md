@@ -583,7 +583,7 @@ The same small brass hand bell, still and quiet, with a soft sleepy "shh" feelin
 ```
 
 
-## Tillägg 3 (okt 2026) · Vännerna åldras och blir mäktigare (24)
+## Tillägg 3 (okt 2026) · Vännerna åldras och blir mäktigare (24) — LEVERERAD 12 okt, inlagd
 
 De förra stadiebilderna (`*-stage-*.png`) blev nästan samma djur i olika
 storlek, så i appen ser det ut som att vännen bara skalas upp. Nu ska varje

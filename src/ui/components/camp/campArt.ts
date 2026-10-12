@@ -31,11 +31,12 @@ export const hasPetAnimation = (species: PetSpeciesId, stage: PetStage, action: 
 export const petAnimation = (species: PetSpeciesId, stage: PetStage, action: string): string =>
   `${base}art/camp/anim/${species}-age-${stage}-${action}.webp`
 
-/** Bilden för ett tillväxtstadium (etapp 2). Stadie 3 är den vuxna
-    vännens befintliga stillbild/sovbild. */
+/** Bilden för ett tillväxtstadium (etapp 2). Stadie 1, 2 och 4 är
+    åldersbilderna (bebis, tonåring, väktare — GRAFIKBESTALLNING Tillägg 3);
+    stadie 3 är den vuxna vännens befintliga stillbild/sovbild. */
 export const petStageImage = (species: PetSpeciesId, stage: PetStage, sleeping = false): string =>
   stage === 3
     ? campImage(sleeping ? `${species}-sleep-v1` : `${species}-poster-v1`)
-    : campImage(`${species}-stage-${stage}${sleeping ? '-sleep' : ''}`)
+    : campImage(`${species}-age-${stage}${sleeping ? '-sleep' : ''}`)
 
 export const worldImage = (worldId: string): string => `${base}art/world/${worldId}.webp`

@@ -535,9 +535,12 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
   92% { background-position: 100% 0; } 96% { background-position: 0% 0; }
 }
 @keyframes pet-strip-run { from { background-position: 0% 0; } to { background-position: 133.333% 0; } }
-.pet-still--stage-1 { scale: .56; animation: pet-baby 3.2s ease-in-out infinite; }
-.pet-still--stage-2 { scale: .7; animation: pet-young 4.4s ease-in-out infinite; }
-.pet-still--stage-4 { scale: .86; animation: pet-elder 6s ease-in-out infinite, pet-aura 2.8s ease-in-out infinite; }
+/* Åldersbilderna (Tillägg 3) är målade i rätt storlek i rutan — ungen
+   fyller ~45 % av höjden, den unga ~65 %, följeslagaren ~95 % — så de
+   skalas inte här; då blir de aldrig suddiga och åldern syns i målningen. */
+.pet-still--stage-1 { animation: pet-baby 3.2s ease-in-out infinite; }
+.pet-still--stage-2 { animation: pet-young 4.4s ease-in-out infinite; }
+.pet-still--stage-4 { animation: pet-elder 6s ease-in-out infinite, pet-aura 2.8s ease-in-out infinite; }
 .pet-still--sleeping { animation: pet-sleep-breathe 4.2s ease-in-out infinite; transform-origin: center bottom; }
 .pet-still--stage-4.pet-still--sleeping { animation: pet-sleep-breathe 4.8s ease-in-out infinite, pet-aura 4s ease-in-out infinite; }
 .pet-still--greeting { animation: pet-still-hop .5s ease-out 2; }
