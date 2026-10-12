@@ -15,6 +15,7 @@ import { SoundToggle } from '../components/SoundToggle'
 import { Icon, HeroImg } from '../components/Icon'
 import { Pi } from '../components/Pi'
 import { PiVisar } from '../components/PiVisar'
+import { momentIntro } from '../../domain/intros'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
 import { WorldGiftChest } from '../components/WorldGiftChest'
 import { todayISO, useStore } from '../store'
@@ -86,6 +87,8 @@ export function SessionScreen() {
   const scratchHandle = useRef<ScratchPadHandle>()
   // "Pi visar först": lösta exempel innan ett helt nytt moment övas.
   const [introDone, setIntroDone] = useState(false)
+  // "Visa igen": barnet kan när som helst be Pi förklara momentet en gång till.
+  const [replayFor, setReplayFor] = useState<string>()
   const introMomentId = useMemo(() => {
     if (!child) return undefined
     const firstNew = slots.find((s) => s.kind === 'nytt')
@@ -339,7 +342,7 @@ export function SessionScreen() {
   const moment = momentById(slot.momentId)
   // Uppgiftens identitet (samma nyckel som TaskRunner) — Pi-samtalet knyts hit.
   const taskKey = `${index}-${task.ref.seed}`
-  const showIntro = slot.kind === 'nytt' && slot.momentId === introMomentId && !introDone
+  const showIntro = (slot.kind === 'nytt' && slot.momentId === introMomentId && !introDone) || replayFor === slot.momentId
   const chatAvailable = chatReadyFor(child)
   // Världstema bakom uppgiften: den målade världsbilden syns runt kanterna,
   // men en varm pergamentslöja är tät i mitten så uppgiftstexten är knivskarp.
@@ -381,9 +384,13 @@ export function SessionScreen() {
         <span className="chip" style={{ color: 'var(--muted)' }}>
           {showIntro ? 'Pi visar först' : `${PART_LABEL[slot.kind]} · ${moment.title}`}
         </span>
+        {/* Introduktionen går att se igen — förr visades den en gång och sedan aldrig mer. */}
+        {!showIntro && slot.kind === 'nytt' && momentIntro(slot.momentId) && (
+          <button className="chip" onClick={() => setReplayFor(slot.momentId)}>💡 Visa igen</button>
+        )}
       </div>
       {showIntro ? (
-        <PiVisar momentId={slot.momentId} onDone={() => setIntroDone(true)} />
+        <PiVisar key={`${slot.momentId}-${replayFor ?? ''}`} momentId={slot.momentId} onDone={() => { setIntroDone(true); setReplayFor(undefined) }} />
       ) : (
       <TaskRunner
         key={`${index}-${task.ref.seed}`}
