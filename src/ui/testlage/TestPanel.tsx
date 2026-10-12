@@ -5,7 +5,7 @@ import { WORLDS } from '../../domain/worlds'
 import { yearLabel } from '../../domain/guardians'
 import { BLIXT_TESTS } from '../../engine/blixt'
 import { currentMomentId } from '../../engine/progress'
-import { masteredCount, petDay, petStage } from '../../engine/pet-home'
+import { STAGE_FROM, masteredCount, petDay, petStage } from '../../engine/pet-home'
 import { PET_ORDER, emptyPetProgress } from '../../domain/pet-home'
 import { useStore } from '../store'
 
@@ -62,7 +62,7 @@ export function TestPanel({ child }: { child: ChildProfile }) {
                 ...c.petProgress,
                 pets: c.petProgress.pets.map((p) => {
                   const next = Math.min(4, petStage(c, p) + 1)
-                  return { ...p, masteredAtFound: masteredCount(c) - [0, 3, 7, 13][next - 1], seenStage: p.seenStage ?? petStage(c, p) }
+                  return { ...p, masteredAtFound: masteredCount(c) - STAGE_FROM[next - 1], seenStage: p.seenStage ?? petStage(c, p) }
                 }),
               },
             }))}>Vännerna växer ett steg</button>
