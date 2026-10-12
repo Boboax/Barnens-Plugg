@@ -198,11 +198,12 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
   moment sedan vännen hittades — aldrig ur poäng, fart eller mynt: ung vid
   5, vuxen vid 12 och följeslagare vid 25 (höjt från 3/7/13 efter förälderns
   invändning: följeslagaren ska vara ett halvårsmål, inte något en tioåring
-  når efter några pass). Vänner från före etapp 2 räknas som vuxna och växer
-  bara med det barnet lär sig därefter — moment som diagnosen placerade
-  barnet på räknas aldrig. Ett moment som går till repetition räknas
-  fortfarande, och stadiet kan aldrig sjunka under det barnet redan sett,
-  så en vän krymper aldrig. Nya vänner kommer vid
+  når efter några pass). Alla vänner växer upp med barnet: även vänner
+  från innan tillväxten startades om som ungar (förälderns beslut okt 2026)
+  med en vänlig ruta, "växer upp med dig", så att det aldrig känns som att
+  vännen krympt. Moment som diagnosen placerade barnet på räknas aldrig. Ett moment som går till repetition räknas
+  fortfarande, och efter omstarten kan stadiet aldrig sjunka under det
+  barnet redan sett — inte ens om gränserna ändras igen. Nya vänner kommer vid
   barnets egna milstolpar (första riktigt besegrade årsväktaren, första
   världsbossen, första klarade blixten) i fast ordning — groda, räv,
   axolotl, drake — en i taget. Inget slumpas, så syskon får aldrig
