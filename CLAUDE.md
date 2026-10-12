@@ -51,6 +51,8 @@ src/storage/      IndexedDB + localStorage-reserv, PIN-hash, export/import.
 src/chat/         ChatProvider-gränssnitt (fas 5). Pi "sover" tills vidare.
 src/sound.ts      Web Audio-syntetiserad musik/effekter. Inga ljudfiler.
 src/ui/           React. store.tsx är enda bryggan motor↔UI↔lagring.
+                  components/lessons/ = minilektionerna ("filmerna",
+                  texter i domain/lessons.ts, bild per scen i visuals.tsx).
                   screens/PetHomeScreen + components/camp/ = Kvällslägret
                   (lägervy, stationer, handelsbod). testlage/ = testläget.
 docs/             ARKITEKTUR, PEDAGOGIK (forskningsgrund), GUARDRAILS (fas 5).

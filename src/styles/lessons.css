@@ -1,0 +1,133 @@
+/* Minilektionerna (ui/components/lessons). Bilden ligger på eget ljust
+   papper och undertexten på en egen platta — kontrasten får aldrig hänga
+   på vad som råkar ligga bakom. */
+
+.lesson {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.lesson__stage {
+  position: relative;
+  background: #FFFDF6;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.lesson-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* iPad på tvären: bild + undertext + knappar + Pi ska rymmas utan scroll. */
+  max-height: 46vh;
+  font-family: var(--font);
+}
+
+/* Mjuka övergångar mellan scenerna. transform-box: view-box gör att
+   transform-origin anges i bildens egna koordinater. */
+.lesson-svg .ls {
+  transition: opacity .6s ease, transform .8s cubic-bezier(.4, 0, .2, 1), fill .5s ease, stroke-opacity .5s ease;
+  transform-box: view-box;
+}
+.lesson-svg .ls--slow {
+  transition: opacity .6s ease, transform 1s cubic-bezier(.4, 0, .2, 1), fill .5s ease;
+}
+
+.lesson-pop {
+  animation: lesson-pop .5s cubic-bezier(.2, .9, .3, 1.3) both;
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+@keyframes lesson-pop {
+  from { opacity: 0; transform: scale(.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.lesson__big-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  background: var(--primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  padding-left: 6px;
+  box-shadow: 0 6px 0 var(--primary-shadow), 0 10px 24px rgba(0, 0, 0, .25);
+  cursor: pointer;
+  animation: lesson-pulse 1.8s ease-in-out infinite;
+}
+@keyframes lesson-pulse {
+  50% { transform: scale(1.07); }
+}
+
+.lesson__subtitle {
+  margin: 0;
+  min-height: 3.1em;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(#FBF4E2, #F0E6CD);
+  border: 2px solid #E2D3AE;
+  color: #35302E;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.lesson__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lesson__btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.lesson__btn:disabled { opacity: .35; cursor: default; }
+.lesson__btn--main {
+  width: 54px;
+  height: 54px;
+  background: var(--primary);
+  border-color: var(--primary-shadow);
+  color: #fff;
+}
+
+.lesson__dots {
+  display: flex;
+  gap: 5px;
+  margin-left: 6px;
+}
+.lesson__dots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--line);
+  transition: background .3s, transform .3s;
+}
+.lesson__dots span.is-done { background: var(--muted); }
+.lesson__dots span.is-on { background: var(--primary); transform: scale(1.35); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-svg .ls,
+  .lesson-svg .ls--slow { transition: none; }
+  .lesson-pop,
+  .lesson__big-play { animation: none; }
+}

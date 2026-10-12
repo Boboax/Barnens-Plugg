@@ -10,6 +10,7 @@ import { Pi } from './Pi'
 import { Icon } from './Icon'
 import { TaskVisualView } from './TaskVisualView'
 import { TaskRunner } from './TaskRunner'
+import { LessonPlayer, hasLesson } from './lessons/LessonPlayer'
 
 /* ============================================================
    "Pi visar först" — introduktionen till ett nytt moment.
@@ -23,6 +24,9 @@ import { TaskRunner } from './TaskRunner'
    3. VI GÖR: en uppgift barnet löser själv med Pis hjälp — ledtrådssteget
       finns kvar, och svaret bokförs ALDRIG (introduktionen är ingen
       prövning och ska inte påverka barnets nivå).
+   För de svåraste begreppen (bråk, procent, vinklar, ekvationer …) är
+   idésteget en animerad minilektion i stället för det fasta kortet —
+   barnet ser idén hända, med berättarröst (domain/lessons.ts).
    Därefter "du gör" i passet. Äldre barn (åk 4+) kan hoppa över med
    "Jag kan redan" — en tioåring ska inte tvingas genom det självklara.
    ============================================================ */
@@ -42,6 +46,7 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
   const canSkip = year === '4' || year === '5' || year === '6'
   const moment = momentById(momentId)
   const intro = momentIntro(momentId)
+  const lesson = hasLesson(momentId)
 
   // Exempel + "vi gör"-uppgift: låg nivå (2–3) och olika uppgifter — det
   // ska vara enkelt och tydligt, inte en prövning.
@@ -62,7 +67,7 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
   const examples = tasks.slice(0, EXAMPLE_COUNT)
   const together = tasks[EXAMPLE_COUNT]
 
-  const [stage, setStage] = useState<Stage>(intro ? 'idea' : 'examples')
+  const [stage, setStage] = useState<Stage>(intro || lesson ? 'idea' : 'examples')
   const [step, setStep] = useState(0)
 
   // Kantfall: moment utan generator kan inte visas — hoppa över introt.
@@ -74,7 +79,8 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
   // Idékortet läses upp av sig självt för de yngsta (förskoleklass, åk 1).
   const ideaSpoken = intro ? `Nytt äventyr: ${moment.title}. ${youngest && intro.say ? intro.say : intro.idea}` : ''
   useEffect(() => {
-    if (stage !== 'idea' || !intro) return
+    // Filmen har egen berättarröst — läs inte upp kortet ovanpå den.
+    if (stage !== 'idea' || !intro || lesson) return
     prewarmSpeak(ideaSpoken)
     if (!youngest || !ttsAvailable()) return
     const t = window.setTimeout(() => speak(ideaSpoken), 600)
@@ -92,7 +98,9 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
 
   if (examples.length === 0) return null
 
-  const bubble = stage === 'idea'
+  const bubble = stage === 'idea' && lesson
+    ? <>Nytt äventyr: <strong>{moment.title}</strong>! Tryck på ▶ så visar jag en liten film.</>
+    : stage === 'idea'
     ? <>Nytt äventyr: <strong>{moment.title}</strong>! Först berättar jag vad det handlar om.</>
     : stage === 'examples'
       ? <>{step === 0 ? 'Nu visar jag två exempel' : 'Ett exempel till'} — titta hur jag tänker.</>
@@ -129,7 +137,12 @@ export function PiVisar({ momentId, onDone }: { momentId: string; onDone(): void
     }}>
       <PiBubble>{bubble}</PiBubble>
 
-      {stage === 'idea' && intro ? (
+      {stage === 'idea' && lesson ? (
+        <div className="card" style={{ maxWidth: 600, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '14px 16px' }}>
+          <span className="chip" style={{ color: 'var(--muted)' }}>Idén</span>
+          <LessonPlayer momentId={momentId} />
+        </div>
+      ) : stage === 'idea' && intro ? (
         <div className="card" style={{ maxWidth: 560, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '18px 20px' }}>
           <span className="chip" style={{ color: 'var(--muted)' }}>Idén</span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>

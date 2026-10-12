@@ -8,6 +8,8 @@ import { currentMomentId } from '../../engine/progress'
 import { GROWTH_VERSION, STAGE_FROM, masteredCount, petDay, petStage } from '../../engine/pet-home'
 import { PET_ORDER, emptyPetProgress } from '../../domain/pet-home'
 import { useStore } from '../store'
+import { LESSONS } from '../../domain/lessons'
+import { LessonPlayer } from '../components/lessons/LessonPlayer'
 
 /* Testpanelen på kartan: hoppa direkt till strider och läger utan att
    spela fram dem. Renderas bara när __TESTLAGE__ är sant (förhandsbyggen);
@@ -24,6 +26,7 @@ const H: React.CSSProperties = { margin: 0, fontSize: 13, fontWeight: 900, textT
 export function TestPanel({ child }: { child: ChildProfile }) {
   const store = useStore()
   const [open, setOpen] = useState(false)
+  const [lessonId, setLessonId] = useState<string | null>(null)
   if (!__TESTLAGE__) return null
   const momentId = currentMomentId(child)
   const go = (start: () => void): void => { setOpen(false); start() }
@@ -33,6 +36,20 @@ export function TestPanel({ child }: { child: ChildProfile }) {
   return (
     <>
       <button className="chip" onClick={() => setOpen(!open)} aria-expanded={open}>🧪 Test</button>
+      {lessonId && (
+        <div role="dialog" aria-label="Minilektion" style={{
+          position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(36,28,36,.6)',
+          display: 'grid', placeItems: 'center', padding: 16, overflow: 'auto',
+        }}>
+          <div className="card" style={{ width: 'min(600px, 100%)', padding: 16, display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <strong>{momentById(lessonId).title}</strong>
+              <button className="chip" onClick={() => setLessonId(null)}>Stäng ✕</button>
+            </div>
+            <LessonPlayer key={lessonId} momentId={lessonId} />
+          </div>
+        </div>
+      )}
       {open && (
         <div className="card" style={PANEL} role="dialog" aria-label="Testpanel">
           <p style={{ margin: 0, fontSize: 13 }}>Bara på testadressen. Resultat sparas på testbarnet som vanligt.</p>
@@ -70,6 +87,13 @@ export function TestPanel({ child }: { child: ChildProfile }) {
             <button className="btn btn-quiet" onClick={() => patch((c) => ({ ...c, conqueredWorlds: WORLDS.map((w) => w.id) }))}>
               Erövra alla världar (alla reliker)
             </button>
+          </div>
+
+          <h4 style={H}>Minilektioner (filmerna)</h4>
+          <div style={ROW}>
+            {Object.keys(LESSONS).map((id) => (
+              <button key={id} className="btn btn-quiet" onClick={() => { setOpen(false); setLessonId(id) }}>{momentById(id).title}</button>
+            ))}
           </div>
 
           <h4 style={H}>Nuvarande moment{momentId ? `: ${momentById(momentId).title}` : ''}</h4>

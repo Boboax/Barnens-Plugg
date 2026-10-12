@@ -1,0 +1,120 @@
+import { useEffect, useState } from 'react'
+import { lessonFor, sceneDurationMs, sceneSpoken } from '../../../domain/lessons'
+import { prewarmSpeak, speak, stopSpeaking, ttsAvailable } from '../../../tts'
+import { LESSON_VISUALS } from './visuals'
+import '../../../styles/lessons.css'
+
+/* Spelaren för en minilektion: en "film" i scener. Varje scen läses upp
+   med barnets valda röst, undertexten står kvar på en ljus platta (barn
+   som inte hör, eller läser hellre själva) och bilden animeras fram.
+
+   Filmen startar på barnets tryck — dels för att iPad bara tillåter
+   uppläsning efter en gest, dels för att barnet ska vara med när det
+   börjar. Paus, bakåt, framåt och "se igen" finns alltid: en film man
+   inte kan spola tillbaka i blir ett hinder, inte en hjälp. */
+
+export function hasLesson(momentId: string): boolean {
+  return !!lessonFor(momentId) && !!LESSON_VISUALS[momentId]
+}
+
+export function LessonPlayer({ momentId }: { momentId: string }) {
+  const lesson = lessonFor(momentId)
+  const Visual = LESSON_VISUALS[momentId]
+  const [step, setStep] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  const [started, setStarted] = useState(false)
+  const [ended, setEnded] = useState(false)
+  const scenes = lesson?.scenes ?? []
+  const scene = scenes[step]
+
+  // Molnrösten: förvärm alla scener så filmen inte hackar mellan dem.
+  useEffect(() => {
+    scenes.forEach((s) => prewarmSpeak(sceneSpoken(s)))
+    return () => stopSpeaking()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [momentId])
+
+  useEffect(() => {
+    if (!playing || !scene) return
+    if (ttsAvailable()) speak(sceneSpoken(scene))
+    const t = window.setTimeout(() => {
+      if (step + 1 < scenes.length) setStep(step + 1)
+      else { setPlaying(false); setEnded(true) }
+    }, sceneDurationMs(scene))
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, playing])
+
+  if (!lesson || !Visual || !scene) return null
+
+  const play = (): void => {
+    setStarted(true)
+    if (ended) { setEnded(false); setStep(0) }
+    setPlaying(true)
+  }
+  const pause = (): void => { stopSpeaking(); setPlaying(false) }
+  const goTo = (i: number): void => {
+    stopSpeaking()
+    setEnded(false)
+    setStarted(true)
+    setStep(Math.max(0, Math.min(scenes.length - 1, i)))
+  }
+
+  return (
+    <div className="lesson">
+      <div className="lesson__stage">
+        <svg className="lesson-svg" viewBox="0 0 320 200" role="img" aria-label={scene.text}>
+          <Visual step={step} />
+        </svg>
+        {!started && (
+          <button className="lesson__big-play" onClick={play} aria-label="Spela filmen">
+            <PlayIcon size={34} />
+          </button>
+        )}
+      </div>
+      <p className="lesson__subtitle" aria-live="polite">{scene.text}</p>
+      <div className="lesson__controls">
+        <button className="lesson__btn" onClick={() => goTo(step - 1)} disabled={step === 0} aria-label="Föregående">
+          <StepIcon back />
+        </button>
+        {playing ? (
+          <button className="lesson__btn lesson__btn--main" onClick={pause} aria-label="Pausa"><PauseIcon /></button>
+        ) : ended ? (
+          <button className="lesson__btn lesson__btn--main" onClick={play} aria-label="Se igen"><ReplayIcon /></button>
+        ) : (
+          <button className="lesson__btn lesson__btn--main" onClick={play} aria-label="Spela"><PlayIcon size={20} /></button>
+        )}
+        <button className="lesson__btn" onClick={() => goTo(step + 1)} disabled={step + 1 >= scenes.length} aria-label="Nästa">
+          <StepIcon />
+        </button>
+        <div className="lesson__dots" aria-hidden="true">
+          {scenes.map((_, i) => (
+            <span key={i} className={i === step ? 'is-on' : i < step ? 'is-done' : ''} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PlayIcon({ size = 20 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3 L17 10 L5 17 Z" fill="currentColor" /></svg>
+}
+function PauseIcon() {
+  return <svg width={20} height={20} viewBox="0 0 20 20" aria-hidden="true"><rect x={4} y={3} width={4.5} height={14} rx={1.5} fill="currentColor" /><rect x={11.5} y={3} width={4.5} height={14} rx={1.5} fill="currentColor" /></svg>
+}
+function ReplayIcon() {
+  return (
+    <svg width={20} height={20} viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M10 3.5 A6.5 6.5 0 1 1 3.5 10" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" />
+      <path d="M10 0.5 L14 3.5 L10 6.5 Z" fill="currentColor" />
+    </svg>
+  )
+}
+function StepIcon({ back = false }: { back?: boolean }) {
+  return (
+    <svg width={18} height={18} viewBox="0 0 20 20" aria-hidden="true" style={back ? { transform: 'scaleX(-1)' } : undefined}>
+      <path d="M4 4 L13 10 L4 16 Z" fill="currentColor" /><rect x={14} y={4} width={3} height={12} rx={1} fill="currentColor" />
+    </svg>
+  )
+}
