@@ -17,6 +17,20 @@ export const itemImage = (item: CampCatalogItem): string => `${base}art/camp/ite
     i upptäckten och Bokhörnan. */
 export const petStill = (species: PetSpeciesId): string => campImage(`${species}-poster-v1`)
 
+/**
+ * Målade bildrutor per art, ålder och handling (grafikbeställningen,
+ * Tillägg 5): `art/camp/anim/{art}-age-{1–4}-{handling}.webp`, fyra rutor i
+ * en vågrät remsa. Lägg nyckeln här när remsan levererats — tills dess
+ * spelar PetSprite atlasen eller den andande stillbilden.
+ */
+const PET_ANIM_READY: ReadonlySet<string> = new Set<string>([])
+
+export const hasPetAnimation = (species: PetSpeciesId, stage: PetStage, action: string): boolean =>
+  PET_ANIM_READY.has(`${species}-${stage}-${action}`)
+
+export const petAnimation = (species: PetSpeciesId, stage: PetStage, action: string): string =>
+  `${base}art/camp/anim/${species}-age-${stage}-${action}.webp`
+
 /** Bilden för ett tillväxtstadium (etapp 2). Stadie 3 är den vuxna
     vännens befintliga stillbild/sovbild. */
 export const petStageImage = (species: PetSpeciesId, stage: PetStage, sleeping = false): string =>

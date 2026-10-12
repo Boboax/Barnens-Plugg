@@ -743,7 +743,7 @@ The same small lilac crystal dragon with violet crystal horns and spikes, amber 
 The same small lilac crystal dragon with violet crystal horns and spikes, amber eyes, small wings and a curled tail as in the attached reference, now shown as a grand crystal dragon: big wings spread proudly, tall glowing crystal horns, shining crystal plates on chest and back like armour, a long elegant tail with a crystal tip, a regal confident pose with a soft violet glow and sparkles. Powerful and majestic, still warm and friendly — never scary. Curled up asleep, eyes peacefully closed, cosy and calm — same age, size and details as the awake version. The figure fills about 95 % of the image height, feet near the bottom edge. Transparent background, no ground shadow, no text.
 ```
 
-## Tillägg 4 (okt 2026) · Rörelser för varje ålder (12)
+## Tillägg 4 (okt 2026) · Rörelser för varje ålder (12) — ERSATT AV TILLÄGG 5, gör inte dessa
 
 Den vuxna vännen har en rörelseatlas med 16 bildrutor (blinkar, tittar,
 puffar, myser) — se https://boboax.github.io/Barnens-Plugg/art/camp/woodland-frog-motion-v1.webp.
@@ -780,4 +780,511 @@ Rörelsen ska passa åldern: ungen får gärna vara lite vinglig och klumpig
 Prompt (byt art och ålder, och bifoga den vakna åldersbilden):
 ```
 Using the attached image of this exact character at this exact age as the reference, create one 2048×2048 image divided into a 2×2 grid of four equal 1024×1024 cells with a transparent background and no lines between them. The character is identical in every cell — same size, same position, feet at the same height, same angle — only the face, head and a little of the body change: top-left the normal pose (same as the reference); top-right blinking with eyes happily closed, otherwise identical; bottom-left looking curiously to the side with the head slightly turned; bottom-right happy with an open-mouthed smile, standing a little taller. Match the character's age in how it moves (baby: slightly wobbly and clumsy; young: lively; guardian: calm and dignified). Same painterly style and lighting as the reference. No text, no frames.
+```
+
+
+## Tillägg 5 (okt 2026) · Rörelser för varje ålder och handling (92)
+
+Föräldern vill ha **ordentligt bra animationer för allt man gör med
+vännerna**, i alla åldrar — hellre för mycket än för lite. Vuxengrodans
+16-rutors atlas visar ribban: magen och halsen rör sig när den andas, den
+blinkar och myser (https://boboax.github.io/Barnens-Plugg/art/camp/woodland-frog-motion-v1.webp).
+
+**Ersätter Tillägg 4.** Gör detta EFTER Tillägg 3 (`*-age-*.png`) och
+använd åldersbilden (för vuxen: den befintliga atlasen/stillbilden) som
+referens i VARJE remsa, så att djuret är exakt detsamma i alla rutor.
+
+**Format:** en remsa per art, ålder och handling:
+`{art}-age-{1|2|3|4}-{handling}.png`, **2048×512**, fyra lika stora rutor
+(512×512) i en vågrät rad, transparent bakgrund, inga linjer mellan
+rutorna. Djuret står på EXAKT samma plats och i samma storlek i alla fyra
+rutor (fötterna på samma höjd) — bara det som rör sig ändras, så att
+remsan kan spelas som en mjuk animation. Figuren fyller ungefär
+**45 % (unge), 65 % (ung), 80 % (vuxen), 95 % (följeslagare)** av rutans höjd.
+
+Rörelsen ska passa åldern: ungen vinglig och klumpig, den unga pigg och
+studsig, den vuxna lugn och glad, följeslagaren värdig och kraftfull.
+
+| Handling | Rutorna 1–4 |
+|---|---|
+| `idle` — vila | vilopose · andas in (magen/halsen sväller) · andas ut · blinkar glatt |
+| `eat` — äta | munnen öppnas mot godbiten · hugger/tar godbiten · tuggar med fulla kinder · sväljer och slickar sig nöjt |
+| `pet` — klapp | blundar av njutning · lutar sig mot en osynlig hand · liten glad vickning · nöjt leende med stängda ögon |
+| `play` — lek | huka sig redo · mitt i hoppet · landar · springer |
+| `happy` — glad | förvånat förtjust · glädjeskutt · tassar/vingar upp av glädje · stort glatt leende |
+| `sleep` — sova | sover, andas in · andas ut · liten sömnig ryckning · sover, vilopose |
+
+Vuxen `idle` finns redan (atlasen) och ska INTE göras — därför 92 (4 arter × 23).
+Leverera gärna i omgångar, en art i taget (23 remsor), med en commit per art.
+
+
+### Grodan (woodland-frog)
+
+#### `woodland-frog-age-1-idle.png` — Vila (spelas hela tiden), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the throat pouch puffs out and the round belly rises and falls with each breath); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-1-eat.png` — Äta (när barnet ger en godbit), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) the long tongue flicks out, catches the treat, and the cheeks bulge while chewing (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-1-pet.png` — Klapp (när barnet stryker vännen), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-1-play.png` — Lek (hämtar bollen, springer), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) squats low on its strong back legs, then leaps — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-1-happy.png` — Glad (när barnet trycker på vännen), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-1-sleep.png` — Sova (lyktan släckt), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (its throat gently puffs as it snores softly); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-2-idle.png` — Vila (spelas hela tiden), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the throat pouch puffs out and the round belly rises and falls with each breath); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-2-eat.png` — Äta (när barnet ger en godbit), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) the long tongue flicks out, catches the treat, and the cheeks bulge while chewing (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-2-pet.png` — Klapp (när barnet stryker vännen), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-2-play.png` — Lek (hämtar bollen, springer), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) squats low on its strong back legs, then leaps — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-2-happy.png` — Glad (när barnet trycker på vännen), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-2-sleep.png` — Sova (lyktan släckt), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (its throat gently puffs as it snores softly); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-3-eat.png` — Äta (när barnet ger en godbit), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) the long tongue flicks out, catches the treat, and the cheeks bulge while chewing (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-3-pet.png` — Klapp (när barnet stryker vännen), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-3-play.png` — Lek (hämtar bollen, springer), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) squats low on its strong back legs, then leaps — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-3-happy.png` — Glad (när barnet trycker på vännen), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-3-sleep.png` — Sova (lyktan släckt), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (its throat gently puffs as it snores softly); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-4-idle.png` — Vila (spelas hela tiden), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the throat pouch puffs out and the round belly rises and falls with each breath); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-4-eat.png` — Äta (när barnet ger en godbit), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) the long tongue flicks out, catches the treat, and the cheeks bulge while chewing (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-4-pet.png` — Klapp (när barnet stryker vännen), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-4-play.png` — Lek (hämtar bollen, springer), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) squats low on its strong back legs, then leaps — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-4-happy.png` — Glad (när barnet trycker på vännen), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `woodland-frog-age-4-sleep.png` — Sova (lyktan släckt), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (its throat gently puffs as it snores softly); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+
+### Räven (dune-fox)
+
+#### `dune-fox-age-1-idle.png` — Vila (spelas hela tiden), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the chest and fluffy belly rise and fall, the huge ears twitch one at a time); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-1-eat.png` — Äta (när barnet ger en godbit), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it sniffs the treat, nibbles, and chews with its eyes half-closed in delight (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-1-pet.png` — Klapp (när barnet stryker vännen), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-1-play.png` — Lek (hämtar bollen, springer), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) crouches with its tail up, pounces and trots with its ears flapping — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-1-happy.png` — Glad (när barnet trycker på vännen), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-1-sleep.png` — Sova (lyktan släckt), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (curled in its tail, its side rises and falls and one ear twitches); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-2-idle.png` — Vila (spelas hela tiden), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the chest and fluffy belly rise and fall, the huge ears twitch one at a time); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-2-eat.png` — Äta (när barnet ger en godbit), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it sniffs the treat, nibbles, and chews with its eyes half-closed in delight (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-2-pet.png` — Klapp (när barnet stryker vännen), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-2-play.png` — Lek (hämtar bollen, springer), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) crouches with its tail up, pounces and trots with its ears flapping — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-2-happy.png` — Glad (när barnet trycker på vännen), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-2-sleep.png` — Sova (lyktan släckt), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (curled in its tail, its side rises and falls and one ear twitches); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-3-eat.png` — Äta (när barnet ger en godbit), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it sniffs the treat, nibbles, and chews with its eyes half-closed in delight (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-3-pet.png` — Klapp (när barnet stryker vännen), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-3-play.png` — Lek (hämtar bollen, springer), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) crouches with its tail up, pounces and trots with its ears flapping — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-3-happy.png` — Glad (när barnet trycker på vännen), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-3-sleep.png` — Sova (lyktan släckt), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (curled in its tail, its side rises and falls and one ear twitches); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-4-idle.png` — Vila (spelas hela tiden), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the chest and fluffy belly rise and fall, the huge ears twitch one at a time); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-4-eat.png` — Äta (när barnet ger en godbit), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it sniffs the treat, nibbles, and chews with its eyes half-closed in delight (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-4-pet.png` — Klapp (när barnet stryker vännen), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-4-play.png` — Lek (hämtar bollen, springer), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) crouches with its tail up, pounces and trots with its ears flapping — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-4-happy.png` — Glad (när barnet trycker på vännen), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `dune-fox-age-4-sleep.png` — Sova (lyktan släckt), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (curled in its tail, its side rises and falls and one ear twitches); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+
+### Axolotln (reef-axolotl)
+
+#### `reef-axolotl-age-1-idle.png` — Vila (spelas hela tiden), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the frilly gills wave softly and the belly rises and falls); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-1-eat.png` — Äta (när barnet ger en godbit), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it opens its wide mouth, gulps the treat and chews with puffed cheeks, gills fluttering (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-1-pet.png` — Klapp (när barnet stryker vännen), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-1-play.png` — Lek (hämtar bollen, springer), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) wiggles its whole body and tail like swimming, then hops — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-1-happy.png` — Glad (när barnet trycker på vännen), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-1-sleep.png` — Sova (lyktan släckt), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (its gills drift slowly and its body rises and falls); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-2-idle.png` — Vila (spelas hela tiden), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the frilly gills wave softly and the belly rises and falls); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-2-eat.png` — Äta (när barnet ger en godbit), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it opens its wide mouth, gulps the treat and chews with puffed cheeks, gills fluttering (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-2-pet.png` — Klapp (när barnet stryker vännen), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-2-play.png` — Lek (hämtar bollen, springer), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) wiggles its whole body and tail like swimming, then hops — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-2-happy.png` — Glad (när barnet trycker på vännen), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-2-sleep.png` — Sova (lyktan släckt), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (its gills drift slowly and its body rises and falls); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-3-eat.png` — Äta (när barnet ger en godbit), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it opens its wide mouth, gulps the treat and chews with puffed cheeks, gills fluttering (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-3-pet.png` — Klapp (när barnet stryker vännen), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-3-play.png` — Lek (hämtar bollen, springer), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) wiggles its whole body and tail like swimming, then hops — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-3-happy.png` — Glad (när barnet trycker på vännen), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-3-sleep.png` — Sova (lyktan släckt), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (its gills drift slowly and its body rises and falls); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-4-idle.png` — Vila (spelas hela tiden), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the frilly gills wave softly and the belly rises and falls); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-4-eat.png` — Äta (när barnet ger en godbit), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it opens its wide mouth, gulps the treat and chews with puffed cheeks, gills fluttering (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-4-pet.png` — Klapp (när barnet stryker vännen), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-4-play.png` — Lek (hämtar bollen, springer), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) wiggles its whole body and tail like swimming, then hops — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-4-happy.png` — Glad (när barnet trycker på vännen), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `reef-axolotl-age-4-sleep.png` — Sova (lyktan släckt), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (its gills drift slowly and its body rises and falls); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+
+### Draken (crystal-dragon)
+
+#### `crystal-dragon-age-1-idle.png` — Vila (spelas hela tiden), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the chest and belly rise and fall, the little wings fold and unfold slightly, crystals glint); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-1-eat.png` — Äta (när barnet ger en godbit), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it sniffs, takes the treat in its little jaws and munches, a tiny puff of sparkly breath (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-1-pet.png` — Klapp (när barnet stryker vännen), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-1-play.png` — Lek (hämtar bollen, springer), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) flaps its wings, hops and spins, tail swishing — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-1-happy.png` — Glad (när barnet trycker på vännen), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-1-sleep.png` — Sova (lyktan släckt), unge
+```
+Using the attached reference of this exact character as a baby — wobbly and clumsy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 45 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (curled up with wings tucked, its belly rises and falls, a few sparkles drift); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-2-idle.png` — Vila (spelas hela tiden), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the chest and belly rise and fall, the little wings fold and unfold slightly, crystals glint); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-2-eat.png` — Äta (när barnet ger en godbit), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it sniffs, takes the treat in its little jaws and munches, a tiny puff of sparkly breath (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-2-pet.png` — Klapp (när barnet stryker vännen), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-2-play.png` — Lek (hämtar bollen, springer), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) flaps its wings, hops and spins, tail swishing — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-2-happy.png` — Glad (när barnet trycker på vännen), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-2-sleep.png` — Sova (lyktan släckt), ung
+```
+Using the attached reference of this exact character as a young teenager — lively and bouncy, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 65 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (curled up with wings tucked, its belly rises and falls, a few sparkles drift); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-3-eat.png` — Äta (när barnet ger en godbit), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it sniffs, takes the treat in its little jaws and munches, a tiny puff of sparkly breath (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-3-pet.png` — Klapp (när barnet stryker vännen), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-3-play.png` — Lek (hämtar bollen, springer), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) flaps its wings, hops and spins, tail swishing — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-3-happy.png` — Glad (när barnet trycker på vännen), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-3-sleep.png` — Sova (lyktan släckt), vuxen
+```
+Using the attached reference of this exact character as an adult — the existing stage-3 look, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 80 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (curled up with wings tucked, its belly rises and falls, a few sparkles drift); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-4-idle.png` — Vila (spelas hela tiden), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) rest pose; 2) breathing in (the chest and belly rise and fall, the little wings fold and unfold slightly, crystals glint); 3) breathing out (back to rest); 4) a happy blink with eyes closed. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-4-eat.png` — Äta (när barnet ger en godbit), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) mouth opens towards the treat; 2) it sniffs, takes the treat in its little jaws and munches, a tiny puff of sparkly breath (bite); 3) chewing with full cheeks; 4) swallowing with a satisfied lick. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-4-pet.png` — Klapp (när barnet stryker vännen), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) eyes closing in bliss; 2) leaning into an invisible hand; 3) a happy little wiggle; 4) content smile with closed eyes. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-4-play.png` — Lek (hämtar bollen, springer), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) crouching ready to jump; 2) flaps its wings, hops and spins, tail swishing — mid-air; 3) landing; 4) running stride. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-4-happy.png` — Glad (när barnet trycker på vännen), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) surprised and delighted; 2) a joyful jump; 3) arms/paws/wings up in joy; 4) big happy smile. Same painterly style, colours and lighting as the reference. No text, no frames.
+```
+
+#### `crystal-dragon-age-4-sleep.png` — Sova (lyktan släckt), följeslagare
+```
+Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (curled up with wings tucked, its belly rises and falls, a few sparkles drift); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
 ```
