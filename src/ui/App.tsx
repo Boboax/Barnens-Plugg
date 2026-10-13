@@ -39,6 +39,7 @@ const TICK_SECONDS = 5
  */
 const IDLE_GRACE_MS = 90_000
 const IDLE_SLEEP_MS = 150_000
+const IDLE_FLUSH_SECONDS = 60
 
 export function App() {
   const store = useStore()
@@ -92,14 +93,20 @@ export function App() {
   // bara när appen är synlig. Låser vänligt när tiden är slut.
   useEffect(() => {
     if (!activeChild || !TIMED_SCREENS.has(screen)) return
+    // Pausad tid (synlig app, ingen pekning) bokförs för föräldrarapportens
+    // fokusmått — samlad i klumpar så att en orörd platta inte skriver
+    // hushållet var femte sekund.
+    let idle = 0
+    const flushIdle = (): void => { if (idle > 0) { store.addIdle(idle); idle = 0 } }
     const interval = window.setInterval(() => {
       const idleFor = Date.now() - lastActivity.current
-      if (document.visibilityState === 'visible' && idleFor < IDLE_GRACE_MS) {
-        store.addUsage(TICK_SECONDS)
+      if (document.visibilityState === 'visible') {
+        if (idleFor < IDLE_GRACE_MS) store.addUsage(TICK_SECONDS)
+        else if ((idle += TICK_SECONDS) >= IDLE_FLUSH_SECONDS) flushIdle()
       }
       setPiSover(idleFor >= IDLE_SLEEP_MS)
     }, TICK_SECONDS * 1000)
-    return () => window.clearInterval(interval)
+    return () => { window.clearInterval(interval); flushIdle() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, activeChild?.id])
 

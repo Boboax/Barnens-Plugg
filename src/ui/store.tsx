@@ -130,6 +130,8 @@ interface StoreValue {
   // Tid
   secondsLeftToday(child: ChildProfile): number
   addUsage(seconds: number): void
+  /** Pausad tid (appen framme, ingen pekning) — bara för föräldrarapporten. */
+  addIdle(seconds: number): void
   /** Förälder beviljar extra minuter idag (PIN-kollad i UI:t, se TimeUp). */
   grantExtraTime(childId: string, minutes: number): void
   /** Kollar PIN utan att låsa upp föräldraläget (extratid från barnets skärm). */
@@ -647,6 +649,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       patchChild(activeChildId, (c) => ({
         ...c,
         usageSeconds: { ...c.usageSeconds, [todayISO()]: (c.usageSeconds[todayISO()] ?? 0) + seconds },
+      }))
+    },
+
+    addIdle: (seconds) => {
+      if (!activeChildId || seconds <= 0) return
+      patchChild(activeChildId, (c) => ({
+        ...c,
+        idleSeconds: { ...c.idleSeconds, [todayISO()]: (c.idleSeconds?.[todayISO()] ?? 0) + seconds },
       }))
     },
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChildProfile, SchoolYear } from '../../domain/types'
 import { areaName, weeklyReport } from '../../engine/report'
+import { DailyReport } from './DailyReport'
 import { rewardProgress } from '../../engine/rewards'
 import { BLIXT_TESTS, blixtTarget, blixtTimed, BLIXT_UNTIMED_COUNT, BLIXT_UNTIMED_PASS } from '../../engine/blixt'
 import { pingProvider } from '../../chat/providers'
@@ -14,7 +15,7 @@ import { KID_COLORS, nowISO, useStore } from '../store'
    Flikar: Översikt · Barn & tid · Belöningar · Säkerhet
    ============================================================ */
 
-type Tab = 'oversikt' | 'barn' | 'beloningar' | 'sakerhet'
+type Tab = 'oversikt' | 'dagar' | 'barn' | 'beloningar' | 'sakerhet'
 
 export function ParentScreen() {
   const store = useStore()
@@ -87,7 +88,7 @@ function ParentInner() {
   const [tab, setTab] = useState<Tab>(store.household.children.length === 0 ? 'barn' : 'oversikt')
 
   const TABS: [Tab, string][] = [
-    ['oversikt', 'Översikt'], ['barn', 'Barn & tid'], ['beloningar', 'Belöningar'], ['sakerhet', 'Säkerhet'],
+    ['oversikt', 'Översikt'], ['dagar', 'Dag för dag'], ['barn', 'Barn & tid'], ['beloningar', 'Belöningar'], ['sakerhet', 'Säkerhet'],
   ]
 
   return (
@@ -112,6 +113,7 @@ function ParentInner() {
           (t.ex. AI-nyckeln), särskilt sedan dokumentet naglats fast. */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '14px 18px calc(24px + env(safe-area-inset-bottom))', color: '#2A2F3A' }}>
         {tab === 'oversikt' && <OverviewTab />}
+        {tab === 'dagar' && <DailyTab />}
         {tab === 'barn' && <ChildrenTab />}
         {tab === 'beloningar' && <RewardsTab />}
         {tab === 'sakerhet' && <SafetyTab />}
@@ -225,6 +227,33 @@ function ChildReport({ child }: { child: ChildProfile }) {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+/* ---------- Dag för dag ---------- */
+
+function DailyTab() {
+  const { children } = useStore().household
+  if (children.length === 0) return <p style={{ fontWeight: 700 }}>Lägg till ett barn under "Barn & tid" så kommer dagboken hit.</p>
+  return (
+    <div style={{ maxWidth: 760 }}>
+      <p style={{ margin: '0 0 12px', fontSize: 13, color: '#5B6070', lineHeight: 1.5 }}>
+        Två veckor, dag för dag. Aktiv tid räknas bara när barnet rör skärmen; pauser (appen framme men
+        orörd i mer än 90 sekunder) visas separat och dras inte av från dagens tid. Snabba gissningar är fel
+        svar på under 2,5 sekunder. Signalerna är skäl att prata med barnet — inga domar.
+      </p>
+      {children.map((child) => (
+        <div key={child.id} style={pcard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <span style={{ width: 34, height: 34, borderRadius: '50%', background: child.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>
+              {child.name.charAt(0).toUpperCase()}
+            </span>
+            <strong style={{ fontSize: 15 }}>{child.name}</strong>
+          </div>
+          <DailyReport child={child} now={nowISO()} />
+        </div>
+      ))}
     </div>
   )
 }

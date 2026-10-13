@@ -321,6 +321,12 @@ export interface ChildProfile {
   /** Extratid som förälder beviljat (PIN-skyddat): ISO-datum → sekunder.
       Optionellt fält = bakåtkompatibelt med äldre profiler/exportfiler. */
   extraSeconds?: Record<string, number>
+  /** Pausad tid per dag: appen låg framme på en träningsskärm men ingen
+      pekning på 90 s (klockan stod still). Föräldrarapportens fokusmått —
+      skiljer "satt av tiden" från "tränade". Optionellt = bakåtkompatibelt. */
+  idleSeconds?: Record<string, number>
+  /** Tid i Kvällslägret per dag (räknas inte som mattetid). Optionellt. */
+  campSeconds?: Record<string, number>
 
   /** AI-chatt på/av för detta barn (fas 5). */
   chatEnabled: boolean

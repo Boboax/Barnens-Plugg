@@ -1,4 +1,4 @@
-import type { BlixtKind, ChildProfile, SchoolYear, SkillState } from '../../domain/types'
+import type { AnswerRecord, BlixtKind, ChildProfile, SchoolYear, SkillState } from '../../domain/types'
 import { MOMENTS, YEAR_ORDER } from '../../domain/curriculum'
 import { emptyPetProgress } from '../../domain/pet-home'
 import { backfillSeenWorlds, grantedYears, newSkillState, recomputeAvailability } from '../../engine/progress'
@@ -49,6 +49,41 @@ function testChild(name: string, schoolYear: SchoolYear, birthYear: number, colo
   return { ...placed, seenWorlds: backfillSeenWorlds(placed.skills, placed.conqueredWorlds, placed.seenWorlds) }
 }
 
+/** Påhittad tvåveckorshistorik så att föräldraläget "Dag för dag" går att
+    prova direkt: vanliga fokusdagar, vilodagar, en dag med många snabba
+    gissningar, en med långa pauser och en där orken tryter. Deterministisk
+    (ingen slump) så att förhandsvyn ser likadan ut varje gång. */
+function withHistory(child: ChildProfile, momentId: string, now: Date): ChildProfile {
+  const answers: AnswerRecord[] = []
+  const usageSeconds: Record<string, number> = {}
+  const idleSeconds: Record<string, number> = {}
+  const campSeconds: Record<string, number> = {}
+  // dagar sedan → mönster
+  const plan: Record<number, 'fokus' | 'gissa' | 'paus' | 'trott'> = {
+    1: 'fokus', 2: 'gissa', 3: 'fokus', 5: 'paus', 6: 'fokus', 7: 'fokus', 9: 'trott', 10: 'fokus', 12: 'fokus', 13: 'fokus',
+  }
+  for (const [ago, kind] of Object.entries(plan).map(([k, v]) => [Number(k), v] as const)) {
+    const start = new Date(now.getTime() - ago * 86_400_000)
+    start.setUTCHours(15, 10 + ago, 0, 0)
+    const key = start.toISOString().slice(0, 10)
+    const n = kind === 'paus' ? 9 : kind === 'gissa' ? 26 : 22
+    for (let i = 0; i < n; i++) {
+      const guess = kind === 'gissa' && i % 2 === 1
+      const correct = kind === 'trott' ? (i < n / 2 ? i % 6 !== 0 : i % 2 === 0) : guess ? false : (i * 7 + ago) % 6 !== 0
+      answers.push({
+        at: new Date(start.getTime() + i * (kind === 'paus' ? 75_000 : 38_000)).toISOString(),
+        momentId, taskRef: { generatorId: `gen.${momentId}`, level: 4, seed: ago * 100 + i },
+        correct, elapsedMs: guess ? 900 + (i % 4) * 300 : 6000 + ((i * 1300) % 9000), context: 'ovning',
+      })
+    }
+    usageSeconds[key] = (kind === 'paus' ? 13 : kind === 'gissa' ? 11 : 15) * 60 + ago * 20
+    if (kind === 'paus') idleSeconds[key] = 11 * 60
+    if (ago % 3 === 1) campSeconds[key] = 6 * 60
+  }
+  answers.sort((a, b) => a.at.localeCompare(b.at))
+  return { ...child, answers, usageSeconds, idleSeconds, campSeconds }
+}
+
 /** Tre testbarn: FK (grodan väntar bakom stenen), åk 2 (har redan sin groda)
     och åk 4 (groda och några saker i packningen). */
 export function testFamily(now: Date): ChildProfile[] {
@@ -69,5 +104,5 @@ export function testFamily(now: Date): ChildProfile[] {
       { id: 'test-lantern', itemId: 'camp-lantern', boughtAt: now.toISOString() },
     ],
   }
-  return [fk, ak2, ak4]
+  return [fk, withHistory(ak2, 'mult-intro', now), withHistory(ak4, 'stora-tal', now)]
 }

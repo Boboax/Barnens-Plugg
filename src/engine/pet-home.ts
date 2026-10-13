@@ -201,7 +201,10 @@ export function spendHomeTime(child: ChildProfile, seconds: number, at: Date): C
   const day = petDay(at)
   const p = child.petProgress
   const used = p.visit?.day === day ? p.visit.seconds : 0
-  return withProgress(child, {
-    visit: { day, seconds: Math.min(HOME_VISIT_SECONDS, used + Math.round(seconds)) },
-  })
+  const next = Math.min(HOME_VISIT_SECONDS, used + Math.round(seconds))
+  // Samma datumnyckel som usageSeconds, så föräldrarapporten kan ställa
+  // lägertid bredvid mattetid dag för dag.
+  const key = at.toISOString().slice(0, 10)
+  const withVisit = withProgress(child, { visit: { day, seconds: next } })
+  return { ...withVisit, campSeconds: { ...child.campSeconds, [key]: (child.campSeconds?.[key] ?? 0) + (next - used) } }
 }
