@@ -472,39 +472,47 @@ const BrakDecimalProcent: LessonVisual = ({ step }) => {
 
 interface Weight { key: string; kind: 'box' | 'block'; x: number; y: number; gone?: boolean; label?: string; hi?: boolean; dim?: boolean }
 
-function Balance({ items, eq, cuts = false }: { items: Weight[]; eq: string; cuts?: boolean }) {
+/** Vågen. tilt > 0 = höger sida tyngre (sjunker så många px), < 0 = vänster.
+    Ekvationerna håller den alltid vågrät — det är hela poängen; bara
+    likhetstecknets "fälla" får den att tippa. */
+function Balance({ items, eq, cuts = false, tilt = 0 }: { items: Weight[]; eq: string; cuts?: boolean; tilt?: number }) {
+  const angle = (Math.atan2(2 * tilt, 204) * 180) / Math.PI
+  const side = (left: boolean): ReactNode => {
+    const cx = left ? 60 : 260
+    return (
+      <g className="ls" style={{ transform: `translateY(${left ? -tilt : tilt}px)` }}>
+        <line x1={cx} x2={cx - 48} y1={58} y2={140} stroke={MUTED} strokeWidth={1.5} />
+        <line x1={cx} x2={cx + 48} y1={58} y2={140} stroke={MUTED} strokeWidth={1.5} />
+        <path d={`M${cx - 56} 140 L${cx + 56} 140 L${cx + 46} 148 L${cx - 46} 148 Z`} fill={SUN} stroke={INK} strokeWidth={2.5} />
+        <line className="ls" x1={left ? 60 : 262} x2={left ? 60 : 262} y1={70} y2={140} stroke={CORAL} strokeWidth={2.5} strokeDasharray="5 4" style={fade(cuts)} />
+        {items.filter((w) => (w.x < 160) === left).map((w) => (
+          <g
+            key={w.key}
+            className="ls"
+            style={{ transform: `translate(${w.x}px, ${w.y - (w.gone ? 40 : 0)}px)`, opacity: w.gone ? 0 : w.dim ? 0.3 : 1 }}
+          >
+            {w.kind === 'box' ? (
+              <>
+                <rect width={30} height={30} rx={4} fill={w.hi ? SUN : '#B98A5A'} stroke={INK} strokeWidth={2.5} />
+                <text x={15} y={22} textAnchor="middle" fontSize={20} fontWeight={900} fill={w.hi ? INK : '#fff'}>{w.label ?? 'x'}</text>
+              </>
+            ) : (
+              <rect width={15} height={15} rx={2.5} fill={w.hi ? SUN : PRIMARY} stroke={INK} strokeWidth={2} />
+            )}
+          </g>
+        ))}
+      </g>
+    )
+  }
   return (
     <g>
-      {/* Stativ och balk — balken ligger alltid vågrätt: det är hela poängen. */}
       <polygon points="148,164 172,164 160,148" fill={MUTED} />
       <line x1={160} x2={160} y1={58} y2={152} stroke={MUTED} strokeWidth={6} strokeLinecap="round" />
-      <line x1={58} x2={262} y1={58} y2={58} stroke={INK} strokeWidth={6} strokeLinecap="round" />
+      <line className="ls" x1={58} x2={262} y1={58} y2={58} stroke={INK} strokeWidth={6} strokeLinecap="round"
+        style={{ transform: `rotate(${angle}deg)`, transformOrigin: '160px 58px' }} />
       <circle cx={160} cy={58} r={7} fill={SUN} stroke={INK} strokeWidth={2.5} />
-      {[60, 260].map((cx) => (
-        <g key={cx}>
-          <line x1={cx} x2={cx - 48} y1={58} y2={140} stroke={MUTED} strokeWidth={1.5} />
-          <line x1={cx} x2={cx + 48} y1={58} y2={140} stroke={MUTED} strokeWidth={1.5} />
-          <path d={`M${cx - 56} 140 L${cx + 56} 140 L${cx + 46} 148 L${cx - 46} 148 Z`} fill={SUN} stroke={INK} strokeWidth={2.5} />
-        </g>
-      ))}
-      <line className="ls" x1={60} x2={60} y1={70} y2={140} stroke={CORAL} strokeWidth={2.5} strokeDasharray="5 4" style={fade(cuts)} />
-      <line className="ls" x1={262} x2={262} y1={70} y2={140} stroke={CORAL} strokeWidth={2.5} strokeDasharray="5 4" style={fade(cuts)} />
-      {items.map((w) => (
-        <g
-          key={w.key}
-          className="ls"
-          style={{ transform: `translate(${w.x}px, ${w.y - (w.gone ? 40 : 0)}px)`, opacity: w.gone ? 0 : w.dim ? 0.3 : 1 }}
-        >
-          {w.kind === 'box' ? (
-            <>
-              <rect width={30} height={30} rx={4} fill={w.hi ? SUN : '#B98A5A'} stroke={INK} strokeWidth={2.5} />
-              <text x={15} y={22} textAnchor="middle" fontSize={20} fontWeight={900} fill={w.hi ? INK : '#fff'}>{w.label ?? 'x'}</text>
-            </>
-          ) : (
-            <rect width={15} height={15} rx={2.5} fill={w.hi ? SUN : PRIMARY} stroke={INK} strokeWidth={2} />
-          )}
-        </g>
-      ))}
+      {side(true)}
+      {side(false)}
       <text x={160} y={193} textAnchor="middle" fontSize={22} fontWeight={900} fill={INK} style={{ whiteSpace: 'pre' }}>{eq}</text>
     </g>
   )
@@ -729,6 +737,263 @@ const Koordinat: LessonVisual = ({ step }) => {
   )
 }
 
+/* ---------- Tiotalsövergång: fyll tian ---------- */
+
+const Tiotal: LessonVisual = ({ step }) => {
+  const cell = 34
+  const fx = 30
+  const fy = 40
+  const cellPos = (i: number): [number, number] => [fx + (i % 5) * cell + cell / 2, fy + Math.floor(i / 5) * cell + cell / 2]
+  const moved = step >= 2
+  return (
+    <g>
+      {/* Tiorutan */}
+      {Array.from({ length: 10 }, (_, i) => {
+        const [x, y] = cellPos(i)
+        const empty = i >= 8
+        return <rect key={i} className="ls" x={x - cell / 2} y={y - cell / 2} width={cell} height={cell} fill={empty && step === 1 ? SUN_SOFT : PAPER} stroke={INK} strokeWidth={2} />
+      })}
+      {Array.from({ length: 8 }, (_, i) => {
+        const [x, y] = cellPos(i)
+        return <circle key={i} cx={x} cy={y} r={12} fill={PRIMARY} stroke={INK} strokeWidth={2} />
+      })}
+      {Array.from({ length: 5 }, (_, i) => {
+        const outside: [number, number] = [236 + (i % 3) * 30, 57 + Math.floor(i / 3) * 34]
+        const [x, y] = moved && i < 2 ? cellPos(8 + i) : outside
+        return (
+          <g key={i} className="ls ls--slow" style={{ transform: `translate(${x}px, ${y}px)`, transitionDelay: moved ? `${i * 400}ms` : '0ms' }}>
+            <circle r={12} fill={CORAL} stroke={INK} strokeWidth={2} />
+          </g>
+        )
+      })}
+      <Caption x={115} y={28} size={15} color={MUTED}>tiorutan</Caption>
+      <rect className="ls" x={222} y={38} width={92} height={78} rx={10} fill="none" stroke={CORAL} strokeWidth={2.5} strokeDasharray="6 5" style={fade(step === 3)} />
+      <Caption x={160} y={168} size={26} visible={step === 0}>8 + 5 = ?</Caption>
+      <Caption x={160} y={168} size={24} visible={step === 1 || step === 2} color={MUTED}>8 + 2 = 10</Caption>
+      <Caption x={160} y={168} size={24} visible={step === 3} color={CORAL}>3 kvar</Caption>
+      <Caption x={160} y={168} size={26} visible={step >= 4} color={PRIMARY}>10 + 3 = 13</Caption>
+      <Caption x={160} y={194} size={18} visible={step >= 4} color={MUTED}>8 + 5 = 13</Caption>
+    </g>
+  )
+}
+
+/* ---------- Växling: en tiostav blir tio ental ---------- */
+
+const Vaxling: LessonVisual = ({ step }) => {
+  const stickGone = (i: number): boolean => (i === 3 && step >= 2) || (i === 2 && step >= 4)
+  // Ental: 2 från början + 10 efter växlingen. 7 tas bort i steg 3.
+  const cube = (i: number): [number, number] => [176 + (i % 6) * 21, 132 - Math.floor(i / 6) * 21]
+  return (
+    <g>
+      {[0, 1, 2, 3].map((i) => (
+        <g key={i} className="ls" style={{ ...fade(!stickGone(i)), transform: stickGone(i) && i === 3 ? 'translateX(90px)' : 'none' }}>
+          <rect x={22 + i * 26} y={46} width={18} height={100} rx={3} fill={PRIMARY} stroke={INK} strokeWidth={2} />
+          {Array.from({ length: 9 }, (_, k) => <line key={k} x1={22 + i * 26} x2={40 + i * 26} y1={56 + k * 10} y2={56 + k * 10} stroke={INK} strokeWidth={1} opacity={0.5} />)}
+        </g>
+      ))}
+      {Array.from({ length: 12 }, (_, i) => {
+        const exchanged = i >= 2
+        const visible = exchanged ? step >= 2 : true
+        const removed = step >= 3 && i >= 5
+        const [x, y] = cube(i)
+        return (
+          <rect
+            key={i}
+            className="ls"
+            x={x} y={y} width={17} height={17} rx={2}
+            fill={exchanged ? CORAL : SUN}
+            stroke={INK} strokeWidth={1.8}
+            style={{ ...fade(visible && !removed, exchanged ? 600 + (i - 2) * 80 : 0), transform: removed ? 'translateY(-24px)' : 'none' }}
+          />
+        )
+      })}
+      <rect className="ls" x={170} y={124} width={50} height={33} rx={6} fill="none" stroke={CORAL} strokeWidth={2.5} strokeDasharray="5 4" style={fade(step === 1)} />
+      <Caption x={74} y={30} size={15} color={MUTED}>tiotal</Caption>
+      <Caption x={230} y={30} size={15} color={MUTED}>ental</Caption>
+      <Caption x={160} y={186} size={24} visible={step <= 1}>42 − 17</Caption>
+      <Caption x={160} y={186} size={22} visible={step === 2} color={CORAL}>3 tiotal och 12 ental</Caption>
+      <Caption x={160} y={186} size={22} visible={step === 3}>12 − 7 = 5 ental</Caption>
+      <Caption x={160} y={186} size={22} visible={step === 4}>3 − 1 = 2 tiotal</Caption>
+      <Caption x={160} y={186} size={26} visible={step >= 5} color={PRIMARY}>42 − 17 = 25</Caption>
+    </g>
+  )
+}
+
+/* ---------- Likhetstecknet ---------- */
+
+const Likhetstecken: LessonVisual = ({ step }) => {
+  const puzzle = step >= 2
+  const boxLabel = step >= 5 ? '8' : step === 4 ? '3' : '?'
+  const items: Weight[] = puzzle
+    ? [
+        ...stack(8, 18, 4).map(([x, y], i): Weight => ({ key: `l${i}`, kind: 'block', x, y, hi: step === 3 || (step === 2 && i >= 6) })),
+        { key: 'box', kind: 'box', x: 216, y: 110, label: boxLabel, hi: step >= 4 },
+        ...stack(5, 252, 3).map(([x, y], i): Weight => ({ key: `r${i}`, kind: 'block', x, y })),
+      ]
+    : [
+        ...stack(8, 18, 4).map(([x, y], i): Weight => ({ key: `l${i}`, kind: 'block', x, y, hi: i >= 5 })),
+        ...stack(8, 226, 4).map(([x, y], i): Weight => ({ key: `r${i}`, kind: 'block', x, y })),
+      ]
+  const eq = ['5 + 3 = 8', '8 = 5 + 3', '6 + 2 = □ + 5', '8 = □ + 5', '6 + 2 = 3 + 5', '8 ≠ 8 + 5'][step] ?? ''
+  return <Balance items={items} eq={eq} tilt={step >= 5 ? 16 : 0} />
+}
+
+/* ---------- Klockan ---------- */
+
+const CLOCK_NAMES: Record<number, string> = {
+  180: 'klockan tre', 240: 'klockan fyra', 270: 'halv fem', 255: 'kvart över fyra', 285: 'kvart i fem', 300: 'klockan fem',
+  200: 'tjugo över tre', 205: 'fem i halv fyra', 215: 'fem över halv fyra', 220: 'tjugo i fyra',
+}
+const digital = (mins: number): string => `${Math.floor(mins / 60)}:${String(Math.round(mins % 60)).padStart(2, '0')}`
+
+function Clock({ minutes, wedge = false, fives = false, labels = false }: { minutes: number; wedge?: boolean; fives?: boolean; labels?: boolean }) {
+  const cx = 98
+  const cy = 102
+  const r = 74
+  const minAngle = ((minutes % 60) / 60) * 360 - 90
+  const hourAngle = (((minutes / 60) % 12) / 12) * 360 - 90
+  const [mx, my] = polar(cx, cy, r * 0.82, minAngle)
+  const [hx, hy] = polar(cx, cy, r * 0.5, hourAngle)
+  const swept = minutes % 60
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={r} fill={PAPER} stroke={INK} strokeWidth={4} />
+      {wedge && swept > 0.3 && (
+        <path d={swept >= 59.7 ? `M${cx} ${cy - r + 4} A${r - 4} ${r - 4} 0 1 1 ${cx - 0.01} ${cy - r + 4} Z` : slice(cx, cy, r - 4, -90, minAngle)} fill={SUN_SOFT} />
+      )}
+      {wedge && [0, 90, 180, 270].map((a) => {
+        const [x, y] = polar(cx, cy, r - 4, a - 90)
+        return <line key={a} x1={cx} y1={cy} x2={x} y2={y} stroke={LINE} strokeWidth={1.5} strokeDasharray="3 3" />
+      })}
+      {Array.from({ length: 60 }, (_, i) => {
+        const [x1, y1] = polar(cx, cy, r - 3, i * 6 - 90)
+        const [x2, y2] = polar(cx, cy, r - (i % 5 === 0 ? 11 : 6), i * 6 - 90)
+        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={INK} strokeWidth={i % 5 === 0 ? 2.2 : 1} />
+      })}
+      {Array.from({ length: 12 }, (_, i) => {
+        const [x, y] = polar(cx, cy, r - 23, (i + 1) * 30 - 90)
+        return <text key={i} x={x} y={y + 6} textAnchor="middle" fontSize={16} fontWeight={900} fill={INK}>{i + 1}</text>
+      })}
+      {Array.from({ length: 12 }, (_, i) => {
+        const [x, y] = polar(cx, cy, r + 13, (i + 1) * 30 - 90)
+        return <text key={i} className="ls" x={x} y={y + 4} textAnchor="middle" fontSize={11} fontWeight={800} fill={CORAL} style={fade(fives, i * 120)}>{(i + 1) * 5}</text>
+      })}
+      <line x1={cx} y1={cy} x2={hx} y2={hy} stroke={INK} strokeWidth={7} strokeLinecap="round" />
+      <line x1={cx} y1={cy} x2={mx} y2={my} stroke={PRIMARY} strokeWidth={4.5} strokeLinecap="round" />
+      <circle cx={cx} cy={cy} r={6} fill={CORAL} stroke={INK} strokeWidth={2} />
+      <g className="ls" style={fade(labels)}>
+        <rect x={cx + 6} y={cy + 10} width={66} height={18} rx={9} fill={PAPER} stroke={LINE} />
+        <text x={cx + 39} y={cy + 23} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={INK}>timvisare</text>
+        <rect x={cx - 84} y={cy - 46} width={78} height={18} rx={9} fill={PAPER} stroke={LINE} />
+        <text x={cx - 45} y={cy - 33} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={PRIMARY}>minutvisare</text>
+      </g>
+    </g>
+  )
+}
+
+function ClockLesson({ step, times, wedge = false, fives }: { step: number; times: number[]; wedge?: boolean; fives?: (step: number) => boolean }) {
+  const target = times[step] ?? times[times.length - 1]
+  const m = useTween(target, 2600)
+  const name = CLOCK_NAMES[target]
+  return (
+    <g>
+      <Clock minutes={m} wedge={wedge} fives={fives?.(step)} labels={step === 0} />
+      <g key={target} className="lesson-pop">
+        {name && <text x={254} y={92} textAnchor="middle" fontSize={name.length > 15 ? 13.5 : name.length > 13 ? 15 : 19} fontWeight={900} fill={INK}>{name}</text>}
+        <text x={254} y={128} textAnchor="middle" fontSize={30} fontWeight={900} fill={PRIMARY}>{digital(target)}</text>
+      </g>
+    </g>
+  )
+}
+
+const KlockanHelHalv: LessonVisual = ({ step }) => <ClockLesson step={step} times={[180, 180, 240, 270, 270, 270]} />
+const KlockanKvart: LessonVisual = ({ step }) => <ClockLesson step={step} times={[240, 255, 270, 285, 300, 300]} wedge />
+const KlockanMinuter: LessonVisual = ({ step }) => <ClockLesson step={step} times={[180, 200, 200, 205, 215, 220]} fives={(st) => st <= 2} />
+
+/* ---------- Medelvärde: jämna ut tornen ---------- */
+
+const MEDEL_START = [2, 6, 3, 5]
+const MEDEL_POS: { start: [number, number]; end: [number, number] }[] = (() => {
+  const cubes: { col: number; lvl: number }[] = []
+  MEDEL_START.forEach((h, col) => { for (let lvl = 0; lvl < h; lvl++) cubes.push({ col, lvl }) })
+  const avg = 4
+  const fill = MEDEL_START.map((h) => Math.min(h, avg))
+  return cubes.map(({ col, lvl }) => {
+    let endCol = col
+    let endLvl = lvl
+    if (lvl >= avg) {
+      endCol = fill.findIndex((f) => f < avg)
+      endLvl = fill[endCol]
+      fill[endCol]++
+    }
+    const at = (c: number, l: number): [number, number] => [62 + c * 62, 150 - l * 24]
+    return { start: at(col, lvl), end: at(endCol, endLvl) }
+  })
+})()
+
+const Medelvarde: LessonVisual = ({ step }) => {
+  const level = step >= 2
+  return (
+    <g>
+      <line x1={30} x2={300} y1={172} y2={172} stroke={INK} strokeWidth={3} />
+      {MEDEL_POS.map((p, i) => {
+        const [x, y] = level ? p.end : p.start
+        const moving = p.start[0] !== p.end[0]
+        return (
+          <rect key={i} className="ls ls--slow" x={-11} y={-11} width={22} height={22} rx={4}
+            fill={moving && level ? CORAL : PRIMARY} stroke={INK} strokeWidth={2}
+            style={{ transform: `translate(${x}px, ${y + 11}px)`, transitionDelay: level && moving ? `${(i % 3) * 500}ms` : '0ms' }} />
+        )
+      })}
+      {MEDEL_START.map((h, c) => (
+        <text key={c} className="ls" x={62 + c * 62} y={192} textAnchor="middle" fontSize={16} fontWeight={900} fill={MUTED} style={fade(step < 2)}>{h}</text>
+      ))}
+      <line className="ls" x1={34} x2={296} y1={150 - 3 * 24 - 13} y2={150 - 3 * 24 - 13} stroke={MINT} strokeWidth={3} strokeDasharray="7 5" style={fade(step >= 3)} />
+      <Caption x={160} y={30} size={20} visible={step >= 3 && step < 4} color={MINT}>medelvärdet = 4</Caption>
+      <Caption x={160} y={30} size={20} visible={step >= 4} color={PRIMARY}>(2 + 6 + 3 + 5) / 4 = 4</Caption>
+    </g>
+  )
+}
+
+/* ---------- Stapelmodellen ---------- */
+
+const Stapelmodell: LessonVisual = ({ step }) => {
+  const x0 = 64
+  const u = 128 // en "Bea-stapel" (12)
+  const extra = 64 // de 6 extra
+  const removed = step === 3 || step === 4
+  const known = step >= 4
+  const bx = x0 + u + extra + 10
+  return (
+    <g>
+      <Caption x={160} y={26} size={16} color={MUTED} visible={step === 0}>tillsammans 30 · Ali har 6 fler</Caption>
+      <g className="ls" style={fade(step >= 1)}>
+        <text x={x0 - 10} y={70} textAnchor="end" fontSize={17} fontWeight={900} fill={INK}>Ali</text>
+        <rect x={x0} y={48} width={u} height={34} rx={4} fill={PRIMARY_SOFT} stroke={PRIMARY} strokeWidth={2.5} />
+        <text className="ls" x={x0 + u / 2} y={71} textAnchor="middle" fontSize={18} fontWeight={900} fill={INK} style={fade(known)}>12</text>
+        <g className="ls" style={{ opacity: removed ? 0.3 : 1 }}>
+          <rect x={x0 + u} y={48} width={extra} height={34} rx={4} fill={removed ? PAPER : CORAL_SOFT} stroke={CORAL} strokeWidth={2.5} strokeDasharray={removed ? '5 4' : undefined} />
+          <text x={x0 + u + extra / 2} y={71} textAnchor="middle" fontSize={18} fontWeight={900} fill={INK}>6</text>
+        </g>
+        <text className="ls" x={x0 + u + extra + 4} y={40} textAnchor="end" fontSize={15} fontWeight={900} fill={MINT} style={fade(step >= 5)}>Ali = 18</text>
+        <text x={x0 - 10} y={124} textAnchor="end" fontSize={17} fontWeight={900} fill={INK}>Bea</text>
+        <rect x={x0} y={102} width={u} height={34} rx={4} fill={known ? PRIMARY_SOFT : PAPER} stroke={known ? PRIMARY : CORAL} strokeWidth={2.5} strokeDasharray={known ? undefined : '5 4'} />
+        <text x={x0 + u / 2} y={125} textAnchor="middle" fontSize={18} fontWeight={900} fill={known ? INK : CORAL}>{known ? '12' : '?'}</text>
+      </g>
+      <g className="ls" style={fade(step >= 2)}>
+        <path d={`M${bx} 48 q8 0 8 8 V84 q0 8 8 8 q-8 0 -8 8 V128 q0 8 -8 8`} fill="none" stroke={INK} strokeWidth={2.2} />
+        <g key={removed ? 'a' : 'b'} className="lesson-pop">
+          <text x={bx + 36} y={98} textAnchor="middle" fontSize={22} fontWeight={900} fill={removed ? CORAL : INK}>{removed ? '24' : '30'}</text>
+        </g>
+      </g>
+      <Caption x={160} y={176} size={22} visible={step === 3} color={CORAL}>30 − 6 = 24</Caption>
+      <Caption x={160} y={176} size={22} visible={step === 4} color={PRIMARY}>24 / 2 = 12</Caption>
+      <Caption x={160} y={176} size={22} visible={step === 5} color={MINT}>12 + 18 = 30</Caption>
+      <Caption x={160} y={176} size={20} visible={step >= 6} color={PRIMARY}>rita först, räkna sedan</Caption>
+    </g>
+  )
+}
+
 export const LESSON_VISUALS: Record<string, LessonVisual> = {
   'mult-intro': MultIntro,
   'div-intro': DivIntro,
@@ -745,4 +1010,12 @@ export const LESSON_VISUALS: Record<string, LessonVisual> = {
   'area': Area,
   'vinklar': Vinklar,
   'koordinatsystem': Koordinat,
+  'tiotalsovergang-20': Tiotal,
+  'vaxling-0-100': Vaxling,
+  'likhetstecken': Likhetstecken,
+  'klockan-hel-halv': KlockanHelHalv,
+  'klockan-kvart': KlockanKvart,
+  'klockan-minuter': KlockanMinuter,
+  'medelvarde': Medelvarde,
+  'problemlosning-flerstegs': Stapelmodell,
 }

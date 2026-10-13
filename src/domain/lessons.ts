@@ -185,6 +185,87 @@ export const LESSONS: Record<string, Lesson> = {
       { text: 'Där är punkten (3, 4)! Först längs golvet, sedan uppför trappan.', say: 'Där är punkten tre, fyra! Först längs golvet, sedan uppför trappan.' },
     ],
   },
+  'tiotalsovergang-20': {
+    scenes: [
+      { text: '8 + 5 — hur gör man när svaret blir mer än tio?', say: 'Åtta plus fem. Hur gör man när svaret blir mer än tio?' },
+      { text: 'Först fyller vi tiorutan. Där fattas två.' },
+      { text: 'Vi flyttar två av de fem dit. Nu är tian full!', minMs: 4200 },
+      { text: 'Utanför ligger tre kvar.' },
+      { text: '10 + 3 = 13. Alltså är 8 + 5 = 13.', say: 'Tio plus tre är tretton. Alltså är åtta plus fem tretton.' },
+      { text: 'Det kallas att gå via tian: fyll upp till tio först, lägg sedan till resten.' },
+    ],
+  },
+  'vaxling-0-100': {
+    scenes: [
+      { text: '42 − 17. Vi bygger 42 med tiostavar och ental.', say: 'Fyrtiotvå minus sjutton. Vi bygger fyrtiotvå med tiostavar och ental.' },
+      { text: 'Vi ska ta bort 7 ental — men det finns bara 2.', say: 'Vi ska ta bort sju ental. Men det finns bara två.' },
+      { text: 'Då växlar vi: en tiostav blir tio ental. Nu finns det 12 ental.', say: 'Då växlar vi. En tiostav blir tio ental. Nu finns det tolv ental.', minMs: 4800 },
+      { text: 'Nu kan vi ta bort 7 ental. 5 ental är kvar.', say: 'Nu kan vi ta bort sju ental. Fem ental är kvar.' },
+      { text: 'Sedan tar vi bort 1 tiotal. 2 tiotal är kvar.', say: 'Sedan tar vi bort ett tiotal. Två tiotal är kvar.' },
+      { text: '2 tiotal och 5 ental är 25. Alltså 42 − 17 = 25.', say: 'Två tiotal och fem ental är tjugofem. Alltså är fyrtiotvå minus sjutton tjugofem.' },
+    ],
+  },
+  'likhetstecken': {
+    scenes: [
+      { text: 'Likhetstecknet = betyder: lika mycket på båda sidor. 5 + 3 = 8.', say: 'Likhetstecknet betyder: lika mycket på båda sidor. Fem plus tre är lika med åtta.' },
+      { text: '8 = 5 + 3 är också rätt! Svaret behöver inte stå sist.', say: 'Åtta är lika med fem plus tre är också rätt! Svaret behöver inte stå sist.' },
+      { text: 'Vad ska stå i rutan? 6 + 2 = □ + 5', say: 'Vad ska stå i rutan? Sex plus två är lika med rutan plus fem.' },
+      { text: 'Vänster sida är 8. Då måste höger sida också bli 8.', say: 'Vänster sida är åtta. Då måste höger sida också bli åtta.' },
+      { text: 'I rutan står 3, för 3 + 5 = 8. Vågen väger jämnt!', say: 'I rutan står tre, för tre plus fem är åtta. Vågen väger jämnt!' },
+      { text: 'Fällan: att skriva 8 i rutan. Då blir höger sida 13 — och vågen tippar!', say: 'Fällan är att skriva åtta i rutan. Då blir höger sida tretton, och vågen tippar!' },
+    ],
+  },
+  'klockan-hel-halv': {
+    scenes: [
+      { text: 'Klockan har två visare. Den korta visar timmen. Den långa visar minuterna.' },
+      { text: 'När den långa visaren pekar rakt upp är klockan hel. Nu är klockan tre.' },
+      { text: 'På en timme går den långa visaren ett helt varv. Titta — nu blir klockan fyra.', minMs: 5600 },
+      { text: 'Nu har den långa visaren gått ett halvt varv och pekar rakt ner.', minMs: 4500 },
+      { text: 'Den korta visaren står mitt emellan fyra och fem. Vi säger halv fem.' },
+      { text: 'Halv fem är 4:30 — halvvägs till fem. Halv räknar alltid mot nästa timme!', say: 'Halv fem är fyra och trettio. Halvvägs till fem. Halv räknar alltid mot nästa timme!' },
+    ],
+  },
+  'klockan-kvart': {
+    scenes: [
+      { text: 'En timme kan delas i fyra kvartar — som en pizza i fyra bitar.' },
+      { text: 'Kvart över fyra: den långa visaren har gått en kvart av varvet, till trean.', minMs: 4500 },
+      { text: 'Halv fem: två kvartar, ett halvt varv.', minMs: 4000 },
+      { text: 'Kvart i fem: tre kvartar har gått — det är en kvart kvar till fem.', minMs: 4000 },
+      { text: 'Fyra kvartar — ett helt varv. Nu är klockan fem.', minMs: 4000 },
+      { text: 'Över betyder efter en hel timme. I betyder före nästa hela timme.' },
+    ],
+  },
+  'klockan-minuter': {
+    scenes: [
+      { text: 'Mellan två siffror på klockan går det fem minuter.' },
+      { text: 'Räkna femsteg: 5, 10, 15, 20. När den långa visaren pekar på fyran har det gått 20 minuter.', say: 'Räkna femsteg. Fem, tio, femton, tjugo. När den långa visaren pekar på fyran har det gått tjugo minuter.', minMs: 4500 },
+      { text: 'Det heter tjugo över tre: 3:20.', say: 'Det heter tjugo över tre.' },
+      { text: 'Fem i halv fyra: fem minuter kvar till halv. 3:25.', say: 'Fem i halv fyra. Fem minuter kvar till halv.' },
+      { text: 'Fem över halv fyra: fem minuter efter halv. 3:35.', say: 'Fem över halv fyra. Fem minuter efter halv.' },
+      { text: 'Tjugo i fyra: tjugo minuter kvar till fyra. 3:40.', say: 'Tjugo i fyra. Tjugo minuter kvar till fyra.' },
+    ],
+  },
+  'medelvarde': {
+    scenes: [
+      { text: 'Fyra barn har 2, 6, 3 och 5 kulor. Hur många har de i medeltal?', say: 'Fyra barn har två, sex, tre och fem kulor. Hur många har de i medeltal?' },
+      { text: 'Medelvärdet är hur många var och en skulle få om vi delade lika.' },
+      { text: 'Vi flyttar kulor från de höga tornen till de låga …', minMs: 4500 },
+      { text: 'Nu har alla lika många: fyra var. Medelvärdet är 4.', say: 'Nu har alla lika många. Fyra var. Medelvärdet är fyra.' },
+      { text: 'Räkna: 2 + 6 + 3 + 5 = 16. 16 / 4 = 4.', say: 'Räkna. Två plus sex plus tre plus fem är sexton. Sexton delat med fyra är fyra.' },
+      { text: 'Lägg ihop alla och dela med hur många de är — så får du medelvärdet.' },
+    ],
+  },
+  'problemlosning-flerstegs': {
+    scenes: [
+      { text: 'Ali och Bea har tillsammans 30 kulor. Ali har 6 fler än Bea. Hur många har Bea?', say: 'Ali och Bea har tillsammans trettio kulor. Ali har sex fler än Bea. Hur många har Bea?' },
+      { text: 'Vi ritar en stapel för var och en. Alis stapel är 6 längre.', say: 'Vi ritar en stapel för var och en. Alis stapel är sex längre.' },
+      { text: 'Tillsammans är staplarna 30.', say: 'Tillsammans är staplarna trettio.' },
+      { text: 'Tar vi bort de 6 extra blir staplarna lika långa — och tillsammans 24.', say: 'Tar vi bort de sex extra blir staplarna lika långa. Tillsammans tjugofyra.', minMs: 4500 },
+      { text: 'Två lika långa staplar är 24. En stapel är 24 / 2 = 12.', say: 'Två lika långa staplar är tjugofyra. En stapel är tjugofyra delat med två. Tolv.' },
+      { text: 'Bea har 12, Ali har 12 + 6 = 18. Kolla: 12 + 18 = 30!', say: 'Bea har tolv. Ali har tolv plus sex, arton. Kolla: tolv plus arton är trettio!' },
+      { text: 'Det här är stapelmodellen: rita först, räkna sedan.' },
+    ],
+  },
 }
 
 export const lessonFor = (momentId: string): Lesson | undefined => LESSONS[momentId]

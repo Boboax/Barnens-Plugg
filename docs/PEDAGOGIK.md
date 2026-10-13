@@ -223,3 +223,25 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
 Barnens beteende under testperioden avgör nästa steg (planen:
 `docs/PLAN-LAGER.md`, etapp 2): fler vänner vid barnets egna milstolpar och
 djur som växer med det barnet behärskar.
+
+
+## Stapelmodellen och dag-för-dag-rapporten (okt 2026)
+
+**Stapelmodellen** (Singapore "bar model", den best belagda delen av
+Singapore-matten för textuppgifter): personerna i uppgiften ritas som
+staplar i rätt proportioner, med "?" där det sökta sitter. Textuppgifterna
+i addition/subtraktion har tre berättelsetyper — förändring, jämförelse,
+saknad del — och modellen visas som stöd före svaret t.o.m. nivå 7 och som
+lösningsbild efter fel svar. Från nivå 8 ska barnet själv tänka modellen;
+bilden kommer bara i förklaringen. Åk 5 får de klassiska
+modellproblemen ("gånger så mycket", "summa och skillnad"). Varje del ritas
+minst ~30 px bred så att små delar syns, men radernas längd är proportionell
+så att jämförelser stämmer.
+
+**Dag för dag** i föräldraläget svarar på "gör barnen sitt bästa?" med flera
+spår som är svåra att fuska med samtidigt: aktiv tid (bara vid pekning),
+pausad tid (appen framme men orörd > 90 s — bokförs separat och dras inte
+av), snabba gissningar (fel svar < 2,5 s, utom blixt), tempo (uppgifter per
+aktiv minut) och ork (träffsäkerhet första vs andra halvan av dagen).
+Signalerna formuleras som en lärare: skäl att prata, aldrig domar. Barnen
+ser ingenting av detta (princip 3: ingen jämförelse, inget poängjagande).
