@@ -204,9 +204,12 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
   vännen krympt. Moment som diagnosen placerade barnet på räknas aldrig. Ett moment som går till repetition räknas
   fortfarande, och efter omstarten kan stadiet aldrig sjunka under det
   barnet redan sett — inte ens om gränserna ändras igen. Nya vänner kommer vid
-  barnets egna milstolpar (första riktigt besegrade årsväktaren, första
-  världsbossen, första klarade blixten) i fast ordning — groda, räv,
-  axolotl, drake — en i taget. Inget slumpas, så syskon får aldrig
+  barnets egna NYA milstolpar — nästa riktigt besegrade årsväktare, nästa
+  världsboss, nästa klarade blixt — i fast ordning: groda, räv, axolotl,
+  drake, en i taget. Milstolpar som redan var nådda när första vännen kom
+  räknas inte (förälderns beslut okt 2026: ett barn med gamla framsteg fick
+  annars två vänner samma dag, och en ny vän ska belöna något barnet just
+  klarat). Barn som redan hade fler vänner behåller dem. Inget slumpas, så syskon får aldrig
   "bättre tur" (princip 3).
 - **Lägret är en kvällsstund efter träningen:** 15 minuter per dag (höjt
   från 3 när lyan blev en lekscen, förälderns beslut okt 2026), och bara

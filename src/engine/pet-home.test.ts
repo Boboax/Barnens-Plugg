@@ -3,7 +3,7 @@ import type { ChildProfile } from '../domain/types'
 import { DAILY_PET_COINS, HOME_VISIT_SECONDS, emptyPetProgress } from '../domain/pet-home'
 import {
   adoptPet, completePetPractice, friendsEarned, homeSecondsLeft, markPetGrowthSeen, nextFriendSpecies, petDay,
-  dismissFreshStart, petGrewUnseen, petStage, restartPetGrowth, spendHomeTime,
+  dismissFreshStart, petGrewUnseen, petStage, restartPetGrowth, settleMilestoneBase, spendHomeTime,
 } from './pet-home'
 import type { SkillState } from '../domain/types'
 
@@ -179,15 +179,38 @@ describe('Etapp 2: en ny vän per milstolpe', () => {
     expect(friendsEarned(tenYearOld)).toBe(1)
   })
 
-  it('den som redan passerat alla milstolpar får vännerna EN i taget', () => {
-    const veteran: ChildProfile = {
-      ...withFrog(), conqueredYears: ['1'], conqueredWorlds: ['talens-dal'],
+  it('milstolpar nådda INNAN första vännen ger inga nya vänner — bara nästa milstolpe gör det', () => {
+    // Nikolai-fallet (okt 2026): blixt och väktare klarade sedan länge gav
+    // förr räv och axolotl direkt efter grodan, samma dag.
+    const veteranKid = {
+      ...kid(), schoolYear: '4', conqueredYears: ['3'], conqueredWorlds: ['talens-dal'],
       blixt: { 'plus-minus-10': { best: 20, cleared: true, attempts: 1 } },
     } as ChildProfile
-    const one = completePetPractice(veteran, 8, 8, 'talens-dal', at)
-    expect(one.petProgress.encounter?.species).toBe('dune-fox')
-    // En upptäckt väntar redan → nästa pass väcker ingen till.
-    expect(completePetPractice(one, 8, 8, 'talens-dal', at)).toBe(one)
+    let c = adoptPet(completePetPractice(veteranKid, 8, 8, 'talens-dal', at), 'Mossa', at)
+    expect(c.petProgress.milestoneBase).toEqual({ friends: 1, years: 1, worlds: 1, blixt: 1 })
+    expect(friendsEarned(c)).toBe(1)
+    expect(completePetPractice(c, 8, 8, 'talens-dal', at).petProgress.encounter).toBeUndefined()
+    expect(completePetPractice(c, 8, 8, 'talens-dal', nextDay).petProgress.encounter).toBeUndefined()
+    // Nästa årsväktare besegrad → nästa vän.
+    c = { ...c, conqueredYears: ['3', '4'] }
+    expect(completePetPractice(c, 8, 8, 'talens-dal', nextDay).petProgress.encounter?.species).toBe('dune-fox')
+  })
+
+  it('barn som redan har vänner behåller dem; räkningen startar därifrån', () => {
+    const fox = { ...withFrog().petProgress.pets[0], id: 'fox', species: 'dune-fox' as const }
+    const before: ChildProfile = {
+      ...withFrog(), conqueredYears: ['3'], blixt: { 'plus-minus-10': { best: 20, cleared: true, attempts: 1 } },
+    } as ChildProfile
+    const legacy: ChildProfile = {
+      ...before,
+      petProgress: { ...before.petProgress, pets: [...before.petProgress.pets, fox], milestoneBase: undefined },
+    }
+    const settled = settleMilestoneBase(legacy)
+    expect(settled.petProgress.milestoneBase).toEqual({ friends: 2, years: 1, worlds: 0, blixt: 1 })
+    expect(settleMilestoneBase(settled)).toBe(settled)
+    expect(nextFriendSpecies(settled)).toBeUndefined()
+    // En ny milstolpe → tredje vännen.
+    expect(nextFriendSpecies({ ...settled, conqueredWorlds: ['talens-dal'] })).toBe('reef-axolotl')
   })
 })
 

@@ -70,20 +70,42 @@ const GROWN: ReadonlySet<MasteryState> = new Set<MasteryState>(['mastered', 'sta
 export const masteredCount = (child: ChildProfile): number =>
   Object.values(child.skills).filter((s) => GROWN.has(s.mastery)).length
 
+/** Barnets milstolpar just nu: besegrade årsväktare (skänkta fjärranår
+    ligger inte i conqueredYears och räknas inte), världsbossar och klarade
+    blixtpass. Barnets egna framsteg — aldrig poäng eller tid (princip 3). */
+export function milestoneCounts(child: ChildProfile): { years: number; worlds: number; blixt: number } {
+  return {
+    years: child.conqueredYears?.length ?? 0,
+    worlds: child.conqueredWorlds?.length ?? 0,
+    blixt: Object.values(child.blixt ?? {}).filter((b) => b?.cleared === true).length,
+  }
+}
+
 /**
- * Hur många vänner barnet har förtjänat: grodan (första passet) plus en
- * per milstolpe — första RIKTIGT besegrade årsväktaren (skänkta fjärranår
- * räknas inte, de ligger inte i conqueredYears), första världsbossen och
- * första klarade blixten. Milstolparna är barnets egna framsteg, aldrig
- * poäng eller tid (princip 3).
+ * Hur många vänner barnet har förtjänat: grodan (första passet) och sedan
+ * en ny vän för varje NY milstolpe — nästa årsväktare, nästa världsboss,
+ * nästa klarade blixt. Milstolpar som redan var nådda när räkningen
+ * startade (milestoneBase) räknas inte: förr räknades de bakåt, och ett
+ * barn med gamla framsteg fick då flera vänner samma dag (förälderns
+ * iakttagelse okt 2026). En ny vän ska vara belöningen för något barnet
+ * just har klarat.
  */
 export function friendsEarned(child: ChildProfile): number {
-  const milestones = [
-    (child.conqueredYears?.length ?? 0) > 0,
-    (child.conqueredWorlds?.length ?? 0) > 0,
-    Object.values(child.blixt ?? {}).some((b) => b?.cleared === true),
-  ].filter(Boolean).length
-  return Math.min(PET_ORDER.length, 1 + milestones)
+  const base = child.petProgress.milestoneBase
+  if (!base) return 1
+  const now = milestoneCounts(child)
+  const fresh = Math.max(0, now.years - base.years) + Math.max(0, now.worlds - base.worlds) + Math.max(0, now.blixt - base.blixt)
+  return Math.min(PET_ORDER.length, base.friends + fresh)
+}
+
+/** Startar räkningen av nya milstolpar för barn som redan har vänner men
+    inget utgångsläge (de som hade vänner innan regeln kom). Vännerna barnet
+    redan har får det behålla — en vän tas aldrig ifrån barnet. Samma objekt
+    tillbaka när inget behöver göras. */
+export function settleMilestoneBase(child: ChildProfile): ChildProfile {
+  const p = child.petProgress
+  if (p.milestoneBase || p.pets.length === 0) return child
+  return withProgress(child, { milestoneBase: { friends: p.pets.length, ...milestoneCounts(child) } })
 }
 
 /** Nästa vän som väntar bakom stenen, eller undefined. */
@@ -180,7 +202,9 @@ export function adoptPet(child: ChildProfile, name: string, at: Date): ChildProf
     seenStage: 1,
     growthV: GROWTH_VERSION,
   }
-  return withProgress(child, { pets: [...p.pets, pet], encounter: undefined })
+  // Första vännen startar räkningen: härifrån ger varje ny milstolpe en ny vän.
+  const milestoneBase = p.milestoneBase ?? { friends: 1, ...milestoneCounts(child) }
+  return withProgress(child, { pets: [...p.pets, pet], encounter: undefined, milestoneBase })
 }
 
 /** Kvar av dagens lägertid. Ingen tid alls utan dagens avslutade pass —

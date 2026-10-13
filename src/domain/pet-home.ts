@@ -99,6 +99,11 @@ export interface PetProgress {
   outfit?: string
   /** Köpta mantlar (resenärens mantel är gratis och står inte här). */
   outfits?: string[]
+  /** Utgångsläget för nya vänner: hur många vänner barnet hade och hur
+      många milstolpar som redan var nådda när räkningen startade. Bara
+      milstolpar EFTER det ger nya vänner (förälderns beslut, okt 2026 —
+      gamla framsteg gav annars flera vänner samma dag). Optionellt. */
+  milestoneBase?: { friends: number; years: number; worlds: number; blixt: number }
 }
 
 /** Mynt för VANAN: första avslutade passet per dag, oavsett hur många rätt.

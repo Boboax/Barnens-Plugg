@@ -16,7 +16,7 @@ import { emptyPetProgress } from '../domain/pet-home'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { mergeHouseholds, pullRemote, pushRemote, syncRound, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
-import { adoptPet, completePetPractice, dismissFreshStart, homeSecondsLeft, markPetGrowthSeen, restartPetGrowth, spendHomeTime } from '../engine/pet-home'
+import { adoptPet, completePetPractice, dismissFreshStart, homeSecondsLeft, markPetGrowthSeen, restartPetGrowth, settleMilestoneBase, spendHomeTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
 
 /* ============================================================
@@ -202,10 +202,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           setSyncStatus(e instanceof Error ? e.message : 'Kunde inte nå synktjänsten (offline?)')
         }
       }
-      // Vänner från innan tillväxtreglerna startas om som ungar (en gång).
-      if (h.children.some((c) => restartPetGrowth(c) !== c)) {
+      // Vänner från innan tillväxtreglerna startas om som ungar, och barn med
+      // vänner får ett utgångsläge för nya milstolpar (båda en gång).
+      const settle = (c: ChildProfile): ChildProfile => settleMilestoneBase(restartPetGrowth(c))
+      if (h.children.some((c) => settle(c) !== c)) {
         h = { ...h, children: h.children.map((c) => {
-          const settled = restartPetGrowth(c)
+          const settled = settle(c)
           return settled === c ? c : { ...settled, updatedAt: new Date().toISOString() }
         }) }
       }
