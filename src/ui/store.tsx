@@ -16,7 +16,7 @@ import { emptyPetProgress } from '../domain/pet-home'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { mergeHouseholds, pullRemote, pushRemote, syncRound, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
-import { adoptPet, completePetPractice, dismissFreshStart, homeSecondsLeft, markPetGrowthSeen, restartPetGrowth, settleMilestoneBase, spendHomeTime } from '../engine/pet-home'
+import { adoptPet, completePetPractice, dismissFreshStart, homeSecondsLeft, markPetGrowthSeen, releasePet, restartPetGrowth, settleMilestoneBase, spendHomeTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
 
 /* ============================================================
@@ -126,6 +126,8 @@ interface StoreValue {
   finishDiagnosisPass(converged: boolean): void
   /** Nollställ placering + framsteg och kör om startdiagnosen (föräldervalt). */
   redoDiagnosis(childId: string): void
+  /** Föräldern tar bort en vän i Kvällslägret (föräldraläget). */
+  releasePet(childId: string, petId: string): void
 
   // Tid
   secondsLeftToday(child: ChildProfile): number
@@ -588,6 +590,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!__TESTLAGE__ || !activeChildId) return
       patchChild(activeChildId, fn)
     },
+
+    releasePet: (id, petId) => patchChild(id, (c) => releasePet(c, petId)),
 
     redoDiagnosis: (id) => patchChild(id, (c) => {
       // Färska färdigheter så gammal placering rensas helt; profil/namn/

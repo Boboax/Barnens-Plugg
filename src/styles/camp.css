@@ -146,7 +146,7 @@
 }
 .camp-pet:disabled { opacity: 1; }
 /* Namnet på en egen mörk platta — bakgrunden varierar från eld till natt. */
-.camp-pet span {
+.camp-pet__name {
   display: inline-block; max-width: 145%; padding: 3px 9px; overflow-wrap: anywhere;
   border: 1px solid #af915b; border-radius: 12px; background: #182823eb; color: #fbeac8;
   font-size: clamp(11px, 1.3vw, 15px); font-weight: 800;

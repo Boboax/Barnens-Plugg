@@ -232,3 +232,17 @@ export function spendHomeTime(child: ChildProfile, seconds: number, at: Date): C
   const withVisit = withProgress(child, { visit: { day, seconds: next } })
   return { ...withVisit, campSeconds: { ...child.campSeconds, [key]: (child.campSeconds?.[key] ?? 0) + (next - used) } }
 }
+
+/** Föräldern tar bort en vän (föräldraläget, PIN-skyddat) — t.ex. en vän
+    som kom för tidigt enligt gamla regler. Räkningen av nya milstolpar
+    startar om från de vänner som är kvar, så samma vän inte genast väcks
+    igen. Samma objekt tillbaka om vännen inte finns. */
+export function releasePet(child: ChildProfile, petId: string): ChildProfile {
+  const p = child.petProgress
+  const pets = p.pets.filter((pet) => pet.id !== petId)
+  if (pets.length === p.pets.length) return child
+  return withProgress(child, {
+    pets,
+    milestoneBase: pets.length > 0 ? { friends: pets.length, ...milestoneCounts(child) } : undefined,
+  })
+}

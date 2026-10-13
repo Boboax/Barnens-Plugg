@@ -3,7 +3,7 @@ import type { ChildProfile } from '../domain/types'
 import { DAILY_PET_COINS, HOME_VISIT_SECONDS, emptyPetProgress } from '../domain/pet-home'
 import {
   adoptPet, completePetPractice, friendsEarned, homeSecondsLeft, markPetGrowthSeen, nextFriendSpecies, petDay,
-  dismissFreshStart, petGrewUnseen, petStage, restartPetGrowth, settleMilestoneBase, spendHomeTime,
+  dismissFreshStart, petGrewUnseen, petStage, releasePet, restartPetGrowth, settleMilestoneBase, spendHomeTime,
 } from './pet-home'
 import type { SkillState } from '../domain/types'
 
@@ -211,6 +211,20 @@ describe('Etapp 2: en ny vän per milstolpe', () => {
     expect(nextFriendSpecies(settled)).toBeUndefined()
     // En ny milstolpe → tredje vännen.
     expect(nextFriendSpecies({ ...settled, conqueredWorlds: ['talens-dal'] })).toBe('reef-axolotl')
+  })
+})
+
+describe('Föräldern tar bort en vän', () => {
+  it('vännen försvinner och räkningen startar om från de som är kvar', () => {
+    let c: ChildProfile = { ...withFrog(), conqueredYears: ['F'] }
+    c = passAndAdopt(c, 'Saffran')
+    const fox = c.petProgress.pets[1]
+    const after = releasePet(c, fox.id)
+    expect(after.petProgress.pets.map((p) => p.name)).toEqual(['Mossa'])
+    expect(after.petProgress.milestoneBase).toEqual({ friends: 1, years: 1, worlds: 0, blixt: 0 })
+    // Väcks inte igen förrän vid nästa nya milstolpe.
+    expect(nextFriendSpecies(after)).toBeUndefined()
+    expect(releasePet(after, 'finns-inte')).toBe(after)
   })
 })
 

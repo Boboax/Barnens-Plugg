@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ChildProfile, SchoolYear } from '../../domain/types'
 import { areaName, weeklyReport } from '../../engine/report'
 import { DailyReport } from './DailyReport'
+import { petSpecies } from '../../domain/pet-home'
 import { rewardProgress } from '../../engine/rewards'
 import { BLIXT_TESTS, blixtTarget, blixtTimed, BLIXT_UNTIMED_COUNT, BLIXT_UNTIMED_PASS } from '../../engine/blixt'
 import { pingProvider } from '../../chat/providers'
@@ -505,6 +506,8 @@ function ChildSettings({ child }: { child: ChildProfile }) {
         )}
       </div>
 
+      <CampFriends child={child} />
+
       <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, fontSize: 14, fontWeight: 700, padding: '6px 0' }}>
         <span>⏱ Tid per dag: <strong>{child.dailyLimitMinutes} min</strong></span>
         <input
@@ -592,6 +595,45 @@ function ChildSettings({ child }: { child: ChildProfile }) {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+/** Kvällslägrets vänner — föräldern kan ta bort en vän (t.ex. en som kom
+    för tidigt). Kräver en extra bekräftelse; barnet ser aldrig knappen. */
+function CampFriends({ child }: { child: ChildProfile }) {
+  const store = useStore()
+  const [confirm, setConfirm] = useState<string | null>(null)
+  const pets = child.petProgress.pets
+  if (pets.length === 0) return null
+  return (
+    <div style={{ background: '#F7F6F2', borderRadius: 10, padding: '10px 12px', margin: '6px 0' }}>
+      <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 6 }}>🏕️ Vänner i Kvällslägret</div>
+      <div style={{ display: 'grid', gap: 6 }}>
+        {pets.map((pet) => (
+          <div key={pet.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 13.5 }}>
+            <strong>{pet.name}</strong>
+            <span style={{ color: '#8B8FA0', fontWeight: 600 }}>
+              {petSpecies(pet.species).name} · hittad {new Date(pet.foundAt).toLocaleDateString('sv-SE')}
+            </span>
+            {confirm === pet.id ? (
+              <span style={{ display: 'flex', gap: 6, marginLeft: 'auto', alignItems: 'center' }}>
+                <span style={{ fontSize: 12.5, fontWeight: 800, color: '#B4552E' }}>Ta bort {pet.name} för gott?</span>
+                <button onClick={() => { store.releasePet(child.id, pet.id); setConfirm(null) }}
+                  style={{ fontSize: 12.5, fontWeight: 800, padding: '5px 12px', borderRadius: 8, background: '#E2574C', color: '#fff', fontFamily: 'inherit' }}>Ja, ta bort</button>
+                <button onClick={() => setConfirm(null)}
+                  style={{ fontSize: 12.5, fontWeight: 700, padding: '5px 10px', borderRadius: 8, background: '#EDEAE2', color: '#2A2F3A', fontFamily: 'inherit' }}>Avbryt</button>
+              </span>
+            ) : (
+              <button onClick={() => setConfirm(pet.id)}
+                style={{ marginLeft: 'auto', fontSize: 12.5, fontWeight: 700, padding: '5px 10px', borderRadius: 8, background: '#EDEAE2', color: '#2A2F3A', fontFamily: 'inherit' }}>Ta bort …</button>
+            )}
+          </div>
+        ))}
+      </div>
+      <p style={{ margin: '6px 0 0', fontSize: 12, color: '#8B8FA0' }}>
+        Nästa vän kommer vid nästa nya milstolpe (årsväktare, världsboss eller blixtpass).
+      </p>
     </div>
   )
 }

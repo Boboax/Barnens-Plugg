@@ -114,7 +114,7 @@ export function CampView(props: Props) {
               onClick={() => props.onGreet(pet)}
             >
               <PetSprite species={pet.species} stage={petStage(child, pet)} greeting={greetingPetId === pet.id} resting={pet.care?.resting} />
-              <span>{pet.name}</span>
+              <span className="camp-pet__name">{pet.name}</span>
             </button>
           )
         })}
