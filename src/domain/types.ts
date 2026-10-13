@@ -140,7 +140,20 @@ export type TaskVisual =
   // av generatorns facittabell — bilden visar bara linjen barnet ska bedöma.
   | { kind: 'spegel'; shape: 'cirkel' | 'kvadrat' | 'rektangel' | 'triangel' | 'hjarta';
       axis: 'lodrat' | 'vagrat' | 'diagonal' }
+  // Stapelmodellen (Singapore "bar model"): textuppgiften som staplar.
+  // Varje rad är en person/sak; delarna ritas i proportion till size och
+  // bär sin text ('?' för det sökta). total = klammer under en hel rad
+  // (row = -1: lodrät klammer till höger om ALLA rader, "tillsammans"),
+  // diff = det streckade glappet där en kortare rad slutar (jämförelse).
+  | { kind: 'stapelmodell'; rows: BarModelRow[];
+      total?: { row: number; text: string; unknown?: boolean };
+      diff?: { text: string; unknown?: boolean } }
   | { kind: 'ingen' }
+
+export interface BarModelRow {
+  label: string
+  parts: { size: number; text: string; unknown?: boolean; tone?: 0 | 1 | 2; removed?: boolean }[]
+}
 
 /** Ett svarsalternativ i flervalsuppgift. */
 export interface Choice {

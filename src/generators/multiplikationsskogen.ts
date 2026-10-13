@@ -1,6 +1,6 @@
 import type { DifficultyLevel, TaskGenerator } from '../domain/types'
 import { createRng, type Rng } from './rng'
-import { lerpInt, numericTask, pickName, pickThing } from './helpers'
+import { equalParts, lerpInt, numericTask, pickName, pickThing, pickTwoNames } from './helpers'
 
 /* ============================================================
    Multiplikationsskogen — multiplikation, division, flerstegsproblem.
@@ -33,7 +33,8 @@ const multMisconceptions = (a: number, b: number): Record<number, 'fel-raknesatt
 const multIntro = g('mult-intro', (level, seed, rng) => {
   const id = 'gen.mult-intro'
   const table = level <= 3 ? rng.pick([2, 10] as const) : level <= 7 ? rng.pick([2, 5, 10] as const) : rng.pick([3, 4, 5] as const)
-  const n = rng.int(1, level >= 8 ? 12 : 10)
+  // Berättelsen (nivå 1–5) börjar på två högar — "1 högar" är ingen svenska.
+  const n = rng.int(level <= 5 ? 2 : 1, level >= 8 ? 12 : 10)
   const [, plural, emoji] = pickThing(rng)
   if (level <= 5) {
     return numericTask({
@@ -41,6 +42,8 @@ const multIntro = g('mult-intro', (level, seed, rng) => {
       prompt: `${n} högar med ${table} ${plural} i varje. Hur många ${plural} är det?`,
       value: n * table,
       visual: { kind: 'grupper', groupCount: n, itemsPerGroup: table, emoji },
+      // Stapelmodellen: n lika långa delar — samma bild som i åk 5:s problemlösning.
+      solution: { kind: 'stapelmodell', rows: [{ label: 'Högarna', parts: equalParts(n, table, `${table}`) }], total: { row: 0, text: `${n * table}` } },
       explanation: `${n} × ${table} betyder ${Array(Math.min(n, 5)).fill(table).join(' + ')}${n > 5 ? ' + …' : ''} = ${n * table}.`,
       misconceptions: multMisconceptions(n, table),
     })
@@ -71,6 +74,7 @@ const divIntro = g('div-intro', (level, seed, rng) => {
       generatorId: id, level, seed,
       prompt: `${name} delar ${total} ${plural} lika mellan sig själv och ${parts} kompisar. Hur många får var och en?`,
       value: each,
+      solution: { kind: 'stapelmodell', rows: [{ label: 'Alla', parts: equalParts(persons, each, `${each}`) }], total: { row: 0, text: `${total}` } },
       explanation: `Det är ${persons} personer som delar (glöm inte ${name}!): ${total} / ${persons} = ${each}.`,
       // Kärnmissen (delade med kompisarna, glömde sig själv) taggas bara när
       // den ger ett heltal — annars krockade reserven med en-fel-nyckeln.
@@ -87,7 +91,11 @@ const divIntro = g('div-intro', (level, seed, rng) => {
     value: each,
     // EN odelad hög att dela upp — att rita färdiga högar visade facit direkt.
     // Fler än 12 objekt blir plottrigt → inget stöd då.
-    visual: level <= 5 && total <= 12 ? { kind: 'grupper', groupCount: 1, itemsPerGroup: total, emoji } : { kind: 'ingen' },
+    visual: level <= 5 && total <= 12
+      ? { kind: 'grupper', groupCount: 1, itemsPerGroup: total, emoji }
+      : level <= 7 ? { kind: 'stapelmodell', rows: [{ label: 'Högarna', parts: equalParts(parts, each, '', { unknownFirst: true }) }], total: { row: 0, text: `${total}` } }
+      : { kind: 'ingen' },
+    solution: { kind: 'stapelmodell', rows: [{ label: 'Högarna', parts: equalParts(parts, each, `${each}`) }], total: { row: 0, text: `${total}` } },
     explanation: `${total} / ${parts} = ${each} — kolla: ${parts} × ${each} = ${total}.`,
     misconceptions: { [total - parts]: 'fel-raknesatt', [each + 1]: 'en-fel', [each - 1]: 'en-fel' },
   })
@@ -252,8 +260,57 @@ const multDivStora = g('mult-div-stora', (level, seed, rng) => {
 
 const problemFlersteg = g('problemlosning-flerstegs', (level, seed, rng) => {
   const id = 'gen.problemlosning-flerstegs'
-  const name = pickName(rng)
-  const kind = rng.pick(['kop', 'biljetter', 'spara'] as const)
+  const [name, other] = pickTwoNames(rng)
+  // Från nivå 6: de klassiska stapelmodellsproblemen (Singapore) — "gånger
+  // så mycket" och "summa och skillnad", som är svåra att lösa utan bild
+  // men nästan självklara med den. Stapelmodellen är stöd t.o.m. nivå 7
+  // och lösningsbild alltid.
+  const kind = rng.pick(level >= 6
+    ? (['kop', 'biljetter', 'spara', 'ganger', 'skillnad'] as const)
+    : (['kop', 'biljetter', 'spara'] as const))
+  const support = level <= 7
+  if (kind === 'ganger') {
+    const k = rng.int(2, level >= 8 ? 5 : 3)
+    const unit = rng.int(4, lerpInt(level, 12, 40))
+    const total = (k + 1) * unit
+    const model = (shown: boolean) => ({
+      kind: 'stapelmodell' as const,
+      rows: [
+        { label: name, parts: equalParts(k, unit, shown ? `${unit}` : '') },
+        { label: other, parts: [{ size: unit, text: shown ? `${unit}` : '?', unknown: !shown, tone: 1 as const }] },
+      ],
+      total: { row: -1, text: `${total}` },
+    })
+    return numericTask({
+      generatorId: id, level, seed, value: unit,
+      prompt: `${name} och ${other} har tillsammans ${total} kr. ${name} har ${k} gånger så mycket som ${other}. Hur mycket har ${other}?`,
+      visual: support ? model(false) : { kind: 'ingen' },
+      solution: model(true),
+      explanation: `Rita ${other} som en ruta och ${name} som ${k} lika rutor: ${k + 1} rutor är ${total} kr. En ruta: ${total} / ${k + 1} = ${unit} kr.`,
+      misconceptions: { [total / k]: 'fel-raknesatt', [k * unit]: 'fel-raknesatt' },
+    })
+  }
+  if (kind === 'skillnad') {
+    const small = rng.int(6, lerpInt(level, 20, 60))
+    const d = rng.int(2, lerpInt(level, 10, 30))
+    const total = 2 * small + d
+    const model = (shown: boolean) => ({
+      kind: 'stapelmodell' as const,
+      rows: [
+        { label: name, parts: [{ size: small, text: shown ? `${small}` : '' }, { size: d, text: `${d}`, tone: 1 as const }] },
+        { label: other, parts: [{ size: small, text: shown ? `${small}` : '?', unknown: !shown }] },
+      ],
+      total: { row: -1, text: `${total}` },
+    })
+    return numericTask({
+      generatorId: id, level, seed, value: small,
+      prompt: `${name} och ${other} har tillsammans ${total} klistermärken. ${name} har ${d} fler än ${other}. Hur många har ${other}?`,
+      visual: support ? model(false) : { kind: 'ingen' },
+      solution: model(true),
+      explanation: `Ta bort de ${d} extra: ${total} − ${d} = ${total - d}. Då är staplarna lika långa: ${total - d} / 2 = ${small}.`,
+      misconceptions: { [(total) / 2]: 'fel-raknesatt', [small + d]: 'fel-raknesatt', [total - d]: 'fel-raknesatt' },
+    })
+  }
   if (kind === 'kop') {
     const antal = rng.int(3, 8)
     const pris = rng.int(8, lerpInt(level, 20, 60))
@@ -262,12 +319,18 @@ const problemFlersteg = g('problemlosning-flerstegs', (level, seed, rng) => {
     // "får tillbaka 0 kr", vilket känns som en lurad fråga.
     const betalt = kostnad % 100 === 0 ? kostnad + 100 : Math.ceil(kostnad / 100) * 100
     const extra = level >= 9 ? ` I affären finns ${rng.int(20, 90)} bullar.` : ''
+    const back = betalt - kostnad
     return numericTask({
       generatorId: id, level, seed,
       prompt: `${name} köper ${antal} bullar för ${pris} kr styck och betalar med ${betalt} kr.${extra} Hur mycket får ${name} tillbaka?`,
-      value: betalt - antal * pris,
-      explanation: `Steg 1: ${antal} × ${pris} = ${antal * pris} kr. Steg 2: ${betalt} − ${antal * pris} = ${betalt - antal * pris} kr.`,
-      misconceptions: { [antal * pris]: 'fel-raknesatt', [betalt - pris]: 'fel-raknesatt' },
+      value: back,
+      solution: {
+        kind: 'stapelmodell',
+        rows: [{ label: 'Betalt', parts: [{ size: kostnad, text: `${kostnad}` }, { size: back, text: `${back}`, tone: 1 }] }],
+        total: { row: 0, text: `${betalt} kr` },
+      },
+      explanation: `Steg 1: ${antal} × ${pris} = ${kostnad} kr. Steg 2: ${betalt} − ${kostnad} = ${back} kr.`,
+      misconceptions: { [kostnad]: 'fel-raknesatt', [betalt - pris]: 'fel-raknesatt' },
     })
   }
   if (kind === 'biljetter') {
@@ -275,23 +338,35 @@ const problemFlersteg = g('problemlosning-flerstegs', (level, seed, rng) => {
     const barn = rng.int(2, 4)
     const vuxenPris = rng.int(8, 15) * 10
     const barnPris = vuxenPris / 2
+    const sum = vuxna * vuxenPris + barn * barnPris
     return numericTask({
       generatorId: id, level, seed,
       prompt: `En vuxenbiljett kostar ${vuxenPris} kr och en barnbiljett hälften. Vad kostar det för ${vuxna} vuxna och ${barn} barn?`,
-      value: vuxna * vuxenPris + barn * barnPris,
-      explanation: `Barnbiljett: ${barnPris} kr. Vuxna: ${vuxna} × ${vuxenPris} = ${vuxna * vuxenPris}. Barn: ${barn} × ${barnPris} = ${barn * barnPris}. Tillsammans ${vuxna * vuxenPris + barn * barnPris} kr.`,
+      value: sum,
+      solution: {
+        kind: 'stapelmodell',
+        rows: [{ label: 'Biljetter', parts: [...equalParts(vuxna, vuxenPris, `${vuxenPris}`), ...equalParts(barn, barnPris, `${barnPris}`, { tone: 1 })] }],
+        total: { row: 0, text: `${sum} kr` },
+      },
+      explanation: `Barnbiljett: ${barnPris} kr. Vuxna: ${vuxna} × ${vuxenPris} = ${vuxna * vuxenPris}. Barn: ${barn} × ${barnPris} = ${barn * barnPris}. Tillsammans ${sum} kr.`,
       misconceptions: { [(vuxna + barn) * vuxenPris]: 'fel-raknesatt' },
     })
   }
   const veckopeng = rng.int(3, 8) * 10
   const veckor = rng.int(4, 9)
   const mal = veckopeng * veckor + rng.int(2, 9) * 10
+  const sparat = veckopeng * veckor
   return numericTask({
     generatorId: id, level, seed,
     prompt: `${name} sparar ${veckopeng} kr i veckan i ${veckor} veckor. En cykel kostar ${mal} kr. Hur mycket fattas?`,
-    value: mal - veckopeng * veckor,
-    explanation: `Sparat: ${veckor} × ${veckopeng} = ${veckopeng * veckor} kr. Fattas: ${mal} − ${veckopeng * veckor} = ${mal - veckopeng * veckor} kr.`,
-    misconceptions: { [veckopeng * veckor]: 'fel-raknesatt' },
+    value: mal - sparat,
+    solution: {
+      kind: 'stapelmodell',
+      rows: [{ label: 'Cykeln', parts: [{ size: sparat, text: `${sparat}` }, { size: mal - sparat, text: `${mal - sparat}`, tone: 1 }] }],
+      total: { row: 0, text: `${mal} kr` },
+    },
+    explanation: `Sparat: ${veckor} × ${veckopeng} = ${sparat} kr. Fattas: ${mal} − ${sparat} = ${mal - sparat} kr.`,
+    misconceptions: { [sparat]: 'fel-raknesatt' },
   })
 })
 

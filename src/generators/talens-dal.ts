@@ -1,4 +1,4 @@
-import type { DifficultyLevel, TaskGenerator } from '../domain/types'
+import type { DifficultyLevel, TaskGenerator, TaskVisual } from '../domain/types'
 import { createRng } from './rng'
 import {
   choiceTask, hopSolution, lerpInt, numericTask, pickName, pickThing, pickTwoNames, tiobas, tiobasOp, uniqueDistractors,
@@ -228,23 +228,100 @@ function makeAddSub(momentId: string, cfg: AddSubCfg): TaskGenerator {
       if (opposite >= 0 && opposite !== value) mis[opposite] = 'fel-raknesatt'
 
       // Textuppgift på högre nivåer — med överflödig information på stjärnnivån.
-      const story = level >= (cfg.storyFrom ?? 6) && rng.chance(level >= 8 ? 0.7 : 0.4)
+      // Tre sorters berättelser (Singapore-matten): förändring (får/ger bort),
+      // jämförelse (fler/färre än) och saknad del. Alla får en STAPELMODELL:
+      // som stöd före svaret upp till nivå 7, och som lösningsbild efteråt.
+      // (Ger bort allt = noll kvar blir en stapel utan bredd — då en vanlig uppgift.)
+      const story = level >= (cfg.storyFrom ?? 6) && rng.chance(level >= 8 ? 0.7 : 0.4) && (isAdd || value >= 1)
       if (story) {
         // Den överflödiga informationen måste handla om en ANNAN person —
         // pickName två gånger kunde dra samma namn ("Vera har 7 bullar …
         // Vera har 19 bullar") och göra uppgiften självmotsägande.
         const [name, other] = pickTwoNames(rng)
-        const [, plural, emoji] = pickThing(rng)
-        const extra = level >= 9 ? ` ${other} har ${rng.int(2, 20)} ${plural}.` : ''
+        const [, plural] = pickThing(rng)
+        const support = level <= 7
+        const kind = rng.pick(isAdd ? (['andring', 'jamfor', 'saknas'] as const) : (['andring', 'jamfor'] as const))
+        // I jämförelsen är den andra personen själva frågan — då får den
+        // överflödiga informationen inte handla om en person alls.
+        const personExtra = kind !== 'jamfor' && rng.chance(0.5)
+        const extra = level >= 9
+          ? personExtra ? ` ${other} har ${rng.int(2, 20)} ${plural}.` : ` Det är ${rng.int(2, 9)} grader varmt ute.`
+          : ''
+        const extraNote = extra ? ' Den andra informationen behövdes inte!' : ''
+
+        if (kind === 'saknas') {
+          // a + ? = a + b: den sökta delen. Felet att lägga ihop allt fångas.
+          const whole = a + b
+          const model = (shown: boolean): TaskVisual => ({
+            kind: 'stapelmodell',
+            rows: [{ label: name, parts: [{ size: a, text: `${a}` }, { size: b, text: shown ? `${b}` : '?', unknown: !shown, tone: 1 }] }],
+            total: { row: 0, text: `${whole}` },
+          })
+          return numericTask({
+            generatorId: id, level, seed, value: b,
+            prompt: `${name} hade ${a} ${plural}. Sedan fick ${name} några till och har nu ${whole}.${extra} Hur många fick ${name}?`,
+            visual: support ? model(false) : { kind: 'ingen' },
+            solution: model(true),
+            explanation: `Helheten är ${whole} och en del är ${a}. Den andra delen: ${whole} − ${a} = ${b}.${extraNote}`,
+            misconceptions: { [whole + a]: 'fel-raknesatt', [b + 1]: 'en-fel', ...(b - 1 >= 0 ? { [b - 1]: 'en-fel' } : {}) },
+          })
+        }
+
+        if (kind === 'jamfor') {
+          // Jämförelse: den andra personen har b fler/färre. Skillnaden är
+          // glappet i stapelmodellen.
+          const model = (shown: boolean): TaskVisual => isAdd
+            ? {
+                kind: 'stapelmodell',
+                rows: [
+                  { label: name, parts: [{ size: a, text: `${a}` }] },
+                  { label: other, parts: [{ size: a, text: `${a}` }, { size: b, text: `${b}`, tone: 1 }] },
+                ],
+                total: { row: 1, text: shown ? `${value}` : '?', unknown: !shown },
+              }
+            : {
+                kind: 'stapelmodell',
+                rows: [
+                  { label: name, parts: [{ size: a, text: `${a}` }] },
+                  { label: other, parts: [{ size: value, text: shown ? `${value}` : '?', unknown: !shown, tone: 1 }] },
+                ],
+                diff: { text: `${b}` },
+              }
+          return numericTask({
+            generatorId: id, level, seed, value,
+            prompt: isAdd
+              ? `${name} har ${a} ${plural}. ${other} har ${b} fler än ${name}.${extra} Hur många ${plural} har ${other}?`
+              : `${name} har ${a} ${plural}. ${other} har ${b} färre än ${name}.${extra} Hur många ${plural} har ${other}?`,
+            visual: support ? model(false) : { kind: 'ingen' },
+            solution: model(true),
+            explanation: isAdd
+              ? `${other} har lika många som ${name} och ${b} till: ${a} + ${b} = ${value}.${extraNote}`
+              : `${other} har ${b} färre — staplen är ${b} kortare: ${a} − ${b} = ${value}.${extraNote}`,
+            misconceptions: mis,
+          })
+        }
+
+        const model = (shown: boolean): TaskVisual => isAdd
+          ? {
+              kind: 'stapelmodell',
+              rows: [{ label: name, parts: [{ size: a, text: `${a}` }, { size: b, text: `${b}`, tone: 1 }] }],
+              total: { row: 0, text: shown ? `${value}` : '?', unknown: !shown },
+            }
+          : {
+              kind: 'stapelmodell',
+              rows: [{ label: name, parts: [{ size: value, text: shown ? `${value}` : '?', unknown: !shown }, { size: b, text: `${b}`, removed: true }] }],
+              total: { row: 0, text: `${a}` },
+            }
         const prompt = isAdd
           ? `${name} har ${a} ${plural} och får ${b} till.${extra} Hur många ${plural} har ${name} nu?`
           : `${name} har ${a} ${plural} och ger bort ${b}.${extra} Hur många ${plural} har ${name} kvar?`
         return numericTask({
           generatorId: id, level, seed, prompt, value,
-          visual: level <= cfg.visualUpTo ? { kind: 'grupper', groupCount: 1, itemsPerGroup: Math.min(a, 12), emoji } : { kind: 'ingen' },
+          visual: support ? model(false) : { kind: 'ingen' },
+          solution: model(true),
           explanation: isAdd
-            ? `${a} + ${b} = ${value}. Informationen om andra personer behövdes inte!`
-            : `${a} − ${b} = ${value}. Informationen om andra personer behövdes inte!`,
+            ? `Två delar blir en helhet: ${a} + ${b} = ${value}.${extraNote}`
+            : `Helheten är ${a}, ${b} försvinner: ${a} − ${b} = ${value}.${extraNote}`,
           misconceptions: mis,
         })
       }

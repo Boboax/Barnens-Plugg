@@ -31,6 +31,11 @@ const brakIntro = g('brak-intro', (level, seed, rng) => {
       prompt: `Vad är ${frac(n, d)} av ${whole}?`,
       value: (whole / d) * n,
       visual: { kind: 'brak', parts: d, filled: n },
+      solution: {
+        kind: 'stapelmodell',
+        rows: [{ label: 'Hela', parts: Array.from({ length: d }, (_, i) => ({ size: 1, text: d <= 6 || i === 0 ? `${whole / d}` : '', tone: i < n ? 1 as const : 0 as const })) }],
+        total: { row: 0, text: `${frac(n, d)} av ${whole} = ${(whole / d) * n}` },
+      },
       explanation: `En ${d}-del av ${whole} är ${whole / d}. Då är ${frac(n, d)} lika med ${n} × ${whole / d} = ${(whole / d) * n}.`,
       misconceptions: { [whole / d]: 'fel-raknesatt', [whole - n]: 'fel-raknesatt' },
     })

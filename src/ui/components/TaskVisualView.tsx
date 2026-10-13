@@ -1,4 +1,4 @@
-import type { TaskVisual } from '../../domain/types'
+import type { BarModelRow, TaskVisual } from '../../domain/types'
 import { isObjektIcon, ObjektIcon } from './Icon'
 
 /* ============================================================
@@ -24,6 +24,7 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
       case 'vinkel': return <Vinkel degrees={visual.degrees} rot={visual.rot} />
       case 'kropp': return <Kropp body={visual.body} />
       case 'spegel': return <Spegel shape={visual.shape} axis={visual.axis} />
+      case 'stapelmodell': return <Stapelmodell rows={visual.rows} total={visual.total} diff={visual.diff} />
     }
   })()
   // Ljus "kortyta" runt bilden med ÅTERSTÄLLDA färgvariabler: annars ärver
@@ -615,5 +616,135 @@ function Rektangel({ w, h, unit }: { w: number; h: number; unit: string }) {
         </span>
       </div>
     </div>
+  )
+}
+
+/* Stapelmodellen (Singapore "bar model"): personerna i textuppgiften blir
+   rader med staplar i rätt proportioner, så barnet SER vad som är delar och
+   vad som är helheten — och var frågetecknet sitter — innan det räknar.
+   Det är bilden som bär strategin: delar + delar = helhet, helhet − del =
+   del, och vid jämförelse är skillnaden glappet där den kortare raden tar slut. */
+const BAR_TONES = [
+  { fill: '#C9CDF2', stroke: '#4A56C6' },
+  { fill: '#FFD3CD', stroke: '#D9584B' },
+  { fill: '#FFE9AE', stroke: '#B88A12' },
+]
+
+const MIN_PART = 30
+
+/** Delarnas bredder så att raden blir `target` px och ingen del smalare än MIN_PART. */
+function fitRow(sizes: number[], target: number): number[] {
+  const sum = sizes.reduce((a, b) => a + b, 0) || 1
+  let w = sizes.map((s) => (s / sum) * target)
+  const small = w.map((x) => x < MIN_PART)
+  const deficit = w.reduce((d, x, i) => d + (small[i] ? MIN_PART - x : 0), 0)
+  const bigSum = w.reduce((d, x, i) => d + (small[i] ? 0 : x), 0)
+  if (deficit > 0 && bigSum > deficit) w = w.map((x, i) => (small[i] ? MIN_PART : x - (x / bigSum) * deficit))
+  return w
+}
+
+function Stapelmodell({ rows, total, diff }: {
+  rows: BarModelRow[]
+  total?: { row: number; text: string; unknown?: boolean }
+  diff?: { text: string; unknown?: boolean }
+}) {
+  const LABEL_W = 78
+  const all = total?.row === -1
+  const BAR_W = all ? 196 : 236
+  const RIGHT = all ? 64 : 12
+  const ROW_H = 34
+  const sums = rows.map((r) => r.parts.reduce((s, p) => s + p.size, 0))
+  const longest = Math.max(...sums, 1)
+  const scale = BAR_W / longest
+  const shortRow = diff ? sums.indexOf(Math.min(...sums)) : -1
+  // Glappet i en jämförelse får aldrig bli ett streck: minst MIN_PART brett.
+  const diffPx = diff && shortRow >= 0 ? Math.max(MIN_PART, (longest - sums[shortRow]) * scale) : 0
+  // Radernas längd är proportionell (så jämförelser stämmer), men varje del
+  // är minst MIN_PART bred — en del på 2 av 24 ska gå att se och läsa.
+  const widths = rows.map((row, i) => fitRow(row.parts.map((p) => p.size), i === shortRow ? BAR_W - diffPx : sums[i] * scale))
+  const rowPx = widths.map((w) => w.reduce((a, b) => a + b, 0))
+  // Plats under en rad med klammer (helheten) och mellan raderna.
+  const gapAfter = (i: number): number => (total?.row === i ? 50 : 14)
+  const tops: number[] = []
+  let y = 8
+  rows.forEach((_, i) => { tops.push(y); y += ROW_H + gapAfter(i) })
+  const height = y
+  const unknownColor = '#D9584B'
+
+  return (
+    <svg viewBox={`0 0 ${LABEL_W + BAR_W + RIGHT} ${height}`} width={Math.min(360, LABEL_W + BAR_W + RIGHT)} style={{ maxWidth: '100%', fontFamily: 'inherit' }} role="img" aria-label="Stapelmodell">
+      <defs>
+        <pattern id="bm-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="#9A8F78" strokeWidth="2" />
+        </pattern>
+      </defs>
+      {rows.map((row, i) => {
+        let x = LABEL_W
+        const top = tops[i]
+        return (
+          <g key={i}>
+            <text x={LABEL_W - 8} y={top + ROW_H / 2 + 5} textAnchor="end" fontSize={14} fontWeight={800} fill="#2E3350">{row.label}</text>
+            {row.parts.map((part, j) => {
+              const w = widths[i][j]
+              const tone = BAR_TONES[part.tone ?? 0]
+              const px = x
+              x += w
+              const inside = w >= 26
+              return (
+                <g key={j}>
+                  <rect
+                    x={px} y={top} width={w} height={ROW_H} rx={3}
+                    fill={part.unknown ? '#FFFFFF' : part.removed ? 'url(#bm-hatch)' : tone.fill}
+                    stroke={part.unknown ? unknownColor : part.removed ? '#9A8F78' : tone.stroke}
+                    strokeWidth={2.2}
+                    strokeDasharray={part.unknown ? '5 4' : undefined}
+                  />
+                  {part.text && (
+                    <text
+                      x={px + w / 2} y={inside ? top + ROW_H / 2 + 6 : top - 5}
+                      textAnchor="middle" fontSize={inside ? 16 : 13} fontWeight={900}
+                      fill={part.unknown ? unknownColor : '#2E3350'}
+                      style={part.removed && inside ? { paintOrder: 'stroke', stroke: '#FBF4E2', strokeWidth: 4 } : undefined}
+                    >{part.text}</text>
+                  )}
+                </g>
+              )
+            })}
+            {i === shortRow && diff && (
+              <g>
+                <rect x={x} y={top} width={diffPx} height={ROW_H} rx={3}
+                  fill="#FFFFFF" stroke={diff.unknown ? unknownColor : '#6E6656'} strokeWidth={2.2} strokeDasharray="5 4" />
+                <text x={x + diffPx / 2} y={top + ROW_H / 2 + 6} textAnchor="middle" fontSize={16} fontWeight={900}
+                  fill={diff.unknown ? unknownColor : '#2E3350'}>{diff.text}</text>
+              </g>
+            )}
+          </g>
+        )
+      })}
+      {total && all && (() => {
+        const x = LABEL_W + BAR_W + 8
+        const y1 = tops[0]
+        const y2 = tops[rows.length - 1] + ROW_H
+        const mid = (y1 + y2) / 2
+        return (
+          <g>
+            <path d={`M${x} ${y1} q8 0 8 8 V${mid - 8} q0 8 8 8 q-8 0 -8 8 V${y2 - 8} q0 8 -8 8`} fill="none" stroke="#2E3350" strokeWidth={2} />
+            <text x={x + 38} y={mid + 6} textAnchor="middle" fontSize={16} fontWeight={900} fill={total.unknown ? unknownColor : '#2E3350'}>{total.text}</text>
+          </g>
+        )
+      })()}
+      {total && !all && rows[total.row] && (() => {
+        const top = tops[total.row] + ROW_H + 6
+        const x1 = LABEL_W
+        const x2 = LABEL_W + rowPx[total.row]
+        const mid = (x1 + x2) / 2
+        return (
+          <g>
+            <path d={`M${x1} ${top} q0 8 8 8 H${mid - 8} q8 0 8 8 q0 -8 8 -8 H${x2 - 8} q8 0 8 -8`} fill="none" stroke="#2E3350" strokeWidth={2} />
+            <text x={mid} y={top + 34} textAnchor="middle" fontSize={16} fontWeight={900} fill={total.unknown ? unknownColor : '#2E3350'}>{total.text}</text>
+          </g>
+        )
+      })()}
+    </svg>
   )
 }

@@ -1,4 +1,4 @@
-import type { Choice, DifficultyLevel, MisconceptionTag, Task, TaskVisual } from '../domain/types'
+import type { BarModelRow, Choice, DifficultyLevel, MisconceptionTag, Task, TaskVisual } from '../domain/types'
 import type { Rng } from './rng'
 
 /* Gemensamma byggstenar för alla uppgiftsgeneratorer. */
@@ -195,3 +195,18 @@ export const tiobasOp = (op: '+' | '−', ...numbers: number[]): TaskVisual => (
 /** Skala ett intervall efter nivå: nivå 1 → [lo], nivå 10 → [hi]. */
 export const lerpInt = (level: DifficultyLevel, lo: number, hi: number): number =>
   Math.round(lo + ((hi - lo) * (level - 1)) / 9)
+
+/** n lika stora delar i en stapelmodell (gånger, delat, "gånger så många").
+    Vid många delar skrivs texten bara i den första — tio "4" i rad blir
+    plotter, och barnet ser ändå att delarna är lika långa. */
+export function equalParts(
+  n: number, size: number, text: string,
+  opts: { unknownFirst?: boolean; tone?: 0 | 1 | 2 } = {},
+): BarModelRow['parts'] {
+  return Array.from({ length: n }, (_, i) => ({
+    size,
+    text: i === 0 || n <= 6 ? (opts.unknownFirst && i === 0 ? '?' : text) : '',
+    unknown: opts.unknownFirst && i === 0 ? true : undefined,
+    tone: opts.tone,
+  }))
+}
