@@ -282,6 +282,28 @@
 .den-pet__body--chew { animation: den-chew .32s ease-in-out 4; }
 .den-pet__body--stretch { animation: den-stretch .9s ease-in-out; }
 .den-pet--running .den-pet__body { animation: den-run .22s ease-in-out infinite; }
+/* Favoritgodiset: glädjeskutt med snurr och en varm glöd — den största reaktionen. */
+.den-pet__body--love { animation: den-love 2s cubic-bezier(.3, .7, .4, 1); }
+@keyframes den-love {
+  0% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 0 #ffd36b00); }
+  15% { transform: translateY(-22%) scale(1.12) rotateY(0); filter: drop-shadow(0 0 18px #ffd36bcc); }
+  45% { transform: translateY(-26%) scale(1.15) rotateY(360deg); filter: drop-shadow(0 0 26px #ffd36bee); }
+  65% { transform: translateY(0) scale(1.05, .92) rotateY(360deg); }
+  80% { transform: translateY(-10%) scale(1.06) rotateY(360deg); filter: drop-shadow(0 0 14px #ffd36b99); }
+  100% { transform: translateY(0) scale(1) rotateY(360deg); filter: drop-shadow(0 0 0 #ffd36b00); }
+}
+.den-sparkle { position: absolute; left: 50%; top: 40%; width: 0; height: 0; pointer-events: none; z-index: 6; }
+.den-sparkle i {
+  position: absolute; left: 0; top: 0; font-style: normal; font-size: 30px; color: #ffe08a;
+  text-shadow: 0 0 8px #fff3c4, 0 0 2px #b8860b;
+  animation: den-sparkle 1.3s ease-out both; transform: rotate(var(--a)) translateY(0);
+}
+.den-sparkle i:nth-child(even) { animation-delay: .15s; font-size: 22px; color: #ffb3d1; }
+@keyframes den-sparkle {
+  0% { opacity: 0; transform: rotate(var(--a)) translateY(0) scale(.4); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-110px) scale(1.1); }
+}
 
 .den-heart {
   position: absolute; z-index: 8; pointer-events: none; font-size: 34px; color: #FF6B8A;
@@ -644,6 +666,7 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
   .camp-fireflies i { opacity: .35; }
   .pet-sprite { background-position: 0 0; }
   .den-heart, .den-mums b { opacity: 1; }
+  .den-pet__body--love, .den-sparkle i { animation: none; }
   .den-pet { transition: none; }
   .pet-den-firefly { opacity: .7; }
 }

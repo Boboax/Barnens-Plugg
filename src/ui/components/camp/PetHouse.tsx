@@ -3,7 +3,7 @@ import type { CampItemInstance, CampPet, PetCareActivity, PetStage } from '../..
 import { PET_STAGE_NAMES, petSpecies } from '../../../domain/pet-home'
 import { CAMP_CATALOG, catalogItem } from '../../../domain/camp'
 import { worldById } from '../../../domain/worlds'
-import { PetSounds } from '../../pet-sounds'
+import { PetSounds, type PetSoundKind } from '../../pet-sounds'
 import { PetSprite, type PetAction } from './PetSprite'
 import { campIcon, campImage, itemImage } from './campArt'
 import { DEN_ART_READY, DenScene } from './DenScene'
@@ -74,13 +74,13 @@ function peekRound(round: number): { count: 3 | 4; swaps: number; swapMs: number
 }
 type PeekPhase = 'show' | 'shuffle' | 'guess'
 
-type Reaction = 'hop' | 'spin' | 'wiggle' | 'giggle' | 'purr' | 'chew' | 'stretch' | 'run'
+type Reaction = 'hop' | 'spin' | 'wiggle' | 'giggle' | 'purr' | 'chew' | 'stretch' | 'run' | 'love'
 type Mode = 'free' | 'fetch' | 'peek'
 
 /** Vilken målad rörelse varje reaktion spelar (PetSprite: bildrutor per handling). */
 const REACTION_ACTION: Record<Reaction, PetAction> = {
   hop: 'happy', spin: 'happy', wiggle: 'happy', giggle: 'happy', stretch: 'idle',
-  purr: 'pet', chew: 'eat', run: 'play',
+  purr: 'pet', chew: 'eat', run: 'play', love: 'happy',
 }
 
 const TAP_REACTIONS: { kind: Reaction; line: (n: string) => string }[] = [
@@ -142,6 +142,8 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
   const [bubble, setBubble] = useState('')
   const [hearts, setHearts] = useState<{ id: number; x: number; y: number }[]>([])
   const [mums, setMums] = useState(0)
+  const [mumsText, setMumsText] = useState('Mums!')
+  const [sparkle, setSparkle] = useState(0)
   const [petPos, setPetPos] = useState(HOME)
   const [lean, setLean] = useState(0)
   const [ball, setBall] = useState<{ x: number; y: number; phase: 'home' | 'drag' | 'fly' | 'carried' | 'return' }>(
@@ -199,7 +201,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
   // En reaktion är en kort animation; nästa kan börja när den är klar.
   useEffect(() => {
     if (!reaction) return
-    const t = window.setTimeout(() => setReaction(null), reaction.kind === 'chew' ? 1400 : 1000)
+    const t = window.setTimeout(() => setReaction(null), reaction.kind === 'love' ? 2200 : reaction.kind === 'chew' ? 1400 : 1000)
     return () => window.clearTimeout(t)
   }, [reaction])
 
@@ -219,10 +221,10 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
     setReaction(null)
     requestAnimationFrame(() => setReaction({ kind, key: Date.now() }))
   }
-  const sound = (): void => {
+  const sound = (kind: PetSoundKind = 'happy'): void => {
     if (muted) return
     sounds.current ??= new PetSounds()
-    sounds.current.play(pet.species)
+    sounds.current.play(pet.species, kind)
   }
   /** Spara omsorgen i barnets läger. Klapp sparas högst var 1,5 s — ett
       strykande finger ska inte bli tjugo sparningar (och synkrundor). */
@@ -246,8 +248,9 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
     setHearts((h) => [...h.slice(-14), { id, x, y }])
     later(() => setHearts((h) => h.filter((v) => v.id !== id)), 1300)
   }
-  const heartBurst = (at = petPos): void => {
-    for (let i = 0; i < 5; i++) later(() => addHeart(at.x - 8 + Math.random() * 16, at.y - PET_HEIGHT * 0.7), i * 110)
+  const heartBurst = (at = petPos, count = 5): void => {
+    const spread = count > 5 ? 26 : 16
+    for (let i = 0; i < count; i++) later(() => addHeart(at.x - spread / 2 + Math.random() * spread, at.y - PET_HEIGHT * 0.7), i * 110)
   }
 
   /* ---------- Röra vid vännen: tryck och stryk ---------- */
@@ -273,7 +276,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
       s.counted = true
       react('purr')
       say(pick(PURR_LINES)(pet.name))
-      sound()
+      sound('pet')
       care('pet')
     }
   }
@@ -294,15 +297,21 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
   const feed = (treat: { name: string; special: boolean }): void => {
     care('feed')
     setMums(Date.now())
-    sound()
     if (treat.special) {
-      // Favoritgodiset: en extra glad snurr och hjärtan — samma omsorg,
-      // bara roligare att ge (inget mätbart, ingen mätare).
-      react('spin')
-      heartBurst()
+      // Favoritgodiset (köpt i boden): vännens STÖRSTA reaktion — ett
+      // glädjeskutt med snurr och glöd, en hjärtregn, gnistor och det
+      // största lätet. Samma omsorg som vanligt godis (inget mätbart,
+      // ingen mätare) — bara roligare att ge.
+      setMumsText('Favorit!')
+      react('love')
+      sound('love')
+      heartBurst(petPos, 12)
+      setSparkle(Date.now())
       say(pick(LOVE_LINES)(pet.name, treat.name.toLowerCase()))
     } else {
+      setMumsText('Mums!')
       react('chew')
+      sound('eat')
       say(pick(FEED_LINES)(pet.name))
     }
   }
@@ -351,7 +360,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
       setBall({ ...BALL_HOME, phase: 'return' })
       react('hop')
       say(`${pet.name} kommer tillbaka med bollen. Igen!`)
-      sound()
+      sound('play')
       heartBurst(HOME)
       care('play')
     }, 2350)
@@ -420,7 +429,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
     say(peek.wrong.length === 0
       ? `Tittut! Du hittade ${pet.name} direkt! Nästa gång blir det svårare.`
       : `Tittut! Du hittade ${pet.name}!`)
-    sound()
+    sound('play')
     heartBurst(found)
     care('play')
     setPeekLevel(next)
@@ -437,7 +446,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
       onCare(pet.id, 'wake')
       react('stretch')
       say(`${pet.name} vaknar, sträcker på sig och är glad att se dig.`)
-      sound()
+      sound('wake')
     } else {
       onCare(pet.id, 'rest')
       sounds.current?.stop()
@@ -557,14 +566,19 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
           onKeyDown={(e) => {
             if ((e.key === 'Enter' || e.key === ' ') && free && !resting && canInteract) {
               e.preventDefault()
-              react('hop'); say(pick(PURR_LINES)(pet.name)); sound(); heartBurst(); care('pet')
+              react('hop'); say(pick(PURR_LINES)(pet.name)); sound('pet'); heartBurst(); care('pet')
             }
           }}
         >
           <div className={`den-pet__body${reaction ? ` den-pet__body--${reaction.kind}` : ''}`}>
             <PetSprite species={pet.species} stage={stageOf(pet)} action={reaction ? REACTION_ACTION[reaction.kind] : mode === 'fetch' ? 'play' : 'idle'} resting={resting} />
           </div>
-          {mums > 0 && <span key={mums} className="den-mums" aria-hidden="true"><b>Mums!</b><i /><i /><i /></span>}
+          {mums > 0 && <span key={mums} className="den-mums" aria-hidden="true"><b>{mumsText}</b><i /><i /><i /></span>}
+          {sparkle > 0 && (
+            <span key={sparkle} className="den-sparkle" aria-hidden="true">
+              {Array.from({ length: 10 }, (_, i) => <i key={i} style={{ '--a': `${i * 36}deg` } as React.CSSProperties}>✦</i>)}
+            </span>
+          )}
           {resting && <span className="den-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span>}
           {ball.phase === 'carried' && <span className="den-ball den-ball--carried" style={BALL_ART} aria-hidden="true" />}
         </div>

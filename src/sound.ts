@@ -61,6 +61,14 @@ function ensure(): AudioContext | null {
   return ctx
 }
 
+/** Effektutgången (låst upp vid första pekningen) — för vännernas läten,
+    så att de följer effektreglaget och ljud av/på och aldrig behöver en
+    egen AudioContext som iPad håller tyst utanför en gest. */
+export function sfxOutput(): { ctx: AudioContext; bus: GainNode } | null {
+  const c = ensure()
+  return c && sfxBus ? { ctx: c, bus: sfxBus } : null
+}
+
 /** Anropas vid första pekningen — låser upp ljudet på iOS. */
 export function unlockAudio(): void {
   const c = ensure()
