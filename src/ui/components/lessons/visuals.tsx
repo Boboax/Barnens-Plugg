@@ -994,6 +994,47 @@ const Stapelmodell: LessonVisual = ({ step }) => {
   )
 }
 
+/* ---------- Räkna till 100: hundrarutan ---------- */
+
+const HUNDRA_PAIRS = [[39, 40], [49, 50], [69, 70], [99, 100]]
+
+const Hundra: LessonVisual = ({ step }) => {
+  const C = 18.5
+  const x0 = 67
+  const y0 = 6
+  return (
+    <g>
+      {Array.from({ length: 100 }, (_, i) => {
+        const v = i + 1
+        const row = Math.floor(i / 10)
+        const col = i % 10
+        const inRow = v >= 21 && v <= 29
+        const pairIdx = HUNDRA_PAIRS.findIndex((p) => p.includes(v))
+        const hi =
+          (step === 1 && inRow) ||
+          (step === 2 && (v === 29 || v === 30)) ||
+          (step === 3 && pairIdx >= 0) ||
+          (step >= 4 && v % 10 === 0) ||
+          (step === 5 && v === 29)
+        const fill = hi ? (v % 10 === 0 ? CORAL : SUN) : v % 10 === 0 ? PRIMARY_SOFT : PAPER
+        const delay = step === 0 ? row * 140 : step === 1 && inRow ? (v - 21) * 280 : step === 3 && pairIdx >= 0 ? pairIdx * 900 : step === 4 && v % 10 === 0 ? row * 280 : 0
+        return (
+          <g key={v} className="ls" style={{ ...fade(true, step === 0 ? row * 140 : 0) }}>
+            <rect className="ls" x={x0 + col * C} y={y0 + row * C} width={C - 1.5} height={C - 1.5} rx={2.5}
+              fill={fill} stroke={LINE} strokeWidth={0.8} style={{ transitionDelay: `${delay}ms` }} />
+            <text x={x0 + col * C + (C - 1.5) / 2} y={y0 + row * C + C / 2 + 3} textAnchor="middle" fontSize={8} fontWeight={800} fill={INK}>{v}</text>
+          </g>
+        )
+      })}
+      <Caption x={34} y={y0 + 3.5 * C + 4} size={13} visible={step === 2} color={CORAL}>ny rad →</Caption>
+      <g className="ls" style={fade(step === 5)}>
+        <rect x={258} y={46} width={58} height={24} rx={12} fill={PAPER} stroke={CORAL} strokeWidth={2} />
+        <text x={287} y={63} textAnchor="middle" fontSize={11} fontWeight={900} fill={CORAL} textDecoration="line-through">tjugotio</text>
+      </g>
+    </g>
+  )
+}
+
 export const LESSON_VISUALS: Record<string, LessonVisual> = {
   'mult-intro': MultIntro,
   'div-intro': DivIntro,
@@ -1010,6 +1051,7 @@ export const LESSON_VISUALS: Record<string, LessonVisual> = {
   'area': Area,
   'vinklar': Vinklar,
   'koordinatsystem': Koordinat,
+  'talrad-0-100': Hundra,
   'tiotalsovergang-20': Tiotal,
   'vaxling-0-100': Vaxling,
   'likhetstecken': Likhetstecken,

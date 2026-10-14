@@ -1,7 +1,7 @@
 import type { ChildProfile, Household } from '../domain/types'
 import { PROFILE_SCHEMA_VERSION } from '../domain/types'
 import { emptyPetProgress } from '../domain/pet-home'
-import { grantedYears, repairDiagnosisBossReady, backfillSplitAddSub, backfillLateNewMoments, backfillSeenWorlds } from '../engine/progress'
+import { grantedYears, repairDiagnosisBossReady, backfillSplitAddSub, backfillLateNewMoments, backfillSeenWorlds, backfillCountTo100 } from '../engine/progress'
 import { blixtBlockedMoments } from '../engine/blixt'
 
 /* ============================================================
@@ -144,7 +144,7 @@ export function migrate(data: Household): Household {
         // grinden gäller bakåt och barnet möter Årsväktarna för redan
         // behärskade år).
         skills: repairDiagnosisBossReady(
-          backfillLateNewMoments(backfillSplitAddSub(c.skills, now), c, now),
+          backfillCountTo100(backfillLateNewMoments(backfillSplitAddSub(c.skills, now), c, now), now),
           now, grantedYears(c), blixtBlockedMoments(c)),
         // Fyll seenWorlds för barn som redan spelat (annars ankomstkort för
         // gamla världar). Idempotent — redan satt lämnas orört.

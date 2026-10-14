@@ -36,6 +36,11 @@ export const MOMENT_INTROS: Record<string, MomentIntro> = {
     say: 'Talen står i rad. Ett steg fram är ett mer. Ett steg bak är ett mindre.',
     visual: { kind: 'tallinje', min: 0, max: 10, hops: [4, 5] },
   },
+  'talrad-0-100': {
+    idea: 'Talen till hundra går i rader om tio. När entalen har räknat till nio är tiotalet fullt — då börjar nästa: 28, 29, 30, 31 …',
+    say: 'Talen går i rader om tio. Efter nio börjar ett nytt tiotal. Tjugonio, trettio, trettioett.',
+    visual: { kind: 'hundraruta', highlight: [29, 30], rows: [1, 3] },
+  },
   'dela-upp-tal': {
     idea: 'Ett tal kan delas i två delar på olika sätt. Sju kan vara fem och två, eller tre och fyra — det är fortfarande sju.',
     say: 'Ett tal kan delas i två delar. Sju är fem och två.',

@@ -99,6 +99,7 @@ export type MisconceptionTag =
   | 'nolla-multiplikation' // fel kring nollor: 30 × 4 = 12
   | 'rest-ignorerad' // division: struntar i resten
   | 'enhet-fel' // blandar enheter (cm/m, min/h)
+  | 'ramsa-tiotal' // räkneramsan tappar tråden vid tiotalet: 29 → 20 eller 29 → 210
   | 'okand' // fritextsvar som inte matchar känd feltyp
 
 /** Visuellt stöd enligt CRA-principen (konkret → representation → abstrakt). */
@@ -148,6 +149,10 @@ export type TaskVisual =
   | { kind: 'stapelmodell'; rows: BarModelRow[];
       total?: { row: number; text: string; unknown?: boolean };
       diff?: { text: string; unknown?: boolean } }
+  // Hundrarutan 1–100 (10 × 10): highlight = tal som lyser, hidden = tal
+  // som visas som "?" (det barnet ska komma fram till). rows begränsar till
+  // de rader som behövs (t.ex. [2, 3] = 21–40) så rutan inte blir plottrig.
+  | { kind: 'hundraruta'; highlight: number[]; hidden?: number[]; rows?: [number, number] }
   | { kind: 'ingen' }
 
 export interface BarModelRow {

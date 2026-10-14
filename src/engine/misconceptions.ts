@@ -26,6 +26,10 @@ export const MISCONCEPTIONS: Record<MisconceptionTag, MisconceptionInfo> = {
     childHint: 'Titta noga på talens platser — vilken siffra är tiotal och vilken är ental?',
     parentNote: 'Blandar ihop siffrornas platsvärden. Träna att bygga tal med tiotal och ental ("47 är 4 tior och 7 enkronor").',
   },
+  'ramsa-tiotal': {
+    childHint: 'När entalen når nio är tiotalet fullt — då börjar nästa tiotal: 29, 30, 31 …',
+    parentNote: 'Tappar räkneramsan vid tiotalsövergången (t.ex. 29 → 20 eller "tjugotio"). Räkna högt tillsammans förbi tiotalen — 28, 29, 30, 31 — och peka i en hundraruta.',
+  },
   'fel-raknesatt': {
     childHint: 'Läs uppgiften en gång till — ska det bli fler eller färre?',
     parentNote: 'Väljer fel räknesätt, oftast i textuppgifter. Träna att rita uppgiften eller berätta den med egna ord innan räknandet.',

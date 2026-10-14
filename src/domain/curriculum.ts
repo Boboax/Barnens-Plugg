@@ -54,6 +54,12 @@ export const MOMENTS: Moment[] = [
     description: 'Talens uppdelning: 7 är 5 och 2, 3 och 4 …',
   }),
   def({
+    id: 'talrad-0-100', world: 'talens-dal', area: 'taluppfattning', term: t('F', 'VT', 2), gen: true,
+    prereq: ['talrad-0-20'],
+    title: 'Räkna till 100',
+    description: 'Talraden till hundra — och övergångarna mellan tiotalen: 29, 30 … 99, 100.',
+  }),
+  def({
     id: 'talkamrater-10', world: 'talens-dal', area: 'taluppfattning', term: t('1', 'HT', 1), gen: true,
     prereq: ['dela-upp-tal'],
     title: 'Tiokamraterna',

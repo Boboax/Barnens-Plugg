@@ -289,6 +289,29 @@ export function backfillLateNewMoments(
   return changed ? next : skills
 }
 
+/**
+ * Migrering (idempotent): "Räkna till 100" (förskoleklass, okt 2026) kom
+ * till i efterhand. För ett barn som redan behärskar tal till hundra på
+ * högre nivå (positionssystemet 0–100, addition/subtraktion 0–100 eller
+ * något moment från åk 2 och uppåt) är momentet självklart — det ska inte
+ * dyka upp som en lucka och dra "Du är här" tillbaka till förskoleklassen.
+ * Barn utan sådana framsteg (t.ex. förskoleklassbarnet) får det som vanligt
+ * moment att träna.
+ */
+export function backfillCountTo100(skills: Record<string, SkillState>, now: string): Record<string, SkillState> {
+  const id = 'talrad-0-100'
+  const s = skills[id]
+  const untouched = !s || (s.attempts === 0 && (s.mastery === 'locked' || s.mastery === 'available') && !s.review)
+  if (!untouched) return skills
+  const beyond = isDone(skills['positionssystem-100']) || isDone(skills['add-sub-0-100']) ||
+    MOMENTS.some((m) => YEAR_ORDER.indexOf(m.year) >= YEAR_ORDER.indexOf('2') && isDone(skills[m.id]))
+  if (!beyond) return skills
+  return {
+    ...skills,
+    [id]: { ...(s ?? newSkillState(id)), mastery: 'mastered', rating: Math.max(s?.rating ?? 0, 700), review: scheduleFirstReviewSpread(now, 0) },
+  }
+}
+
 /** Migrering (idempotent): fyll `seenWorlds` för befintliga barn så de inte
     plötsligt får "Pi anländer"-kort för världar de redan spelat i. En värld
     räknas som redan sedd om barnet har NÅGOT framsteg där (ett moment som

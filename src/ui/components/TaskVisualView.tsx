@@ -25,6 +25,7 @@ export function TaskVisualView({ visual }: { visual: TaskVisual }) {
       case 'kropp': return <Kropp body={visual.body} />
       case 'spegel': return <Spegel shape={visual.shape} axis={visual.axis} />
       case 'stapelmodell': return <Stapelmodell rows={visual.rows} total={visual.total} diff={visual.diff} />
+      case 'hundraruta': return <Hundraruta highlight={visual.highlight} hidden={visual.hidden} rows={visual.rows} />
     }
   })()
   // Ljus "kortyta" runt bilden med ÅTERSTÄLLDA färgvariabler: annars ärver
@@ -745,6 +746,35 @@ function Stapelmodell({ rows, total, diff }: {
           </g>
         )
       })()}
+    </svg>
+  )
+}
+
+/* Hundrarutan: tiotalen som rader, så att övergången 29 → 30 syns som
+   "ny rad". Det sökta talet står som "?" — barnet kan resonera fram det ur
+   grannarna (stöd, inte facit). */
+function Hundraruta({ highlight, hidden = [], rows = [0, 9] }: { highlight: number[]; hidden?: number[]; rows?: [number, number] }) {
+  const C = 30
+  const [r0, r1] = rows
+  const n = r1 - r0 + 1
+  return (
+    <svg viewBox={`0 0 ${10 * C + 4} ${n * C + 4}`} width={Math.min(330, 10 * C + 4)} style={{ maxWidth: '100%', fontFamily: 'inherit' }} role="img" aria-label="Hundraruta">
+      {Array.from({ length: n * 10 }, (_, i) => {
+        const value = (r0 + Math.floor(i / 10)) * 10 + (i % 10) + 1
+        const x = 2 + (i % 10) * C
+        const y = 2 + Math.floor(i / 10) * C
+        const isHidden = hidden.includes(value)
+        const isHi = highlight.includes(value)
+        const tens = value % 10 === 0
+        return (
+          <g key={value}>
+            <rect x={x} y={y} width={C} height={C} fill={isHidden ? '#FFFFFF' : isHi ? '#FFC94D' : tens ? '#E4E7FA' : '#FBF4E2'}
+              stroke={isHidden ? '#D9584B' : '#C9B489'} strokeWidth={isHidden ? 2.4 : 1} strokeDasharray={isHidden ? '4 3' : undefined} />
+            <text x={x + C / 2} y={y + C / 2 + 5} textAnchor="middle" fontSize={isHi || isHidden ? 14 : 12} fontWeight={isHi || isHidden ? 900 : 700}
+              fill={isHidden ? '#D9584B' : '#2E3350'}>{isHidden ? '?' : value}</text>
+          </g>
+        )
+      })}
     </svg>
   )
 }

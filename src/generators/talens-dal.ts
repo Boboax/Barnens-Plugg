@@ -163,6 +163,147 @@ const talkamrater10 = g('talkamrater-10', (level, seed, rng) => {
   })
 })
 
+// ---------- Räkna till 100 (förskoleklass, VT) ----------
+
+/* Talraden till hundra. Barn som inte når 100 fastnar nästan alltid på
+   SAMMA ställen: där entalen tar slut och ett nytt tiotal börjar (29 → 30,
+   69 → 70, 99 → 100) — ramsan "tjugoåtta, tjugonio, tjugotio". Därför
+   handlar mer än hälften av uppgifterna om just övergångarna, och felet
+   att gå tillbaka till tiotalets början (29 → 20) eller säga "tjugotio"
+   (210) taggas så att motorn och föräldrarapporten ser VAD som hakar.
+   Hundrarutan är stödet (CRA): varje rad är ett tiotal, så övergången blir
+   synlig som "ny rad". */
+
+/** Raderna i hundrarutan (0 = 1–10 … 9 = 91–100) som täcker talen. */
+const chartRows = (...nums: number[]): [number, number] => {
+  const rows = nums.map((n) => Math.floor((Math.max(1, Math.min(100, n)) - 1) / 10))
+  return [Math.min(...rows), Math.max(...rows)]
+}
+
+const talrad0100 = g('talrad-0-100', (level, seed, rng) => {
+  const id = 'gen.talrad-0-100'
+  const max = level <= 3 ? 50 : 100
+  const atTransition = rng.chance(0.6)
+  const chart = level <= 4
+  const kind = rng.pick(
+    level <= 3 ? (['efter', 'efter', 'saknas'] as const)
+      : level <= 5 ? (['efter', 'fore', 'saknas'] as const)
+        : level <= 7 ? (['efter', 'fore', 'saknas', 'tiotal'] as const)
+          : (['bakat', 'under', 'fore', 'efter'] as const),
+  )
+
+  if (kind === 'tiotal') {
+    const start = rng.int(1, 6)
+    const seq = [start, start + 1, start + 2].map((k) => k * 10)
+    const value = (start + 3) * 10
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `Räkna tiotal: ${seq.join(', ')}, __`,
+      spokenPrompt: `Räkna tiotal: ${seq.join(', ')}. Vad kommer sedan?`,
+      value,
+      explanation: `Tiotalen: tio, tjugo, trettio, fyrtio, femtio, sextio, sjuttio, åttio, nittio, hundra. Efter ${value - 10} kommer ${value}.`,
+      misconceptions: { [value - 9]: 'ramsa-tiotal', [value + 10]: 'en-fel', [value - 10 + 1]: 'ramsa-tiotal' },
+    })
+  }
+
+  if (kind === 'under') {
+    // Hundrarutan: talet under är tio mer — en hel rad längre fram.
+    const n = rng.int(11, 89)
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `I hundrarutan: vilket tal står rakt under ${n}?`,
+      value: n + 10,
+      visual: { kind: 'hundraruta', highlight: [n], hidden: [n + 10], rows: chartRows(n, n + 10) },
+      explanation: `Varje rad i hundrarutan är tio tal. Rakt under ${n} står ${n + 10} — tio mer.`,
+      misconceptions: { [n + 1]: 'positionsfel', [n + 11]: 'en-fel', [n + 9]: 'en-fel' },
+    })
+  }
+
+  if (kind === 'bakat') {
+    // Baklänges förbi ett tiotal: 52, 51, __ (50) eller 41, 40, __ (39).
+    const ten = rng.int(2, 9) * 10
+    const crossBelow = rng.chance(0.5)
+    const seq = crossBelow ? [ten + 1, ten] : [ten + 2, ten + 1]
+    const value = crossBelow ? ten - 1 : ten
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `Räkna baklänges: ${seq.join(', ')}, __`,
+      spokenPrompt: `Räkna baklänges: ${seq.join(', ')}. Vad kommer sedan?`,
+      value,
+      explanation: crossBelow
+        ? `Baklänges förbi tiotalet: ${ten + 1}, ${ten}, ${ten - 1} — före ${ten} kommer ${ten - 1}.`
+        : `Baklänges: ${ten + 2}, ${ten + 1}, ${ten}.`,
+      misconceptions: crossBelow ? { [ten + 9]: 'ramsa-tiotal', [ten - 10]: 'ramsa-tiotal' } : { [ten - 1]: 'en-fel' },
+    })
+  }
+
+  if (kind === 'fore') {
+    // Före ett jämnt tiotal: före 40 kommer 39 (inte 49 eller 30).
+    const n = atTransition ? rng.int(2, max / 10) * 10 : rng.int(2, max)
+    const value = n - 1
+    const mis: Record<number, 'ramsa-tiotal' | 'en-fel'> = { [n + 1]: 'en-fel' }
+    if (n % 10 === 0) { mis[n + 9] = 'ramsa-tiotal'; mis[n - 10] = 'ramsa-tiotal' }
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `Vilket tal kommer före ${n}?`,
+      value,
+      visual: chart ? { kind: 'hundraruta', highlight: [n], hidden: [value], rows: chartRows(value, n) } : { kind: 'ingen' },
+      explanation: n % 10 === 0
+        ? `${n} är början på ett nytt tiotal. Talet före är sista talet i tiotalet innan: ${value}.`
+        : `Ett steg bakåt från ${n} är ${value}.`,
+      misconceptions: mis,
+    })
+  }
+
+  // efter / saknas: oftast vid övergången (…9 → nästa tiotal).
+  const raw = atTransition ? rng.int(1, max / 10 - (max === 100 ? 0 : 1)) * 10 - 1 : rng.int(1, max - 1)
+  // "Saknas" visar talet efter luckan också — det får inte bli 101.
+  const n = kind === 'saknas' ? Math.min(raw, raw % 10 === 9 ? max - 11 : max - 2) : raw
+  const value = n + 1
+  const mis: Record<number, 'ramsa-tiotal' | 'en-fel' | 'positionsfel'> = { [n + 2]: 'en-fel' }
+  if (n % 10 === 9) {
+    mis[n - 9] = 'ramsa-tiotal' // 29 → 20: tillbaka till tiotalets början
+    mis[(n - 9) * 10 + 10] = 'ramsa-tiotal' // 29 → 210: "tjugotio"
+    mis[n + 11] = 'positionsfel' // 29 → 40: hoppade ett tiotal för långt
+  }
+  const transitionNote = n % 10 === 9
+    ? ` Efter nio ental är tiotalet fullt — då börjar nästa tiotal: ${value}.`
+    : ''
+  if (kind === 'saknas') {
+    const seq = [n - 1, n, '__', n + 2].filter((x) => x === '__' || (x as number) >= 1)
+    return numericTask({
+      generatorId: id, level, seed,
+      prompt: `Vilket tal saknas? ${seq.join(', ')}`,
+      spokenPrompt: `Vilket tal saknas? ${seq.map((x) => (x === '__' ? 'vad' : x)).join(', ')}`,
+      value,
+      visual: chart ? { kind: 'hundraruta', highlight: [n, n + 2].filter((x) => x <= 100), hidden: [value], rows: chartRows(n, n + 2) } : { kind: 'ingen' },
+      explanation: `Talet mellan ${n} och ${n + 2} är ${value}.${transitionNote}`,
+      misconceptions: mis,
+    })
+  }
+  if (level <= 3) {
+    const wrongs: [string, 'ramsa-tiotal' | 'en-fel' | null][] = n % 10 === 9
+      ? [[String(n - 9), 'ramsa-tiotal'], [String(n + 11), null]]
+      : [[String(n + 2), 'en-fel'], [String(Math.max(0, n - 1)), null]]
+    return choiceTask({
+      generatorId: id, level, seed, rng,
+      prompt: `Vilket tal kommer efter ${n}?`,
+      correct: String(value),
+      distractors: wrongs,
+      visual: { kind: 'hundraruta', highlight: [n], hidden: [value], rows: chartRows(n, value) },
+      explanation: `Efter ${n} kommer ${value}.${transitionNote}`,
+    })
+  }
+  return numericTask({
+    generatorId: id, level, seed,
+    prompt: `Vilket tal kommer efter ${n}?`,
+    value,
+    visual: chart ? { kind: 'hundraruta', highlight: [n], hidden: [value], rows: chartRows(n, value) } : { kind: 'ingen' },
+    explanation: `Efter ${n} kommer ${value}.${transitionNote}`,
+    misconceptions: mis,
+  })
+})
+
 // ---------- Parametriserad addition/subtraktion ----------
 
 interface AddSubCfg {
@@ -590,6 +731,7 @@ const overslagsrakning = g('overslagsrakning', (level, seed, rng) => {
 })
 
 export const TALENS_DAL_GENERATORS: TaskGenerator[] = [
+  talrad0100,
   antal010, talrad020, delaUppTal, talkamrater10,
   addition010, subtraktion010, addSub010,
   addition020, subtraktion020, addSub020,

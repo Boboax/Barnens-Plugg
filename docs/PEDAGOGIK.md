@@ -248,3 +248,14 @@ av), snabba gissningar (fel svar < 2,5 s, utom blixt), tempo (uppgifter per
 aktiv minut) och ork (träffsäkerhet första vs andra halvan av dagen).
 Signalerna formuleras som en lärare: skäl att prata, aldrig domar. Barnen
 ser ingenting av detta (princip 3: ingen jämförelse, inget poängjagande).
+
+**Räkna till 100** (förskoleklass VT, okt 2026, förälderns önskan): barn som
+inte når 100 fastnar nästan alltid vid tiotalsövergångarna (29 → 30) och på
+ramsan "tjugotio". Över hälften av uppgifterna handlar därför om övergångarna
+— efter, före, vilket tal saknas, tiotal, baklänges och "rakt under i
+hundrarutan" — och felet 29 → 20 / 210 taggas som `ramsa-tiotal`. Hundrarutan
+är stödet t.o.m. nivå 4 (det sökta talet som "?"). Muntligt prov med mikrofon
+valdes bort: taligenkänning skickar ljud från enheten (princip 6) och tolkar
+sexåringars snabba räknande opålitligt. Äldre barn som redan behärskar tal
+till 100 får momentet skänkt (`backfillCountTo100`) så "Du är här" inte dras
+tillbaka till förskoleklassen.

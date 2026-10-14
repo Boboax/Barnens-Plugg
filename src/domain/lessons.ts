@@ -185,6 +185,16 @@ export const LESSONS: Record<string, Lesson> = {
       { text: 'Där är punkten (3, 4)! Först längs golvet, sedan uppför trappan.', say: 'Där är punkten tre, fyra! Först längs golvet, sedan uppför trappan.' },
     ],
   },
+  'talrad-0-100': {
+    scenes: [
+      { text: 'Här är alla tal från 1 till 100. De står i rader om tio.', minMs: 4500 },
+      { text: 'Titta på en rad: 21, 22, 23 … ända till 29.', say: 'Titta på en rad. Tjugoett, tjugotvå, tjugotre, ända till tjugonio.', minMs: 5200 },
+      { text: 'Efter 29 tar raden slut. Då börjar ett nytt tiotal: 30!', say: 'Efter tjugonio tar raden slut. Då börjar ett nytt tiotal. Trettio!' },
+      { text: 'Så är det varje gång: 39, 40 … 49, 50 … 69, 70 … 99, 100!', say: 'Så är det varje gång. Trettionio, fyrtio. Fyrtionio, femtio. Sextionio, sjuttio. Nittionio, hundra!', minMs: 6500 },
+      { text: 'Tiotalen står längst till höger: 10, 20, 30, 40, 50, 60, 70, 80, 90 — och 100.', say: 'Tiotalen står längst till höger. Tio, tjugo, trettio, fyrtio, femtio, sextio, sjuttio, åttio, nittio, och hundra.', minMs: 6000 },
+      { text: 'Det finns inget som heter "tjugotio". Efter tjugonio kommer trettio!', say: 'Det finns inget som heter tjugotio. Efter tjugonio kommer trettio!' },
+    ],
+  },
   'tiotalsovergang-20': {
     scenes: [
       { text: '8 + 5 — hur gör man när svaret blir mer än tio?', say: 'Åtta plus fem. Hur gör man när svaret blir mer än tio?' },
