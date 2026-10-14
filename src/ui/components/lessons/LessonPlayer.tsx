@@ -13,6 +13,11 @@ import '../../../styles/lessons.css'
    börjar. Paus, bakåt, framåt och "se igen" finns alltid: en film man
    inte kan spola tillbaka i blir ett hinder, inte en hjälp. */
 
+/** Paus efter att rösten läst klart, innan nästa scen. */
+const SCENE_PAUSE_MS = 900
+/** Reservtid utöver den beräknade lästiden (molnrösten hämtas först). */
+const SPEECH_GRACE_MS = 8000
+
 export function hasLesson(momentId: string): boolean {
   return !!lessonFor(momentId) && !!LESSON_VISUALS[momentId]
 }
@@ -34,14 +39,42 @@ export function LessonPlayer({ momentId }: { momentId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [momentId])
 
+  // Nästa scen kommer när rösten läst klart (plus en liten paus att titta)
+  // — inte efter en gissad lästid: molnrösten tar en stund att hämta och
+  // läser i sin egen takt, och då klipptes den av eller lämnade tystnad.
+  // Animationen får alltid sin minsta tid, och en reservklocka för det fall
+  // att talsyntesen aldrig säger "klar" (händer på iPad).
   useEffect(() => {
     if (!playing || !scene) return
-    if (ttsAvailable()) speak(sceneSpoken(scene))
-    const t = window.setTimeout(() => {
+    const started = Date.now()
+    let finished = false
+    const timers: number[] = []
+    const advance = (): void => {
+      if (finished) return
+      finished = true
       if (step + 1 < scenes.length) setStep(step + 1)
       else { setPlaying(false); setEnded(true) }
-    }, sceneDurationMs(scene))
-    return () => window.clearTimeout(t)
+    }
+    const afterSpeech = (): void => {
+      const elapsed = Date.now() - started
+      // "Klar" långt innan meningen hunnit läsas = talsyntesen gav upp (ingen
+      // röst laddad, avbrott). Då går scenen på beräknad lästid i stället för
+      // att filmen rusar igenom alla scener på några sekunder.
+      const readMs = sceneSpoken(scene).length * 60
+      if (elapsed < readMs * 0.35) {
+        timers.push(window.setTimeout(advance, Math.max(SCENE_PAUSE_MS, sceneDurationMs(scene) - elapsed)))
+        return
+      }
+      const minLeft = Math.max(0, (scene.minMs ?? 0) - elapsed)
+      timers.push(window.setTimeout(advance, Math.max(SCENE_PAUSE_MS, minLeft)))
+    }
+    if (ttsAvailable()) {
+      speak(sceneSpoken(scene), undefined, afterSpeech)
+      timers.push(window.setTimeout(advance, sceneDurationMs(scene) + SPEECH_GRACE_MS))
+    } else {
+      timers.push(window.setTimeout(advance, sceneDurationMs(scene)))
+    }
+    return () => { finished = true; timers.forEach((t) => window.clearTimeout(t)) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, playing])
 

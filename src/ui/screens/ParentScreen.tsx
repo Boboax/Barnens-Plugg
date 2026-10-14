@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChildProfile, SchoolYear } from '../../domain/types'
 import { areaName, weeklyReport } from '../../engine/report'
 import { DailyReport } from './DailyReport'
 import { petSpecies } from '../../domain/pet-home'
+import { LESSONS, sceneSpoken } from '../../domain/lessons'
 import { rewardProgress } from '../../engine/rewards'
 import { BLIXT_TESTS, blixtTarget, blixtTimed, BLIXT_UNTIMED_COUNT, BLIXT_UNTIMED_PASS } from '../../engine/blixt'
 import { pingProvider } from '../../chat/providers'
-import { CLOUD_VOICE, cloudTtsAvailable, kickVoiceList, preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
+import { CLOUD_VOICE, cloudAudioStored, cloudTtsAvailable, kickVoiceList, prepareCloudAudio, preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
 import { daysSinceBackup, exportHousehold, importHousehold } from '../../storage/backup'
 import { BELONING_ICONS, BelongIcon, isBelongIcon, HERO_KINDS, HERO_LABEL, HeroImg } from '../components/Icon'
 import { KID_COLORS, nowISO, useStore } from '../store'
@@ -314,8 +315,9 @@ function VoicePicker() {
     <div style={{ ...pcard, marginTop: 12 }}>
       <h4 style={h4}>🔊 Uppläsningsröst</h4>
       <p style={{ margin: '0 0 8px', fontSize: 13, color: '#8B8FA0', fontWeight: 600, lineHeight: 1.5 }}>
-        <strong>Bäst kvalitet:</strong> lägg in en Gemini-nyckel (under AI-chatten nedan) och välj
-        "Pi:s molnröst" — mänsklig röst, kräver internet (lokal röst tar över offline).
+        <strong>Bäst kvalitet:</strong> lägg in en Gemini-nyckel (under AI-chatten nedan) — då läser Pi
+        med en mjuk AI-röst automatiskt. Tryck sedan "Förbered filmerna" så sparas rösten på iPaden
+        och filmerna fungerar även utan internet.
         <br /><strong>Bra offline-röst:</strong> hämta "Alva (förbättrad)" på iPaden gratis via
         Inställningar → Tillgänglighet → Talat innehåll → Röster → Svenska, och starta om appen.
         Röstvalet sparas per enhet.
@@ -334,7 +336,7 @@ function VoicePicker() {
             }}
             style={{ flex: 1, minWidth: 220, fontSize: 14, fontWeight: 700, padding: '8px 12px', borderRadius: 10, border: '2px solid #EDEAE2' }}
           >
-            <option value="">Automatiskt (bästa tillgängliga)</option>
+            <option value="">Automatiskt (bästa tillgängliga{cloudTtsAvailable() ? ' = Pi:s molnröst' : ''})</option>
             {cloudTtsAvailable() && (
               <option value={CLOUD_VOICE}>🌟 Pi:s molnröst — bäst kvalitet (Gemini, kräver internet)</option>
             )}
@@ -349,6 +351,7 @@ function VoicePicker() {
           </button>
         </div>
       )}
+      <PrepareLessonVoices usesCloud={cloudTtsAvailable() && (selected === '' || selected === CLOUD_VOICE)} />
       {ttsAvailable() && voices.length === 0 && (
         <p style={{ margin: '8px 0 0', fontSize: 13, fontWeight: 700, color: '#B4552E' }}>
           Inga lokala svenska röster hittade ännu.{' '}
@@ -358,6 +361,49 @@ function VoicePicker() {
           {cloudTtsAvailable() ? ' — Pi:s molnröst ovan fungerar ändå!' : ''}
         </p>
       )}
+    </div>
+  )
+}
+
+/** "Förbered filmerna": hämtar molnrösten för alla filmscener en gång och
+    sparar ljudet på iPaden — sedan spelas filmerna med AI-rösten direkt,
+    även utan internet, utan nya anrop. */
+function PrepareLessonVoices({ usesCloud }: { usesCloud: boolean }) {
+  const texts = useMemo(() => Object.values(LESSONS).flatMap((l) => l.scenes.map(sceneSpoken)), [])
+  const [stored, setStored] = useState<number | null>(null)
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
+  useEffect(() => {
+    if (!usesCloud) return
+    let alive = true
+    void Promise.all(texts.map(cloudAudioStored)).then((r) => { if (alive) setStored(r.filter(Boolean).length) })
+    return () => { alive = false }
+  }, [usesCloud, texts])
+  if (!usesCloud) {
+    return (
+      <p style={{ margin: '10px 0 0', fontSize: 12.5, color: '#8B8FA0', fontWeight: 600 }}>
+        🎬 Filmerna läses med vald lokal röst. Med en Gemini-nyckel och "Automatiskt" eller "Pi:s molnröst" får de AI-rösten.
+      </p>
+    )
+  }
+  const allDone = stored !== null && stored >= texts.length
+  return (
+    <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+      <button
+        className="btn btn-ghost"
+        disabled={progress !== null}
+        onClick={() => {
+          setProgress({ done: 0, total: texts.length })
+          void prepareCloudAudio(texts, (done, total) => setProgress({ done, total })).then((done) => {
+            setStored(done)
+            setProgress(null)
+          })
+        }}
+      >🎬 {allDone ? 'Filmerna är förberedda ✓ (uppdatera)' : 'Förbered filmerna med AI-rösten'}</button>
+      <span style={{ fontSize: 12.5, fontWeight: 700, color: '#5B6070' }}>
+        {progress
+          ? `Hämtar … ${progress.done} av ${progress.total} (låt fliken vara öppen)`
+          : stored !== null ? `${stored} av ${texts.length} scener sparade på iPaden` : ''}
+      </span>
     </div>
   )
 }

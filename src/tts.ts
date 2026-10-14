@@ -163,11 +163,23 @@ function ensureAudioCtx(): AudioContext | null {
 }
 
 /** Gemini-TTS svarar med rå PCM (16-bit, 24 kHz mono) i base64. */
-function pcmToAudioBuffer(ctx: AudioContext, base64: string, sampleRate: number): AudioBuffer {
+function base64ToBytes(base64: string): Uint8Array {
   const raw = atob(base64)
   const bytes = new Uint8Array(raw.length)
   for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
-  const samples = new Int16Array(bytes.buffer)
+  return bytes
+}
+
+function rememberAudio(text: string, buffer: AudioBuffer): void {
+  if (audioCache.size >= AUDIO_CACHE_MAX) {
+    const oldest = audioCache.keys().next().value
+    if (oldest !== undefined) audioCache.delete(oldest)
+  }
+  audioCache.set(text, buffer)
+}
+
+function pcmBytesToAudioBuffer(ctx: AudioContext, bytes: Uint8Array, sampleRate: number): AudioBuffer {
+  const samples = new Int16Array(bytes.buffer, bytes.byteOffset, Math.floor(bytes.byteLength / 2))
   const buffer = ctx.createBuffer(1, samples.length, sampleRate)
   const channel = buffer.getChannelData(0)
   for (let i = 0; i < samples.length; i++) channel[i] = samples[i] / 32768
@@ -179,6 +191,12 @@ async function fetchCloudAudio(text: string): Promise<AudioBuffer> {
   if (!ctx || !cloudApiKey) throw new Error('moln-TTS ej konfigurerad')
   const cached = audioCache.get(text)
   if (cached) return cached
+  const stored = await readStoredAudio(text)
+  if (stored) {
+    const buffer = pcmBytesToAudioBuffer(ctx, stored.pcm, stored.rate)
+    rememberAudio(text, buffer)
+    return buffer
+  }
 
   const models = await ttsCandidates()
   let lastError: Error = new Error('okänt TTS-fel')
@@ -209,13 +227,11 @@ async function fetchCloudAudio(text: string): Promise<AudioBuffer> {
       const inline = data.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)?.inlineData
       if (!inline?.data) throw new Error(`TTS ${model}: tomt ljudsvar`)
       const rate = Number(/rate=(\d+)/.exec(inline.mimeType ?? '')?.[1] ?? 24000)
-      const buffer = pcmToAudioBuffer(ctx, inline.data, rate)
+      const pcm = base64ToBytes(inline.data)
+      const buffer = pcmBytesToAudioBuffer(ctx, pcm, rate)
       workingTtsModel = model
-      if (audioCache.size >= AUDIO_CACHE_MAX) {
-        const oldest = audioCache.keys().next().value
-        if (oldest !== undefined) audioCache.delete(oldest)
-      }
-      audioCache.set(text, buffer)
+      rememberAudio(text, buffer)
+      void storeAudio(text, pcm, rate)
       return buffer
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err))
@@ -224,8 +240,8 @@ async function fetchCloudAudio(text: string): Promise<AudioBuffer> {
   throw lastError
 }
 
-function speakLocal(text: string, voiceURI?: string): void {
-  if (!ttsAvailable()) return
+function speakLocal(text: string, voiceURI?: string, onEnd?: () => void): void {
+  if (!ttsAvailable()) { onEnd?.(); return }
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = 'sv-SE'
   const voice =
@@ -234,6 +250,10 @@ function speakLocal(text: string, voiceURI?: string): void {
       : pickVoice()
   if (voice) utterance.voice = voice
   utterance.rate = 0.92 // något lugnare för barn
+  if (onEnd) {
+    utterance.onend = onEnd
+    utterance.onerror = onEnd
+  }
   window.speechSynthesis.speak(utterance)
 }
 
@@ -244,39 +264,48 @@ function speakLocal(text: string, voiceURI?: string): void {
  * hela genereringstiden efter knapptrycket.) Gör inget vid lokal röst.
  */
 export function prewarmSpeak(text: string): void {
-  const wanted = preferredVoiceURI()
-  if (wanted !== CLOUD_VOICE || !cloudTtsAvailable()) return
+  if (!wantsCloud(preferredVoiceURI() ?? undefined)) return
   const spoken = toSpoken(text)
   if (audioCache.has(spoken)) return
   void fetchCloudAudio(spoken).catch(() => { /* tyst — knappen faller ändå tillbaka till lokal röst */ })
 }
 
-/** Läs upp en text på svenska — moln-röst om vald, annars lokal. */
-export function speak(text: string, voiceURI?: string): void {
+/** Molnrösten används när föräldern valt den — och även på "Automatiskt"
+    när en Gemini-nyckel finns: bästa tillgängliga rösten ÄR då molnrösten
+    (förälderns iakttagelse okt 2026: filmerna lät mekaniska med iPadens
+    standardröst). Ett uttryckligt val av en lokal röst respekteras. */
+const wantsCloud = (wanted: string | undefined): boolean =>
+  cloudTtsAvailable() && (wanted === CLOUD_VOICE || !wanted)
+
+/** Läs upp en text på svenska — moln-röst om vald, annars lokal.
+    onEnd anropas när uppläsningen är klar (inte om den avbryts av
+    stopSpeaking/ny uppläsning) — filmerna väntar in rösten med den. */
+export function speak(text: string, voiceURI?: string, onEnd?: () => void): void {
   stopSpeaking()
   const spoken = toSpoken(text)
   const wanted = voiceURI ?? preferredVoiceURI() ?? undefined
-  const useCloud = wanted === CLOUD_VOICE && cloudTtsAvailable()
+  const token = ++speakToken
+  const done = (): void => { if (token === speakToken) onEnd?.() }
 
-  if (!useCloud) {
-    speakLocal(spoken, wanted)
+  if (!wantsCloud(wanted)) {
+    speakLocal(spoken, wanted, done)
     return
   }
-  const token = ++speakToken
   void fetchCloudAudio(spoken)
     .then((buffer) => {
       if (token !== speakToken) return // barnet gick vidare — släng
       const ctx = ensureAudioCtx()
-      if (!ctx) return
+      if (!ctx) { done(); return }
       const source = ctx.createBufferSource()
       source.buffer = buffer
       source.connect(ctx.destination)
+      source.onended = done
       source.start()
       currentSource = source
     })
     .catch((err) => {
       console.warn('Moln-TTS föll tillbaka till lokal röst:', err)
-      if (token === speakToken) speakLocal(spoken)
+      if (token === speakToken) speakLocal(spoken, undefined, done)
     })
 }
 
@@ -292,4 +321,78 @@ export function stopSpeaking(): void {
     try { currentSource.stop() } catch { /* redan stoppad */ }
     currentSource = null
   }
+}
+
+/* ============================================================
+   Sparad molnröst (IndexedDB) — filmerna offline med AI-rösten.
+
+   Minnescachen ovan glöms när appen stängs, så varje filmscen kostade ett
+   nytt anrop och en väntan. Ljudet sparas därför på enheten (rå PCM, ca
+   48 kB per sekund — alla filmer ryms på några tiotal MB) under rösten +
+   texten. Ingenting om barnet sparas eller skickas: bara filmernas och
+   uppgifternas fasta texter. Nyckeln bor kvar i hushållets lagring.
+   ============================================================ */
+
+const TTS_DB = 'barnens-plugg-tts'
+const TTS_STORE = 'ljud'
+const storeKey = (text: string): string => `${TTS_VOICE}|${text}`
+let ttsDb: Promise<IDBDatabase | null> | null = null
+
+function openTtsDb(): Promise<IDBDatabase | null> {
+  if (ttsDb) return ttsDb
+  ttsDb = new Promise((resolve) => {
+    try {
+      if (typeof indexedDB === 'undefined') { resolve(null); return }
+      const req = indexedDB.open(TTS_DB, 1)
+      req.onupgradeneeded = () => req.result.createObjectStore(TTS_STORE)
+      req.onsuccess = () => resolve(req.result)
+      req.onerror = () => resolve(null)
+    } catch { resolve(null) }
+  })
+  return ttsDb
+}
+
+async function readStoredAudio(text: string): Promise<{ pcm: Uint8Array; rate: number } | null> {
+  const db = await openTtsDb()
+  if (!db) return null
+  return new Promise((resolve) => {
+    try {
+      const req = db.transaction(TTS_STORE, 'readonly').objectStore(TTS_STORE).get(storeKey(text))
+      req.onsuccess = () => {
+        const v = req.result as { pcm: ArrayBuffer; rate: number } | undefined
+        resolve(v ? { pcm: new Uint8Array(v.pcm), rate: v.rate } : null)
+      }
+      req.onerror = () => resolve(null)
+    } catch { resolve(null) }
+  })
+}
+
+async function storeAudio(text: string, pcm: Uint8Array, rate: number): Promise<void> {
+  const db = await openTtsDb()
+  if (!db) return
+  try {
+    const copy = pcm.slice().buffer
+    db.transaction(TTS_STORE, 'readwrite').objectStore(TTS_STORE).put({ pcm: copy, rate }, storeKey(text))
+  } catch { /* full lagring — rösten hämtas då från molnet nästa gång */ }
+}
+
+/** Finns texten redan sparad med molnrösten? */
+export async function cloudAudioStored(text: string): Promise<boolean> {
+  return (await readStoredAudio(toSpoken(text))) !== null
+}
+
+/** Hämtar och sparar molnrösten för alla texter (föräldraläget: "Förbered
+    filmerna"). En i taget, så att nyckelns kvot inte överbelastas.
+    Returnerar hur många som är klara. */
+export async function prepareCloudAudio(texts: string[], onProgress: (done: number, total: number) => void): Promise<number> {
+  let done = 0
+  for (const text of texts) {
+    const spoken = toSpoken(text)
+    try {
+      if (!(await readStoredAudio(spoken))) await fetchCloudAudio(spoken)
+      done++
+    } catch { /* hoppa över — försök igen nästa gång */ }
+    onProgress(done, texts.length)
+  }
+  return done
 }
