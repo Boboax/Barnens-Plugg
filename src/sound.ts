@@ -66,6 +66,7 @@ export function unlockAudio(): void {
   const c = ensure()
   if (!c) return
   unlocked = true
+  if (mCurrent) routeTrack(mCurrent)
   if (pendingMood) {
     const mood = pendingMood
     pendingMood = null
@@ -108,9 +109,32 @@ const trkBoss: (HTMLAudioElement | null)[] = [null, null]
 function mkTrack(url: string, loop: boolean): HTMLAudioElement {
   const a = new Audio(url); a.loop = loop; a.preload = 'auto'; a.volume = musicVolume * MUSIC_MAX; return a
 }
+
+/* iPad (Safari) ignorerar HTMLAudioElement.volume — den är alltid 1 där,
+   så musikreglaget gjorde ingenting och låten hördes även på minimum
+   (förälderns iakttagelse okt 2026). Låtarna kopplas därför genom Web
+   Audio: element → egen förstärkare (musikvolymen) → mastern (ljud av/på).
+   Kopplingen görs första gången ett spår spelas efter att ljudet låsts upp,
+   och kan bara göras en gång per element. */
+let trackGain: GainNode | null = null
+const routed = new WeakSet<HTMLAudioElement>()
+function routeTrack(a: HTMLAudioElement): void {
+  if (routed.has(a) || !ctx || !master || !unlocked) return
+  try {
+    if (!trackGain) {
+      trackGain = ctx.createGain()
+      trackGain.gain.value = musicVolume * MUSIC_MAX
+      trackGain.connect(master)
+    }
+    ctx.createMediaElementSource(a).connect(trackGain)
+    a.volume = 1 // volymen styrs nu av förstärkaren, inte elementet
+    routed.add(a)
+  } catch { /* äldre webbläsare: elementets egen volym får räcka */ }
+}
 let retryCleanup: (() => void) | null = null
 function gesturePlay(a: HTMLAudioElement): void {
   if (muted) return
+  routeTrack(a)
   a.play().catch(() => {
     // Bara EN väntande gest-retry i taget (undvik att lyssnare hopar sig när
     // play() nekas upprepade gånger innan första användargesten).
@@ -119,7 +143,7 @@ function gesturePlay(a: HTMLAudioElement): void {
       retryCleanup = null
       window.removeEventListener('pointerdown', retry)
       window.removeEventListener('keydown', retry)
-      if (mCurrent === a && !muted) void a.play().catch(() => { /* ge upp tyst */ })
+      if (mCurrent === a && !muted) { routeTrack(a); void a.play().catch(() => { /* ge upp tyst */ }) }
     }
     retryCleanup = () => {
       window.removeEventListener('pointerdown', retry)
@@ -193,7 +217,8 @@ export const getSfxVolume = (): number => sfxVolume
 export function setMusicVolume(v: number): void {
   musicVolume = clamp01(v)
   try { localStorage.setItem(LS_MUSIC, String(musicVolume)) } catch { /* privat läge */ }
-  for (const t of [trkStart, trkTheme, trkBoss[0], trkBoss[1]]) if (t) t.volume = musicVolume * MUSIC_MAX
+  for (const t of [trkStart, trkTheme, trkBoss[0], trkBoss[1]]) if (t && !routed.has(t)) t.volume = musicVolume * MUSIC_MAX
+  if (trackGain) trackGain.gain.value = musicVolume * MUSIC_MAX
   if (musicBus) musicBus.gain.value = musicVolume * CHIP_MAX
 }
 

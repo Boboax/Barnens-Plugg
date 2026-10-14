@@ -270,6 +270,7 @@ function ChildrenTab() {
 
   return (
     <div style={{ maxWidth: 640 }}>
+      <DuplicateProfiles children={store.household.children} />
       {store.household.children.map((child) => <ChildSettings key={child.id} child={child} />)}
 
       {showForm ? <NewChildForm onDone={() => setShowForm(false)} /> : (
@@ -279,6 +280,57 @@ function ChildrenTab() {
       {store.household.children.length > 0 && <BlixtTargets />}
       {store.household.children.length > 0 && <VoicePicker />}
       {store.household.children.length > 0 && <ChatConfig />}
+    </div>
+  )
+}
+
+/* Två profiler med samma namn uppstår när två plattor skapat barnet var för
+   sig innan synken kopplades på — de har olika id, så synken behåller båda.
+   Visa dem sida vid sida så föräldern ser vilken som bär framstegen, och
+   ta bort den andra med "Ta bort profilen" (den kommer då aldrig tillbaka
+   via synken). Appen väljer aldrig själv — fel val vore oåterkalleligt. */
+function DuplicateProfiles({ children }: { children: ChildProfile[] }) {
+  const groups = new Map<string, ChildProfile[]>()
+  for (const c of children) {
+    const key = c.name.trim().toLowerCase()
+    groups.set(key, [...(groups.get(key) ?? []), c])
+  }
+  const dupes = [...groups.values()].filter((g) => g.length > 1)
+  if (dupes.length === 0) return null
+  const mastered = (c: ChildProfile): number =>
+    Object.values(c.skills).filter((s) => s.mastery === 'mastered' || s.mastery === 'star' || s.mastery === 'needs-review').length
+  const lastActive = (c: ChildProfile): string => c.answers[c.answers.length - 1]?.at ?? c.createdAt
+  const fmt = (iso: string): string => new Date(iso).toLocaleDateString('sv-SE')
+  return (
+    <div style={{ ...pcard, border: '2px solid #E8A13C', background: '#FFF8EA' }}>
+      <h4 style={{ ...h4, color: '#8A5A00' }}>⚠️ Samma barn finns två gånger</h4>
+      <p style={{ margin: '0 0 10px', fontSize: 13, lineHeight: 1.5 }}>
+        Det händer när två plattor skapat barnet var för sig innan synken kopplades på. Behåll den profil som
+        har mest framsteg och ta bort den andra längre ner med <strong>"Ta bort profilen …"</strong> — då kommer
+        den aldrig tillbaka via synken.
+      </p>
+      {dupes.map((g) => {
+        const ranked = [...g].sort((a, b) => mastered(b) - mastered(a) || b.answers.length - a.answers.length || lastActive(b).localeCompare(lastActive(a)))
+        // Bara en rekommendation när en profil faktiskt har mer — vid lika är valet fritt.
+        const tie = ranked.length > 1 && mastered(ranked[0]) === mastered(ranked[1]) && ranked[0].answers.length === ranked[1].answers.length
+        const best = tie ? null : ranked[0]
+        return (
+          <div key={g[0].id} style={{ display: 'grid', gap: 6, marginBottom: 8 }}>
+            {g.map((c) => (
+              <div key={c.id} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', fontSize: 13, background: '#fff', borderRadius: 10, padding: '8px 10px' }}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', background: c.color, display: 'inline-block' }} />
+                <strong>{c.name}</strong>
+                <span style={{ color: '#5B6070' }}>
+                  skapad {fmt(c.createdAt)} · senast aktiv {fmt(lastActive(c))} · {mastered(c)} behärskade moment ·
+                  {' '}{c.answers.length} svar · {c.petProgress.pets.length} vänner
+                </span>
+                {best && c.id === best.id && <span style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 800, color: '#1F7A50' }}>✓ mest framsteg — behåll</span>}
+              </div>
+            ))}
+            {tie && <span style={{ fontSize: 12.5, fontWeight: 700, color: '#5B6070' }}>Lika mycket framsteg — behåll vilken som helst.</span>}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -372,6 +424,7 @@ function PrepareLessonVoices({ usesCloud }: { usesCloud: boolean }) {
   const texts = useMemo(() => Object.values(LESSONS).flatMap((l) => l.scenes.map(sceneSpoken)), [])
   const [stored, setStored] = useState<number | null>(null)
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
+  const [quota, setQuota] = useState(false)
   useEffect(() => {
     if (!usesCloud) return
     let alive = true
@@ -393,8 +446,10 @@ function PrepareLessonVoices({ usesCloud }: { usesCloud: boolean }) {
         disabled={progress !== null}
         onClick={() => {
           setProgress({ done: 0, total: texts.length })
-          void prepareCloudAudio(texts, (done, total) => setProgress({ done, total })).then((done) => {
-            setStored(done)
+          setQuota(false)
+          void prepareCloudAudio(texts, (done, total) => setProgress({ done, total })).then((r) => {
+            setStored(r.done)
+            setQuota(r.quota)
             setProgress(null)
           })
         }}
@@ -404,6 +459,12 @@ function PrepareLessonVoices({ usesCloud }: { usesCloud: boolean }) {
           ? `Hämtar … ${progress.done} av ${progress.total} (låt fliken vara öppen)`
           : stored !== null ? `${stored} av ${texts.length} scener sparade på iPaden` : ''}
       </span>
+      {quota && (
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: '#B4552E', width: '100%' }}>
+          Googles gratiskvot för AI-röst tog slut för stunden. Det som hunnit sparas finns kvar — tryck igen
+          senare (eller i morgon) så fortsätter det där det slutade. Under tiden läser iPadens röst.
+        </span>
+      )}
     </div>
   )
 }
@@ -521,6 +582,10 @@ function ChildSettings({ child }: { child: ChildProfile }) {
         </span>
         <strong>{child.name}</strong>
         <span style={{ color: '#8B8FA0', fontSize: 13, fontWeight: 700 }}>f. {child.birthYear} · åk {child.schoolYear}</span>
+        {/* Skiljer två profiler med samma namn åt (se DuplicateProfiles). */}
+        <span style={{ marginLeft: 'auto', color: '#8B8FA0', fontSize: 12, fontWeight: 600 }}>
+          skapad {new Date(child.createdAt).toLocaleDateString('sv-SE')} · {child.answers.length} svar
+        </span>
       </div>
 
       {/* Startdiagnos / nivåplacering — högst upp så den är lätt att hitta.

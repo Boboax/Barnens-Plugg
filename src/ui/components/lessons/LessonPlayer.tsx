@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { lessonFor, sceneDurationMs, sceneSpoken } from '../../../domain/lessons'
-import { prewarmSpeak, speak, stopSpeaking, ttsAvailable } from '../../../tts'
+import { prewarmSpeak, primeAudio, speak, stopSpeaking, ttsAvailable } from '../../../tts'
 import { LESSON_VISUALS } from './visuals'
 import '../../../styles/lessons.css'
 
@@ -31,13 +31,31 @@ export function LessonPlayer({ momentId }: { momentId: string }) {
   const [ended, setEnded] = useState(false)
   const scenes = lesson?.scenes ?? []
   const scene = scenes[step]
+  // Scenen vars uppläsning redan startats i själva trycket (▶ / bakåt /
+  // framåt) — iPad släpper bara fram ljud som börjar i gesten. Effekten
+  // nedan kopplar då bara på "klar"-signalen i stället för att läsa igen.
+  const startedInGesture = useRef<number | null>(null)
+  const onSpeechEnd = useRef<(() => void) | null>(null)
+  const speakInGesture = (i: number): void => {
+    const sc = scenes[i]
+    if (!sc || !ttsAvailable()) return
+    startedInGesture.current = i
+    onSpeechEnd.current = null
+    speak(sceneSpoken(sc), undefined, () => onSpeechEnd.current?.())
+  }
 
-  // Molnrösten: förvärm alla scener så filmen inte hackar mellan dem.
+  // Molnrösten: förvärm de två första scenerna, sedan alltid nästa — inte
+  // alla på en gång, Googles gratiskvot klarar bara några anrop i minuten.
   useEffect(() => {
-    scenes.forEach((s) => prewarmSpeak(sceneSpoken(s)))
+    scenes.slice(0, 2).forEach((s) => prewarmSpeak(sceneSpoken(s)))
     return () => stopSpeaking()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [momentId])
+  useEffect(() => {
+    const next = scenes[step + 1]
+    if (next) prewarmSpeak(sceneSpoken(next))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
 
   // Nästa scen kommer när rösten läst klart (plus en liten paus att titta)
   // — inte efter en gissad lästid: molnrösten tar en stund att hämta och
@@ -69,28 +87,39 @@ export function LessonPlayer({ momentId }: { momentId: string }) {
       timers.push(window.setTimeout(advance, Math.max(SCENE_PAUSE_MS, minLeft)))
     }
     if (ttsAvailable()) {
-      speak(sceneSpoken(scene), undefined, afterSpeech)
+      if (startedInGesture.current === step) {
+        startedInGesture.current = null
+        onSpeechEnd.current = afterSpeech
+      } else {
+        speak(sceneSpoken(scene), undefined, afterSpeech)
+      }
       timers.push(window.setTimeout(advance, sceneDurationMs(scene) + SPEECH_GRACE_MS))
     } else {
       timers.push(window.setTimeout(advance, sceneDurationMs(scene)))
     }
-    return () => { finished = true; timers.forEach((t) => window.clearTimeout(t)) }
+    return () => { finished = true; onSpeechEnd.current = null; timers.forEach((t) => window.clearTimeout(t)) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, playing])
 
   if (!lesson || !Visual || !scene) return null
 
   const play = (): void => {
+    primeAudio() // i själva trycket — annars förblir rösten tyst på iPad
+    const from = ended ? 0 : step
+    speakInGesture(from)
     setStarted(true)
     if (ended) { setEnded(false); setStep(0) }
     setPlaying(true)
   }
   const pause = (): void => { stopSpeaking(); setPlaying(false) }
   const goTo = (i: number): void => {
+    primeAudio()
     stopSpeaking()
+    const to = Math.max(0, Math.min(scenes.length - 1, i))
+    if (playing) speakInGesture(to)
     setEnded(false)
     setStarted(true)
-    setStep(Math.max(0, Math.min(scenes.length - 1, i)))
+    setStep(to)
   }
 
   return (

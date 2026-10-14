@@ -141,6 +141,12 @@ const TTS_VOICE = 'Leda' // varm, ungdomlig — passar Pi
 const TTS_TIMEOUT_MS = 10_000
 
 let cloudApiKey: string | null = null
+/** Googles gratiskvot för röst är liten. Svarar molnet "för många anrop"
+    (429) vilar molnrösten en stund och den lokala rösten läser direkt —
+    annars väntade varje filmscen tio sekunder på ett anrop som ändå nekas. */
+let cloudPausedUntil = 0
+const CLOUD_PAUSE_MS = 5 * 60_000
+class QuotaError extends Error {}
 let audioCtx: AudioContext | null = null
 let currentSource: AudioBufferSourceNode | null = null
 let speakToken = 0
@@ -198,6 +204,7 @@ async function fetchCloudAudio(text: string): Promise<AudioBuffer> {
     return buffer
   }
 
+  if (Date.now() < cloudPausedUntil) throw new QuotaError('molnrösten vilar (kvot)')
   const models = await ttsCandidates()
   let lastError: Error = new Error('okänt TTS-fel')
   for (const model of models) {
@@ -220,6 +227,10 @@ async function fetchCloudAudio(text: string): Promise<AudioBuffer> {
         },
       )
       window.clearTimeout(timer)
+      if (res.status === 429) {
+        cloudPausedUntil = Date.now() + CLOUD_PAUSE_MS
+        throw new QuotaError(`TTS ${model}: kvoten slut`)
+      }
       if (!res.ok) throw new Error(`TTS ${model}: ${res.status}`)
       const data = (await res.json()) as {
         candidates?: { content?: { parts?: { inlineData?: { mimeType?: string; data?: string } }[] } }[]
@@ -234,6 +245,7 @@ async function fetchCloudAudio(text: string): Promise<AudioBuffer> {
       void storeAudio(text, pcm, rate)
       return buffer
     } catch (err) {
+      if (err instanceof QuotaError) throw err
       lastError = err instanceof Error ? err : new Error(String(err))
     }
   }
@@ -309,6 +321,33 @@ export function speak(text: string, voiceURI?: string, onEnd?: () => void): void
     })
 }
 
+/**
+ * Lås upp ljudet för uppläsning — anropas DIREKT i en tryckgest (t.ex.
+ * filmens ▶). iPad släpper bara fram ljud som startas i själva gesten;
+ * filmen läser upp sina scener en stund efteråt (från en effekt och
+ * timers), och då förblev både Web Audio och talsyntesen tysta (Alberts
+ * film, okt 2026). En tyst mikrobit i gesten räcker för resten av besöket.
+ */
+export function primeAudio(): void {
+  try {
+    const ctx = typeof window !== 'undefined' ? ensureAudioCtx() : null
+    if (ctx) {
+      const b = ctx.createBuffer(1, 1, 22050)
+      const src = ctx.createBufferSource()
+      src.buffer = b
+      src.connect(ctx.destination)
+      src.start()
+    }
+  } catch { /* ofarligt */ }
+  if (ttsAvailable()) {
+    try {
+      const u = new SpeechSynthesisUtterance(' ')
+      u.volume = 0
+      window.speechSynthesis.speak(u)
+    } catch { /* ofarligt */ }
+  }
+}
+
 /** Provlyssning i föräldraläget. */
 export function speakSample(voiceURI?: string): void {
   speak('Hej! Så här låter jag. Vad är 47 + 25?', voiceURI)
@@ -382,17 +421,23 @@ export async function cloudAudioStored(text: string): Promise<boolean> {
 }
 
 /** Hämtar och sparar molnrösten för alla texter (föräldraläget: "Förbered
-    filmerna"). En i taget, så att nyckelns kvot inte överbelastas.
-    Returnerar hur många som är klara. */
-export async function prepareCloudAudio(texts: string[], onProgress: (done: number, total: number) => void): Promise<number> {
+    filmerna"). En i taget, så att nyckelns kvot inte överbelastas. Tar
+    Googles gratiskvot slut avbryts hämtningen — det som hunnit sparas
+    finns kvar, och nästa tryck fortsätter där det slutade. */
+export async function prepareCloudAudio(
+  texts: string[],
+  onProgress: (done: number, total: number) => void,
+): Promise<{ done: number; quota: boolean }> {
   let done = 0
   for (const text of texts) {
     const spoken = toSpoken(text)
     try {
       if (!(await readStoredAudio(spoken))) await fetchCloudAudio(spoken)
       done++
-    } catch { /* hoppa över — försök igen nästa gång */ }
+    } catch (err) {
+      if (err instanceof QuotaError) { onProgress(done, texts.length); return { done, quota: true } }
+    }
     onProgress(done, texts.length)
   }
-  return done
+  return { done, quota: false }
 }
