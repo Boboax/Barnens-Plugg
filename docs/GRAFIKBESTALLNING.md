@@ -783,7 +783,7 @@ Using the attached image of this exact character at this exact age as the refere
 ```
 
 
-## Tillägg 5 (okt 2026) · Rörelser för varje ålder och handling (92)
+## Tillägg 5 (okt 2026) · Rörelser för varje ålder och handling (92) — LEVERERAD 16 okt, 84 inlagda (8 ombeställda i Tillägg 6)
 
 Föräldern vill ha **ordentligt bra animationer för allt man gör med
 vännerna**, i alla åldrar — hellre för mycket än för lite. Vuxengrodans
@@ -1288,3 +1288,25 @@ Using the attached reference of this exact character as an older guardian — ca
 ```
 Using the attached reference of this exact character as an older guardian — calm, strong and dignified, create one 2048×512 image: a horizontal strip of four equal 512×512 frames on a transparent background, no lines between them. The character stays in exactly the same place and size in all four frames (feet at the same height, filling about 95 % of the frame height); only the moving parts change, so the frames play as a smooth animation. Frames: 1) asleep, breathing in (curled up with wings tucked, its belly rises and falls, a few sparkles drift); 2) breathing out; 3) a tiny sleepy twitch; 4) asleep, back to rest. Same painterly style, colours and lighting as the reference. No text, no frames.
 ```
+
+
+## Tillägg 6 (okt 2026) · Omleverans av 8 rörelseremsor
+
+Åtta remsor i Tillägg 5 visade fel djur eller fel ålder och är INTE inlagda.
+Gör om exakt dessa, med samma format som Tillägg 5 (2048×512, fyra rutor,
+transparent bakgrund, fötterna på samma plats i alla rutor), och använd
+åldersbilden (`*-age-N.png` från Tillägg 3) som förlaga i varje ruta:
+
+| Fil | Fel i leveransen |
+|---|---|
+| `reef-axolotl-age-1-eat.png` | visade en räv |
+| `reef-axolotl-age-1-idle.png` | visade en räv |
+| `reef-axolotl-age-1-pet.png` | visade en räv |
+| `reef-axolotl-age-2-idle.png` | visade axolotlbebisen uppförstorad, inte tonåringen |
+| `dune-fox-age-2-idle.png` | visade rävbebisen uppförstorad, inte tonåringen |
+| `dune-fox-age-2-pet.png` | visade rävbebisen uppförstorad, inte tonåringen |
+| `dune-fox-age-3-eat.png` | visade tonårsräven, inte den vuxna (sittande, stor svans) |
+| `dune-fox-age-3-pet.png` | visade tonårsräven, inte den vuxna |
+
+Håll hela figuren inne i sin ruta (inga öron, svansar eller vingar som
+sticker ut i grannrutan). Leverans: `leverans/` på grenen `grafik/leverans`.
