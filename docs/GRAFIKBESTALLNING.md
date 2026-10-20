@@ -1290,7 +1290,7 @@ Using the attached reference of this exact character as an older guardian — ca
 ```
 
 
-## Tillägg 6 (okt 2026) · Omleverans av 8 rörelseremsor
+## Tillägg 6 (okt 2026) · Omleverans av 8 rörelseremsor — LEVERERAD, inlagd 20 okt (fötterna justerade till samma höjd som övriga remsor)
 
 Åtta remsor i Tillägg 5 visade fel djur eller fel ålder och är INTE inlagda.
 Gör om exakt dessa, med samma format som Tillägg 5 (2048×512, fyra rutor,

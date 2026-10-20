@@ -45,11 +45,15 @@ const PET_ANIM_READY: ReadonlySet<string> = new Set<string>([
   'dune-fox-2-eat', 'dune-fox-2-happy', 'dune-fox-2-play', 'dune-fox-2-sleep', 'dune-fox-3-happy', 'dune-fox-3-play',
   'dune-fox-3-sleep', 'dune-fox-4-eat', 'dune-fox-4-happy', 'dune-fox-4-idle', 'dune-fox-4-pet', 'dune-fox-4-play',
   'dune-fox-4-sleep',
+  // Tillägg 6 (omleverans, okt 2026)
+  'dune-fox-2-idle', 'dune-fox-2-pet', 'dune-fox-3-eat', 'dune-fox-3-pet',
   // reef-axolotl: 19
   'reef-axolotl-1-happy', 'reef-axolotl-1-play', 'reef-axolotl-1-sleep', 'reef-axolotl-2-eat', 'reef-axolotl-2-happy', 'reef-axolotl-2-pet',
   'reef-axolotl-2-play', 'reef-axolotl-2-sleep', 'reef-axolotl-3-eat', 'reef-axolotl-3-happy', 'reef-axolotl-3-pet', 'reef-axolotl-3-play',
   'reef-axolotl-3-sleep', 'reef-axolotl-4-eat', 'reef-axolotl-4-happy', 'reef-axolotl-4-idle', 'reef-axolotl-4-pet', 'reef-axolotl-4-play',
   'reef-axolotl-4-sleep',
+  // Tillägg 6 (omleverans, okt 2026)
+  'reef-axolotl-1-eat', 'reef-axolotl-1-idle', 'reef-axolotl-1-pet', 'reef-axolotl-2-idle',
   // woodland-frog: 23
   'woodland-frog-1-eat', 'woodland-frog-1-happy', 'woodland-frog-1-idle', 'woodland-frog-1-pet', 'woodland-frog-1-play', 'woodland-frog-1-sleep',
   'woodland-frog-2-eat', 'woodland-frog-2-happy', 'woodland-frog-2-idle', 'woodland-frog-2-pet', 'woodland-frog-2-play', 'woodland-frog-2-sleep',
