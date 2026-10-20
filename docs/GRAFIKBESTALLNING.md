@@ -1310,3 +1310,32 @@ transparent bakgrund, fötterna på samma plats i alla rutor), och använd
 
 Håll hela figuren inne i sin ruta (inga öron, svansar eller vingar som
 sticker ut i grannrutan). Leverans: `leverans/` på grenen `grafik/leverans`.
+
+## Tillägg 7 (okt 2026) · Tidsmaskinen (2)
+
+Tidsmaskinen (köps i handelsboden, låter barnet se sin vän i en tidigare
+ålder) gick ut med en tillfällig, platt vektorbild som inte passar ihop med
+de målade sakerna i boden. Två målade bilder i samma stil som övriga
+lägersaker. Leverans: `leverans/` på grenen `grafik/leverans`, PNG med
+transparent bakgrund, exakt dessa filnamn. Klistra först in stil-prompten
+under "Stil (gäller alla bilder)" ovan och bifoga referensbilderna.
+
+Referenser för stil och ljus (bifoga båda):
+- Skattkistan: https://boboax.github.io/Barnens-Plugg/art/camp/items/treasure-chest.webp
+- Lyktan: https://boboax.github.io/Barnens-Plugg/art/camp/items/camp-lantern.webp
+
+### `time-machine.png` — 640×640 (sak i handelsboden)
+
+```
+A small magical time machine for a children's fantasy camp, as a standalone object: a carved wooden and brass hourglass on a sturdy wooden stand, warm golden sand flowing inside the glass, two small brass cogwheels on the sides, a curved brass arrow circling the hourglass pointing backwards (counter-clockwise), and a few tiny soft glowing stars around it. Feels like a cosy, slightly whimsical old treasure — the same family of objects as the attached treasure chest and lantern: same painterly style, same warm wood and brass materials, same campfire rim light from the left and faint cool moonlight from the right. Seen slightly from the front and above, whole object visible, centered with a little empty space around it. Transparent background, no ground shadow, no glow disc or circle behind it, no text, no frame.
+```
+
+### `icon-time-machine.png` — 512×512 (knapp i lyan)
+
+Referens för ikonstil: https://boboax.github.io/Barnens-Plugg/art/camp/icons/icon-lantern-lit.webp
+
+```
+The same small wooden and brass hourglass time machine as in the attached item image, simplified as a game icon: hourglass with golden sand and one curved backwards-pointing brass arrow around it, no stand details, no extra stars. Simple bold readable shape that still reads clearly at 44 px, soft painterly game-icon style matching the attached lantern icon. Centered, transparent background, no text, no frame.
+```
+
+Visas i boden i ca 120 px och som knapp i lyan i 44–60 px.

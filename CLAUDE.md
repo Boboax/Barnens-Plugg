@@ -138,6 +138,14 @@ publikt för Pages på gratisplanen.
   gjord — `practiceTimeDone`, okt 2026 — en minuts snabbtitt före — `campAccess` i engine/pet-home; mattetiden står still i
   lägret, så arbetstiden kan aldrig väntas ut där; lägg den ALDRIG i
   `TIMED_SCREENS` och låt aldrig lägertid räknas som mattetid).
+- **Grafiken ska vara enhetlig — rita den aldrig själv.** All grafik i
+  appen är målad i EN stil och beställs från ChatGPT med stil-prompten och
+  referensbilder i `docs/GRAFIKBESTALLNING.md` (nytt "Tillägg N"). Jämför
+  varje leverans sida vid sida med befintliga bilder innan den läggs in.
+  Behövs en bild innan leveransen finns: en platshållare får bara gå ut om
+  föräldern godkänt det, och den ska stå i `PENDING_ART` i
+  `src/art-consistency.test.ts` (testet faller annars). Bakgrund:
+  tidsmaskinen gick ut som platt vektorteckning bland målade saker (okt 2026).
 - **Bildbudgeten:** PWA:n precachar ALLT i `public/`. `src/art-budget.test.ts`
   faller om `public/art` passerar 20 MB (höjt från 12, okt 2026). Nya bilder som webp, aldrig
   PNG-sekvenser; studier och demobilder hör inte hemma i `public/`.
