@@ -108,15 +108,25 @@ export interface PetProgress {
       många milstolpar som redan var nådda när räkningen startade. Bara
       milstolpar EFTER det ger nya vänner (förälderns beslut, okt 2026 —
       gamla framsteg gav annars flera vänner samma dag). Optionellt. */
-  milestoneBase?: { friends: number; years: number; worlds: number; blixt: number }
+  milestoneBase?: { friends: number; years: number; worlds: number; blixt: number; habit?: number }
+  /** Antal dagar med minst ett avslutat pass (räknas från okt 2026).
+      Träningsvanan är en milstolpe: var HABIT_DAYS:e dag ger en ny vän.
+      Optionellt — saknas = 0. */
+  practiceDays?: number
 }
+
+/** Träningsvanans milstolpe: en ny vän per så här många träningsdagar.
+    Ersatte blixtpasset som milstolpe (förälderns beslut, okt 2026) —
+    blixten handlar om fart, och belöningar ska aldrig hänga på hastighet
+    (princip 3). Vanan belönar att barnet kommer tillbaka. */
+export const HABIT_DAYS = 10
 
 /** Mynt för VANAN: första avslutade passet per dag, oavsett hur många rätt.
     Aldrig för rätt svar, hastighet eller jämförelse (princip 3). 20/dag
     gör att inget i boden kostar mer än en veckas träning. */
 export const DAILY_PET_COINS = 20
 
-/** Lägertid per dag, bara efter dagens pass. Höjd från 3 till 15 minuter
+/** Lägertid per dag, bara när dagens mattetid är gjord. Höjd från 3 till 15 minuter
     på förälderns begäran (okt 2026) när lyan blev en lekscen. Tiden är
     lägrets EGEN klocka: den drar aldrig av mattetiden, och mattetiden tickar
     inte i lägret (pet-home står inte i TIMED_SCREENS) — så passets arbetstid

@@ -85,6 +85,8 @@ describe('familjesynk: sammanslagning per barn', () => {
     const at = new Date(2026, 8, 9, 18)
     const camper = (id: string): ChildProfile => ({
       ...kid(id, '2026-09-09T10:00:00Z'),
+      // Dagens mattetid gjord — lägret är öppet.
+      usageSeconds: { [at.toISOString().slice(0, 10)]: 20 * 60 },
       petProgress: {
         ...emptyPetProgress(), coins: 100, lastPracticeDay: '2026-09-09',
         pets: [{ id: 'p', name: 'Mossa', species: 'woodland-frog', foundAt: 'x', foundInWorldId: 'talens-dal' }],

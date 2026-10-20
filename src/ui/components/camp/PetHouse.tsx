@@ -292,10 +292,10 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
     if (!s || s.id !== e.pointerId) return
     stroke.current = null
     if (s.dist > 10) return
-    if (resting) { say(canInteract ? `Shh … ${pet.name} sover. Tryck på lyktan för att väcka.` : `Shh … ${pet.name} sover. Efter passet kan du väcka ${pet.name} med lyktan.`); return }
+    if (resting) { say(canInteract ? `Shh … ${pet.name} sover. Tryck på lyktan för att väcka.` : `Shh … ${pet.name} sover. Efter mattetiden kan du väcka ${pet.name} med lyktan.`); return }
     const r = pick(TAP_REACTIONS)
     react(r.kind)
-    say(canInteract ? r.line(pet.name) : `${pet.name} vinkar. Efter nästa pass kan ni leka mer!`)
+    say(canInteract ? r.line(pet.name) : `${pet.name} vinkar. När dagens mattetid är klar kan ni leka mer!`)
     if (canInteract) { sound(); heartBurst(); care('pet') }
   }
 
@@ -508,7 +508,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
   ].filter((m): m is string => Boolean(m))
 
   const hint = !canInteract
-    ? 'Vännerna vilar. Efter nästa övningspass kan ni leka igen.'
+    ? 'Vännerna vilar. När dagens mattetid är klar kan ni leka igen.'
     : resting ? `${pet.name} sover. Tryck på lyktan för att väcka.`
     : 'Tryck på din vän eller stryk med fingret. Dra en godbit, kasta bollen, lek tittut!'
   const hiding = mode === 'peek' && peek !== null && !peek.found

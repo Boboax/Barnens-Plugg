@@ -101,16 +101,23 @@ describe('Kvällslägret: dagsmynt och upptäckt', () => {
   })
 })
 
+/** Hela dagens mattetid gjord — det är den som öppnar lägret (okt 2026). */
+const timeDone = (c: ChildProfile, when = at): ChildProfile =>
+  ({ ...c, usageSeconds: { ...c.usageSeconds, [when.toISOString().slice(0, 10)]: c.dailyLimitMinutes * 60 } })
+
 describe('Kvällslägret: lägertid', () => {
-  it('finns bara efter dagens avslutade pass', () => {
+  it('öppnar först när hela dagens mattetid är gjord — ett pass räcker inte', () => {
     expect(homeSecondsLeft(kid(), at)).toBe(0)
-    expect(homeSecondsLeft(withFrog(), at)).toBe(HOME_VISIT_SECONDS)
-    expect(homeSecondsLeft(withFrog(), nextDay)).toBe(0)
+    expect(homeSecondsLeft(withFrog(), at)).toBe(0)
+    expect(homeSecondsLeft(timeDone(withFrog()), at)).toBe(HOME_VISIT_SECONDS)
+    expect(homeSecondsLeft(timeDone(withFrog()), nextDay)).toBe(0)
+    // Även utan avslutat pass: tiden tog slut mitt i passet, då är träningen gjord.
+    expect(homeSecondsLeft(timeDone(kid()), at)).toBe(HOME_VISIT_SECONDS)
   })
 
   it('är 15 minuter och rör aldrig mattetiden', () => {
     expect(HOME_VISIT_SECONDS).toBe(15 * 60)
-    const before = withFrog()
+    const before = timeDone(withFrog())
     const after = spendHomeTime(before, 10 * 60, at)
     expect(homeSecondsLeft(after, at)).toBe(5 * 60)
     // Bara lägrets egen klocka ändras — mattetiden (usageSeconds) är orörd.
@@ -118,14 +125,14 @@ describe('Kvällslägret: lägertid', () => {
   })
 
   it('kan inte fyllas på genom återbesök eller fler pass samma dag', () => {
-    const h = spendHomeTime(withFrog(), HOME_VISIT_SECONDS, at)
+    const h = spendHomeTime(timeDone(withFrog()), HOME_VISIT_SECONDS, at)
     expect(homeSecondsLeft(h, at)).toBe(0)
     expect(homeSecondsLeft(completePetPractice(h, 8, 8, 'talens-dal', at), at)).toBe(0)
-    expect(homeSecondsLeft(completePetPractice(h, 8, 8, 'talens-dal', nextDay), nextDay)).toBe(HOME_VISIT_SECONDS)
+    expect(homeSecondsLeft(timeDone(h, nextDay), nextDay)).toBe(HOME_VISIT_SECONDS)
   })
 
   it('bokförs i klumpar och stannar vid taket', () => {
-    let h = withFrog()
+    let h = timeDone(withFrog())
     h = spendHomeTime(h, 15, at)
     h = spendHomeTime(h, 15, at)
     expect(homeSecondsLeft(h, at)).toBe(HOME_VISIT_SECONDS - 30)
@@ -135,7 +142,7 @@ describe('Kvällslägret: lägertid', () => {
   })
 
   it('ignorerar noll, negativa och trasiga tider', () => {
-    const h = withFrog()
+    const h = timeDone(withFrog())
     for (const s of [0, -5, Number.NaN, Number.POSITIVE_INFINITY]) expect(spendHomeTime(h, s, at)).toBe(h)
   })
 })
@@ -160,7 +167,7 @@ describe('Etapp 2: en ny vän per milstolpe', () => {
     expect(completePetPractice(h, 8, 8, 'brakberget', nextDay).petProgress.encounter).toBeUndefined()
   })
 
-  it('väktare, världsboss och blixt ger räv, axolotl och drake — i fast ordning', () => {
+  it('väktare, tio träningsdagar och världsboss ger räv, axolotl och drake — i fast ordning', () => {
     let c: ChildProfile = { ...withFrog(), conqueredYears: ['F'] }
     expect(nextFriendSpecies(c)).toBe('dune-fox')
     c = passAndAdopt(c, 'Saffran')
@@ -168,7 +175,12 @@ describe('Etapp 2: en ny vän per milstolpe', () => {
     // Vännen kommer från världen barnet just tränade i, även samma dag (inga extra mynt).
     expect(c.petProgress.pets[1].foundInWorldId).toBe('brakberget')
     expect(c.petProgress.coins).toBe(DAILY_PET_COINS)
-    c = passAndAdopt({ ...c, blixt: { 'plus-minus-10': { best: 20, cleared: true, attempts: 1 } } } as ChildProfile, 'Pärla')
+    // Ett klarat blixtpass är ingen milstolpe längre (fart, princip 3).
+    const fast = { ...c, blixt: { 'plus-minus-10': { best: 20, cleared: true, attempts: 1 } } } as ChildProfile
+    expect(nextFriendSpecies(fast)).toBeUndefined()
+    // Tionde träningsdagen är det (träningsvana, okt 2026).
+    c = passAndAdopt({ ...fast, petProgress: { ...fast.petProgress, practiceDays: 9 } }, 'Pärla', nextDay)
+    expect(c.petProgress.practiceDays).toBe(10)
     c = passAndAdopt({ ...c, conqueredWorlds: ['talens-dal'] }, 'Glimmer')
     expect(c.petProgress.pets.map((p) => p.species)).toEqual(['woodland-frog', 'dune-fox', 'reef-axolotl', 'crystal-dragon'])
     expect(nextFriendSpecies(c)).toBeUndefined()
@@ -187,7 +199,7 @@ describe('Etapp 2: en ny vän per milstolpe', () => {
       blixt: { 'plus-minus-10': { best: 20, cleared: true, attempts: 1 } },
     } as ChildProfile
     let c = adoptPet(completePetPractice(veteranKid, 8, 8, 'talens-dal', at), 'Mossa', at)
-    expect(c.petProgress.milestoneBase).toEqual({ friends: 1, years: 1, worlds: 1, blixt: 1 })
+    expect(c.petProgress.milestoneBase).toEqual({ friends: 1, years: 1, worlds: 1, blixt: 1, habit: 0 })
     expect(friendsEarned(c)).toBe(1)
     expect(completePetPractice(c, 8, 8, 'talens-dal', at).petProgress.encounter).toBeUndefined()
     expect(completePetPractice(c, 8, 8, 'talens-dal', nextDay).petProgress.encounter).toBeUndefined()
@@ -206,7 +218,7 @@ describe('Etapp 2: en ny vän per milstolpe', () => {
       petProgress: { ...before.petProgress, pets: [...before.petProgress.pets, fox], milestoneBase: undefined },
     }
     const settled = settleMilestoneBase(legacy)
-    expect(settled.petProgress.milestoneBase).toEqual({ friends: 2, years: 1, worlds: 0, blixt: 1 })
+    expect(settled.petProgress.milestoneBase).toEqual({ friends: 2, years: 1, worlds: 0, blixt: 1, habit: 0 })
     expect(settleMilestoneBase(settled)).toBe(settled)
     expect(nextFriendSpecies(settled)).toBeUndefined()
     // En ny milstolpe → tredje vännen.
@@ -221,7 +233,7 @@ describe('Föräldern tar bort en vän', () => {
     const fox = c.petProgress.pets[1]
     const after = releasePet(c, fox.id)
     expect(after.petProgress.pets.map((p) => p.name)).toEqual(['Mossa'])
-    expect(after.petProgress.milestoneBase).toEqual({ friends: 1, years: 1, worlds: 0, blixt: 0 })
+    expect(after.petProgress.milestoneBase).toEqual({ friends: 1, years: 1, worlds: 0, blixt: 0, habit: 0 })
     // Väcks inte igen förrän vid nästa nya milstolpe.
     expect(nextFriendSpecies(after)).toBeUndefined()
     expect(releasePet(after, 'finns-inte')).toBe(after)
@@ -307,23 +319,23 @@ describe('Etapp 2: vännerna växer med barnets lärande', () => {
   })
 })
 
-describe('Lägret är belöningen efter passet', () => {
-  it('före passet: en minuts snabbtitt, sedan stängt', () => {
+describe('Lägret är belöningen efter mattetiden', () => {
+  it('innan mattetiden är gjord: en minuts snabbtitt, sedan stängt', () => {
     const c = adoptPet(completePetPractice(kid(), 8, 8, 'talens-dal', at), 'Mossa', at)
-    // Nästa dag, innan något pass: snabbtitt.
-    expect(campAccess(c, nextDay)).toBe('peek')
+    // Passet klart men mattetid kvar: bara snabbtitt.
+    expect(campAccess(c, at)).toBe('peek')
     expect(peekSecondsLeft(c, nextDay)).toBe(HOME_PEEK_SECONDS)
     const used = spendPeekTime(c, HOME_PEEK_SECONDS, nextDay)
     expect(campAccess(used, nextDay)).toBe('closed-before')
     expect(spendPeekTime(used, 10, nextDay)).toBe(used)
-    // Passet klart → öppet med full lägertid.
-    const passed = completePetPractice(used, 8, 8, 'talens-dal', nextDay)
-    expect(campAccess(passed, nextDay)).toBe('open')
-    expect(peekSecondsLeft(passed, nextDay)).toBe(0)
+    // Mattetiden gjord → öppet med full lägertid.
+    const done = timeDone(used, nextDay)
+    expect(campAccess(done, nextDay)).toBe('open')
+    expect(peekSecondsLeft(done, nextDay)).toBe(0)
   })
 
   it('när lägertiden är slut stänger lägret för dagen', () => {
-    const c = adoptPet(completePetPractice(kid(), 8, 8, 'talens-dal', at), 'Mossa', at)
+    const c = timeDone(adoptPet(completePetPractice(kid(), 8, 8, 'talens-dal', at), 'Mossa', at))
     const spent = spendHomeTime(c, HOME_VISIT_SECONDS, at)
     expect(campAccess(spent, at)).toBe('closed-after')
   })

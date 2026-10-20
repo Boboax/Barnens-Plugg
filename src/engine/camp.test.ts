@@ -21,7 +21,8 @@ const fox: CampPet = { id: 'fox', name: 'Saffran', species: 'dune-fox', foundAt:
 const kid = (patch: Partial<ChildProfile['petProgress']> = {}, id = 'a'): ChildProfile => ({
   id, name: id.toUpperCase(), color: '#446633', birthYear: 2018, schoolYear: '2', createdAt: at.toISOString(),
   skills: {}, answers: [], diagnosis: { done: true, passesDone: 1, passesTotal: 1, probes: [] },
-  dailyLimitMinutes: 20, usageSeconds: {}, chatEnabled: false, streak: { days: 0, lastActiveDate: '' },
+  // Dagens mattetid är gjord — lägret är öppet.
+  dailyLimitMinutes: 20, usageSeconds: { [at.toISOString().slice(0, 10)]: 20 * 60 }, chatEnabled: false, streak: { days: 0, lastActiveDate: '' },
   seenWorlds: ['monsterskogen'],
   petProgress: { ...emptyPetProgress(), coins: 200, lastPracticeDay: today, pets: [frog], ...patch },
 })
@@ -67,7 +68,8 @@ describe('Kvällslägret: köp', () => {
   it('kräver dagens lägertid och minst en vän', () => {
     const noTime = kid({ visit: { day: today, seconds: HOME_VISIT_SECONDS } })
     expect(changeCamp(noTime, buy('camp-lantern', 'x'), at)).toBe(noTime)
-    const noPractice = kid({ lastPracticeDay: '2026-09-08' })
+    // Mattetiden inte gjord än → inga köp, även om dagens pass är klart.
+    const noPractice: ChildProfile = { ...kid(), usageSeconds: {} }
     expect(changeCamp(noPractice, buy('camp-lantern', 'x'), at)).toBe(noPractice)
     const noPets = kid({ pets: [] })
     expect(changeCamp(noPets, buy('camp-lantern', 'x'), at)).toBe(noPets)

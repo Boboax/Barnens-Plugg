@@ -1,6 +1,6 @@
 import type { ChildProfile } from '../domain/types'
 import {
-  DAILY_PET_COINS, FIRST_PET_SPECIES, HOME_PEEK_SECONDS, HOME_VISIT_SECONDS, PET_ORDER,
+  DAILY_PET_COINS, FIRST_PET_SPECIES, HABIT_DAYS, HOME_PEEK_SECONDS, HOME_VISIT_SECONDS, PET_ORDER,
   type CampPet, type PetProgress, type PetSpeciesId, type PetStage,
 } from '../domain/pet-home'
 import type { MasteryState } from '../domain/types'
@@ -54,9 +54,12 @@ export function completePetPractice(
   const firstToday = p.lastPracticeDay < day
   const species = p.encounter ? undefined : nextFriendSpecies(child)
   if (!firstToday && !species) return child
-  return withProgress(child, {
+  const counted = firstToday ? withProgress(child, { practiceDays: (p.practiceDays ?? 0) + 1 }) : child
+  // En ny träningsdag kan i sig vara milstolpen (var tionde dag).
+  const next = p.encounter ? undefined : nextFriendSpecies(counted)
+  return withProgress(counted, {
     ...(firstToday ? { coins: p.coins + DAILY_PET_COINS, lastPracticeDay: day } : {}),
-    encounter: species ? { species, worldId } : p.encounter,
+    encounter: next ? { species: next, worldId } : p.encounter,
   })
 }
 
@@ -73,11 +76,14 @@ export const masteredCount = (child: ChildProfile): number =>
 /** Barnets milstolpar just nu: besegrade årsväktare (skänkta fjärranår
     ligger inte i conqueredYears och räknas inte), världsbossar och klarade
     blixtpass. Barnets egna framsteg — aldrig poäng eller tid (princip 3). */
-export function milestoneCounts(child: ChildProfile): { years: number; worlds: number; blixt: number } {
+export function milestoneCounts(child: ChildProfile): { years: number; worlds: number; blixt: number; habit: number } {
   return {
     years: child.conqueredYears?.length ?? 0,
     worlds: child.conqueredWorlds?.length ?? 0,
+    // Sparas kvar i utgångsläget för gamla profilers skull, men ger inga
+    // nya vänner längre (se friendsEarned).
     blixt: Object.values(child.blixt ?? {}).filter((b) => b?.cleared === true).length,
+    habit: Math.floor((child.petProgress.practiceDays ?? 0) / HABIT_DAYS),
   }
 }
 
@@ -94,7 +100,10 @@ export function friendsEarned(child: ChildProfile): number {
   const base = child.petProgress.milestoneBase
   if (!base) return 1
   const now = milestoneCounts(child)
-  const fresh = Math.max(0, now.years - base.years) + Math.max(0, now.worlds - base.worlds) + Math.max(0, now.blixt - base.blixt)
+  // Blixtpassen räknas inte längre (fart är ingen milstolpe, princip 3) —
+  // träningsvanan har tagit deras plats. Utgångsläge utan habit = 0:
+  // träningsdagarna räknas från när regeln kom, så inget räknas bakåt.
+  const fresh = Math.max(0, now.years - base.years) + Math.max(0, now.worlds - base.worlds) + Math.max(0, now.habit - (base.habit ?? 0))
   return Math.min(PET_ORDER.length, base.friends + fresh)
 }
 
@@ -207,22 +216,33 @@ export function adoptPet(child: ChildProfile, name: string, at: Date): ChildProf
   return withProgress(child, { pets: [...p.pets, pet], encounter: undefined, milestoneBase })
 }
 
-/** Kvar av dagens lägertid. Ingen tid alls utan dagens avslutade pass —
-    lägret är kvällsstunden EFTER träningen, aldrig i stället för den. */
+/** Har barnet använt hela dagens mattetid? Förälderns beslut (okt 2026):
+    lägret öppnar först när HELA dagens övningstid är gjord — inte efter
+    första passet. Ett blixtpass på två minuter öppnade annars en kvart i
+    lägret, och resten av mattetiden blev ogjord. Extratid som föräldern
+    ger räknas inte: lägret stängs inte igen för att barnet fick mer tid.
+    Samma datumnyckel som usageSeconds (store.todayISO). */
+export function practiceTimeDone(child: ChildProfile, at: Date): boolean {
+  const used = child.usageSeconds[at.toISOString().slice(0, 10)] ?? 0
+  return used >= child.dailyLimitMinutes * 60
+}
+
+/** Kvar av dagens lägertid. Ingen tid alls förrän dagens mattetid är gjord
+    — lägret är kvällsstunden EFTER träningen, aldrig i stället för den. */
 export function homeSecondsLeft(child: ChildProfile, at: Date): number {
   const p = child.petProgress
   const day = petDay(at)
-  if (p.lastPracticeDay !== day) return 0
+  if (!practiceTimeDone(child, at)) return 0
   const used = p.visit?.day === day ? p.visit.seconds : 0
   return Math.max(0, HOME_VISIT_SECONDS - used)
 }
 
-/** Kvar av dagens snabbtitt — bara före dagens pass (efter passet gäller
-    den vanliga lägertiden). */
+/** Kvar av dagens snabbtitt — bara innan mattetiden är gjord (sedan
+    gäller den vanliga lägertiden). */
 export function peekSecondsLeft(child: ChildProfile, at: Date): number {
   const day = petDay(at)
   const p = child.petProgress
-  if (p.lastPracticeDay === day) return 0
+  if (practiceTimeDone(child, at)) return 0
   const used = p.peek?.day === day ? p.peek.seconds : 0
   return Math.max(0, HOME_PEEK_SECONDS - used)
 }
@@ -235,14 +255,14 @@ export function spendPeekTime(child: ChildProfile, seconds: number, at: Date): C
   return withProgress(child, { peek: { day, seconds: Math.min(HOME_PEEK_SECONDS, used + Math.round(seconds)) } })
 }
 
-/** Lägrets dörr just nu: öppet (lägertid efter passet), snabbtitt (före
-    passet, en minut), stängt före passet (titten förbrukad) eller stängt
-    för dagen (lägertiden slut). */
+/** Lägrets dörr just nu: öppet (lägertid när mattetiden är gjord),
+    snabbtitt (innan dess, en minut), stängt (titten förbrukad) eller
+    stängt för dagen (lägertiden slut). */
 export type CampAccess = 'open' | 'peek' | 'closed-before' | 'closed-after'
 
 export function campAccess(child: ChildProfile, at: Date): CampAccess {
   if (homeSecondsLeft(child, at) > 0) return 'open'
-  if (child.petProgress.lastPracticeDay === petDay(at)) return 'closed-after'
+  if (practiceTimeDone(child, at)) return 'closed-after'
   return peekSecondsLeft(child, at) > 0 ? 'peek' : 'closed-before'
 }
 

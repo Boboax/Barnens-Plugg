@@ -318,13 +318,13 @@ function HomeInner({ child }: { child: ChildProfile }) {
           <SoundToggle />
           {/* Kvällslägret syns först när första vännen väntar bakom stenen
               (efter första avslutade övningspasset) — lägret är en upptäckt,
-              inte en låst dörr att vänta vid. Lägertid finns ändå bara efter
-              dagens pass (engine/pet-home), så knappen frestar aldrig bort
-              från träningen. */}
+              inte en låst dörr att vänta vid. Lägertid finns ändå bara när
+              dagens mattetid är gjord (engine/pet-home), så knappen frestar
+              aldrig bort från träningen. */}
           {(child.petProgress.pets.length > 0 || child.petProgress.encounter) && (
             <button className="chip" onClick={() => {
               // En väntande vän bakom stenen får alltid mötas. Annars: lägret är
-              // öppet efter passet, en minuts snabbtitt före — sedan stängt, och
+              // öppet när mattetiden är gjord, en minuts snabbtitt före — sedan stängt, och
               // då vinkar vännen här på kartan i stället.
               const access = campAccess(child, new Date())
               if (child.petProgress.encounter || access === 'open' || access === 'peek') store.go('pet-home')
@@ -1080,8 +1080,8 @@ function CampClosedCard({ child, afterTime, onClose }: { child: ChildProfile; af
         <h2 className="display" style={{ margin: '6px 0', fontSize: 26 }}>{pet.name} vinkar!</h2>
         <p style={{ margin: '0 0 14px', fontWeight: 700, lineHeight: 1.45 }}>
           {afterTime
-            ? `${pet.name} vilar nu. Vi ses i lägret i morgon efter passet!`
-            : `Gör dagens pass, så ses ni i lägret och kan leka i 15 minuter.`}
+            ? `${pet.name} vilar nu. Vi ses i lägret i morgon efter mattetiden!`
+            : `Träna klart dagens mattetid, så ses ni i lägret och kan leka i 15 minuter.`}
         </p>
         <button className="btn btn-primary" onClick={onClose}>Okej!</button>
       </div>

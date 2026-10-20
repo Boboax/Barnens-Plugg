@@ -18,13 +18,24 @@ import { currentMomentId, isDistantYear } from './progress'
    den gula knappen är alltid nästa steg.
    ============================================================ */
 
-const NEW_TASK_COUNT = 8
-const MIXED_TASK_COUNT = 4
-const MAX_REVIEW_MOMENTS = 2
-// Fokuserad nodträning: bara det valda momentet. 12 = når "boss-redo"
-// (BOSS_READY_MIN_ATTEMPTS) på ett fokuserat pass om det går bra → bossen
-// vaknar direkt, så vägen till "klar" blir tydlig och snabb.
-const FOCUSED_TASK_COUNT = 12
+/* Passets längd efter årskurs (förälderns beslut, okt 2026). Ett pass om
+   upp till 18 uppgifter var för långt för en sexåring: orken tar slut innan
+   passet gör det, och då lär sig barnet att matte är tjatigt. Kortare pass
+   för de yngsta — fler korta pass ryms ändå inom dagens tid. Strukturen
+   (repetition → nytt → blandat) är densamma; bara mängden krymper. */
+interface SessionSize { reviewMoments: number; reviewTasks: number; newTasks: number; mixedTasks: number; focusedTasks: number }
+const SIZE_BY_YEAR: Record<'F' | 'lag' | 'mellan', SessionSize> = {
+  // ≈ 10 uppgifter
+  F: { reviewMoments: 1, reviewTasks: 2, newTasks: 6, mixedTasks: 2, focusedTasks: 8 },
+  // åk 1–2: ≈ 14 uppgifter
+  lag: { reviewMoments: 1, reviewTasks: 3, newTasks: 8, mixedTasks: 3, focusedTasks: 10 },
+  // åk 3+: upp till 20 (som tidigare)
+  mellan: { reviewMoments: 2, reviewTasks: REVIEW_TASK_COUNT, newTasks: 8, mixedTasks: 4, focusedTasks: 12 },
+}
+
+export function sessionSize(year: SchoolYear): SessionSize {
+  return year === 'F' ? SIZE_BY_YEAR.F : year === '1' || year === '2' ? SIZE_BY_YEAR.lag : SIZE_BY_YEAR.mellan
+}
 
 /** Kan momentet tränas som "nytt" just nu? (upplåst + byggd generator) */
 export function isTrainable(profile: ChildProfile, momentId: string): boolean {
@@ -36,12 +47,13 @@ export function isTrainable(profile: ChildProfile, momentId: string): boolean {
 
 export function composeSession(profile: ChildProfile, today: string, preferredMomentId?: string, focused = false): SessionPlan {
   const parts: SessionPlan['parts'] = []
+  const size = sessionSize(profile.schoolYear)
 
   // Fokuserad nodträning: barnet tryckte på EN specifik nod och vill träna
   // just det momentet — då hoppar vi över uppvärmning/blandat (som hör till
   // "Dagens pass") och kör bara det valda momentet.
   if (focused && preferredMomentId && isTrainable(profile, preferredMomentId)) {
-    return { parts: [{ kind: 'nytt', momentId: preferredMomentId, taskCount: FOCUSED_TASK_COUNT }] }
+    return { parts: [{ kind: 'nytt', momentId: preferredMomentId, taskCount: size.focusedTasks }] }
   }
 
   // Fjärranår hålls utanför uppvärmningen: en åk 5-elev ska inte värma upp
@@ -50,9 +62,9 @@ export function composeSession(profile: ChildProfile, today: string, preferredMo
   const due = dueForReview(profile.skills, today)
     .filter((s) => hasGenerator(momentById(s.momentId).generatorId))
     .filter((s) => !isDistantYear(momentById(s.momentId).year, profile.schoolYear))
-    .slice(0, MAX_REVIEW_MOMENTS)
+    .slice(0, size.reviewMoments)
   for (const skill of due) {
-    parts.push({ kind: 'uppvarmning', momentId: skill.momentId, taskCount: REVIEW_TASK_COUNT })
+    parts.push({ kind: 'uppvarmning', momentId: skill.momentId, taskCount: size.reviewTasks })
   }
 
   // Barnet kan välja ett upplåst moment på kartan; annars väljer motorn.
@@ -61,7 +73,7 @@ export function composeSession(profile: ChildProfile, today: string, preferredMo
       ? preferredMomentId
       : currentMomentId(profile)
   if (current) {
-    parts.push({ kind: 'nytt', momentId: current, taskCount: NEW_TASK_COUNT })
+    parts.push({ kind: 'nytt', momentId: current, taskCount: size.newTasks })
   }
 
   // Blandad avslutning: slumpa bland behärskade moment (interleaving) —
@@ -75,7 +87,7 @@ export function composeSession(profile: ChildProfile, today: string, preferredMo
   )
   if (mastered.length > 0) {
     const rng = createRng(freshSeed())
-    const picked = rng.shuffle(mastered).slice(0, MIXED_TASK_COUNT)
+    const picked = rng.shuffle(mastered).slice(0, size.mixedTasks)
     for (const skill of picked) {
       parts.push({ kind: 'blandat', momentId: skill.momentId, taskCount: 1 })
     }

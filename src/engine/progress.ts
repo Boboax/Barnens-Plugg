@@ -419,12 +419,13 @@ export function applyAnswer(
     attempts: skill.attempts + 1,
     correct: skill.correct + (correct ? 1 : 0),
     recentMisconceptions,
+    firstPracticedOn: skill.firstPracticedOn ?? now.slice(0, 10),
     mastery:
       skill.mastery === 'available' ? 'in-progress'
       // needs-review tränas om precis som in-progress — och måste kunna nå
       // bossen igen, annars fastnar momentet i evig omträning.
       : (skill.mastery === 'in-progress' || skill.mastery === 'needs-review') &&
-        isBossReady({ ...skill, rating, attempts: skill.attempts + 1 }) ? 'boss-ready'
+        isBossReady({ ...skill, rating, attempts: skill.attempts + 1 }, now.slice(0, 10)) ? 'boss-ready'
       : skill.mastery,
   }
 

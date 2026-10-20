@@ -65,6 +65,17 @@ export function variedLevel(rating: number, roll: number, noUp = false): Difficu
 export const BOSS_READY_RATING = 620 // ≈ klarar nivå 6 med god marginal
 export const BOSS_READY_MIN_ATTEMPTS = 12
 
-export function isBossReady(skill: SkillState): boolean {
+/** Har barnet tränat momentet en tidigare dag än `today`? Förälderns
+    beslut (okt 2026): kunskapskollen vaknar först när barnet visat
+    momentet på TVÅ olika dagar. Ett fokuserat pass kunde annars göra ett
+    moment "redo" på en kvart — det som sitter efter en natts sömn är det
+    som faktiskt är inlärt (spaced repetition), och väktaren i slutet av
+    året kräver att grunderna sitter. */
+export function practicedOnEarlierDay(skill: SkillState, today: string): boolean {
+  return skill.firstPracticedOn !== undefined && skill.firstPracticedOn < today
+}
+
+export function isBossReady(skill: SkillState, today?: string): boolean {
   return skill.rating >= BOSS_READY_RATING && skill.attempts >= BOSS_READY_MIN_ATTEMPTS
+    && (today === undefined || practicedOnEarlierDay(skill, today))
 }

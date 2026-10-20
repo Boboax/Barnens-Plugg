@@ -95,6 +95,7 @@ describe('vägen tillbaka efter missad repetition', () => {
       rating: 615,
       attempts: 25,
       correct: 18,
+      firstPracticedOn: '2025-11-02',
     }
     const task = { ref: { generatorId: 'gen.vaxling-0-100', level: 6 as const, seed: 1 }, prompt: '', visual: { kind: 'ingen' as const }, answer: { kind: 'numeric' as const, value: 1 }, explanation: '' }
     // Några rätta svar ska lyfta ratingen över bossgränsen och öppna striden.
@@ -102,6 +103,24 @@ describe('vägen tillbaka efter missad repetition', () => {
       skill = applyAnswer(skill, task, true, 5000, 'ovning', '2026-01-01T10:00:00Z').skill
     }
     expect(skill.mastery).toBe('boss-ready')
+  })
+})
+
+describe('kunskapskollen kräver två dagar', () => {
+  const task = { ref: { generatorId: 'gen.vaxling-0-100', level: 8 as const, seed: 1 }, prompt: '', visual: { kind: 'ingen' as const }, answer: { kind: 'numeric' as const, value: 1 }, explanation: '' }
+  const run = (skill: SkillState, n: number, at: string): SkillState => {
+    for (let i = 0; i < n; i++) skill = applyAnswer(skill, task, true, 5000, 'ovning', at, undefined, undefined, i + 1).skill
+    return skill
+  }
+
+  it('ett starkt pass första dagen räcker inte — nästa dag vaknar kollen', () => {
+    const day1 = run({ ...newSkillState('vaxling-0-100'), mastery: 'in-progress' }, 30, '2026-03-02T15:00:00Z')
+    expect(day1.firstPracticedOn).toBe('2026-03-02')
+    expect(day1.rating).toBeGreaterThanOrEqual(620)
+    expect(day1.mastery).toBe('in-progress')
+    const day2 = run(day1, 1, '2026-03-03T15:00:00Z')
+    expect(day2.mastery).toBe('boss-ready')
+    expect(day2.firstPracticedOn).toBe('2026-03-02')
   })
 })
 
@@ -746,5 +765,20 @@ describe('belöningar', () => {
     expect(progress.total).toBeGreaterThan(0)
     expect(progress.nextSteps.length).toBe(progress.total - progress.done)
     expect(progress.requirement).toContain('moment till')
+  })
+})
+
+describe('passets längd följer årskursen', () => {
+  it('förskoleklass ≈ 10, åk 1–2 ≈ 14, åk 3+ upp till 20', async () => {
+    const { sessionSize } = await import('./session')
+    const total = (y: Parameters<typeof sessionSize>[0]): number => {
+      const s = sessionSize(y)
+      return s.reviewMoments * s.reviewTasks + s.newTasks + s.mixedTasks
+    }
+    expect(total('F')).toBeLessThanOrEqual(10)
+    expect(total('2')).toBeLessThanOrEqual(14)
+    expect(total('4')).toBeLessThanOrEqual(20)
+    expect(total('F')).toBeLessThan(total('2'))
+    expect(total('2')).toBeLessThan(total('4'))
   })
 })

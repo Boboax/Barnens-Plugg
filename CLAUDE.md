@@ -27,6 +27,8 @@ uttryckligen förstått avvägningen (dokumenterad i `docs/PEDAGOGIK.md`).
    varandras framsteg (bara föräldravyn gör det). Kvällslägrets mynt
    (okt 2026): bara för dagens första AVSLUTADE pass — övningspass, blixt,
    koll, boss eller väktare, vinst som förlust (20/dag, oavsett antal rätt), inget i boden dyrare än en veckas träning (140), allt kosmetiskt.
+   Nya vänner kommer vid besegrad årsväktare, erövrad värld eller var
+   tionde träningsdag — ALDRIG vid blixtpass/fart (ändrat okt 2026).
    Se `docs/PEDAGOGIK.md` → Kvällslägret.
 4. **Fel svar möts alltid vänligt**: missuppfattningsspecifik ledtråd +
    pedagogisk förklaring. Growth mindset-språk ("bra kämpat"), aldrig "vad
@@ -132,8 +134,8 @@ publikt för Pages på gratisplanen.
   funktioner som returnerar SAMMA objekt vid nej, så patchChild inte stämplar
   updatedAt). Lägertiden räknas i en ref och sparas var 15:e sekund — skriv
   aldrig hushållet varje sekund. `pet-home` står medvetet INTE i
-  `TIMED_SCREENS` (egen klocka, 15 min/dag efter passet, en minuts
-  snabbtitt före — `campAccess` i engine/pet-home; mattetiden står still i
+  `TIMED_SCREENS` (egen klocka, 15 min/dag när HELA dagens mattetid är
+  gjord — `practiceTimeDone`, okt 2026 — en minuts snabbtitt före — `campAccess` i engine/pet-home; mattetiden står still i
   lägret, så arbetstiden kan aldrig väntas ut där; lägg den ALDRIG i
   `TIMED_SCREENS` och låt aldrig lägertid räknas som mattetid).
 - **Bildbudgeten:** PWA:n precachar ALLT i `public/`. `src/art-budget.test.ts`
@@ -144,6 +146,10 @@ publikt för Pages på gratisplanen.
   lokalt). Barnens bygge får det aldrig — vakta varje ny testknapp bakom
   flaggan både i UI och i store, och kontrollera att texten saknas i
   `dist/` efter `npm run build`.
+- **Kunskapskollen kräver två dagar** (okt 2026): `isBossReady(skill, today)`
+  och `markCheckReady` kräver `practicedOnEarlierDay` — ett moment blir
+  aldrig "redo" samma dag som barnet började träna det. Passlängden följer
+  årskursen (`sessionSize`). Se PEDAGOGIK → Passlängd.
 - **Kladdbilder är stora**: ringbuffert på 20 per barn (`store.tsx`). Öka inte
   utan att tänka på iPadens lagringskvot.
 - **Animationer**: respektera `prefers-reduced-motion` (konfetti och CSS gör

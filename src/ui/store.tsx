@@ -18,6 +18,7 @@ import { mergeHouseholds, pullRemote, pushRemote, syncRound, type SyncConfig } f
 import { hashPin, verifyPin } from '../storage/pin'
 import { adoptPet, completePetPractice, dismissFreshStart, homeSecondsLeft, markPetGrowthSeen, releasePet, restartPetGrowth, settleMilestoneBase, spendHomeTime, spendPeekTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
+import { practicedOnEarlierDay } from '../engine/rating'
 
 /* ============================================================
    Appens tillstånd: hushållet + navigering + tidsbokföring.
@@ -479,6 +480,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // Bara pågående träningstillstånd befordras — klara moment och
         // otränade rörs aldrig. Idempotent (boss-ready förblir boss-ready).
         if (!s || (s.mastery !== 'in-progress' && s.mastery !== 'needs-review')) return c
+        // Kollen vaknar först en senare dag än första träningen (två dagar,
+        // förälderns beslut okt 2026) — ett starkt första pass räcker inte.
+        if (!practicedOnEarlierDay(s, todayISO())) return c
         return { ...c, skills: { ...c.skills, [momentId]: { ...s, mastery: 'boss-ready' } } }
       })
     },

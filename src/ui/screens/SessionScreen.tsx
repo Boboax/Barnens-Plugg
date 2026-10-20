@@ -19,6 +19,8 @@ import { momentIntro } from '../../domain/intros'
 import { TaskRunner, type TaskResult } from '../components/TaskRunner'
 import { WorldGiftChest } from '../components/WorldGiftChest'
 import { todayISO, useStore } from '../store'
+import { practicedOnEarlierDay } from '../../engine/rating'
+import { campAccess } from '../../engine/pet-home'
 
 /* ============================================================
    Dagens pass: uppvärmning (repetition) → nytt → blandat.
@@ -270,7 +272,10 @@ export function SessionScreen() {
     // bor bara i slutet av varje värld). Gick den fokuserade nod-träningen bra
     // leder vi DIREKT in i kollen, så noden kan bli klar på plats utan att leta
     // på kartan. (Val med föräldern: "kort Pi-koll direkt efter".)
-    if (store.sessionFocused && trainedId && trainedMoment && strong && !alreadyDone) {
+    // Kollen vaknar först en senare dag än första träningen (förälderns
+    // beslut okt 2026): första dagen blir det ett varmt "i morgon" i stället.
+    const checkWaitsForTomorrow = !!trained && !alreadyDone && !practicedOnEarlierDay(trained, todayISO())
+    if (store.sessionFocused && trainedId && trainedMoment && strong && !alreadyDone && !checkWaitsForTomorrow) {
       return (
         <EndCard
           title="Superjobbat!"
@@ -305,6 +310,12 @@ export function SessionScreen() {
         nextStep = isFK
           ? 'Klart! ✓ Bra jobbat!'
           : `${trainedMoment.title} är klart! Vill du testa diamantnivån trycker du på noden på kartan.`
+      } else if (strong && checkWaitsForTomorrow) {
+        // Starkt första pass: kollen väntar till i morgon — det som sitter
+        // efter en natts sömn är det som verkligen är inlärt.
+        nextStep = isFK
+          ? 'I morgon vill Pi se vad du kan! 🌙'
+          : `Kom tillbaka i morgon, då vill Pi se vad du kan i ${trainedMoment.title}. Det man sovit på sitter bäst!`
       } else if (store.sessionFocused) {
         // Fokuserad träning men inte stark nog än → mer träning, sedan Pis koll.
         nextStep = isFK
@@ -332,7 +343,10 @@ export function SessionScreen() {
           ? `${chestPrefix}${correctCount} av ${slots.length} rätt! ${nextStep}${timeNote}`
           : `${chestPrefix}${correctCount} av ${slots.length} rätt${flawless ? ' — varenda en!' : '.'} ${nextStep}${streakHook}${timeNote}`}
         onDone={() => store.go(timeOut ? 'time-up' : 'home')}
-        secondaryText={child.petProgress.pets.length > 0 ? 'Till Kvällslägret' : 'Det prasslar bakom en sten …'}
+        // Lägerknappen bara när lägret faktiskt tar emot (öppet, snabbtitt
+        // kvar eller en vän som väntar) — inte en dörr som stängs direkt.
+        secondaryText={child.petProgress.encounter ? 'Det prasslar bakom en sten …'
+          : child.petProgress.pets.length > 0 && campAccess(child, new Date()) !== 'closed-before' && campAccess(child, new Date()) !== 'closed-after' ? 'Till Kvällslägret' : undefined}
         onSecondary={() => store.go('pet-home')}
         celebrate={strong}
       />

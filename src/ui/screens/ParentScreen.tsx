@@ -743,7 +743,7 @@ function CampFriends({ child }: { child: ChildProfile }) {
         ))}
       </div>
       <p style={{ margin: '6px 0 0', fontSize: 12, color: '#8B8FA0' }}>
-        Nästa vän kommer vid nästa nya milstolpe (årsväktare, världsboss eller blixtpass).
+        Nästa vän kommer vid nästa nya milstolpe: en besegrad årsväktare, en erövrad värld eller var tionde träningsdag.
       </p>
     </div>
   )

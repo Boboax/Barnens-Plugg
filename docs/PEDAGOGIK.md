@@ -205,16 +205,22 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
   fortfarande, och efter omstarten kan stadiet aldrig sjunka under det
   barnet redan sett — inte ens om gränserna ändras igen. Nya vänner kommer vid
   barnets egna NYA milstolpar — nästa riktigt besegrade årsväktare, nästa
-  världsboss, nästa klarade blixt — i fast ordning: groda, räv, axolotl,
+  världsboss, var tionde träningsdag (`HABIT_DAYS`; ersatte blixtpasset som
+  milstolpe, förälderns beslut okt 2026: blixten handlar om fart, och
+  belöningar ska hänga på vana och kunskap, aldrig hastighet) — i fast ordning: groda, räv, axolotl,
   drake, en i taget. Milstolpar som redan var nådda när första vännen kom
   räknas inte (förälderns beslut okt 2026: ett barn med gamla framsteg fick
   annars två vänner samma dag, och en ny vän ska belöna något barnet just
   klarat). Barn som redan hade fler vänner behåller dem. Inget slumpas, så syskon får aldrig
   "bättre tur" (princip 3).
 - **Lägret är en kvällsstund efter träningen:** 15 minuter per dag (höjt
-  från 3 när lyan blev en lekscen, förälderns beslut okt 2026), och bara
-  efter dagens pass. Före passet finns en snabbtitt på en minut (hälsa på,
-  inte leka); sedan är lägret stängt och vännen vinkar på kartan i stället.
+  från 3 när lyan blev en lekscen, förälderns beslut okt 2026), och först
+  när HELA dagens mattetid är gjord (`practiceTimeDone`, förälderns beslut
+  okt 2026 — förr räckte ett avslutat pass, och ett blixtpass på två
+  minuter öppnade då en kvart i lägret medan resten av mattetiden blev
+  ogjord). Mynten är oförändrade: dagens första avslutade pass. Innan
+  mattetiden är gjord finns en snabbtitt på en minut (hälsa på, inte
+  leka); sedan är lägret stängt och vännen vinkar på kartan i stället.
   När lägertiden är slut stänger lägret för dagen — förr gick det att
   sitta och titta runt utan gräns (förälderns beslut okt 2026). Tiden är lägrets egen klocka och drar inte av
   mattetiden — och mattetiden står still i lägret, så passets arbetstid kan
@@ -262,3 +268,22 @@ valdes bort: taligenkänning skickar ljud från enheten (princip 6) och tolkar
 sexåringars snabba räknande opålitligt. Äldre barn som redan behärskar tal
 till 100 får momentet skänkt (`backfillCountTo100`) så "Du är här" inte dras
 tillbaka till förskoleklassen.
+
+
+## Passlängd och kunskapskollens tempo (okt 2026)
+
+Två beslut med föräldern efter granskningen av passen:
+
+- **Passets längd följer årskursen** (`sessionSize` i `engine/session.ts`):
+  förskoleklass ≈ 10 uppgifter, åk 1–2 ≈ 14, åk 3+ upp till 20 som förut.
+  En sexårings uthållighet tar slut långt före tjugo uppgifter; ett pass som
+  slutar medan det fortfarande går bra lär barnet att matte går att klara.
+  Strukturen (repetition → nytt → blandat) är densamma, bara mängden krymper.
+- **Kunskapskollen kräver två dagar** (`practicedOnEarlierDay` i
+  `engine/rating.ts`): ett moment blir "redo" först när barnet tränat det en
+  tidigare dag. Förr kunde ett enda fokuserat pass göra ett moment redo, och
+  barnet nådde årets väktare innan grunderna satt. Spacing-effekten
+  (Cepeda m.fl. 2006) är en av de mest robusta i inlärningsforskningen —
+  det som sitter efter en natts sömn är det som faktiskt är inlärt. Barnet
+  får ett varmt "kom tillbaka i morgon, då vill Pi se vad du kan" i stället
+  för kollen samma dag.

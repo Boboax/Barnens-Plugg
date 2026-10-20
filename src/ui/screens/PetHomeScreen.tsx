@@ -15,7 +15,7 @@ import { petStageImage, worldImage } from '../components/camp/campArt'
 import '../../styles/camp.css'
 
 /* ============================================================
-   Kvällslägret — en kort stund efter dagens pass.
+   Kvällslägret — en kort stund när dagens mattetid är gjord.
 
    Barnet hittar en vän i världen det just tränat i, och kan sedan klappa
    den, klä sin hjälte och ställa fram saker från handelsboden. Lägret är
@@ -94,8 +94,8 @@ export function PetHomeScreen() {
 function Camp({ child }: { child: ChildProfile }) {
   const store = useStore()
   const { pets, coins, encounter } = child.petProgress
-  // Dörren bestäms när barnet kommer in: lägertid efter passet, annars en
-  // snabbtitt på en minut före passet (bara titta), annars stängt.
+  // Dörren bestäms när barnet kommer in: lägertid när dagens mattetid är
+  // gjord, annars en snabbtitt på en minut (bara titta), annars stängt.
   const [access] = useState(() => campAccess(child, new Date()))
   const peek = access === 'peek'
   const clockPaused = useRef(false)
@@ -285,7 +285,7 @@ function Camp({ child }: { child: ChildProfile }) {
           <footer className="camp-footer">
             <p role="status">{message || 'Vännerna har det bra här. Dina saker finns alltid kvar.'}</p>
             <span>{peek
-              ? `Snabbtitt: ${left} s — leka går efter dagens pass`
+              ? `Snabbtitt: ${left} s — leka går efter dagens mattetid`
               : canInteract
                 ? `${Math.ceil(left / 60)} min lägertid kvar idag`
                 : 'Lägertiden är slut för idag.'}</span>
@@ -405,7 +405,7 @@ function Discovery({ speciesId, worldId, onAdopt, onLater }: {
 }
 
 /* När lägertiden (eller snabbtitten) är slut stänger lägret vänligt: ingen
-   tidsgräns att sitta och titta efter — lägret är belöningen efter passet,
+   tidsgräns att sitta och titta efter — lägret är belöningen efter mattetiden,
    aldrig ett ställe att vara på i stället för det. Tillbaka till kartan av
    sig självt efter en stund. */
 function CampGoodbye({ petName, beforePass, onLeave }: { petName?: string; beforePass: boolean; onLeave(): void }) {
@@ -421,8 +421,8 @@ function CampGoodbye({ petName, beforePass, onLeave }: { petName?: string; befor
         <p className="camp-eyebrow">{beforePass ? 'Snabbtitten är slut' : 'Lägertiden är slut'}</p>
         <h2>{beforePass ? `${who} vinkar!` : 'Hej då för idag!'}</h2>
         <p>{beforePass
-          ? `Gör dagens pass, så ses ni i lägret och kan leka i 15 minuter.`
-          : `${who} ska vila nu. Vi ses i lägret i morgon efter passet!`}</p>
+          ? `Träna klart dagens mattetid, så ses ni i lägret och kan leka i 15 minuter.`
+          : `${who} ska vila nu. Vi ses i lägret i morgon efter mattetiden!`}</p>
         <div className="camp-growth__actions">
           <button className="btn btn-primary" onClick={onLeave}>Till kartan</button>
         </div>

@@ -234,6 +234,10 @@ export interface SkillState {
   }
   bossAttempts: number
   starWon: boolean
+  /** Första dagen (ÅÅÅÅ-MM-DD, UTC som svarens tidsstämplar) barnet
+      tränade momentet. Kunskapskollen vaknar först en SENARE dag — se
+      engine/rating.ts isBossReady. Optionellt: saknas = sätts vid nästa svar. */
+  firstPracticedOn?: string
 }
 
 /** Ett registrerat svar — grunden för all analys och rapporter. */
