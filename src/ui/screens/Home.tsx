@@ -20,6 +20,8 @@ import { TestPanel } from '../testlage/TestPanel'
 import { worldTheme } from '../worldThemes'
 import { speak, stopSpeaking, ttsAvailable } from '../../tts'
 import { todayISO, useStore } from '../store'
+import { campAccess, petStage, type CampAccess } from '../../engine/pet-home'
+import { PetSprite } from '../components/camp/PetSprite'
 
 /* ============================================================
    Hemskärmen — resan genom Matteriket.
@@ -286,6 +288,7 @@ function HomeInner({ child }: { child: ChildProfile }) {
   // stället för att bollas ut till den stora översikten. Hela riket är ett
   // knapptryck bort ("Hela Matteriket").
   const [view, setView] = useState<'riket' | 'varld'>('varld')
+  const [campClosed, setCampClosed] = useState<CampAccess | null>(null)
   const enterWorld = (id: string): void => {
     setWorldId(id)
     hasScrolled.current = false // scrolla till aktuell nod i den nya världen
@@ -298,6 +301,13 @@ function HomeInner({ child }: { child: ChildProfile }) {
     // height (inte minHeight): kartan scrollar i sin egen yta så att
     // sidopanel och världsväxlare alltid syns — som i ett riktigt spel.
     <div className="screen-fade" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {campClosed && child.petProgress.pets[0] && (
+        <CampClosedCard
+          child={child}
+          afterTime={campClosed === 'closed-after'}
+          onClose={() => setCampClosed(null)}
+        />
+      )}
       {/* Genomgående snidad trä-HUD över HELA skärmen (båda kolumnerna). */}
       <div className="wood-bar" style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
@@ -312,7 +322,14 @@ function HomeInner({ child }: { child: ChildProfile }) {
               dagens pass (engine/pet-home), så knappen frestar aldrig bort
               från träningen. */}
           {(child.petProgress.pets.length > 0 || child.petProgress.encounter) && (
-            <button className="chip" onClick={() => store.go('pet-home')}>
+            <button className="chip" onClick={() => {
+              // En väntande vän bakom stenen får alltid mötas. Annars: lägret är
+              // öppet efter passet, en minuts snabbtitt före — sedan stängt, och
+              // då vinkar vännen här på kartan i stället.
+              const access = campAccess(child, new Date())
+              if (child.petProgress.encounter || access === 'open' || access === 'peek') store.go('pet-home')
+              else setCampClosed(access)
+            }}>
               {/* Tältet från handelsboden — samma bild, ingen ny fil att precacha. */}
               <img src={`${import.meta.env.BASE_URL}art/camp/items/pet-tent.webp`} alt="" width={26} height={26}
                 style={{ display: 'inline-block', verticalAlign: 'middle', objectFit: 'contain', flexShrink: 0, margin: '-3px 0' }} />
@@ -1039,6 +1056,35 @@ function Row({ label, tag, tagColor }: { label: string; tag: string; tagColor: '
         background: tagColor === 'rep' ? '#E4F4EC' : '#FFF1D6',
         color: tagColor === 'rep' ? '#1F7A50' : '#8A6100',
       }}>{tag}</span>
+    </div>
+  )
+}
+
+/* Lägret är stängt (snabbtitten förbrukad före passet, eller dagens
+   lägertid slut): vännen vinkar här på kartan i stället — en vänlig
+   påminnelse om att passet kommer först, aldrig en låst dörr som skäller. */
+function CampClosedCard({ child, afterTime, onClose }: { child: ChildProfile; afterTime: boolean; onClose(): void }) {
+  const pet = child.petProgress.pets[0]
+  return (
+    <div role="dialog" aria-label="Kvällslägret" onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(20,16,24,.55)',
+      display: 'grid', placeItems: 'center', padding: 16,
+    }}>
+      <div className="card" onClick={(e) => e.stopPropagation()} style={{
+        width: 'min(380px, 100%)', padding: '18px 20px', textAlign: 'center',
+        background: 'linear-gradient(180deg, #FBF4E2, #F0E6CD)', color: '#35302E',
+      }}>
+        <div style={{ width: 150, margin: '0 auto' }}>
+          <PetSprite species={pet.species} stage={petStage(child, pet)} action="happy" />
+        </div>
+        <h2 className="display" style={{ margin: '6px 0', fontSize: 26 }}>{pet.name} vinkar!</h2>
+        <p style={{ margin: '0 0 14px', fontWeight: 700, lineHeight: 1.45 }}>
+          {afterTime
+            ? `${pet.name} vilar nu. Vi ses i lägret i morgon efter passet!`
+            : `Gör dagens pass, så ses ni i lägret och kan leka i 15 minuter.`}
+        </p>
+        <button className="btn btn-primary" onClick={onClose}>Okej!</button>
+      </div>
     </div>
   )
 }

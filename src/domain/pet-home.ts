@@ -96,6 +96,8 @@ export interface PetProgress {
   encounter?: { species: PetSpeciesId; worldId: string }
   /** Dagens förbrukade lägertid i sekunder. */
   visit?: { day: string; seconds: number }
+  /** Dagens snabbtitt före passet (sekunder). Optionellt. */
+  peek?: { day: string; seconds: number }
   outfit?: string
   /** Köpta mantlar (resenärens mantel är gratis och står inte här). */
   outfits?: string[]
@@ -117,6 +119,12 @@ export const DAILY_PET_COINS = 20
     inte i lägret (pet-home står inte i TIMED_SCREENS) — så passets arbetstid
     kan aldrig "väntas ut" här. */
 export const HOME_VISIT_SECONDS = 15 * 60
+
+/** Före dagens pass: en snabbtitt på en minut — hälsa på vännen, men inte
+    leka. Sedan är lägret stängt tills passet är klart (förälderns beslut
+    okt 2026: lägret är belöningen EFTER träningen, aldrig ett ställe att
+    vara på i stället för den). */
+export const HOME_PEEK_SECONDS = 60
 
 export const emptyPetProgress = (): PetProgress => ({
   coins: 0,

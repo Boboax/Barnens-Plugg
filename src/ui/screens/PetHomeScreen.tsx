@@ -3,7 +3,7 @@ import type { ChildProfile } from '../../domain/types'
 import { DAILY_PET_COINS, PET_STAGE_NAMES, petSpecies, type CampPet } from '../../domain/pet-home'
 import { catalogItem, type CampCatalogItem } from '../../domain/camp'
 import { worldById } from '../../domain/worlds'
-import { homeSecondsLeft, petGrewUnseen, petStage } from '../../engine/pet-home'
+import { campAccess, homeSecondsLeft, peekSecondsLeft, petGrewUnseen, petStage } from '../../engine/pet-home'
 import { speak, stopSpeaking } from '../../tts'
 import { fireConfetti } from '../fx/confetti'
 import { useStore } from '../store'
@@ -38,13 +38,13 @@ const SAVE_EVERY_SECONDS = 15
  * ändras (eller tiden tar slut) — inte varje sekund, eftersom lägerscenen
  * med eld, eldflugor och animerade djur är tung att rita.
  */
-function useCampSeconds(child: ChildProfile): number {
-  const { spendHomeTime } = useStore()
-  const saved = homeSecondsLeft(child, new Date())
+function useCampSeconds(child: ChildProfile, peek: boolean): number {
+  const { spendHomeTime, spendPeekTime } = useStore()
+  const saved = peek ? peekSecondsLeft(child, new Date()) : homeSecondsLeft(child, new Date())
   const savedRef = useRef(saved)
   savedRef.current = saved
-  const spendRef = useRef(spendHomeTime)
-  spendRef.current = spendHomeTime
+  const spendRef = useRef(peek ? spendPeekTime : spendHomeTime)
+  spendRef.current = peek ? spendPeekTime : spendHomeTime
   const pending = useRef(0)
   const [left, setLeft] = useState(saved)
 
@@ -64,7 +64,8 @@ function useCampSeconds(child: ChildProfile): number {
       const remaining = Math.max(0, savedRef.current - pending.current)
       // Tiden slut → spara direkt, så att motorn också nekar ändringar.
       if (pending.current >= SAVE_EVERY_SECONDS || remaining === 0) flush()
-      setLeft((prev) => (remaining > 0 && Math.ceil(prev / 60) === Math.ceil(remaining / 60) ? prev : remaining))
+      // Snabbtitten (en minut) visar sekunder; lägertiden bara hela minuter.
+      setLeft((prev) => (!peek && remaining > 0 && Math.ceil(prev / 60) === Math.ceil(remaining / 60) ? prev : remaining))
     }, 1000)
     const onHide = (): void => { if (document.visibilityState === 'hidden') flush() }
     document.addEventListener('visibilitychange', onHide)
@@ -89,9 +90,13 @@ export function PetHomeScreen() {
 
 function Camp({ child }: { child: ChildProfile }) {
   const store = useStore()
-  const left = useCampSeconds(child)
-  const canInteract = left > 0
   const { pets, coins, encounter } = child.petProgress
+  // Dörren bestäms när barnet kommer in: lägertid efter passet, annars en
+  // snabbtitt på en minut före passet (bara titta), annars stängt.
+  const [access] = useState(() => campAccess(child, new Date()))
+  const peek = access === 'peek'
+  const left = useCampSeconds(child, peek)
+  const canInteract = !peek && left > 0
 
   const [view, setView] = useState<View>('camp')
   const [moving, setMoving] = useState(true)
@@ -182,6 +187,13 @@ function Camp({ child }: { child: ChildProfile }) {
         <span className="camp-wallet" aria-label={`${coins} mynt`}>● {coins} mynt</span>
       </header>
 
+      {left <= 0 && !discovering && (
+        <CampGoodbye
+          petName={pets[0]?.name}
+          beforePass={access === 'peek' || access === 'closed-before'}
+          onLeave={leave}
+        />
+      )}
       {fresh && <FreshStartCard pet={fresh} onDone={() => store.dismissPetFreshStart(fresh.id)} />}
       {grown && <GrowthCard pet={grown} stage={petStage(child, grown)} onDone={() => store.markPetGrowthSeen(grown.id)} />}
 
@@ -263,9 +275,11 @@ function Camp({ child }: { child: ChildProfile }) {
 
           <footer className="camp-footer">
             <p role="status">{message || 'Vännerna har det bra här. Dina saker finns alltid kvar.'}</p>
-            <span>{canInteract
-              ? `${Math.ceil(left / 60)} min lägertid kvar idag`
-              : 'Lägret vilar. Titta gärna runt — efter nästa dags pass kan du göra mer.'}</span>
+            <span>{peek
+              ? `Snabbtitt: ${left} s — leka går efter dagens pass`
+              : canInteract
+                ? `${Math.ceil(left / 60)} min lägertid kvar idag`
+                : 'Lägertiden är slut för idag.'}</span>
           </footer>
         </div>
       )}
@@ -362,5 +376,32 @@ function Discovery({ speciesId, worldId, onAdopt, onLater }: {
         <button className="chip" onClick={onLater}>Vi ses snart igen</button>
       </div>
     </section>
+  )
+}
+
+/* När lägertiden (eller snabbtitten) är slut stänger lägret vänligt: ingen
+   tidsgräns att sitta och titta efter — lägret är belöningen efter passet,
+   aldrig ett ställe att vara på i stället för det. Tillbaka till kartan av
+   sig självt efter en stund. */
+function CampGoodbye({ petName, beforePass, onLeave }: { petName?: string; beforePass: boolean; onLeave(): void }) {
+  useEffect(() => {
+    const t = window.setTimeout(onLeave, 9000)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const who = petName ?? 'Vännerna'
+  return (
+    <div className="camp-growth" role="dialog" aria-label="Lägret stänger">
+      <div className="camp-growth__card">
+        <p className="camp-eyebrow">{beforePass ? 'Snabbtitten är slut' : 'Lägertiden är slut'}</p>
+        <h2>{beforePass ? `${who} vinkar!` : 'Hej då för idag!'}</h2>
+        <p>{beforePass
+          ? `Gör dagens pass, så ses ni i lägret och kan leka i 15 minuter.`
+          : `${who} ska vila nu. Vi ses i lägret i morgon efter passet!`}</p>
+        <div className="camp-growth__actions">
+          <button className="btn btn-primary" onClick={onLeave}>Till kartan</button>
+        </div>
+      </div>
+    </div>
   )
 }

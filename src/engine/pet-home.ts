@@ -1,6 +1,6 @@
 import type { ChildProfile } from '../domain/types'
 import {
-  DAILY_PET_COINS, FIRST_PET_SPECIES, HOME_VISIT_SECONDS, PET_ORDER,
+  DAILY_PET_COINS, FIRST_PET_SPECIES, HOME_PEEK_SECONDS, HOME_VISIT_SECONDS, PET_ORDER,
   type CampPet, type PetProgress, type PetSpeciesId, type PetStage,
 } from '../domain/pet-home'
 import type { MasteryState } from '../domain/types'
@@ -215,6 +215,35 @@ export function homeSecondsLeft(child: ChildProfile, at: Date): number {
   if (p.lastPracticeDay !== day) return 0
   const used = p.visit?.day === day ? p.visit.seconds : 0
   return Math.max(0, HOME_VISIT_SECONDS - used)
+}
+
+/** Kvar av dagens snabbtitt — bara före dagens pass (efter passet gäller
+    den vanliga lägertiden). */
+export function peekSecondsLeft(child: ChildProfile, at: Date): number {
+  const day = petDay(at)
+  const p = child.petProgress
+  if (p.lastPracticeDay === day) return 0
+  const used = p.peek?.day === day ? p.peek.seconds : 0
+  return Math.max(0, HOME_PEEK_SECONDS - used)
+}
+
+/** Bokför förbrukad snabbtitt. Samma objekt tillbaka om inget finns kvar. */
+export function spendPeekTime(child: ChildProfile, seconds: number, at: Date): ChildProfile {
+  if (!Number.isFinite(seconds) || seconds <= 0 || peekSecondsLeft(child, at) <= 0) return child
+  const day = petDay(at)
+  const used = child.petProgress.peek?.day === day ? child.petProgress.peek.seconds : 0
+  return withProgress(child, { peek: { day, seconds: Math.min(HOME_PEEK_SECONDS, used + Math.round(seconds)) } })
+}
+
+/** Lägrets dörr just nu: öppet (lägertid efter passet), snabbtitt (före
+    passet, en minut), stängt före passet (titten förbrukad) eller stängt
+    för dagen (lägertiden slut). */
+export type CampAccess = 'open' | 'peek' | 'closed-before' | 'closed-after'
+
+export function campAccess(child: ChildProfile, at: Date): CampAccess {
+  if (homeSecondsLeft(child, at) > 0) return 'open'
+  if (child.petProgress.lastPracticeDay === petDay(at)) return 'closed-after'
+  return peekSecondsLeft(child, at) > 0 ? 'peek' : 'closed-before'
 }
 
 /** Bokför förbrukad lägertid. Kallas i klumpar (var 15:e s och vid utgång)

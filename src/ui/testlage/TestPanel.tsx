@@ -58,6 +58,8 @@ export function TestPanel({ child }: { child: ChildProfile }) {
           <div style={ROW}>
             <button className="btn btn-quiet" onClick={() => patch((c) => ({ ...c, petProgress: { ...c.petProgress, coins: c.petProgress.coins + 200 } }))}>+200 mynt</button>
             <button className="btn btn-quiet" onClick={() => patch((c) => ({ ...c, petProgress: { ...c.petProgress, lastPracticeDay: petDay(new Date()), visit: undefined } }))}>Dagens pass klart (ny lägertid)</button>
+            {/* Snabbtitten och stängda lägret: som en ny morgon innan något pass. */}
+            <button className="btn btn-quiet" onClick={() => patch((c) => ({ ...c, petProgress: { ...c.petProgress, lastPracticeDay: petDay(new Date(Date.now() - 86_400_000)), visit: undefined, peek: undefined } }))}>Ny dag (inget pass än)</button>
             <button className="btn btn-quiet" onClick={() => patch((c) => ({
               ...c,
               petProgress: { ...c.petProgress, pets: [], items: [], lastPracticeDay: petDay(new Date()), visit: undefined,

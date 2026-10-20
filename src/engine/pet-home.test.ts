@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { ChildProfile } from '../domain/types'
-import { DAILY_PET_COINS, HOME_VISIT_SECONDS, emptyPetProgress } from '../domain/pet-home'
+import { DAILY_PET_COINS, HOME_PEEK_SECONDS, HOME_VISIT_SECONDS, emptyPetProgress } from '../domain/pet-home'
 import {
   adoptPet, completePetPractice, friendsEarned, homeSecondsLeft, markPetGrowthSeen, nextFriendSpecies, petDay,
-  dismissFreshStart, petGrewUnseen, petStage, releasePet, restartPetGrowth, settleMilestoneBase, spendHomeTime,
+  dismissFreshStart, petGrewUnseen, petStage, releasePet, restartPetGrowth, settleMilestoneBase, spendHomeTime, campAccess, peekSecondsLeft, spendPeekTime,
 } from './pet-home'
 import type { SkillState } from '../domain/types'
 
@@ -304,5 +304,27 @@ describe('Etapp 2: vännerna växer med barnets lärande', () => {
     const after = markPetGrowthSeen(passAndAdopt(c, 'Saffran'), c.petProgress.pets[0].id)
     expect(after.skills).toBe(c.skills)
     expect(after.answers).toBe(c.answers)
+  })
+})
+
+describe('Lägret är belöningen efter passet', () => {
+  it('före passet: en minuts snabbtitt, sedan stängt', () => {
+    const c = adoptPet(completePetPractice(kid(), 8, 8, 'talens-dal', at), 'Mossa', at)
+    // Nästa dag, innan något pass: snabbtitt.
+    expect(campAccess(c, nextDay)).toBe('peek')
+    expect(peekSecondsLeft(c, nextDay)).toBe(HOME_PEEK_SECONDS)
+    const used = spendPeekTime(c, HOME_PEEK_SECONDS, nextDay)
+    expect(campAccess(used, nextDay)).toBe('closed-before')
+    expect(spendPeekTime(used, 10, nextDay)).toBe(used)
+    // Passet klart → öppet med full lägertid.
+    const passed = completePetPractice(used, 8, 8, 'talens-dal', nextDay)
+    expect(campAccess(passed, nextDay)).toBe('open')
+    expect(peekSecondsLeft(passed, nextDay)).toBe(0)
+  })
+
+  it('när lägertiden är slut stänger lägret för dagen', () => {
+    const c = adoptPet(completePetPractice(kid(), 8, 8, 'talens-dal', at), 'Mossa', at)
+    const spent = spendHomeTime(c, HOME_VISIT_SECONDS, at)
+    expect(campAccess(spent, at)).toBe('closed-after')
   })
 })

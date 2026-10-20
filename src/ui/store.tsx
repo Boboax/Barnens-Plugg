@@ -16,7 +16,7 @@ import { emptyPetProgress } from '../domain/pet-home'
 import { emptyHousehold, loadHousehold, requestPersistentStorage, saveHousehold } from '../storage/db'
 import { mergeHouseholds, pullRemote, pushRemote, syncRound, type SyncConfig } from '../storage/sync'
 import { hashPin, verifyPin } from '../storage/pin'
-import { adoptPet, completePetPractice, dismissFreshStart, homeSecondsLeft, markPetGrowthSeen, releasePet, restartPetGrowth, settleMilestoneBase, spendHomeTime } from '../engine/pet-home'
+import { adoptPet, completePetPractice, dismissFreshStart, homeSecondsLeft, markPetGrowthSeen, releasePet, restartPetGrowth, settleMilestoneBase, spendHomeTime, spendPeekTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
 
 /* ============================================================
@@ -113,6 +113,8 @@ interface StoreValue {
   adoptPet(name: string): void
   /** Bokför lägertid i klumpar (PetHomeScreen samlar sekunderna). */
   spendHomeTime(seconds: number): void
+  /** Bokför dagens snabbtitt i lägret före passet. */
+  spendPeekTime(seconds: number): void
   changeCamp(action: CampAction): void
   /** Lägg en världsgåva i barnets samling. Idempotent. */
   claimWorldGift(giftId: string): void
@@ -563,6 +565,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     spendHomeTime: (seconds) => {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => spendHomeTime(c, seconds, new Date()))
+    },
+    spendPeekTime: (seconds) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => spendPeekTime(c, seconds, new Date()))
     },
 
     changeCamp: (action) => {

@@ -213,7 +213,10 @@ med föräldern som en avgränsning av princip 3 i CLAUDE.md:
   "bättre tur" (princip 3).
 - **Lägret är en kvällsstund efter träningen:** 15 minuter per dag (höjt
   från 3 när lyan blev en lekscen, förälderns beslut okt 2026), och bara
-  efter dagens pass. Tiden är lägrets egen klocka och drar inte av
+  efter dagens pass. Före passet finns en snabbtitt på en minut (hälsa på,
+  inte leka); sedan är lägret stängt och vännen vinkar på kartan i stället.
+  När lägertiden är slut stänger lägret för dagen — förr gick det att
+  sitta och titta runt utan gräns (förälderns beslut okt 2026). Tiden är lägrets egen klocka och drar inte av
   mattetiden — och mattetiden står still i lägret, så passets arbetstid kan
   aldrig väntas ut där. Lägertiden kan inte fyllas på med fler pass. Efter att dagens
   mattetid tagit slut kan barnet säga godnatt i lägret om lägertid finns
