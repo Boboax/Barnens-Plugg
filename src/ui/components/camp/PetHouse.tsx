@@ -292,7 +292,7 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
     if (!s || s.id !== e.pointerId) return
     stroke.current = null
     if (s.dist > 10) return
-    if (resting) { say(`Shh … ${pet.name} sover. Tryck på lyktan för att väcka.`); return }
+    if (resting) { say(canInteract ? `Shh … ${pet.name} sover. Tryck på lyktan för att väcka.` : `Shh … ${pet.name} sover. Efter passet kan du väcka ${pet.name} med lyktan.`); return }
     const r = pick(TAP_REACTIONS)
     react(r.kind)
     say(canInteract ? r.line(pet.name) : `${pet.name} vinkar. Efter nästa pass kan ni leka mer!`)

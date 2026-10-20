@@ -38,7 +38,7 @@ const SAVE_EVERY_SECONDS = 15
  * ändras (eller tiden tar slut) — inte varje sekund, eftersom lägerscenen
  * med eld, eldflugor och animerade djur är tung att rita.
  */
-function useCampSeconds(child: ChildProfile, peek: boolean): number {
+function useCampSeconds(child: ChildProfile, peek: boolean, paused: { current: boolean }): number {
   const { spendHomeTime, spendPeekTime } = useStore()
   const saved = peek ? peekSecondsLeft(child, new Date()) : homeSecondsLeft(child, new Date())
   const savedRef = useRef(saved)
@@ -59,6 +59,9 @@ function useCampSeconds(child: ChildProfile, peek: boolean): number {
     }
     const tick = window.setInterval(() => {
       if (document.visibilityState !== 'visible') return
+      // Upptäckten, namngivningen och "har växt!" är en del av belöningen —
+      // de ska inte äta av leken som kommer efter.
+      if (paused.current) return
       if (savedRef.current - pending.current <= 0) return
       pending.current += 1
       const remaining = Math.max(0, savedRef.current - pending.current)
@@ -95,7 +98,8 @@ function Camp({ child }: { child: ChildProfile }) {
   // snabbtitt på en minut före passet (bara titta), annars stängt.
   const [access] = useState(() => campAccess(child, new Date()))
   const peek = access === 'peek'
-  const left = useCampSeconds(child, peek)
+  const clockPaused = useRef(false)
+  const left = useCampSeconds(child, peek, clockPaused)
   const canInteract = !peek && left > 0
 
   const [view, setView] = useState<View>('camp')
@@ -176,6 +180,7 @@ function Camp({ child }: { child: ChildProfile }) {
   // en ruta i taget, och bara när barnet faktiskt är i lägret.
   const fresh = showWorkspace ? pets.find((pet) => pet.freshStart) : undefined
   const grown = showWorkspace && !fresh ? pets.find((pet) => petGrewUnseen(child, pet)) : undefined
+  clockPaused.current = discovering || !!fresh || !!grown
   return (
     // Lyan är en lekscen som fyller skärmen — sidan scrollar då inte, så
     // vännen och sakerna i rummet alltid syns samtidigt.
@@ -189,7 +194,9 @@ function Camp({ child }: { child: ChildProfile }) {
         <span className="camp-wallet" aria-label={`${coins} mynt`}>● {coins} mynt</span>
       </header>
 
-      {left <= 0 && !discovering && (
+      {/* Avskedet väntar tills en "har växt!"-ruta är läst — annars hamnade
+          de ovanpå varandra. */}
+      {left <= 0 && !discovering && !fresh && !grown && (
         <CampGoodbye
           petName={pets[0]?.name}
           beforePass={access === 'peek' || access === 'closed-before'}
@@ -331,6 +338,14 @@ function GrowthCard({ pet, stage, onDone }: { pet: CampPet; stage: ReturnType<ty
   )
 }
 
+const NAME_IDEAS = ['Knopp', 'Gnista', 'Tuss', 'Stjärna', 'Pigg', 'Lyckan', 'Mulle', 'Smulan']
+
+/** Artens eget namn först, sedan två till som skiftar mellan arterna. */
+function nameIdeas(defaultName: string, speciesId: string): string[] {
+  const k = [...speciesId].reduce((sum, ch) => sum + ch.charCodeAt(0), 0)
+  return [defaultName, NAME_IDEAS[k % NAME_IDEAS.length], NAME_IDEAS[(k + 3) % NAME_IDEAS.length]]
+}
+
 /** Upptäckten: något prasslar bakom en mossig sten i världen barnet just
     tränade i. Berättelsens "från" är barnets egen väg, inte artens. */
 function Discovery({ speciesId, worldId, onAdopt, onLater }: {
@@ -372,6 +387,14 @@ function Discovery({ speciesId, worldId, onAdopt, onLater }: {
               autoComplete="off"
               onChange={(e) => setName(e.target.value)}
             />
+            {/* Namnförslag att trycka på: en sexåring som inte skriver än ska
+                inte fastna vid tangentbordet med sin nya vän framför sig. */}
+            <div className="camp-name-ideas" role="group" aria-label="Namnförslag">
+              {nameIdeas(species.defaultName, speciesId).map((idea) => (
+                <button key={idea} type="button" className={`chip${name === idea ? ' is-on' : ''}`}
+                  onClick={() => { setName(idea); speak(idea) }}>{idea}</button>
+              ))}
+            </div>
             <button className="btn btn-primary" disabled={!name.trim()}>Följ med till lägret!</button>
           </form>
         )}

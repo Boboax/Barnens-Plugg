@@ -248,3 +248,14 @@ describe('Tidsmaskinen i handelsboden', () => {
     expect(changeCamp(bought, buy('time-machine', 'tm-2'), at)).toBe(bought)
   })
 })
+
+describe('Omsorgen sparas sparsamt', () => {
+  it('samma omsorg inom en minut ändrar inget — ingen ny sparning', () => {
+    const fed = changeCamp(kid(), { type: 'care', petId: 'first-pet', activity: 'feed' }, at)
+    expect(changeCamp(fed, { type: 'care', petId: 'first-pet', activity: 'feed' }, new Date(at.getTime() + 20_000))).toBe(fed)
+    const later = changeCamp(fed, { type: 'care', petId: 'first-pet', activity: 'feed' }, new Date(at.getTime() + 61_000))
+    expect(later).not.toBe(fed)
+    // Annan omsorg räknas för sig.
+    expect(changeCamp(fed, { type: 'care', petId: 'first-pet', activity: 'play' }, at)).not.toBe(fed)
+  })
+})

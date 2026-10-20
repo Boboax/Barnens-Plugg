@@ -102,6 +102,15 @@ function applyAction(
       if (!pet) return undefined
       // En sovande vän väcks inte av en godbit eller lek — först "Väck försiktigt".
       if (pet.care?.resting && action.activity !== 'rest' && action.activity !== 'wake') return undefined
+      // Tidsstämplarna visas bara som "senaste godbiten: nyss" — en ny
+      // inom minuten ändrar inget barnet ser, men varje skrivning sparar
+      // hushållet och väcker en synkrunda. Ett barn som matar tio godbitar
+      // i rad ska inte bli tio sparningar.
+      const last = action.activity === 'feed' ? pet.care?.lastFedAt
+        : action.activity === 'play' ? pet.care?.lastPlayedAt
+          : action.activity === 'pet' ? pet.care?.lastPettedAt : undefined
+      const since = last ? at.getTime() - Date.parse(last) : Infinity
+      if (since >= 0 && since < CARE_WRITE_MS) return undefined
       return { ...p, pets: p.pets.map((v) => (v.id === pet.id ? withCare(v, action.activity, at) : v)) }
     }
 
@@ -121,6 +130,9 @@ function applyAction(
     }
   }
 }
+
+/** Samma omsorg sparas högst en gång i minuten. */
+const CARE_WRITE_MS = 60_000
 
 function withCare(pet: CampPet, activity: PetCareActivity, at: Date): CampPet {
   const care = { ...pet.care }

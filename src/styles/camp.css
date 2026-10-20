@@ -136,7 +136,8 @@
   padding: 0; border: 0; background: none; cursor: pointer; filter: drop-shadow(0 4px 3px #0006);
 }
 .camp-placed img { display: block; width: 100%; }
-.camp-placed:hover { filter: drop-shadow(0 0 6px #ffd695); }
+.camp-placed:hover:not(:disabled) { filter: drop-shadow(0 0 6px #ffd695); }
+.camp-placed:disabled { opacity: 1; }
 .camp-light img { animation: camp-glow 3s ease-in-out infinite alternate; }
 .camp-placement-preview { z-index: 3; opacity: .65; pointer-events: none; outline: 2px dashed #ffdf93; outline-offset: 5px; }
 
@@ -754,3 +755,7 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
 .den-time__pic { width: 100%; max-width: 96px; aspect-ratio: 1; display: block; }
 .den-time__ages small { font-size: 11.5px; font-weight: 700; color: #6E6656; min-height: 1.2em; }
 @media (prefers-reduced-motion: reduce) { .den-warp, .den-pet__body--warped { animation: none; opacity: 0; } .den-pet__body--warped { opacity: 1; } }
+
+/* Namnförslagen under namnfältet i upptäckten. */
+.camp-name-ideas { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.camp-name-ideas .chip.is-on { outline: 3px solid #D9A441; }

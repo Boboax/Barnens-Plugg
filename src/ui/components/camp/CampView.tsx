@@ -86,6 +86,7 @@ export function CampView(props: Props) {
               className={`camp-placed ${item.kind === 'light' ? 'camp-light' : ''}`}
               style={{ left: `${point.x}%`, top: `${point.y}%`, width: `${point.width}%` }}
               aria-label={`${item.name}, ${point.name}. Flytta eller packa undan`}
+              disabled={!canInteract}
               onClick={() => props.onStartPlacing(instance.id)}
             >
               <img src={itemImage(item)} alt="" />
@@ -109,7 +110,6 @@ export function CampView(props: Props) {
               key={pet.id}
               className="camp-pet"
               style={{ left: `${point.x}%`, top: `${point.y - 4}%` }}
-              disabled={!canInteract}
               aria-label={`Hälsa på ${pet.name}`}
               onClick={() => props.onGreet(pet)}
             >
