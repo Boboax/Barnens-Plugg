@@ -8,7 +8,7 @@ import { rewardProgress } from '../../engine/rewards'
 import { BLIXT_TESTS, blixtTarget, blixtTimed, BLIXT_UNTIMED_COUNT, BLIXT_UNTIMED_PASS } from '../../engine/blixt'
 import { pingProvider } from '../../chat/providers'
 import { CLOUD_VOICE, cloudAudioStored, cloudTtsAvailable, kickVoiceList, prepareCloudAudio, preferredVoiceURI, setPreferredVoice, speakSample, swedishVoices, ttsAvailable } from '../../tts'
-import { daysSinceBackup, exportHousehold, importHousehold } from '../../storage/backup'
+import { daysSinceBackup, exportAnalysis, exportHousehold, importHousehold } from '../../storage/backup'
 import { BELONING_ICONS, BelongIcon, isBelongIcon, HERO_KINDS, HERO_LABEL, HeroImg } from '../components/Icon'
 import { KID_COLORS, nowISO, useStore } from '../store'
 
@@ -1004,6 +1004,23 @@ function SafetyTab() {
           />
         </div>
         {message && <p style={{ margin: '10px 0 0', fontWeight: 700, fontSize: 13.5 }}>{message}</p>}
+      </div>
+
+      <div style={pcard}>
+        <h4 style={h4}>🔍 Analysunderlag</h4>
+        <p style={{ margin: '0 0 10px', fontSize: 13.5, lineHeight: 1.55 }}>
+          En mindre fil för att låta någon granska barnens nivåer — de senaste två veckornas svar och nivån per
+          moment{store.household.sync ? ', för alla barn från alla plattor (via familjesynken)' : ''}. Barnen heter
+          Barn A, B och C; inga namn, kladdbilder, chattloggar eller koder följer med. Filen lämnar enheten bara
+          om du själv skickar den.
+        </p>
+        {/* Nyckeln står bara här på enheten, aldrig i filen. */}
+        <p style={{ margin: '0 0 10px', fontSize: 12.5, color: '#8B8FA0' }}>
+          {store.household.children.map((c, i) => `Barn ${'ABCDEFGH'[i] ?? i + 1} = ${c.name}`).join(' · ')}
+        </p>
+        <button className="btn btn-quiet" onClick={() => exportAnalysis(store.household, __APP_VERSION__)}>
+          Spara analysunderlag ↓
+        </button>
       </div>
 
       <SyncCard />

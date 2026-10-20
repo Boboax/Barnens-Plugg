@@ -1,6 +1,7 @@
 import type { Household } from '../domain/types'
 import { migrate } from './db'
 import { stripDeviceSecrets } from './sync'
+import { analysisSnapshot } from '../engine/analysis'
 
 /* ============================================================
    Export/import av hela hushållet.
@@ -21,6 +22,19 @@ export function exportHousehold(household: Household): void {
   const a = document.createElement('a')
   a.href = url
   a.download = `barnens-plugg-backup-${new Date().toISOString().slice(0, 10)}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** Analysunderlaget (se engine/analysis.ts): en avskalad fil utan namn,
+    kladd och chatt som föräldern kan lämna för en nivågranskning. */
+export function exportAnalysis(household: Household, appVersion?: string): void {
+  const snapshot = analysisSnapshot(household, new Date(), appVersion)
+  const blob = new Blob([JSON.stringify(snapshot, null, 1)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `barnens-plugg-analys-${new Date().toISOString().slice(0, 10)}.json`
   a.click()
   URL.revokeObjectURL(url)
 }

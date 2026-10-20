@@ -54,3 +54,15 @@ se `docs/LATHUND-CLOUDFLARE.md`, del B.
   en per avslutad aktivitet).
 - Byter du familjekod: uppdatera hemligheten i Cloudflare OCH i appens
   föräldraläge på varje enhet.
+
+## Analysunderlag (okt 2026)
+
+Föräldraläge → Säkerhet → "Spara analysunderlag" ger en liten fil för att
+låta någon (t.ex. en AI-assistent) granska barnens nivåer på distans. Med
+familjesynken innehåller den alla barn från alla plattor. Filen är
+avskalad (`engine/analysis.ts`): barnen heter Barn A/B/C, och bara årskurs,
+ålder, nivå per moment, dag-för-dag-siffror och de senaste 14 dagarnas svar
+(generator/nivå/frö — uppgiften kan återskapas exakt) följer med. Inga namn,
+kladdbilder, chattloggar eller koder. Nyckeln "Barn A = …" visas bara på
+enheten. Medvetet ingen stående fjärråtkomst till synkdatan: data lämnar
+familjen bara när föräldern själv skickar en fil (princip 6).
