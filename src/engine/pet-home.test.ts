@@ -3,7 +3,7 @@ import type { ChildProfile } from '../domain/types'
 import { DAILY_PET_COINS, HOME_PEEK_SECONDS, HOME_VISIT_SECONDS, emptyPetProgress } from '../domain/pet-home'
 import {
   adoptPet, completePetPractice, friendsEarned, homeSecondsLeft, markPetGrowthSeen, nextFriendSpecies, petDay,
-  dismissFreshStart, petGrewUnseen, petStage, releasePet, restartPetGrowth, settleMilestoneBase, spendHomeTime, campAccess, peekSecondsLeft, spendPeekTime,
+  dismissFreshStart, displayStage, petGrewUnseen, petStage, releasePet, setShownStage, restartPetGrowth, settleMilestoneBase, spendHomeTime, campAccess, peekSecondsLeft, spendPeekTime,
 } from './pet-home'
 import type { SkillState } from '../domain/types'
 
@@ -326,5 +326,54 @@ describe('Lägret är belöningen efter passet', () => {
     const c = adoptPet(completePetPractice(kid(), 8, 8, 'talens-dal', at), 'Mossa', at)
     const spent = spendHomeTime(c, HOME_VISIT_SECONDS, at)
     expect(campAccess(spent, at)).toBe('closed-after')
+  })
+})
+
+describe('Tidsmaskinen: se vännen som liten igen', () => {
+  // Grodan har vuxit till stadium 3 (12 behärskade moment efter att hon hittades).
+  const grown = (machine = true): ChildProfile => {
+    const c = withFrog()
+    return {
+      ...c, skills: mastered(12),
+      petProgress: { ...c.petProgress, items: machine ? [{ id: 'k1', itemId: 'time-machine', boughtAt: at.toISOString() }] : [] },
+    }
+  }
+
+  const firstId = grown().petProgress.pets[0].id
+
+  it('visar en tidigare ålder men ändrar aldrig den riktiga tillväxten', () => {
+    const c = grown()
+    const pet = c.petProgress.pets[0]
+    expect(petStage(c, pet)).toBe(3)
+    const small = setShownStage(c, pet.id, 1)
+    const p = small.petProgress.pets[0]
+    expect(displayStage(small, p)).toBe(1)
+    expect(petStage(small, p)).toBe(3)
+    expect(small.skills).toBe(c.skills)
+  })
+
+  it('tillbaka till nu rensar valet, och samma val ger samma objekt', () => {
+    const small = setShownStage(grown(), firstId, 2)
+    expect(setShownStage(small, firstId, 2)).toBe(small)
+    const now = setShownStage(small, firstId, 3)
+    expect(now.petProgress.pets[0].shownStage).toBeUndefined()
+    expect(displayStage(now, now.petProgress.pets[0])).toBe(3)
+  })
+
+  it('kan aldrig spola fram till en ålder vännen inte nått', () => {
+    const c = grown()
+    expect(setShownStage(c, firstId, 4)).toBe(c)
+  })
+
+  it('kräver att maskinen är köpt', () => {
+    const c = grown(false)
+    expect(setShownStage(c, firstId, 1)).toBe(c)
+  })
+
+  it('en vän som växer förbi den visade åldern syns fortfarande liten tills barnet väljer nu', () => {
+    const small = setShownStage(grown(), firstId, 1)
+    const more: ChildProfile = { ...small, skills: mastered(30) }
+    expect(petStage(more, more.petProgress.pets[0])).toBe(4)
+    expect(displayStage(more, more.petProgress.pets[0])).toBe(1)
   })
 })

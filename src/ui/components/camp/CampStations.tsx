@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { ChildProfile } from '../../../domain/types'
 import type { PetCareActivity } from '../../../domain/pet-home'
 import { petSpecies } from '../../../domain/pet-home'
-import { ownsCampItem, ownsOutfit, outfitById, visibleOutfits } from '../../../domain/camp'
+import { ownsCampItem, ownsOutfit, ownsTimeMachine, outfitById, visibleOutfits } from '../../../domain/camp'
 import { WORLDS, worldById } from '../../../domain/worlds'
 import { bossGiftForWorld, giftById, ownedBossRelics, type WorldGift } from '../../../domain/world-gifts'
 import { RelicArt } from '../battle/RelicArt'
@@ -11,7 +11,7 @@ import type { CampAction } from '../../../engine/camp'
 import { CampHero } from './CampHero'
 import { PetHouse } from './PetHouse'
 import { petStageImage } from './campArt'
-import { petStage } from '../../../engine/pet-home'
+import { displayStage, petStage } from '../../../engine/pet-home'
 
 /* Lägrets stationer: vännerna (omsorg, i lyan eller tältet), garderoben
    (mantlar), Bokhörnan (minnen av var vännerna och gåvorna hittades) och
@@ -54,7 +54,10 @@ export function CampStations({ station, child, canInteract, onChange, onMessage,
         hasTent={ownsCampItem(child, 'pet-tent')}
         toyName={favouriteToy(child)}
         canInteract={canInteract}
-        stageOf={(pet) => petStage(child, pet)}
+        stageOf={(pet) => displayStage(child, pet)}
+        realStageOf={(pet) => petStage(child, pet)}
+        timeMachine={ownsTimeMachine(child)}
+        onTimeTravel={(petId, stage) => onChange({ type: 'time', petId, stage })}
         onCare={(petId, activity: PetCareActivity) => onChange({ type: 'care', petId, activity })}
         onRename={(petId, name) => onChange({ type: 'rename', petId, name })}
         onBed={(petId, point) => onChange({ type: 'bed', petId, point })}
@@ -156,7 +159,7 @@ function BookCorner({ child }: { child: ChildProfile }) {
       <div className="camp-book-grid">
         {child.petProgress.pets.map((pet) => (
           <article className="camp-book" key={pet.id}>
-            <img src={petStageImage(pet.species, petStage(child, pet))} alt="" />
+            <img src={petStageImage(pet.species, displayStage(child, pet))} alt="" />
             <h3 className="display">{worldById(pet.foundInWorldId).name}</h3>
             <p>Här hittade du {pet.name}.</p>
             <span>{petSpecies(pet.species).name}</span>

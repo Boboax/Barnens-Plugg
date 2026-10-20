@@ -72,6 +72,9 @@ export interface CampPet {
   growthV?: number
   /** Väntande ruta "{namn} växer upp med dig!" efter omstarten. */
   freshStart?: boolean
+  /** Tidsmaskinen: åldern vännen VISAS i (aldrig äldre än den vuxit).
+      Saknas = som den är nu. Bara utseende — tillväxten påverkas inte. */
+  shownStage?: PetStage
 }
 
 /** Ett ägt föremål. `id` är köpets id (purchaseId) — det gör köpet

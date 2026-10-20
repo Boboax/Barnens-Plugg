@@ -129,13 +129,18 @@ interface Props {
   canInteract: boolean
   /** Vännens tillväxtstadium (räknas ur barnets lärande i engine/pet-home). */
   stageOf(pet: CampPet): PetStage
+  /** Åldern vännen faktiskt vuxit till (tidsmaskinen når aldrig längre). */
+  realStageOf(pet: CampPet): PetStage
+  /** Tidsmaskinen köpt i handelsboden. */
+  timeMachine: boolean
+  onTimeTravel(petId: string, stage: PetStage): void
   onCare(petId: string, activity: PetCareActivity): void
   onRename(petId: string, name: string): void
   onBed(petId: string, point: string): void
   onPacking(): void
 }
 
-export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, onCare, onRename, onBed, onPacking }: Props) {
+export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, realStageOf, timeMachine, onTimeTravel, onCare, onRename, onBed, onPacking }: Props) {
   const [selectedId, setSelectedId] = useState(pets[0]?.id)
   const [mode, setMode] = useState<Mode>('free')
   const [reaction, setReaction] = useState<{ kind: Reaction; key: number } | null>(null)
@@ -158,6 +163,8 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
   // lek aldrig rör den nya.
   const peekToken = useRef(0)
   const [bookOpen, setBookOpen] = useState(false)
+  const [timeOpen, setTimeOpen] = useState(false)
+  const [warp, setWarp] = useState(0)
   const [muted, setMuted] = useState(readMuted)
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState('')
@@ -454,6 +461,21 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
     }
   }
 
+  /* ---------- Tidsmaskinen ---------- */
+
+  const travel = (stage: PetStage): void => {
+    if (!canInteract) return
+    const real = realStageOf(pet)
+    setTimeOpen(false)
+    if (stage === stageOf(pet)) return
+    onTimeTravel(pet.id, stage)
+    setWarp(Date.now())
+    sound('wake')
+    say(stage === real
+      ? `Tidsmaskinen surrar … ${pet.name} är tillbaka i nutid!`
+      : `Tidsmaskinen surrar … nu är ${pet.name} ${PET_STAGE_NAMES[stage].toLowerCase()} igen!`)
+  }
+
   const toggleSound = (): void => {
     const next = !muted
     setMuted(next)
@@ -570,7 +592,8 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
             }
           }}
         >
-          <div className={`den-pet__body${reaction ? ` den-pet__body--${reaction.kind}` : ''}`}>
+          {warp > 0 && <span key={warp} className="den-warp" aria-hidden="true" />}
+          <div className={`den-pet__body${reaction ? ` den-pet__body--${reaction.kind}` : ''}${warp > 0 ? ' den-pet__body--warped' : ''}`}>
             <PetSprite species={pet.species} stage={stageOf(pet)} action={reaction ? REACTION_ACTION[reaction.kind] : mode === 'fetch' ? 'play' : 'idle'} resting={resting} />
           </div>
           {mums > 0 && <span key={mums} className="den-mums" aria-hidden="true"><b>{mumsText}</b><i /><i /><i /></span>}
@@ -597,6 +620,11 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
               : <span className="den-pill den-pill--name">{pet.name}</span>}
           </div>
           <div className="den-hud__tools">
+            {timeMachine && (
+              <button className="den-pill" disabled={!free || !canInteract} onClick={() => setTimeOpen(true)} aria-label="Tidsmaskinen">
+                <img className="den-icon" src={itemImage(catalogItem('time-machine')!)} alt="" />
+              </button>
+            )}
             <button className="den-pill" onClick={() => setBookOpen(true)} aria-label={`Minnesboken om ${pet.name}`}><img className="den-icon" src={campIcon('icon-memory-book')} alt="" /></button>
             <button className="den-pill" aria-pressed={muted} onClick={toggleSound} aria-label={muted ? 'Slå på ljudet' : 'Stäng av ljudet'}>
               <img className="den-icon" src={campIcon(muted ? 'icon-sound-off' : 'icon-sound-on')} alt="" />
@@ -649,6 +677,29 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
           <small>{resting ? 'Väck' : 'Godnatt'}</small>
         </button>
 
+        {timeOpen && (
+          <div className="den-time" role="dialog" aria-label="Tidsmaskinen" onClick={() => setTimeOpen(false)}>
+            <div className="den-time__card" onClick={(e) => e.stopPropagation()}>
+              <h3>⏳ Tidsmaskinen</h3>
+              <p>Vilken ålder vill du se {pet.name} i? Du kan alltid åka tillbaka till nu.</p>
+              <div className="den-time__ages">
+                {([1, 2, 3, 4] as PetStage[]).map((st) => {
+                  const real = realStageOf(pet)
+                  const reached = st <= real
+                  const current = st === stageOf(pet)
+                  return (
+                    <button key={st} type="button" disabled={!reached} aria-pressed={current} onClick={() => travel(st)}>
+                      <span className="den-time__pic"><PetSprite species={pet.species} stage={st} /></span>
+                      <b>{PET_STAGE_NAMES[st]}</b>
+                      <small>{!reached ? '🔒 växer med dig' : st === real ? 'nu' : current ? 'visas nu' : ''}</small>
+                    </button>
+                  )
+                })}
+              </div>
+              <button type="button" className="chip" onClick={() => setTimeOpen(false)}>Stäng</button>
+            </div>
+          </div>
+        )}
         {bookOpen && (
           <div className="den-book" role="dialog" aria-label={`Minnesboken om ${pet.name}`}>
             <div className="den-book__card">

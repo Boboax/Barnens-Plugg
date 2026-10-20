@@ -14,8 +14,9 @@ import type { ChildProfile } from './types'
    ============================================================ */
 
 /** 'tent' har ingen flyttbar plats — tältet står alltid vid elden.
-    'treat' ställs inte heller fram: godiset hamnar i godisskålen i lyan. */
-export type CampKind = 'bed' | 'rug' | 'light' | 'toy' | 'storage' | 'tent' | 'treat'
+    'treat' ställs inte heller fram: godiset hamnar i godisskålen i lyan.
+    'gadget' (tidsmaskinen) bor också i lyan, som en knapp. */
+export type CampKind = 'bed' | 'rug' | 'light' | 'toy' | 'storage' | 'tent' | 'treat' | 'gadget'
 
 export type CampUnlock =
   | { kind: 'always' }
@@ -72,6 +73,15 @@ export const CAMP_CATALOG: readonly CampCatalogItem[] = [
     id: 'play-log', name: 'Lekstock', price: 60, kind: 'toy', art: 'play-log',
     description: 'En tunnel och en hängande leksak.',
     unlock: { kind: 'always' }, maxOwned: 2,
+  },
+  {
+    // Edwards idé (okt 2026): få vännerna små igen när man vill. Bara
+    // utseendet — tillväxten (behärskade moment) räknas vidare som vanligt,
+    // och man kan alltid åka tillbaka till "nu". Aldrig framåt i tiden:
+    // äldre än vännen faktiskt vuxit går inte (växandet hör till lärandet).
+    id: 'time-machine', name: 'Tidsmaskin', price: 120, kind: 'gadget', art: 'time-machine',
+    description: 'Snurra tiden bakåt — se din vän som liten igen, och tillbaka till nu.',
+    unlock: { kind: 'always' }, maxOwned: 1,
   },
   {
     id: 'treasure-chest', name: 'Skattkista', price: 80, kind: 'storage', art: 'treasure-chest',
@@ -211,3 +221,7 @@ export const ownsOutfit = (child: ChildProfile, outfit: Outfit): boolean =>
 /** Köpta mantlar visas alltid; övriga först när de låsts upp. */
 export const visibleOutfits = (child: ChildProfile): Outfit[] =>
   OUTFITS.filter((outfit) => ownsOutfit(child, outfit) || isCampUnlockMet(outfit.unlock, child))
+
+/** Äger barnet tidsmaskinen? */
+export const ownsTimeMachine = (child: ChildProfile): boolean =>
+  child.petProgress.items.some((i) => i.itemId === 'time-machine')

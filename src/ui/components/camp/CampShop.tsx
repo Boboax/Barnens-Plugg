@@ -34,7 +34,7 @@ export function CampShop({ child, canInteract, tab, onTab, selectedId, onSelect,
   // av dem kan packas undan eller ställas fram.
   const packable = items.filter((i) => {
     const kind = catalogItem(i.itemId)?.kind
-    return kind !== 'tent' && kind !== 'treat'
+    return kind !== 'tent' && kind !== 'treat' && kind !== 'gadget'
   })
 
   return (

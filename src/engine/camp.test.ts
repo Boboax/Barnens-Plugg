@@ -238,3 +238,13 @@ describe('Kvällslägret: lek', () => {
     expect(changeCamp(c, { type: 'care', petId: 'first-pet', activity: 'play' }, at)).toBe(c)
   })
 })
+
+describe('Tidsmaskinen i handelsboden', () => {
+  it('köps en gång, ligger aldrig i lägret och ger åldersvalet', () => {
+    const c = kid({ coins: 200 })
+    const bought = changeCamp(c, buy('time-machine', 'tm-1'), at)
+    expect(bought.petProgress.coins).toBe(80)
+    expect(bought.petProgress.items).toHaveLength(1)
+    expect(changeCamp(bought, buy('time-machine', 'tm-2'), at)).toBe(bought)
+  })
+})

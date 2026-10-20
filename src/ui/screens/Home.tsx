@@ -20,7 +20,7 @@ import { TestPanel } from '../testlage/TestPanel'
 import { worldTheme } from '../worldThemes'
 import { speak, stopSpeaking, ttsAvailable } from '../../tts'
 import { todayISO, useStore } from '../store'
-import { campAccess, petStage, type CampAccess } from '../../engine/pet-home'
+import { campAccess, displayStage, type CampAccess } from '../../engine/pet-home'
 import { PetSprite } from '../components/camp/PetSprite'
 
 /* ============================================================
@@ -1075,7 +1075,7 @@ function CampClosedCard({ child, afterTime, onClose }: { child: ChildProfile; af
         background: 'linear-gradient(180deg, #FBF4E2, #F0E6CD)', color: '#35302E',
       }}>
         <div style={{ width: 150, margin: '0 auto' }}>
-          <PetSprite species={pet.species} stage={petStage(child, pet)} action="happy" />
+          <PetSprite species={pet.species} stage={displayStage(child, pet)} action="happy" />
         </div>
         <h2 className="display" style={{ margin: '6px 0', fontSize: 26 }}>{pet.name} vinkar!</h2>
         <p style={{ margin: '0 0 14px', fontWeight: 700, lineHeight: 1.45 }}>

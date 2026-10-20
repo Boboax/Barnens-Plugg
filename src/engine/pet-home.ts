@@ -275,3 +275,28 @@ export function releasePet(child: ChildProfile, petId: string): ChildProfile {
     milestoneBase: pets.length > 0 ? { friends: pets.length, ...milestoneCounts(child) } : undefined,
   })
 }
+
+/* ---------- Tidsmaskinen (köp i handelsboden) ---------- */
+
+/** Åldern vännen visas i: tidsmaskinens val, men aldrig äldre än den
+    faktiskt vuxit (om tillväxten skulle ändras följer visningen med). */
+export function displayStage(child: ChildProfile, pet: CampPet): PetStage {
+  const real = petStage(child, pet)
+  return pet.shownStage && pet.shownStage < real ? pet.shownStage : real
+}
+
+/** Välj visad ålder med tidsmaskinen. Kräver att maskinen är köpt och att
+    åldern redan är uppnådd; samma ålder som nu = tillbaka till nutid.
+    Samma objekt tillbaka när inget ändras. */
+export function setShownStage(child: ChildProfile, petId: string, stage: PetStage): ChildProfile {
+  if (!child.petProgress.items.some((i) => i.itemId === 'time-machine')) return child
+  const pet = child.petProgress.pets.find((p) => p.id === petId)
+  if (!pet) return child
+  const real = petStage(child, pet)
+  if (stage > real) return child
+  const next = stage === real ? undefined : stage
+  if (next === pet.shownStage) return child
+  return withProgress(child, {
+    pets: child.petProgress.pets.map((p) => (p.id === petId ? { ...p, shownStage: next } : p)),
+  })
+}

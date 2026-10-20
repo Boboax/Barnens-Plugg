@@ -1,7 +1,7 @@
 import type { ChildProfile } from '../domain/types'
-import type { CampPet, PetCareActivity, PetProgress } from '../domain/pet-home'
+import type { CampPet, PetCareActivity, PetProgress, PetStage } from '../domain/pet-home'
 import { CAMP_POINTS, OUTFITS, campItemLimit, campPoint, catalogItem, isCampUnlockMet, ownsOutfit } from '../domain/camp'
-import { homeSecondsLeft } from './pet-home'
+import { homeSecondsLeft, setShownStage } from './pet-home'
 
 /* ============================================================
    Alla ändringar i Kvällslägret går genom changeCamp.
@@ -23,6 +23,8 @@ export type CampAction =
   | { type: 'bed'; petId: string; point: string }
   | { type: 'care'; petId: string; activity: PetCareActivity }
   | { type: 'outfit'; outfitId: string }
+  /** Tidsmaskinen: visa vännen i en tidigare ålder (eller tillbaka till nu). */
+  | { type: 'time'; petId: string; stage: PetStage }
 
 export function changeCamp(child: ChildProfile, action: CampAction, at: Date): ChildProfile {
   const p = child.petProgress
@@ -65,6 +67,11 @@ function applyAction(
       }
       if (owned.point === action.point) return undefined
       return { ...p, items: p.items.map((i) => (i.id === owned.id ? { ...i, point: action.point } : i)) }
+    }
+
+    case 'time': {
+      const changed = setShownStage(child, action.petId, action.stage)
+      return changed === child ? undefined : changed.petProgress
     }
 
     case 'rename': {
