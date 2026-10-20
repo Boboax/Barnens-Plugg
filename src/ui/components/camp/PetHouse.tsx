@@ -165,6 +165,8 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
   const [bookOpen, setBookOpen] = useState(false)
   const [timeOpen, setTimeOpen] = useState(false)
   const [warp, setWarp] = useState(0)
+  // Tidsresan: sandglaset dyker upp och vänds innan vännen byter ålder.
+  const [hourglass, setHourglass] = useState(0)
   const [muted, setMuted] = useState(readMuted)
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState('')
@@ -467,13 +469,23 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
     if (!canInteract) return
     const real = realStageOf(pet)
     setTimeOpen(false)
-    if (stage === stageOf(pet)) return
-    onTimeTravel(pet.id, stage)
-    setWarp(Date.now())
-    sound('wake')
-    say(stage === real
-      ? `Tidsmaskinen surrar … ${pet.name} är tillbaka i nutid!`
-      : `Tidsmaskinen surrar … nu är ${pet.name} ${PET_STAGE_NAMES[stage].toLowerCase()} igen!`)
+    if (stage === stageOf(pet) || hourglass) return
+    const arrive = (): void => {
+      onTimeTravel(pet.id, stage)
+      setWarp(Date.now())
+      sound('wake')
+      say(stage === real
+        ? `${pet.name} är tillbaka i nutid!`
+        : `Nu är ${pet.name} ${PET_STAGE_NAMES[stage].toLowerCase()} igen!`)
+    }
+    // Utan rörelse (prefers-reduced-motion): bytet direkt, inget snurr.
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { arrive(); return }
+    // Sandglaset vänds först — då förstår barnet att det är tiden som
+    // snurrar, inte vännen som byts ut. Vännen byter ålder när glaset vänt.
+    setHourglass(Date.now())
+    say('Tidsmaskinen surrar … sanden vänder!')
+    later(arrive, 1150)
+    later(() => setHourglass(0), 1900)
   }
 
   const toggleSound = (): void => {
@@ -593,7 +605,8 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
           }}
         >
           {warp > 0 && <span key={warp} className="den-warp" aria-hidden="true" />}
-          <div className={`den-pet__body${reaction ? ` den-pet__body--${reaction.kind}` : ''}${warp > 0 ? ' den-pet__body--warped' : ''}`}>
+          {hourglass > 0 && <img key={hourglass} className="den-hourglass" src={itemImage(catalogItem('time-machine')!)} alt="" aria-hidden="true" />}
+          <div className={`den-pet__body${reaction ? ` den-pet__body--${reaction.kind}` : ''}${warp > 0 ? ' den-pet__body--warped' : ''}${hourglass > 0 && warp < hourglass ? ' den-pet__body--away' : ''}`}>
             <PetSprite species={pet.species} stage={stageOf(pet)} action={reaction ? REACTION_ACTION[reaction.kind] : mode === 'fetch' ? 'play' : 'idle'} resting={resting} />
           </div>
           {mums > 0 && <span key={mums} className="den-mums" aria-hidden="true"><b>{mumsText}</b><i /><i /><i /></span>}

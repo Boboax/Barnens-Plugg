@@ -17,9 +17,7 @@ import { CAMP_CATALOG } from './domain/camp'
    GRAFIKBESTALLNING.md. Varje rad måste finnas beställd där — och ska
    tas bort härifrån när den målade bilden är inlagd. */
 
-const PENDING_ART: Record<string, string> = {
-  'time-machine': 'Tillägg 7',
-}
+const PENDING_ART: Record<string, string> = {}
 
 // Godiset visas bara i ~40 px och är medvetet nedskalat till 192 px vid
 // inläggningen; övriga saker visas stort i boden och lägret.

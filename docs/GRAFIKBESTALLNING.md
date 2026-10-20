@@ -1311,7 +1311,7 @@ transparent bakgrund, fötterna på samma plats i alla rutor), och använd
 Håll hela figuren inne i sin ruta (inga öron, svansar eller vingar som
 sticker ut i grannrutan). Leverans: `leverans/` på grenen `grafik/leverans`.
 
-## Tillägg 7 (okt 2026) · Tidsmaskinen (2)
+## Tillägg 7 (okt 2026) · Tidsmaskinen (2) — LEVERERAD 20 okt, sakbilden inlagd (används även som knapp i lyan; ikonen beställs bara om den blir otydlig på iPad)
 
 Tidsmaskinen (köps i handelsboden, låter barnet se sin vän i en tidigare
 ålder) gick ut med en tillfällig, platt vektorbild som inte passar ihop med
@@ -1339,3 +1339,21 @@ The same small wooden and brass hourglass time machine as in the attached item i
 ```
 
 Visas i boden i ca 120 px och som knapp i lyan i 44–60 px.
+
+## Tillägg 8 (okt 2026) · Sanden rinner i tidsmaskinen (1)
+
+Tidsmaskinen vänds redan med en rörelse i appen. För att sanden också ska
+rinna behövs fyra bildrutor av SAMMA sandglas där bara sanden ändras.
+Bifoga den levererade tidsmaskinen (https://boboax.github.io/Barnens-Plugg/art/camp/items/time-machine.webp)
+som förlaga. Ladda upp resultatet i chatten med Claude.
+
+### `time-machine-sand.png` — 2048×512 (fyra rutor bredvid varandra)
+
+```
+Use the attached time machine picture as the exact model. Make one wide image, 2048×512, divided into four equal square frames side by side (left to right). Every frame shows the SAME time machine, same size, same angle, same position, same lighting — only the golden sand changes:
+frame 1: almost all sand in the top glass, a thin stream starting to fall;
+frame 2: about two thirds in the top, a small pile growing in the bottom;
+frame 3: about one third in the top, a bigger pile in the bottom;
+frame 4: almost all sand in the bottom, the last grains falling.
+Keep the whole object inside its own frame with a little space around it. Transparent background (PNG), no shadow, no text, no frame lines between the frames.
+```

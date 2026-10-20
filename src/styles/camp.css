@@ -759,3 +759,22 @@ button.den-prop[aria-pressed=true] small { background: #E8C27A; }
 /* Namnförslagen under namnfältet i upptäckten. */
 .camp-name-ideas { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .camp-name-ideas .chip.is-on { outline: 3px solid #D9A441; }
+
+/* Tidsresan: det målade sandglaset dyker upp över vännen, gungar, vänds
+   upp och ner och tonar bort — vännen byter ålder när glaset har vänt. */
+.den-hourglass {
+  position: absolute; left: 50%; bottom: 8%; width: 78%; z-index: 4; pointer-events: none;
+  transform: translateX(-50%); filter: drop-shadow(0 0 16px #ffd27acc);
+  animation: den-hourglass 1.9s ease-in-out both;
+}
+@keyframes den-hourglass {
+  0% { opacity: 0; transform: translateX(-50%) scale(.3) rotate(0); }
+  14% { opacity: 1; transform: translateX(-50%) scale(1) rotate(0); }
+  24% { transform: translateX(-50%) scale(1) rotate(-10deg); }
+  32% { transform: translateX(-50%) scale(1) rotate(8deg); }
+  58% { transform: translateX(-50%) scale(1.05) rotate(180deg); filter: drop-shadow(0 0 28px #ffe7a8); }
+  72% { opacity: 1; transform: translateX(-50%) scale(1) rotate(180deg); }
+  100% { opacity: 0; transform: translateX(-50%) scale(.5) rotate(180deg); }
+}
+.den-pet__body--away { opacity: 0; transition: opacity .3s; }
+@media (prefers-reduced-motion: reduce) { .den-hourglass { display: none; } .den-pet__body--away { opacity: 1; } }
