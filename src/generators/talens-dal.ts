@@ -54,17 +54,24 @@ const talrad020 = g('talrad-0-20', (level, seed, rng) => {
   const id = 'gen.talrad-0-20'
   const max = lerpInt(level, 10, 20)
   const kind = rng.pick(level >= 6 ? (['mellan', 'jamfor', 'steg'] as const) : (['efter', 'fore', 'jamfor'] as const))
+  // Tallinjen är stödet på nivå 1–3 (CRA). Senare står siffrorna ovanför
+  // talet som frågas efter — då läser barnet av svaret i stället för att
+  // tänka talraden.
+  const line = (extra: { marks?: number[]; highlight?: number }): TaskVisual | undefined =>
+    level <= 3 ? { kind: 'tallinje', min: 0, max, ...extra } : undefined
   if (kind === 'jamfor') {
-    const a = rng.int(0, max)
-    let b = rng.int(0, max)
-    if (b === a) b = a === max ? a - 1 : a + 1
+    // Tre tal, inte två: med två val blir varannan gissning rätt och felet
+    // kan inte tas om (TaskRunner ger inget andra försök på tvåval).
+    const nums = new Set<number>()
+    while (nums.size < 3) nums.add(rng.int(0, max))
+    const [hi, ...rest] = [...nums].sort((x, y) => y - x)
     return choiceTask({
       generatorId: id, level, seed, rng,
       prompt: `Vilket tal är störst?`,
-      correct: String(Math.max(a, b)),
-      distractors: [[String(Math.min(a, b)), null]],
-      visual: { kind: 'tallinje', min: 0, max, marks: [a, b] },
-      explanation: `${Math.max(a, b)} ligger längre fram på talraden än ${Math.min(a, b)}.`,
+      correct: String(hi),
+      distractors: rest.map((n) => [String(n), null] as [string, null]),
+      visual: line({ marks: [...nums] }),
+      explanation: `${hi} ligger längst fram på talraden — det är störst.`,
     })
   }
   if (kind === 'mellan') {
@@ -73,7 +80,7 @@ const talrad020 = g('talrad-0-20', (level, seed, rng) => {
       generatorId: id, level, seed,
       prompt: `Vilket tal ligger mellan ${a} och ${a + 2}?`,
       value: a + 1,
-      visual: { kind: 'tallinje', min: 0, max, marks: [a, a + 2] },
+      visual: line({ marks: [a, a + 2] }),
       explanation: `Mellan ${a} och ${a + 2} bor ${a + 1}.`,
     })
   }
@@ -84,7 +91,7 @@ const talrad020 = g('talrad-0-20', (level, seed, rng) => {
       generatorId: id, level, seed,
       prompt: `Vilket tal är ${step} mer än ${a}?`,
       value: a + step,
-      visual: { kind: 'tallinje', min: 0, max, highlight: a },
+      visual: line({ highlight: a }),
       explanation: `Hoppa ${step} steg framåt från ${a}: du landar på ${a + step}.`,
       misconceptions: { [a + step - 1]: 'en-fel', [a + step + 1]: 'en-fel', [a - step]: 'fel-raknesatt' },
     })
@@ -96,7 +103,7 @@ const talrad020 = g('talrad-0-20', (level, seed, rng) => {
     generatorId: id, level, seed,
     prompt: after ? `Vilket tal kommer efter ${a}?` : `Vilket tal kommer före ${a}?`,
     value,
-    visual: { kind: 'tallinje', min: 0, max, highlight: a },
+    visual: line({ highlight: a }),
     explanation: after
       ? `Ett steg framåt från ${a} är ${value}.`
       : `Ett steg bakåt från ${a} är ${value}.`,
@@ -108,7 +115,9 @@ const talrad020 = g('talrad-0-20', (level, seed, rng) => {
 
 const delaUppTal = g('dela-upp-tal', (level, seed, rng) => {
   const id = 'gen.dela-upp-tal'
-  const total = lerpInt(level, 5, 10)
+  // Ett spann av helheter, inte en enda: med bara 5 på nivå 1 fanns fyra
+  // uppgifter, och barnet lärde sig dem utantill.
+  const total = rng.int(lerpInt(level, 4, 6), lerpInt(level, 6, 10))
   const part = rng.int(1, total - 1)
   if (level >= 8) {
     const [nameA, nameB] = pickTwoNames(rng)
@@ -123,13 +132,15 @@ const delaUppTal = g('dela-upp-tal', (level, seed, rng) => {
     })
   }
   // Uppdelning skriven som öppen likhet — "7 är 6 och …?" förstod ingen.
+  // Bilden visar HELHETEN (nivå 1–3): barnet räknar bort den kända delen.
+  // Att rita båda delarna var att rita svaret.
   return numericTask({
     generatorId: id, level, seed,
     prompt: `${part} + __ = ${total}`,
     spokenPrompt: `${part} plus vilket tal blir ${total}?`,
     value: total - part,
-    visual: { kind: 'tiobas', groups: [{ tens: 0, ones: part }, { tens: 0, ones: total - part }] },
-    explanation: `${part} och ${total - part} blir tillsammans ${total}.`,
+    visual: level <= 3 ? { kind: 'tiobas', groups: [{ tens: 0, ones: total }] } : undefined,
+    explanation: `Räkna vidare från ${part} till ${total}: det är ${total - part} steg. ${part} och ${total - part} blir tillsammans ${total}.`,
     misconceptions: { [total - part + 1]: 'en-fel', [total - part - 1]: 'en-fel', [total + part]: 'fel-raknesatt' },
   })
 })
@@ -323,6 +334,40 @@ interface AddSubCfg {
 const rangeFor = (level: DifficultyLevel, r: AddSubCfg['ranges']): number =>
   level <= 3 ? r[0] : level <= 5 ? r[1] : level <= 7 ? r[2] : r[3]
 
+/** Förklaringen visar VÄGEN, inte bara facit: tiotal för sig och ental för
+    sig, eller via tian när entalen inte räcker. "Växla: 52 − 17 = 35"
+    upprepade svaret utan att visa hur. */
+function addSubSteps(a: number, b: number, isAdd: boolean): string {
+  const value = isAdd ? a + b : a - b
+  const bTens = b - (b % 10)
+  const bOnes = b % 10
+  if (isAdd) {
+    if ((a % 10) + bOnes >= 10) {
+      const up = 10 - (a % 10)
+      return `Gå via tian: ${a} + ${up} = ${a + up}, sedan ${b - up} till = ${value}.`
+    }
+    if (a >= 10 && bTens > 0) {
+      return `Tiotal för sig: ${a - (a % 10)} + ${bTens} = ${a - (a % 10) + bTens}. Ental för sig: ${a % 10} + ${bOnes} = ${(a % 10) + bOnes}. Tillsammans ${value}.`
+    }
+    return `Räkna vidare från ${a}: ${b} steg till blir ${value}.`
+  }
+  if (a % 10 < bOnes) {
+    // Tiotalen först, sedan entalen ner till tian och vidare — det är
+    // växlingen gjord i huvudet.
+    const x = a - bTens
+    const first = bTens > 0 ? `Ta först bort tiotalen: ${a} − ${bTens} = ${x}. ` : ''
+    const down = x % 10
+    const rest = down === 0
+      ? `Sedan ${x} − ${bOnes} = ${value}.`
+      : `Sedan ner till tian: ${x} − ${down} = ${x - down}, och ${bOnes - down} till: ${value}.`
+    return `Entalen räcker inte — gå via tian. ${first}${rest}`
+  }
+  if (a >= 10 && bTens > 0) {
+    return `Tiotal för sig: ${a - (a % 10)} − ${bTens} = ${a - (a % 10) - bTens}. Ental för sig: ${a % 10} − ${bOnes} = ${(a % 10) - bOnes}. Tillsammans ${value}.`
+  }
+  return `Räkna bakåt från ${a}: ${b} steg blir ${value}.`
+}
+
 function makeAddSub(momentId: string, cfg: AddSubCfg): TaskGenerator {
   const id = `gen.${momentId}`
   return {
@@ -488,13 +533,7 @@ function makeAddSub(momentId: string, cfg: AddSubCfg): TaskGenerator {
         value,
         visual: level <= cfg.visualUpTo ? tiobasOp(isAdd ? '+' : '−', a, b) : { kind: 'ingen' },
         solution: hopSolution(a, b, isAdd),
-        explanation: isAdd
-          ? (a % 10) + (b % 10) >= 10
-            ? `Gå via tian: ${a} + ${10 - (a % 10)} = ${a + 10 - (a % 10)}, sedan ${b - (10 - (a % 10))} till = ${value}.`
-            : `Lägg ihop: ${a} + ${b} = ${value}.`
-          : a % 10 < b % 10
-            ? `Entalen räcker inte — växla ett tiotal: ${a} − ${b} = ${value}.`
-            : `Ta bort: ${a} − ${b} = ${value}.`,
+        explanation: addSubSteps(a, b, isAdd),
         misconceptions: mis,
       })
     },
@@ -555,6 +594,19 @@ const positionssystem100 = g('positionssystem-100', (level, seed, rng) => {
 
 // ---------- Stora tal (åk 4) ----------
 
+/** "+1000" ändrar bara tusentalssiffran — UTOM när den är 9: då blir det
+    en växling till nästa plats (26 969 + 100 = 27 069). Förklaringen
+    påstod tidigare alltid att bara en siffra ändras. */
+function tenPowerStep(a: number, step: 100 | 1000 | 10_000): string {
+  const place = step === 100 ? 'hundratals' : step === 1000 ? 'tusentals' : 'tiotusentals'
+  const next = step === 100 ? 'tusentals' : step === 1000 ? 'tiotusentals' : 'hundratusentals'
+  const digit = Math.floor(a / step) % 10
+  const sum = (a + step).toLocaleString('sv-SE')
+  return digit < 9
+    ? `Bara siffran på ${place}platsen ändras: ${digit} blir ${digit + 1}. Svaret är ${sum}.`
+    : `Siffran på ${place}platsen är 9 och blir 10 — växla: den blir 0 och ${next}siffran ökar med 1. Svaret är ${sum}.`
+}
+
 const storaTal = g('stora-tal', (level, seed, rng) => {
   const id = 'gen.stora-tal'
   const magnitude = level <= 3 ? 10_000 : level <= 6 ? 100_000 : 1_000_000
@@ -565,12 +617,19 @@ const storaTal = g('stora-tal', (level, seed, rng) => {
     const digits = String(a).split('')
     const shuffled = Number(rng.shuffle(digits).join('')) || a + 1
     const b = shuffled === a ? a + 1 : shuffled
+    // Ett tredje tal med en siffra färre men stora siffror ("ser stort ut"),
+    // så att det inte blir ett tvåval där varannan gissning träffar.
+    const c = Math.max(100, Math.floor(Math.max(a, b) / 10) + rng.int(0, 9))
+    const hi = Math.max(a, b)
     return choiceTask({
       generatorId: id, level, seed, rng,
       prompt: `Vilket tal är störst?`,
-      correct: Math.max(a, b).toLocaleString('sv-SE'),
-      distractors: [[Math.min(a, b).toLocaleString('sv-SE'), 'positionsfel']],
-      explanation: `Jämför siffrornas platser från vänster — flest siffror eller störst siffra längst fram vinner.`,
+      correct: hi.toLocaleString('sv-SE'),
+      distractors: [
+        [Math.min(a, b).toLocaleString('sv-SE'), 'positionsfel'],
+        [c.toLocaleString('sv-SE'), 'positionsfel'],
+      ],
+      explanation: `Flest siffror vinner. Har talen lika många siffror jämför du platserna från vänster — första platsen där de skiljer sig avgör.`,
     })
   }
   if (kind === 'plus-tiopotens') {
@@ -581,7 +640,7 @@ const storaTal = g('stora-tal', (level, seed, rng) => {
       prompt: `Vad är ${a.toLocaleString('sv-SE')} + ${step.toLocaleString('sv-SE')}?`,
       spokenPrompt: `Vad är ${a} plus ${step}?`,
       value: a + step,
-      explanation: `Bara siffran på ${step === 100 ? 'hundratals' : step === 1000 ? 'tusentals' : 'tiotusentals'}platsen ändras.`,
+      explanation: tenPowerStep(a, step),
       misconceptions: { [a + step / 10]: 'positionsfel', [a + step * 10]: 'positionsfel' },
     })
   }

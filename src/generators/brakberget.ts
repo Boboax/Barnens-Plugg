@@ -73,37 +73,82 @@ const brakJamfora = g('brak-jamfora', (level, seed, rng) => {
     })
   }
   // Vilket är störst? Klassisk fälla: större nämnare ⇒ mindre delar.
-  const pairs: [number, number, number, number][] =
-    level <= 4
-      ? [[1, 2, 1, 4], [1, 3, 1, 6], [3, 4, 1, 4], [1, 2, 1, 3]]
-      : [[2, 3, 3, 5], [3, 4, 4, 6], [2, 5, 1, 2], [5, 6, 7, 9], [3, 8, 2, 5]]
-  const [a, b, c, d] = rng.pick(pairs)
-  const first = a / b > c / d
+  // Bråken byggs i stället för att plockas ur en lista om fyra par (barnet
+  // lärde sig dem utantill). Nivå 1–3: två bråk med bilden som stöd.
+  // Därefter tre bråk utan bild — med två val blir varannan gissning rätt.
+  type F = [number, number]
+  const kind = level <= 3 ? rng.pick(['stambrak', 'samma'] as const)
+    : level <= 6 ? rng.pick(['stambrak', 'samma', 'dubbel'] as const)
+      : rng.pick(['dubbel', 'olika'] as const)
+  const fracs: F[] = []
+  const add = (f: F): void => {
+    if (f[0] > 0 && f[0] < f[1] && !fracs.some(([n, d]) => n * f[1] === f[0] * d)) fracs.push(f)
+  }
+  const want = level <= 3 ? 2 : 3
+  const dBase = rng.pick([3, 4, 5, 6] as const)
+  const family = rng.shuffle([...rng.pick([[3, 4, 6], [3, 4, 12], [4, 6, 12], [4, 5, 10], [3, 6, 8], [4, 6, 8]] as const)])
+  for (let guard = 0; fracs.length < want && guard < 80; guard++) {
+    if (kind === 'stambrak') add([1, rng.int(2, level <= 3 ? 6 : 10)])
+    else if (kind === 'samma') {
+      const d = level <= 3 ? 6 : 9
+      add([rng.int(1, d - 1), d])
+    } else if (kind === 'dubbel') {
+      // Nämnare där den ena är dubbla den andra (3/4 mot 5/8).
+      // Första två bråken får var sin nämnare, så jämförelsen kräver omskrivning.
+      const big = fracs.length === 1 || (fracs.length > 1 && rng.chance(0.5))
+      add(big ? [rng.int(1, 2 * dBase - 1), 2 * dBase] : [rng.int(1, dBase - 1), dBase])
+    } else {
+      // Tre olika nämnare ur en familj med liten gemensam nämnare (≤ 24) —
+      // annars blir omskrivningen räkning i sextiondelar.
+      const d = family[fracs.length]
+      add([rng.int(1, d - 1), d])
+    }
+  }
+  const sorted = [...fracs].sort((x, y) => y[0] / y[1] - x[0] / x[1])
+  const [best, ...rest] = sorted
+  const L = sorted.reduce((m, [, d]) => (m * d) / gcd(m, d), 1)
+  const explanation =
+    kind === 'stambrak'
+      ? `Alla har täljaren 1. Ju fler delar helheten delas i, desto mindre blir varje bit — ${frac(...best)} har störst bitar.`
+      : kind === 'samma'
+        ? `Samma nämnare betyder lika stora bitar. Flest bitar vinner: ${frac(...best)}.`
+        : `Gör nämnarna lika (${L}-delar): ${sorted.filter(([, d]) => d !== L).map(([n, d]) => `${frac(n, d)} = ${frac((n * L) / d, L)}`).join(', ')}. Flest ${L}-delar har ${frac(...best)}.`
   return choiceTask({
     generatorId: id, level, seed, rng,
-    prompt: `Vilket bråk är störst?`,
-    correct: first ? frac(a, b) : frac(c, d),
-    distractors: [[first ? frac(c, d) : frac(a, b), 'storre-namnare-storre-brak']],
-    visual: { kind: 'brak', parts: b, filled: a, secondary: { parts: d, filled: c } },
-    explanation: `Jämför bitarna: ${frac(a, b)} = ${sv(Math.round((a / b) * 100) / 100)} och ${frac(c, d)} = ${sv(Math.round((c / d) * 100) / 100)}. Större nämnare betyder mindre bitar!`,
+    prompt: want === 2 ? `Vilket bråk är större?` : `Vilket bråk är störst?`,
+    correct: frac(...best),
+    // Felet "större nämnare = större bråk" gäller bara ett felval med större
+    // nämnare än rätt svar; samma nämnare är ett annat fel.
+    distractors: rest.map((f) => [frac(...f), f[1] > best[1] ? 'storre-namnare-storre-brak' : null] as [string, MisconceptionTag | null]),
+    visual: want === 2 ? { kind: 'brak', parts: fracs[0][1], filled: fracs[0][0], secondary: { parts: fracs[1][1], filled: fracs[1][0] } } : undefined,
+    explanation,
   })
 })
 
+const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b))
+
 // ---------- Decimaltal börjar (åk 4) ----------
+
+const tenthsWord = (n: number): string => `${n} ${n === 1 ? 'tiondel' : 'tiondelar'}`
 
 const decimalIntro = g('decimal-intro', (level, seed, rng) => {
   const id = 'gen.decimal-intro'
   if (rng.chance(0.5)) {
-    // Jämförelsefällan: 0,25 ser "större ut" än 0,5.
-    const pairs: [number, number][] =
-      level <= 4 ? [[0.5, 0.25], [0.3, 0.13], [0.7, 0.09]] : [[0.5, 0.45], [0.62, 0.7], [0.08, 0.4], [0.35, 0.4]]
-    const [x, y] = rng.pick(pairs)
+    // Jämförelsefällan: 0,25 ser "större ut" än 0,5. Tre tal, inte två —
+    // ett tvåval gissas rätt varannan gång. Stjärnnivån: tusendelar.
+    const triples: [number, number, number][] =
+      level <= 4 ? [[0.5, 0.25, 0.3], [0.3, 0.13, 0.09], [0.7, 0.09, 0.45], [0.6, 0.52, 0.18], [0.8, 0.75, 0.09], [0.4, 0.35, 0.2]]
+        : level <= 7 ? [[0.5, 0.45, 0.09], [0.7, 0.62, 0.69], [0.4, 0.08, 0.35], [0.4, 0.35, 0.38], [0.9, 0.89, 0.19], [0.3, 0.27, 0.29]]
+          : [[0.5, 0.405, 0.45], [0.7, 0.069, 0.69], [0.9, 0.899, 0.89], [0.31, 0.3, 0.299], [0.6, 0.555, 0.59]]
+    const nums = rng.pick(triples)
+    const hi = Math.max(...nums)
+    const digits = (x: number): number => sv(x).length
     return choiceTask({
       generatorId: id, level, seed, rng,
       prompt: `Vilket tal är störst?`,
-      correct: sv(Math.max(x, y)),
-      distractors: [[sv(Math.min(x, y)), 'decimal-langd']],
-      explanation: `Jämför tiondelarna först: ${sv(Math.max(x, y))} har ${Math.floor(Math.max(x, y) * 10) % 10} tiondelar. Fler siffror betyder inte större tal!`,
+      correct: sv(hi),
+      distractors: nums.filter((x) => x !== hi).map((x) => [sv(x), digits(x) > digits(hi) ? 'decimal-langd' : null] as [string, MisconceptionTag | null]),
+      explanation: `Jämför tiondelarna först (första siffran efter kommat): ${nums.map((x) => `${sv(x)} har ${Math.floor(Math.round(x * 1000) / 100) % 10}`).join(', ')}. Flest tiondelar vinner — är de lika, jämför hundradelarna. Fler siffror betyder inte större tal!`,
     })
   }
   const tenths = rng.int(1, 9)
@@ -112,8 +157,8 @@ const decimalIntro = g('decimal-intro', (level, seed, rng) => {
   return choiceTask({
     generatorId: id, level, seed, rng,
     prompt: hundredths
-      ? `Vilket tal är ${tenths} tiondelar och ${hundredths} hundradelar?`
-      : `Vilket tal är ${tenths} tiondelar?`,
+      ? `Vilket tal är ${tenthsWord(tenths)} och ${hundredths} ${hundredths === 1 ? 'hundradel' : 'hundradelar'}?`
+      : `Vilket tal är ${tenthsWord(tenths)}?`,
     correct: sv(value),
     distractors: [
       [sv(value * 10), 'positionsfel'],

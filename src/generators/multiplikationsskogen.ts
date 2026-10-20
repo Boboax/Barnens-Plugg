@@ -164,6 +164,16 @@ const multDivSamband = g('mult-div-samband', (level, seed, rng) => {
 
 // ---------- Uppställning gånger (åk 4) ----------
 
+/** Talet uppdelat efter platsvärde, utan nollor: 689 → [600, 80, 9]. */
+function placeParts(n: number): number[] {
+  const out: number[] = []
+  for (let p = 10 ** (String(n).length - 1); p >= 1; p /= 10) {
+    const d = Math.floor(n / p) % 10
+    if (d) out.push(d * p)
+  }
+  return out
+}
+
 const skriftligMult = g('skriftlig-mult', (level, seed, rng) => {
   const id = 'gen.skriftlig-mult'
   const a = level <= 3 ? rng.int(12, 49) : level <= 6 ? rng.int(23, 99) : rng.int(102, 999)
@@ -178,7 +188,12 @@ const skriftligMult = g('skriftlig-mult', (level, seed, rng) => {
     prompt: `${a} × ${b} = ?`,
     spokenPrompt: `Vad är ${a} gånger ${b}? Använd gärna kladdytan för uppställning.`,
     value,
-    explanation: `Dela upp: ${a} = ${Math.floor(a / 10) * 10} + ${a % 10}. Då är ${a} × ${b} = ${Math.floor(a / 10) * 10 * b} + ${(a % 10) * b} = ${value}.`,
+    explanation: (() => {
+      // Dela efter platsvärde (689 = 600 + 80 + 9), inte "680 + 9" som
+      // bara flyttar problemet.
+      const parts = placeParts(a)
+      return `Dela upp: ${a} = ${parts.join(' + ')}. Gånger ${b} var för sig: ${parts.map((p) => p * b).join(' + ')} = ${value}.`
+    })(),
     misconceptions: {
       ...(noCarry !== value ? { [noCarry]: 'glomd-minnessiffra' as const } : {}),
       [a * b - b]: 'en-fel',
@@ -211,7 +226,13 @@ const kortDivision = g('kort-division', (level, seed, rng) => {
     prompt: `${a} / ${b} = ?`,
     spokenPrompt: `Vad är ${a} delat med ${b}?`,
     value: q,
-    explanation: `Dela upp ${a} i delar som går jämnt med ${b} — kolla svaret: ${q} × ${b} = ${a}.`,
+    explanation: (() => {
+      // Dela upp täljaren i bitar som går jämnt (84 / 4: 80 och 4) — VÄGEN
+      // till svaret, inte bara kontrollen.
+      const qs = placeParts(q)
+      if (qs.length === 1) return `Tänk gånger: ${b} × ? = ${a}. ${b} × ${q} = ${a}, så svaret är ${q}.`
+      return `Dela upp ${a} i bitar som går jämnt med ${b}: ${qs.map((x) => x * b).join(' + ')}. ${qs.map((x) => `${x * b} / ${b} = ${x}`).join(', ')}. Tillsammans ${q}.`
+    })(),
     misconceptions: { [q + 1]: 'en-fel', [q - 1]: 'en-fel', [a - b]: 'fel-raknesatt' },
   })
 })
