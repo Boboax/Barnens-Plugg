@@ -13,6 +13,9 @@ export const campIcon = (name: string): string => `${base}art/camp/icons/${name}
 
 export const itemImage = (item: CampCatalogItem): string => `${base}art/camp/items/${item.art}.webp`
 
+/** Tidsmaskinens fyra rutor där sanden rinner (Tillägg 8), sida vid sida. */
+export const TIME_MACHINE_SAND = `${base}art/camp/items/time-machine-sand.webp`
+
 /** Stillbild av en art (laddningsbilden ur rörelseatlasen) — används även
     i upptäckten och Bokhörnan. */
 export const petStill = (species: PetSpeciesId): string => campImage(`${species}-poster-v1`)

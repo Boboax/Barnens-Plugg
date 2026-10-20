@@ -5,7 +5,7 @@ import { CAMP_CATALOG, catalogItem } from '../../../domain/camp'
 import { worldById } from '../../../domain/worlds'
 import { PetSounds, type PetSoundKind } from '../../pet-sounds'
 import { PetSprite, type PetAction } from './PetSprite'
-import { campIcon, campImage, itemImage } from './campArt'
+import { TIME_MACHINE_SAND, campIcon, campImage, itemImage } from './campArt'
 import { DEN_ART_READY, DenScene } from './DenScene'
 import { TreatBowl } from './TreatBowl'
 
@@ -480,12 +480,14 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
     }
     // Utan rörelse (prefers-reduced-motion): bytet direkt, inget snurr.
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { arrive(); return }
-    // Sandglaset vänds först — då förstår barnet att det är tiden som
-    // snurrar, inte vännen som byts ut. Vännen byter ålder när glaset vänt.
+    // Sanden rinner ut och glaset vänds — då förstår barnet att det är
+    // tiden som snurrar, inte vännen som byts ut. Vännen byter ålder när
+    // glaset har vänt (tiderna följer .den-hourglass i camp.css).
     setHourglass(Date.now())
-    say('Tidsmaskinen surrar … sanden vänder!')
-    later(arrive, 1150)
-    later(() => setHourglass(0), 1900)
+    say('Tidsmaskinen surrar … sanden rinner!')
+    later(() => say('… och glaset vänder!'), 1000)
+    later(arrive, 1650)
+    later(() => setHourglass(0), 2400)
   }
 
   const toggleSound = (): void => {
@@ -605,7 +607,11 @@ export function PetHouse({ pets, items, hasTent, toyName, canInteract, stageOf, 
           }}
         >
           {warp > 0 && <span key={warp} className="den-warp" aria-hidden="true" />}
-          {hourglass > 0 && <img key={hourglass} className="den-hourglass" src={itemImage(catalogItem('time-machine')!)} alt="" aria-hidden="true" />}
+          {hourglass > 0 && (
+            <span key={hourglass} className="den-hourglass" aria-hidden="true">
+              <span className="den-hourglass__sand" style={{ backgroundImage: `url(${TIME_MACHINE_SAND})` }} />
+            </span>
+          )}
           <div className={`den-pet__body${reaction ? ` den-pet__body--${reaction.kind}` : ''}${warp > 0 ? ' den-pet__body--warped' : ''}${hourglass > 0 && warp < hourglass ? ' den-pet__body--away' : ''}`}>
             <PetSprite species={pet.species} stage={stageOf(pet)} action={reaction ? REACTION_ACTION[reaction.kind] : mode === 'fetch' ? 'play' : 'idle'} resting={resting} />
           </div>

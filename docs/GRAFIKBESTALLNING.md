@@ -1340,7 +1340,7 @@ The same small wooden and brass hourglass time machine as in the attached item i
 
 Visas i boden i ca 120 px och som knapp i lyan i 44–60 px.
 
-## Tillägg 8 (okt 2026) · Sanden rinner i tidsmaskinen (1)
+## Tillägg 8 (okt 2026) · Sanden rinner i tidsmaskinen (1) — LEVERERAD 20 okt, inlagd (time-machine-sand.webp)
 
 Tidsmaskinen vänds redan med en rörelse i appen. För att sanden också ska
 rinna behövs fyra bildrutor av SAMMA sandglas där bara sanden ändras.
