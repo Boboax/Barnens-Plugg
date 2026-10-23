@@ -1035,6 +1035,233 @@ const Hundra: LessonVisual = ({ step }) => {
   )
 }
 
+/* ---------- Chans (sannolikhet): alla möjligheter under strecket ---------- */
+
+/** Blir sann en stund efter att `active` slagit till — för rörelser som ska
+    hända INOM en scen (siffrorna som flyttar), inte bara mellan scener. */
+function useLater(active: boolean, ms: number): boolean {
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    if (!active) { setOn(false); return }
+    if (reducedMotion()) { setOn(true); return }
+    const t = window.setTimeout(() => setOn(true), ms)
+    return () => window.clearTimeout(t)
+  }, [active, ms])
+  return on
+}
+
+const BALLS: { x: number; y: number; red: boolean }[] = [
+  { x: 70, y: 150, red: true }, { x: 104, y: 152, red: false }, { x: 138, y: 148, red: true },
+  { x: 86, y: 118, red: false }, { x: 122, y: 116, red: true },
+]
+
+const Sannolikhet: LessonVisual = ({ step }) => {
+  const dice = step >= 5
+  return (
+    <g>
+      <g className="ls" style={fade(!dice)}>
+        {/* Påsen */}
+        <path d="M44 92 Q40 60 70 52 L80 40 L128 40 L138 52 Q168 60 164 92 L164 160 Q164 182 140 182 L68 182 Q44 182 44 160 Z"
+          fill={SUN_SOFT} stroke={INK} strokeWidth={3} />
+        <path d="M78 46 Q104 58 130 46" fill="none" stroke={INK} strokeWidth={3} strokeLinecap="round" />
+        {BALLS.map((b, i) => (
+          <g key={i}>
+            <circle className="ls" cx={b.x} cy={b.y} r={18} fill="none" stroke={SUN} strokeWidth={6} style={fade(step >= 3 && b.red)} />
+            <circle cx={b.x} cy={b.y} r={14} fill={b.red ? CORAL : PRIMARY} stroke={INK} strokeWidth={2} />
+            <text className="ls" x={b.x} y={b.y + 5} textAnchor="middle" fontSize={14} fontWeight={900} fill={PAPER} style={fade(step >= 2)}>{i + 1}</text>
+          </g>
+        ))}
+      </g>
+      {/* Tärningen */}
+      <g className="ls" style={fade(dice)}>
+        <rect x={60} y={70} width={92} height={92} rx={18} fill={PAPER} stroke={INK} strokeWidth={3} />
+        {[[82, 92], [82, 116], [82, 140], [130, 92], [130, 116], [130, 140]].map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r={7} fill={INK} />
+        ))}
+      </g>
+      <g className="ls" style={fade(step >= 2 && !dice)}>
+        <Frac x={244} y={104} n={step >= 3 ? 3 : '?'} d={5} size={46} hiD={step === 2} hiN={step === 3} />
+      </g>
+      <g className="ls" style={fade(dice)}>
+        <Frac x={244} y={104} n={1} d={6} size={46} />
+      </g>
+      <Caption x={244} y={40} size={17} visible={step === 1} color={CORAL}>röd?</Caption>
+      <Caption x={244} y={182} size={17} visible={step === 2} color={MUTED}>alla kulor</Caption>
+      <Caption x={244} y={182} size={17} visible={step === 3} color={CORAL}>de röda</Caption>
+      <Caption x={244} y={182} size={18} visible={step === 4} color={MINT}>tre av fem</Caption>
+      <Caption x={244} y={182} size={18} visible={dice} color={MINT}>en av sex</Caption>
+    </g>
+  )
+}
+
+/* ---------- Skala: från kartan till verkligheten ---------- */
+
+const CM = 45
+
+const Skala: LessonVisual = ({ step }) => {
+  const measured = useTween(step >= 2 ? 3 : 0, 1600)
+  return (
+    <g>
+      <rect x={18} y={18} width={190} height={112} rx={10} fill="#E6F0D6" stroke={LINE} strokeWidth={2} />
+      <ellipse cx={170} cy={46} rx={26} ry={14} fill="#BFDDF0" />
+      <path d="M30 112 Q60 100 52 124" fill="none" stroke="#9CC27E" strokeWidth={8} strokeLinecap="round" />
+      {/* Vägen: exakt 3 cm på kartan */}
+      <line x1={40} x2={40 + 3 * CM} y1={84} y2={84} stroke="#8A8178" strokeWidth={10} strokeLinecap="round" />
+      <line x1={46} x2={34 + 3 * CM} y1={84} y2={84} stroke={PAPER} strokeWidth={2} strokeDasharray="6 6" />
+      <g className="ls" style={fade(step >= 1)}>
+        <rect x={26} y={26} width={66} height={26} rx={8} fill={PAPER} stroke={INK} strokeWidth={2} />
+        <text x={59} y={45} textAnchor="middle" fontSize={16} fontWeight={900} fill={INK}>1:1000</text>
+      </g>
+      {/* Linjalen */}
+      <g className="ls" style={fade(step >= 2)}>
+        <rect x={34} y={140} width={4 * CM + 12} height={34} rx={4} fill={SUN_SOFT} stroke={INK} strokeWidth={2} />
+        <rect x={40} y={140} width={measured * CM} height={10} fill={SUN} />
+        {Array.from({ length: 5 }, (_, i) => (
+          <g key={i}>
+            <line x1={40 + i * CM} x2={40 + i * CM} y1={140} y2={152} stroke={INK} strokeWidth={2} />
+            <text x={40 + i * CM} y={168} textAnchor="middle" fontSize={12} fontWeight={800} fill={INK}>{i}</text>
+          </g>
+        ))}
+        <text x={34 + 4 * CM + 18} y={168} fontSize={11} fontWeight={800} fill={MUTED}>cm</text>
+      </g>
+      <Caption x={265} y={56} size={16} visible={step === 1} color={PRIMARY}>1 cm →</Caption>
+      <Caption x={265} y={78} size={16} visible={step === 1} color={PRIMARY}>1000 cm</Caption>
+      <Caption x={265} y={84} size={22} visible={step === 2} color={INK}>3 cm</Caption>
+      <Caption x={265} y={56} size={17} visible={step >= 3 && step < 5} color={PRIMARY}>3 × 1000</Caption>
+      <Caption x={265} y={80} size={17} visible={step >= 3 && step < 5} color={PRIMARY}>= 3000 cm</Caption>
+      <Caption x={265} y={110} size={20} visible={step === 4} color={MINT}>= 30 m</Caption>
+      <Caption x={266} y={52} size={14} visible={step >= 5} color={PRIMARY}>från kartan:</Caption>
+      <Caption x={266} y={76} size={20} visible={step >= 5} color={PRIMARY}>gånger</Caption>
+      <Caption x={266} y={112} size={14} visible={step >= 5} color={CORAL}>till kartan:</Caption>
+      <Caption x={266} y={136} size={20} visible={step >= 5} color={CORAL}>delat</Caption>
+    </g>
+  )
+}
+
+/* ---------- Grafer: upp till linjen, sedan åt sidan ---------- */
+
+const Grafer: LessonVisual = ({ step }) => {
+  const ox = 52
+  const oy = 172
+  const ux = 42
+  const uy = 14
+  const X = (hg: number): number => ox + hg * ux
+  const Y = (kr: number): number => oy - kr * uy
+  const up = useTween(step >= 2 ? 6 : 0, 1400)
+  const left = useTween(step >= 3 ? 3 : 0, 1400)
+  const across = useTween(step >= 4 ? 4 : 0, 1400)
+  const down = useTween(step >= 5 ? 8 : 0, 1400)
+  const firstDim = step >= 4 ? 0.25 : 1
+  return (
+    <g>
+      {Array.from({ length: 6 }, (_, i) => (
+        <g key={`x${i}`}>
+          <line x1={X(i)} x2={X(i)} y1={Y(0)} y2={Y(11)} stroke={LINE} strokeWidth={1} />
+          <text x={X(i)} y={oy + 17} textAnchor="middle" fontSize={12} fontWeight={800} fill={MUTED}>{i}</text>
+        </g>
+      ))}
+      {[2, 4, 6, 8, 10].map((kr) => (
+        <g key={`y${kr}`}>
+          <line x1={X(0)} x2={X(5.4)} y1={Y(kr)} y2={Y(kr)} stroke={LINE} strokeWidth={1} />
+          <text x={ox - 8} y={Y(kr) + 4} textAnchor="end" fontSize={12} fontWeight={800} fill={MUTED}>{kr}</text>
+        </g>
+      ))}
+      <line x1={X(0)} x2={X(5.6)} y1={oy} y2={oy} stroke={INK} strokeWidth={3} />
+      <line x1={ox} x2={ox} y1={Y(0)} y2={Y(11.5)} stroke={INK} strokeWidth={3} />
+      <text x={X(5.6)} y={oy - 6} textAnchor="end" fontSize={13} fontWeight={900} fill={INK}>hg</text>
+      <text x={ox + 6} y={Y(11.2)} fontSize={13} fontWeight={900} fill={INK}>kr</text>
+      <line className="ls" x1={X(0)} y1={Y(0)} x2={X(5)} y2={Y(10)} stroke={MINT} strokeWidth={5} strokeLinecap="round" style={fade(step >= 1)} />
+      {/* 3 hg → 6 kr */}
+      <g opacity={firstDim}>
+        <line x1={X(3)} x2={X(3)} y1={Y(0)} y2={Y(up)} stroke={CORAL} strokeWidth={4} strokeDasharray="6 4" opacity={step >= 2 ? 1 : 0} />
+        <line x1={X(3)} x2={X(3 - left)} y1={Y(6)} y2={Y(6)} stroke={CORAL} strokeWidth={4} strokeDasharray="6 4" opacity={step >= 3 ? 1 : 0} />
+      </g>
+      {/* 8 kr → 4 hg */}
+      <line x1={X(0)} x2={X(across)} y1={Y(8)} y2={Y(8)} stroke={PRIMARY} strokeWidth={4} strokeDasharray="6 4" opacity={step >= 4 ? 1 : 0} />
+      <line x1={X(4)} x2={X(4)} y1={Y(8)} y2={Y(8 - down)} stroke={PRIMARY} strokeWidth={4} strokeDasharray="6 4" opacity={step >= 5 ? 1 : 0} />
+      <Caption x={X(3) + 28} y={Y(6) + 6} size={15} visible={step === 3} color={CORAL}>6 kr</Caption>
+      <Caption x={X(4) + 26} y={oy - 10} size={15} visible={step >= 5} color={PRIMARY}>4 hg</Caption>
+      <Caption x={265} y={36} size={15} visible={step === 0} color={MUTED}>godispris</Caption>
+    </g>
+  )
+}
+
+/* ---------- Räkna med decimaltal: komma under komma ---------- */
+
+const DEC = { e: 140, k: 162, t: 184, h: 210 }
+
+const DecimalRakna: LessonVisual = ({ step }) => {
+  const shift = useTween(step >= 1 ? 0 : 52, 1300)
+  const digit = (x: number, y: number, ch: string, color = INK): JSX.Element => (
+    <text x={x} y={y} textAnchor="middle" fontSize={34} fontWeight={900} fill={color}>{ch}</text>
+  )
+  return (
+    <g>
+      <g className="ls" style={fade(step >= 3)}>
+        <text x={DEC.e} y={28} textAnchor="middle" fontSize={10} fontWeight={800} fill={MUTED}>ental</text>
+        <text x={DEC.t} y={20} textAnchor="middle" fontSize={10} fontWeight={800} fill={MUTED}>tiondel</text>
+        <text x={DEC.h + 8} y={34} textAnchor="middle" fontSize={10} fontWeight={800} fill={MUTED}>hundradel</text>
+      </g>
+      <line className="ls" x1={DEC.k} x2={DEC.k} y1={34} y2={176} stroke={MINT} strokeWidth={3} strokeDasharray="5 5" style={fade(step >= 4)} />
+      {digit(DEC.e, 72, '3')}{digit(DEC.k, 72, ',')}{digit(DEC.t, 72, '1')}{digit(DEC.h, 72, '8')}
+      <text x={100} y={116} textAnchor="middle" fontSize={34} fontWeight={900} fill={INK}>+</text>
+      <g style={{ transform: `translate(${shift}px, 0)` }}>
+        {digit(DEC.e, 116, '2')}{digit(DEC.k, 116, ',')}{digit(DEC.t, 116, '7')}
+      </g>
+      <text className="ls" x={DEC.h} y={116} textAnchor="middle" fontSize={34} fontWeight={900} fill={CORAL} style={fade(step >= 2)}>0</text>
+      <line x1={110} x2={232} y1={130} y2={130} stroke={INK} strokeWidth={3} />
+      <text className="ls" x={DEC.h} y={170} textAnchor="middle" fontSize={34} fontWeight={900} fill={PRIMARY} style={fade(step >= 3)}>8</text>
+      <text className="ls" x={DEC.t} y={170} textAnchor="middle" fontSize={34} fontWeight={900} fill={PRIMARY} style={fade(step >= 3, 1100)}>8</text>
+      <text className="ls" x={DEC.e} y={170} textAnchor="middle" fontSize={34} fontWeight={900} fill={PRIMARY} style={fade(step >= 3, 2200)}>5</text>
+      <text className="ls" x={DEC.k} y={170} textAnchor="middle" fontSize={34} fontWeight={900} fill={MINT} style={fade(step >= 4)}>,</text>
+      <Caption x={280} y={116} size={14} visible={step === 0} color={CORAL}>fel plats!</Caption>
+      <Caption x={280} y={116} size={14} visible={step === 2} color={CORAL}>2,7 = 2,70</Caption>
+    </g>
+  )
+}
+
+/* ---------- Gånger och delat med stora tal ---------- */
+
+const PV = { h: 112, t: 162, e: 212 }
+
+const MultDivStora: LessonVisual = ({ step }) => {
+  const shifted0 = useLater(step === 0, 1300)
+  const back2 = useLater(step === 2, 1300)
+  const target = step === 0 ? (shifted0 ? 1 : 0) : step === 1 ? 1 : step === 2 ? (back2 ? 0 : 1) : 0
+  const off = useTween(target, 1000)
+  const area = step >= 3
+  return (
+    <g>
+      <g className="ls" style={fade(!area)}>
+        {([['hundratal', PV.h], ['tiotal', PV.t], ['ental', PV.e]] as const).map(([name, x]) => (
+          <g key={name}>
+            <rect x={x - 22} y={44} width={44} height={70} rx={8} fill={PAPER} stroke={LINE} strokeWidth={2} />
+            <text x={x} y={36} textAnchor="middle" fontSize={11} fontWeight={800} fill={MUTED}>{name}</text>
+          </g>
+        ))}
+        <text x={PV.t - off * 50} y={92} textAnchor="middle" fontSize={36} fontWeight={900} fill={PRIMARY}>3</text>
+        <text x={PV.e - off * 50} y={92} textAnchor="middle" fontSize={36} fontWeight={900} fill={PRIMARY}>4</text>
+        <text x={PV.e} y={92} textAnchor="middle" fontSize={36} fontWeight={900} fill={CORAL} opacity={step === 1 || (step === 0 && shifted0) || (step === 2 && !back2) ? 1 : 0}>0</text>
+        <Caption x={160} y={150} size={20} visible={step <= 1} color={INK}>34 × 10 = 340</Caption>
+        <Caption x={160} y={150} size={20} visible={step === 2} color={INK}>340 / 10 = 34</Caption>
+        <Caption x={160} y={178} size={15} visible={step <= 1} color={PRIMARY}>← ett steg åt vänster</Caption>
+        <Caption x={160} y={178} size={15} visible={step === 2} color={PRIMARY}>ett steg åt höger →</Caption>
+      </g>
+      <g className="ls" style={fade(area)}>
+        <text x={36} y={110} textAnchor="end" fontSize={18} fontWeight={900} fill={INK}>24</text>
+        <rect x={46} y={60} width={160} height={84} rx={6} fill={PRIMARY_SOFT} stroke={INK} strokeWidth={2.5} />
+        <rect x={206} y={60} width={80} height={84} rx={6} fill={CORAL_SOFT} stroke={INK} strokeWidth={2.5} />
+        <text x={126} y={50} textAnchor="middle" fontSize={18} fontWeight={900} fill={PRIMARY}>10</text>
+        <text x={246} y={50} textAnchor="middle" fontSize={18} fontWeight={900} fill={CORAL}>5</text>
+        <text className="ls" x={126} y={110} textAnchor="middle" fontSize={24} fontWeight={900} fill={INK} style={fade(step >= 4)}>240</text>
+        <text className="ls" x={246} y={110} textAnchor="middle" fontSize={24} fontWeight={900} fill={INK} style={fade(step >= 4, 900)}>120</text>
+        <Caption x={166} y={24} size={18} visible={step === 3} color={INK}>24 × 15</Caption>
+        <Caption x={166} y={178} size={20} visible={step >= 5} color={MINT}>240 + 120 = 360</Caption>
+      </g>
+    </g>
+  )
+}
+
 export const LESSON_VISUALS: Record<string, LessonVisual> = {
   'mult-intro': MultIntro,
   'div-intro': DivIntro,
@@ -1060,4 +1287,9 @@ export const LESSON_VISUALS: Record<string, LessonVisual> = {
   'klockan-minuter': KlockanMinuter,
   'medelvarde': Medelvarde,
   'problemlosning-flerstegs': Stapelmodell,
+  'sannolikhet-intro': Sannolikhet,
+  'skala': Skala,
+  'grafer': Grafer,
+  'decimal-rakna': DecimalRakna,
+  'mult-div-stora': MultDivStora,
 }

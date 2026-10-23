@@ -183,6 +183,7 @@ const decimalRakna = g('decimal-rakna', (level, seed, rng) => {
   // Kommafelet: räkna som heltal och sätta kommat fel.
   const wrongComma = isAdd ? (aI + bI) / (scale * 10) : (aI - bI) / (scale * 10)
   const money = rng.chance(0.4)
+  const dec = (x: number): string => x.toFixed(scale === 10 ? 1 : 2).replace('.', ',')
   return numericTask({
     generatorId: id, level, seed,
     prompt: money
@@ -191,7 +192,9 @@ const decimalRakna = g('decimal-rakna', (level, seed, rng) => {
     spokenPrompt: `Vad är ${sv(a)} ${isAdd ? 'plus' : 'minus'} ${sv(b)}?`,
     value,
     unit: money ? 'kr' : undefined,
-    explanation: `Ställ upp med komma under komma — tiondelar räknas med tiondelar: ${sv(value)}.`,
+    // Visa uppställningen med lika många decimaler (2,7 → 2,70), inte bara
+    // facit — det är där kommafelet uppstår.
+    explanation: `Komma under komma, och fyll ut med nollor så att talen har lika många decimaler: ${dec(a)} ${isAdd ? '+' : '−'} ${dec(b)} = ${dec(value)}.`,
     misconceptions: { [wrongComma]: 'decimal-langd', [value * 10]: 'positionsfel' },
   })
 })

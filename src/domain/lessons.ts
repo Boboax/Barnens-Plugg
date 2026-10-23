@@ -276,6 +276,56 @@ export const LESSONS: Record<string, Lesson> = {
       { text: 'Det här är stapelmodellen: rita först, räkna sedan.' },
     ],
   },
+  'sannolikhet-intro': {
+    scenes: [
+      { text: 'Chans betyder hur troligt något är. Vi tittar i en påse med kulor.' },
+      { text: 'I påsen ligger 3 röda och 2 blå kulor. Hur stor är chansen att dra en röd?', say: 'I påsen ligger tre röda och två blå kulor. Hur stor är chansen att dra en röd?' },
+      { text: 'Räkna ALLA kulor först: 5 stycken. Det blir nämnaren, talet under strecket.', say: 'Räkna alla kulor först. Fem stycken. Det blir nämnaren, talet under strecket.' },
+      { text: 'Räkna sedan de röda: 3 stycken. Det blir täljaren, talet över strecket.', say: 'Räkna sedan de röda. Tre stycken. Det blir täljaren, talet över strecket.' },
+      { text: 'Chansen att dra en röd kula är 3/5 — tre av fem.', say: 'Chansen att dra en röd kula är tre femtedelar. Tre av fem.' },
+      { text: 'En tärning har 6 sidor. Chansen att slå en sexa är 1/6 — en av sex.', say: 'En tärning har sex sidor. Chansen att slå en sexa är en sjättedel. En av sex.' },
+    ],
+  },
+  'skala': {
+    scenes: [
+      { text: 'En karta är en förminskad bild av verkligheten. Skalan säger hur mycket mindre.' },
+      { text: 'Skala 1:1000 betyder: 1 cm på kartan är 1000 cm i verkligheten.', say: 'Skala ett till tusen betyder: en centimeter på kartan är tusen centimeter i verkligheten.' },
+      { text: 'Vägen på kartan mäter vi med linjalen: 3 cm.', say: 'Vägen på kartan mäter vi med linjalen. Tre centimeter.', minMs: 4000 },
+      { text: 'Varje centimeter är 1000 cm i verkligheten: 3 × 1000 = 3000 cm.', say: 'Varje centimeter är tusen centimeter i verkligheten. Tre gånger tusen är tretusen centimeter.' },
+      { text: '100 cm är 1 meter, så 3000 cm är 30 meter.', say: 'Hundra centimeter är en meter, så tretusen centimeter är trettio meter.' },
+      { text: 'Från kartan till verkligheten: gånger. Från verkligheten till kartan: delat.' },
+    ],
+  },
+  'grafer': {
+    scenes: [
+      { text: 'Grafen visar vad godis kostar. Längs golvet: hekto. Uppåt: kronor.' },
+      { text: 'Linjen visar priset för varje mängd godis.' },
+      { text: 'Vad kostar 3 hg? Gå rakt upp från 3 tills du når linjen.', say: 'Vad kostar tre hekto? Gå rakt upp från tre tills du når linjen.', minMs: 3500 },
+      { text: 'Gå sedan rakt åt vänster och läs av: 6 kr.', say: 'Gå sedan rakt åt vänster och läs av. Sex kronor.', minMs: 3500 },
+      { text: 'Tvärtom: hur mycket får du för 8 kr? Gå in från 8 till linjen …', say: 'Tvärtom. Hur mycket får du för åtta kronor? Gå in från åtta till linjen.', minMs: 3500 },
+      { text: '… och sedan rakt ner: 4 hg. Varje hekto kostar 2 kr.', say: 'Och sedan rakt ner. Fyra hekto. Varje hekto kostar två kronor.', minMs: 3500 },
+    ],
+  },
+  'decimal-rakna': {
+    scenes: [
+      { text: 'Vi räknar 3,18 + 2,7. Kommat skiljer hela tal från delarna.', say: 'Vi räknar tre komma arton plus två komma sju. Kommat skiljer hela tal från delarna.' },
+      { text: 'Ställ upp så att kommat hamnar rakt under kommat.', minMs: 3500 },
+      { text: 'Fyll den tomma platsen med en nolla: 2,7 är samma som 2,70.', say: 'Fyll den tomma platsen med en nolla. Två komma sju är samma som två komma sjuttio.' },
+      { text: 'Räkna som vanligt från höger: hundradelar, tiondelar, ental.', minMs: 4500 },
+      { text: 'Kommat flyttar rakt ner i svaret: 5,88.', say: 'Kommat flyttar rakt ner i svaret. Fem komma åttioåtta.' },
+      { text: 'Kom ihåg: komma under komma. Då räknas tiondelar med tiondelar.' },
+    ],
+  },
+  'mult-div-stora': {
+    scenes: [
+      { text: 'Gånger 10: varje siffra flyttar ett steg åt vänster. 34 × 10 = 340.', say: 'Gånger tio. Varje siffra flyttar ett steg åt vänster. Trettiofyra gånger tio är trehundrafyrtio.', minMs: 3500 },
+      { text: 'Den tomma entalsplatsen fylls med en nolla.' },
+      { text: 'Delat med 10 är tvärtom: siffrorna flyttar åt höger. 340 / 10 = 34.', say: 'Delat med tio är tvärtom. Siffrorna flyttar åt höger. Trehundrafyrtio delat med tio är trettiofyra.', minMs: 3500 },
+      { text: 'Större tal: 24 × 15. Dela upp 15 i 10 och 5.', say: 'Större tal. Tjugofyra gånger femton. Dela upp femton i tio och fem.' },
+      { text: '24 × 10 = 240 och 24 × 5 = 120.', say: 'Tjugofyra gånger tio är tvåhundrafyrtio. Tjugofyra gånger fem är hundratjugo.' },
+      { text: 'Lägg ihop delarna: 240 + 120 = 360.', say: 'Lägg ihop delarna. Tvåhundrafyrtio plus hundratjugo är trehundrasextio.' },
+    ],
+  },
 }
 
 export const lessonFor = (momentId: string): Lesson | undefined => LESSONS[momentId]

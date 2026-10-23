@@ -252,7 +252,7 @@ const multDivStora = g('mult-div-stora', (level, seed, rng) => {
         prompt: `${a * p} / ${p} = ?`,
         spokenPrompt: `Vad är ${a * p} delat med ${p}?`,
         value: a,
-        explanation: `Att dela med ${p} flyttar siffrorna ${String(p).length - 1} steg åt höger: ${a}.`,
+        explanation: `Delat med ${p}: varje siffra flyttar ${String(p).length - 1} steg åt höger, och nollorna på slutet försvinner: ${a}.`,
         misconceptions: { [a * 10]: 'nolla-multiplikation', [Math.floor(a / 10)]: 'nolla-multiplikation' },
       })
     }
@@ -261,7 +261,9 @@ const multDivStora = g('mult-div-stora', (level, seed, rng) => {
       prompt: `${a} × ${p} = ?`,
       spokenPrompt: `Vad är ${a} gånger ${p}?`,
       value: a * p,
-      explanation: `Att multiplicera med ${p} lägger till ${String(p).length - 1} nollor: ${a * p}.`,
+      // Platsvärdet, inte "lägg till nollor" — samma bild som filmen, och
+      // regeln som håller även för decimaltal senare.
+      explanation: `Gånger ${p}: varje siffra flyttar ${String(p).length - 1} steg åt vänster, och de tomma platserna fylls med ${p === 10 ? 'en nolla' : p === 100 ? 'två nollor' : 'tre nollor'}: ${a * p}.`,
       misconceptions: { [a * p * 10]: 'nolla-multiplikation', [(a * p) / 10]: 'nolla-multiplikation' },
     })
   }

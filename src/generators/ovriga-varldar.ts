@@ -80,14 +80,15 @@ const sannolikhet = g('sannolikhet-intro', (level, seed, rng) => {
   const want = askRed ? red : blue
   return choiceTask({
     generatorId: id, level, seed, rng,
-    prompt: `I en påse ligger ${red} röda och ${blue} blå kulor. Hur stor är chansen att dra en ${askRed ? 'röd' : 'blå'} kula?`,
+    // "1 röd och 3 blå kulor", "4 röda och 1 blå kula" — inte "1 röda".
+    prompt: `I en påse ligger ${red} ${red === 1 ? 'röd' : 'röda'} och ${blue} blå ${blue === 1 ? 'kula' : 'kulor'}. Hur stor är chansen att dra en ${askRed ? 'röd' : 'blå'} kula?`,
     correct: `${want}/${total}`,
     distractors: [
       [`${want}/${askRed ? blue : red}`, 'fel-raknesatt'],
       [`1/${total}`, null],
       [`${askRed ? blue : red}/${total}`, null],
     ],
-    explanation: `Det finns ${total} kulor totalt och ${want} är ${askRed ? 'röda' : 'blå'}: chansen är ${want}/${total}. Nämnaren är alltid ALLA möjligheter.`,
+    explanation: `Det finns ${total} kulor totalt och ${want} är ${askRed ? (want === 1 ? 'röd' : 'röda') : 'blå'}: chansen är ${want}/${total}. Nämnaren är alltid ALLA möjligheter.`,
   })
 })
 
