@@ -11,6 +11,9 @@ import { CLOUD_VOICE, cloudAudioStored, cloudTtsAvailable, kickVoiceList, prepar
 import { daysSinceBackup, exportAnalysis, exportHousehold, importHousehold } from '../../storage/backup'
 import { BELONING_ICONS, BelongIcon, isBelongIcon, HERO_KINDS, HERO_LABEL, HeroImg } from '../components/Icon'
 import { KID_COLORS, nowISO, useStore } from '../store'
+import { weakMoments, type WeakReason } from '../../engine/retrain'
+import { YEAR_ORDER } from '../../domain/curriculum'
+import { yearLabel } from '../../domain/guardians'
 
 /* ============================================================
    Föräldraläget — sakligt och vuxet, inga spelelement.
@@ -618,6 +621,7 @@ function ChildSettings({ child }: { child: ChildProfile }) {
       </div>
 
       <CampFriends child={child} />
+      <RetrainTool child={child} />
 
       <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, fontSize: 14, fontWeight: 700, padding: '6px 0' }}>
         <span>⏱ Tid per dag: <strong>{child.dailyLimitMinutes} min</strong></span>
@@ -745,6 +749,98 @@ function CampFriends({ child }: { child: ChildProfile }) {
       <p style={{ margin: '6px 0 0', fontSize: 12, color: '#8B8FA0' }}>
         Nästa vän kommer vid nästa nya milstolpe: en besegrad årsväktare, en erövrad värld eller var tionde träningsdag.
       </p>
+    </div>
+  )
+}
+
+const WEAK_REASON: Record<WeakReason, string> = {
+  'aldrig-ovat': 'knappt övat',
+  osaker: 'osäker',
+  'latt-niva': 'mest lätta nivåer',
+}
+
+/* Träna om och backa (engine/retrain.ts). Föräldern ser exakt vilka moment
+   det gäller innan något ändras, och varje ändring kräver en bekräftelse.
+   Väktare, troféer, vänner och mynt rörs aldrig vid "träna om". */
+function RetrainTool({ child }: { child: ChildProfile }) {
+  const store = useStore()
+  const weak = useMemo(() => weakMoments(child), [child])
+  const [open, setOpen] = useState(false)
+  const [picked, setPicked] = useState<Set<string>>(() => new Set(weak.filter((w) => w.reason !== 'latt-niva').map((w) => w.momentId)))
+  const [year, setYear] = useState<SchoolYear>(child.schoolYear)
+  const [confirm, setConfirm] = useState<'retrain' | 'back' | null>(null)
+  const [done, setDone] = useState('')
+  const btn = { fontSize: 12.5, fontWeight: 800, padding: '6px 12px', borderRadius: 8, fontFamily: 'inherit' } as const
+  const years = YEAR_ORDER.slice(0, YEAR_ORDER.indexOf(child.schoolYear) + 1)
+  return (
+    <div style={{ background: '#F7F6F2', borderRadius: 10, padding: '10px 12px', margin: '6px 0' }}>
+      <button onClick={() => setOpen(!open)} aria-expanded={open}
+        style={{ all: 'unset', cursor: 'pointer', fontSize: 14, fontWeight: 800 }}>
+        🔁 Träna om och backa {weak.length > 0 ? `· ${weak.length} moment att se över` : ''} {open ? '▴' : '▾'}
+      </button>
+      {open && (
+        <div style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.45 }}>
+          <p style={{ margin: '0 0 8px' }}>
+            Moment som räknas som klara men där {child.name} inte visat att momentet sitter: knappt övade
+            (klarade via diagnos eller boss), låg träffsäkerhet, eller övade mest på lätta nivåer.
+            Valda moment öppnas igen och tränas om med filmerna, i läroplanens ordning. Väktare,
+            troféer, vänner och mynt behålls.
+          </p>
+          {weak.length === 0 ? <p style={{ margin: 0, fontWeight: 700 }}>Inga moment att se över just nu.</p> : (
+            <div style={{ display: 'grid', gap: 3, maxHeight: 240, overflowY: 'auto', marginBottom: 8 }}>
+              {weak.map((w) => (
+                <label key={w.momentId} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input type="checkbox" checked={picked.has(w.momentId)} onChange={() => {
+                    const next = new Set(picked)
+                    if (next.has(w.momentId)) next.delete(w.momentId)
+                    else next.add(w.momentId)
+                    setPicked(next)
+                  }} />
+                  <span><strong>{yearLabel(w.year)}</strong> · {w.title}</span>
+                  <span style={{ marginLeft: 'auto', color: '#8B8FA0', fontSize: 12.5, fontWeight: 700 }}>
+                    {WEAK_REASON[w.reason]} · {w.practiced} svar{w.accuracy !== null ? `, ${Math.round(w.accuracy * 100)} % rätt` : ''}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+          {weak.length > 0 && (confirm === 'retrain' ? (
+            <span style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 800, color: '#B4552E' }}>Öppna {picked.size} moment igen för {child.name}?</span>
+              <button style={{ ...btn, background: '#4A56C6', color: '#fff' }} onClick={() => {
+                store.retrainMoments(child.id, [...picked]); setConfirm(null); setDone(`${picked.size} moment öppnade för omträning.`)
+              }}>Ja, träna om</button>
+              <button style={{ ...btn, background: '#EDEAE2', color: '#2A2F3A' }} onClick={() => setConfirm(null)}>Avbryt</button>
+            </span>
+          ) : (
+            <button disabled={picked.size === 0} style={{ ...btn, background: '#4A56C6', color: '#fff' }} onClick={() => setConfirm('retrain')}>
+              Träna om valda ({picked.size})
+            </button>
+          ))}
+          <div style={{ borderTop: '1px solid #E4E0D6', marginTop: 10, paddingTop: 8 }}>
+            <strong>Backa till en årskurs.</strong> Senare årskurser stängs igen och osäkra moment där låses;
+            osäkra moment i den valda årskursen tränas om och årets väktare möts på nytt. Säkra moment behålls.
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
+              <select value={year} onChange={(e) => setYear(e.target.value as SchoolYear)} style={{ fontFamily: 'inherit', fontSize: 13, padding: 4 }}>
+                {years.map((y) => <option key={y} value={y}>{yearLabel(y)}</option>)}
+              </select>
+              {confirm === 'back' ? (
+                <>
+                  <span style={{ fontWeight: 800, color: '#B4552E' }}>Backa {child.name} till {yearLabel(year)}?</span>
+                  <button style={{ ...btn, background: '#E2574C', color: '#fff' }} onClick={() => {
+                    store.backToYear(child.id, year); setConfirm(null); setDone(`${child.name} är tillbaka i ${yearLabel(year)}.`)
+                  }}>Ja, backa</button>
+                  <button style={{ ...btn, background: '#EDEAE2', color: '#2A2F3A' }} onClick={() => setConfirm(null)}>Avbryt</button>
+                </>
+              ) : (
+                <button style={{ ...btn, background: '#EDEAE2', color: '#2A2F3A' }} onClick={() => setConfirm('back')}>Backa …</button>
+              )}
+            </div>
+          </div>
+          {done && <p style={{ margin: '8px 0 0', fontWeight: 800, color: '#3FA87A' }}>{done}</p>}
+          <p style={{ margin: '6px 0 0', fontSize: 12, color: '#8B8FA0' }}>Tips: exportera en säkerhetskopia först (Säkerhet), så kan ändringen ångras.</p>
+        </div>
+      )}
     </div>
   )
 }

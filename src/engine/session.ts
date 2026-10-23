@@ -5,6 +5,7 @@ import { freshSeed, createRng } from '../generators/rng'
 import { variedLevel, practiceLevel } from './rating'
 import { dueForReview, REVIEW_TASK_COUNT } from './spaced-repetition'
 import { currentMomentId, isDistantYear } from './progress'
+import { easierMomentFor, restingToday } from './struggle'
 
 /* ============================================================
    Passkomponering — "Dagens pass".
@@ -68,10 +69,15 @@ export function composeSession(profile: ChildProfile, today: string, preferredMo
   }
 
   // Barnet kan välja ett upplåst moment på kartan; annars väljer motorn.
-  const current =
+  const front =
     preferredMomentId && isTrainable(profile, preferredMomentId)
       ? preferredMomentId
       : currentMomentId(profile)
+  // Valde barnet "lättare uppgifter" i dag vilar momentet: passet tränar
+  // en förkunskap i stället (spärren, engine/struggle.ts).
+  const current = front && restingToday(profile.skills[front], today)
+    ? easierMomentFor(front, profile.skills) ?? front
+    : front
   if (current) {
     parts.push({ kind: 'nytt', momentId: current, taskCount: size.newTasks })
   }
@@ -134,6 +140,8 @@ export function taskForPart(profile: ChildProfile, momentId: string, kind: 'uppv
    Kort och vänlig — ingen boss, ingen klocka, fel straffas aldrig. */
 export const CHECK_TASK_COUNT = 8
 export const CHECK_CORRECT_TO_WIN = 6 // 75 % — solid, inte perfektion
+/** Kollens lägsta mittnivå: årskursens mitt (nivå 1–7 = årskursnivå). */
+export const CHECK_MIN_LEVEL = 5
 
 /* Världsbossen är klimaxstriden i SLUTET av en värld (sällsynt, dramatisk).
    Blandar frågor från hela världens moment. */
@@ -144,17 +152,18 @@ export const STAR_TASK_COUNT = 8
 export const STAR_CORRECT_TO_WIN = 6
 
 /**
- * Nodens kunskapskoll: några frågor från momentet. Kollen är en BEKRÄFTELSE på
- * det barnet nyss tränade, så nivån läggs kring barnets egen övningsnivå (en
- * aning snäll) — inte en fast hög nivå som kunde bli orättvist svår direkt
- * efter ett lätt moment. Utan känd rating (kartans manuella koll) faller vi
- * tillbaka på nivå 4–6. Nya frön varje gång.
+ * Nodens kunskapskoll: några frågor från momentet, kring barnets övningsnivå
+ * men aldrig under årskursens mitt (nivå 4–6). Nya frön varje gång.
  */
 export function composeCheckTasks(momentId: string, rating?: number): Task[] {
   const moment = momentById(momentId)
   if (!moment.generatorId) throw new Error(`Momentet ${momentId} saknar generator`)
   const rng = createRng(freshSeed())
-  const base = rating !== undefined ? practiceLevel(rating) : (5 as DifficultyLevel)
+  // Golvet är årskursens mitt (nivå 5, alltså 4–6). Förr låg kollen kring
+  // barnets EGEN övningsnivå — ett moment kunde bli klart på nivå 2–3, och
+  // "klart" sa då inte att barnet kunde momentet på årskursnivå (förälderns
+  // beslut okt 2026, efter analysen av barnens pass).
+  const base = Math.max(CHECK_MIN_LEVEL, rating !== undefined ? practiceLevel(rating) : CHECK_MIN_LEVEL) as DifficultyLevel
   const lo = Math.max(1, base - 1) as DifficultyLevel
   const hi = Math.min(10, base + 1) as DifficultyLevel
   const levels: DifficultyLevel[] = [lo, base, base, hi, base]

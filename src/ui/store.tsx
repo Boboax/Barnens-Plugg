@@ -19,6 +19,8 @@ import { hashPin, verifyPin } from '../storage/pin'
 import { adoptPet, completePetPractice, dismissFreshStart, homeSecondsLeft, markPetGrowthSeen, releasePet, restartPetGrowth, settleMilestoneBase, spendHomeTime, spendPeekTime } from '../engine/pet-home'
 import { changeCamp, type CampAction } from '../engine/camp'
 import { practicedOnEarlierDay } from '../engine/rating'
+import { logStruggle, restMoment, type StruggleKind } from '../engine/struggle'
+import { backToYear, retrainMoments } from '../engine/retrain'
 
 /* ============================================================
    Appens tillstånd: hushållet + navigering + tidsbokföring.
@@ -90,6 +92,10 @@ interface StoreValue {
   /** Spara ett förtjänat koll-erbjudande: momentet markeras "redo för Pis
       koll" (boss-ready) så inbjudan överlever ett avbrutet försök. */
   markCheckReady(momentId: string): void
+  /** Spärren: logga att Pi stannade upp barnet / barnet kämpade / "För svårt?". */
+  logStruggle(momentId: string, kind: StruggleKind): void
+  /** Barnet valde lättare uppgifter: momentet vilar resten av dagen. */
+  restMoment(momentId: string): void
   /** Resultat av världsbossen (vinst → världen erövrad). */
   finishWorldBoss(worldId: string, won: boolean): void
   finishStar(momentId: string, won: boolean): void
@@ -131,6 +137,10 @@ interface StoreValue {
   redoDiagnosis(childId: string): void
   /** Föräldern tar bort en vän i Kvällslägret (föräldraläget). */
   releasePet(childId: string, petId: string): void
+  /** Föräldraverktyg: öppna valda moment igen för omträning (engine/retrain). */
+  retrainMoments(childId: string, momentIds: string[]): void
+  /** Föräldraverktyg: backa barnet till en årskurs (engine/retrain). */
+  backToYear(childId: string, year: SchoolYear): void
 
   // Tid
   secondsLeftToday(child: ChildProfile): number
@@ -473,6 +483,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       patchChild(activeChildId, (c) => (c.pendingStreakToast ? { ...c, pendingStreakToast: undefined } : c))
     },
 
+    logStruggle: (momentId, kind) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => logStruggle(c, momentId, kind, nowISO()))
+    },
+
+    restMoment: (momentId) => {
+      if (!activeChildId) return
+      patchChild(activeChildId, (c) => restMoment(c, momentId, todayISO()))
+    },
+
     markCheckReady: (momentId) => {
       if (!activeChildId) return
       patchChild(activeChildId, (c) => {
@@ -602,6 +622,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
 
     releasePet: (id, petId) => patchChild(id, (c) => releasePet(c, petId)),
+    retrainMoments: (id, momentIds) => patchChild(id, (c) => retrainMoments(c, momentIds, todayISO())),
+    backToYear: (id, year) => patchChild(id, (c) => backToYear(c, year, todayISO())),
 
     redoDiagnosis: (id) => patchChild(id, (c) => {
       // Färska färdigheter så gammal placering rensas helt; profil/namn/

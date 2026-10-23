@@ -238,6 +238,9 @@ export interface SkillState {
       tränade momentet. Kunskapskollen vaknar först en SENARE dag — se
       engine/rating.ts isBossReady. Optionellt: saknas = sätts vid nästa svar. */
   firstPracticedOn?: string
+  /** Dagen (ÅÅÅÅ-MM-DD) barnet valde lättare uppgifter — momentet vilar då
+      resten av dagen och passet tränar en förkunskap (engine/struggle.ts). */
+  restDay?: string
 }
 
 /** Ett registrerat svar — grunden för all analys och rapporter. */
@@ -354,6 +357,10 @@ export interface ChildProfile {
       förbrukad och räddade kedjan, 'earned' = ny frysdag tjänad). Nollställs av
       Home efter att skylten visats. Optionellt = bakåtkompatibelt. */
   pendingStreakToast?: 'used' | 'earned'
+
+  /** Spärrens händelser: Pi stannade upp en gissning, barnet kämpade eller
+      tryckte "För svårt?" (engine/struggle.ts). För föräldrarapporten. */
+  struggles?: { at: string; momentId: string; kind: 'gissar' | 'kampar' | 'for-svart' }[]
 
   /** Blixtpass-rekord (flyt): bästa antal rätt på en minut per testtyp. */
   blixt?: Partial<Record<BlixtKind, BlixtRecord>>

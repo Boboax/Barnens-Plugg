@@ -287,3 +287,29 @@ Två beslut med föräldern efter granskningen av passen:
   det som sitter efter en natts sömn är det som faktiskt är inlärt. Barnet
   får ett varmt "kom tillbaka i morgon, då vill Pi se vad du kan" i stället
   för kollen samma dag.
+
+
+## Spärren, kollens golv och "träna om" (okt 2026)
+
+Analysen av barnens säkerhetskopia (23 okt) visade tre problem, och
+föräldern beslutade om varje:
+
+- **Gissning och kamp (spärren, `engine/struggle.ts`).** Förskoleklass-
+  barnet gjorde 50–70 svar om dagen på åk 1-momentet "Över tian" med
+  7–13 % rätt och en sekund per svar. Nu stannar Pi upp barnet efter tre
+  snabba fel (läs eller lyssna, knappen väntar fyra sekunder), och vid
+  högst ett rätt av sex får barnet välja: se förklaringen igen, lättare
+  uppgifter (momentet vilar i dag och passet tränar närmaste förkunskap)
+  eller ett försök till. "För svårt?" finns alltid i passet — att säga till
+  är aldrig fel. Allt syns i "Dag för dag". För förskoleklass läses kortet
+  upp automatiskt.
+- **Kollens golv.** Kunskapskollen låg kring barnets egen övningsnivå, så
+  ett moment kunde bli klart på nivå 2–3. Nu testar den alltid minst på
+  årskursens mitt (nivå 4–6, `CHECK_MIN_LEVEL`). Klart ska betyda kan.
+- **Träna om och backa (`engine/retrain.ts`, föräldraläget).** Moment som
+  blev klara utan övning (gamla diagnosen, bossar) eller med låg
+  träffsäkerhet listas, och föräldern väljer vilka som öppnas igen —
+  väktare, troféer, vänner och mynt behålls. "Backa till en årskurs"
+  stänger senare årskurser (årets väktare möts på nytt) och låser osäkert
+  stoff där; säkra moment behålls. Föräldern ser listan och bekräftar
+  innan något ändras.

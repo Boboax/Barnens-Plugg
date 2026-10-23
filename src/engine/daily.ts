@@ -116,6 +116,18 @@ export function dayStats(profile: ChildProfile, date: string): DayStats {
       signals.push({ tone: 'obs', text: `Träffsäkerheten sjönk under dagen (${pct(first)} → ${pct(second)}) — kanske trött mot slutet.` })
     }
   }
+  // Spärren (engine/struggle.ts): Pi stannade upp gissningar, barnet kämpade
+  // eller tryckte "För svårt?". Att säga till är bra — det formuleras så.
+  const struggles = (profile.struggles ?? []).filter((e) => dayKey(e.at) === date)
+  const stopped = struggles.filter((e) => e.kind === 'gissar').length
+  const tooHard = struggles.filter((e) => e.kind !== 'gissar')
+  if (stopped > 0) {
+    signals.push({ tone: 'obs', text: `Pi stannade upp ${stopped} ${stopped === 1 ? 'gång' : 'gånger'} för snabba gissningar och bad barnet läsa och tänka efter.` })
+  }
+  if (tooHard.length > 0) {
+    const titles = [...new Set(tooHard.map((e) => momentById(e.momentId).title))].join(', ')
+    signals.push({ tone: 'obs', text: `Kämpigt: ${titles} (${tooHard.length} ${tooHard.length === 1 ? 'gång' : 'gånger'} — själv sagt "för svårt" eller nästan inget rätt i följd). Bra att barnet säger till; prata gärna om momentet eller titta på filmen tillsammans.` })
+  }
   const warnings = signals.length
   if (warnings === 0 && trained.length >= 8) {
     signals.push({ tone: 'bra', text: 'Jämnt tempo, få gissningar och inga långa pauser — koncentrerat arbete.' })

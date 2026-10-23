@@ -158,6 +158,12 @@ publikt för Pages på gratisplanen.
   och `markCheckReady` kräver `practicedOnEarlierDay` — ett moment blir
   aldrig "redo" samma dag som barnet började träna det. Passlängden följer
   årskursen (`sessionSize`). Se PEDAGOGIK → Passlängd.
+- **Spärren och "träna om"** (okt 2026): `engine/struggle.ts` stoppar
+  gissningar och erbjuder lättare uppgifter (momentet får `restDay`, passet
+  tar närmaste förkunskap); "För svårt?" ska alltid finnas i övningspass.
+  `engine/retrain.ts` är förälderns verktyg för att öppna svaga moment och
+  backa en årskurs — rör aldrig väktare/troféer/vänner vid "träna om".
+  Kollen testar minst på årskursens mitt (`CHECK_MIN_LEVEL`).
 - **Kladdbilder är stora**: ringbuffert på 20 per barn (`store.tsx`). Öka inte
   utan att tänka på iPadens lagringskvot.
 - **Animationer**: respektera `prefers-reduced-motion` (konfetti och CSS gör

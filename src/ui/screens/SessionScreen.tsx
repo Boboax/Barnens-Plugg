@@ -22,6 +22,9 @@ import { WorldGiftChest } from '../components/WorldGiftChest'
 import { todayISO, useStore } from '../store'
 import { practicedOnEarlierDay } from '../../engine/rating'
 import { campAccess } from '../../engine/pet-home'
+import { detectStruggle, easierMomentFor, type RecentAnswer, type StruggleKind } from '../../engine/struggle'
+import { hasLesson } from '../components/lessons/LessonPlayer'
+import { speak } from '../../tts'
 
 /* ============================================================
    Dagens pass: uppvärmning (repetition) → nytt → blandat.
@@ -57,7 +60,7 @@ export function SessionScreen() {
   const store = useStore()
   const child = store.activeChild
   // Passet planeras EN gång vid start (medvetet: profilen uppdateras under passet).
-  const slots = useMemo<Slot[]>(() => {
+  const initialSlots = useMemo<Slot[]>(() => {
     if (!child) return []
     const plan = composeSession(child, todayISO(), store.sessionMomentId, store.sessionFocused)
     const out: Slot[] = []
@@ -69,6 +72,9 @@ export function SessionScreen() {
     return out
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  // Slots kan bytas under passet: väljer barnet "lättare uppgifter" ersätts
+  // resten av momentets uppgifter med en förkunskap (spärren).
+  const [slots, setSlots] = useState<Slot[]>(initialSlots)
 
   const [index, setIndex] = useState(0)
   const [task, setTask] = useState<Task | null>(() =>
@@ -100,6 +106,13 @@ export function SessionScreen() {
     return (skill?.attempts ?? 0) === 0 ? firstNew.momentId : undefined
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  // Spärren (engine/struggle.ts): svaren i följd per moment, ett väntande
+  // stopp som visas när barnet går vidare, och kortet som visas nu.
+  const recentByMoment = useRef(new Map<string, RecentAnswer[]>())
+  const pendingStop = useRef<'gissar' | 'kampar'>()
+  const [stop, setStop] = useState<{ kind: StruggleKind; answered: boolean } | null>(null)
+  // Moment utan lättare förkunskap: nivån hålls nere resten av passet.
+  const keepLow = useRef(new Set<string>())
   // Repetitionsresultat per moment: [rätt, totalt]
   const reviewTally = useRef(new Map<string, [number, number]>())
   const reviewsFinished = useRef(new Set<string>())
@@ -200,6 +213,16 @@ export function SessionScreen() {
       setCombo(0)
       coldStreak.current += 1
     }
+    // Spärren: gissar eller kämpar barnet på det här momentet?
+    const recent = [...(recentByMoment.current.get(slot.momentId) ?? []), { correct: result.correct, elapsedMs: result.elapsedMs }]
+    const struggle = detectStruggle(recent)
+    if (struggle) {
+      pendingStop.current = struggle
+      store.logStruggle(slot.momentId, struggle)
+      recentByMoment.current.set(slot.momentId, [])
+    } else {
+      recentByMoment.current.set(slot.momentId, recent)
+    }
     if (slot.kind === 'uppvarmning') {
       const tally = reviewTally.current.get(slot.momentId) ?? [0, 0]
       reviewTally.current.set(slot.momentId, [tally[0] + (result.correct ? 1 : 0), tally[1] + 1])
@@ -217,6 +240,54 @@ export function SessionScreen() {
   }
 
   const advance = (): void => {
+    // Ett väntande stopp från spärren visas innan nästa uppgift.
+    if (pendingStop.current) {
+      openStop(pendingStop.current, true)
+      pendingStop.current = undefined
+      return
+    }
+    doAdvance(slots)
+  }
+
+  /** Visa spärrens kort. Förskoleklassbarn läser inte själva — kortet läses
+      upp direkt, i själva trycket (iPad släpper bara fram ljud i en gest). */
+  const openStop = (kind: StruggleKind, answered: boolean): void => {
+    setStop({ kind, answered })
+    if (child.schoolYear === 'F') speak(stopSpeech(kind, true))
+  }
+
+  /** Spärrens "lättare uppgifter": momentet vilar i dag, och resten av dess
+      uppgifter i passet byts mot en förkunskap (eller hålls på lägsta nivå
+      när ingen förkunskap finns). */
+  const easier = (from: number): Slot[] => {
+    const m = slot.momentId
+    store.restMoment(m)
+    const alt = easierMomentFor(m, child.skills)
+    if (!alt) { keepLow.current.add(m); return slots }
+    const next = slots.map((s, i) => (i >= from && s.momentId === m ? { ...s, momentId: alt, partKey: `${s.kind}:${alt}` } : s))
+    setSlots(next)
+    return next
+  }
+
+  const closeStop = (choice: 'vidare' | 'film' | 'lattare'): void => {
+    const current = stop
+    setStop(null)
+    if (!current) return
+    if (current.answered) {
+      const list = choice === 'lattare' ? easier(index + 1) : slots
+      doAdvance(list)
+      if (choice === 'film') setReplayFor(slot.momentId)
+      return
+    }
+    // "För svårt?" mitt i en uppgift: uppgiften är inte besvarad än.
+    if (choice === 'film') setReplayFor(slot.momentId)
+    if (choice === 'lattare') {
+      const list = easier(index)
+      setTask(taskForPart(child, list[index].momentId, list[index].kind, 'sank'))
+    }
+  }
+
+  const doAdvance = (slots: Slot[]): void => {
     // Pi-panelen stängs vid uppgiftsbyte — samtalet gällde FÖRRA uppgiften
     // (trådarna är redan per uppgift) och panelen ska inte skymma den nya.
     setChatOpen(false)
@@ -246,7 +317,8 @@ export function SessionScreen() {
     }
     if (calm !== 'sank') calmActive.current = false
     setIndex(next)
-    setTask(taskForPart(child, slots[next].momentId, slots[next].kind, calm))
+    const low = keepLow.current.has(slots[next].momentId) ? 'sank' as const : calm
+    setTask(taskForPart(child, slots[next].momentId, slots[next].kind, low))
   }
 
   const closeChest = (): void => {
@@ -357,7 +429,7 @@ export function SessionScreen() {
   const moment = momentById(slot.momentId)
   // Uppgiftens identitet (samma nyckel som TaskRunner) — Pi-samtalet knyts hit.
   const taskKey = `${index}-${task.ref.seed}`
-  const showIntro = (slot.kind === 'nytt' && slot.momentId === introMomentId && !introDone) || replayFor === slot.momentId
+  const showIntro = (slot.kind === 'nytt' && slot.momentId === introMomentId && !introDone) || replayFor !== undefined
   const chatAvailable = chatReadyFor(child)
   // Världstema bakom uppgiften: den målade världsbilden syns runt kanterna,
   // men en varm pergamentslöja är tät i mitten så uppgiftstexten är knivskarp.
@@ -403,9 +475,13 @@ export function SessionScreen() {
         {!showIntro && slot.kind === 'nytt' && momentIntro(slot.momentId) && (
           <button className="chip" onClick={() => setReplayFor(slot.momentId)}>💡 Visa igen</button>
         )}
+        {/* Barnet ska enkelt kunna säga till — det är aldrig fel att trycka här. */}
+        {!showIntro && !stop && (
+          <button className="chip" onClick={() => { store.logStruggle(slot.momentId, 'for-svart'); openStop('for-svart', false) }}>😟 För svårt?</button>
+        )}
       </div>
       {showIntro ? (
-        <PiVisar key={`${slot.momentId}-${replayFor ?? ''}`} momentId={slot.momentId} onDone={() => { setIntroDone(true); setReplayFor(undefined) }} />
+        <PiVisar key={`${slot.momentId}-${replayFor ?? ''}`} momentId={replayFor ?? slot.momentId} onDone={() => { setIntroDone(true); setReplayFor(undefined) }} />
       ) : (
       <TaskRunner
         key={`${index}-${task.ref.seed}`}
@@ -421,6 +497,16 @@ export function SessionScreen() {
       />
       )}
       </div>
+
+      {stop && (
+        <StopCard
+          kind={stop.kind}
+          hasFilm={!!momentIntro(slot.momentId) || hasLesson(slot.momentId)}
+          canEasier={!!easierMomentFor(slot.momentId, child.skills) || !keepLow.current.has(slot.momentId)}
+          isFK={child.schoolYear === 'F'}
+          onChoose={closeStop}
+        />
+      )}
 
       {/* Kalla handen-skylten: nästa uppgift lades ett steg ner. Varm och kort —
           barnet ska känna omsorg, aldrig "du misslyckades". */}
@@ -576,6 +662,78 @@ export function EndCard({ title, text, onDone, buttonText = 'Till kartan ▶', c
         {exitText && onExit && (
           <button className="chip" onClick={onExit} style={{ marginTop: 2 }}>{exitText}</button>
         )}
+      </div>
+    </div>
+  )
+}
+
+/* Spärrens kort (engine/struggle.ts). Varmt och kort — aldrig "du gjorde
+   fel". Vid gissning väntar knappen några sekunder: poängen är att barnet
+   faktiskt stannar upp och läser. */
+const STOP_TEXT: Record<StruggleKind, { title: string; text: string; fk: string }> = {
+  gissar: {
+    title: 'Stopp en liten stund! 🦉',
+    text: 'Du svarar jättesnabbt. Läs uppgiften — eller tryck på högtalaren och lyssna — och tänk efter innan du svarar. Det är helt okej att det tar tid!',
+    fk: 'Lyssna på uppgiften och tänk efter. Det får ta tid!',
+  },
+  kampar: {
+    title: 'Det här verkar klurigt just nu',
+    text: 'Det är helt okej — det betyder att du lär dig något nytt. Vad vill du göra?',
+    fk: 'Det är okej. Vad vill du göra?',
+  },
+  'for-svart': {
+    title: 'Bra att du säger till! 💛',
+    text: 'Vi gör det lättare. Vad vill du göra?',
+    fk: 'Vad vill du göra?',
+  },
+}
+
+const STOP_WAIT_S = 4
+
+const stopSpeech = (kind: StruggleKind, fk: boolean): string => {
+  const t = STOP_TEXT[kind]
+  return `${t.title.replace(/[🦉💛]/gu, '').trim()}. ${fk ? t.fk : t.text}`
+}
+
+function StopCard({ kind, hasFilm, canEasier, isFK, onChoose }: {
+  kind: StruggleKind; hasFilm: boolean; canEasier: boolean; isFK: boolean
+  onChoose(choice: 'vidare' | 'film' | 'lattare'): void
+}) {
+  const t = STOP_TEXT[kind]
+  const text = isFK ? t.fk : t.text
+  const [wait, setWait] = useState(kind === 'gissar' ? STOP_WAIT_S : 0)
+  useEffect(() => {
+    if (wait <= 0) return
+    const id = window.setTimeout(() => setWait((w) => w - 1), 1000)
+    return () => window.clearTimeout(id)
+  }, [wait])
+  return (
+    <div role="dialog" aria-label={t.title} style={{
+      position: 'absolute', inset: 0, zIndex: 40, display: 'grid', placeItems: 'center', padding: 16,
+      background: 'rgba(30,24,20,.45)',
+    }}>
+      <div className="pop-big" style={{
+        width: 'min(420px, 100%)', padding: '18px 20px', borderRadius: 18, textAlign: 'center',
+        background: 'linear-gradient(180deg, #FBF4E2, #F0E6CD)', color: '#35302E',
+        border: '2px solid #C9B489', boxShadow: '0 8px 24px rgba(0,0,0,.35)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center' }}><Pi mood="glad" size={64} /></div>
+        <h2 style={{ margin: '6px 0', fontSize: 22, fontWeight: 900 }}>{t.title}</h2>
+        <p style={{ margin: '0 0 12px', fontWeight: 700, lineHeight: 1.45 }}>{text}</p>
+        <button className="chip" style={{ marginBottom: 10 }} onClick={() => speak(stopSpeech(kind, isFK))}>🔊 Lyssna</button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {kind === 'gissar' ? (
+            <button className="btn btn-primary" disabled={wait > 0} onClick={() => onChoose('vidare')}>
+              {wait > 0 ? `Jag tänker efter … ${wait}` : 'Jag tänker efter'}
+            </button>
+          ) : (
+            <>
+              {hasFilm && <button className="btn btn-primary" onClick={() => onChoose('film')}>🎬 Se förklaringen igen</button>}
+              {canEasier && <button className="btn btn-primary" onClick={() => onChoose('lattare')}>🪜 Lättare uppgifter</button>}
+              <button className="btn btn-quiet" onClick={() => onChoose('vidare')}>💪 Jag försöker igen</button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
