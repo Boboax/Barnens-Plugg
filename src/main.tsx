@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { App } from './ui/App'
 import { StoreProvider } from './ui/store'
 import './styles/global.css'
+import { startAppUpdate } from './ui/useAppUpdate'
 
 // Texturernas sökväg måste respektera base-path (GitHub Pages: /Barnens-Plugg/).
 // Sätts som CSS-variabler här så global.css kan referera dem utan hårdkodad bas.
@@ -12,6 +13,9 @@ document.documentElement.style.setProperty('--tex-frame', `url(${import.meta.env
 document.documentElement.style.setProperty('--tex-stone', `url(${import.meta.env.BASE_URL}art/tex/stone.webp)`)
 document.documentElement.style.setProperty('--tex-nodering', `url(${import.meta.env.BASE_URL}art/tex/nodering.webp)`)
 document.documentElement.style.setProperty('--tex-plaque', `url(${import.meta.env.BASE_URL}art/tex/plaque.webp)`)
+
+// Nya versioner letas upp direkt vid start (uppdateringsknappen).
+startAppUpdate()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

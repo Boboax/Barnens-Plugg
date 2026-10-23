@@ -36,7 +36,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt': den nya versionen väntar på förälderns "Uppdatera"
+      // (src/ui/useAppUpdate.ts) i stället för att kräva omstarter.
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['pi.svg'],
       manifest: {
         name: 'Räknarnas rike',

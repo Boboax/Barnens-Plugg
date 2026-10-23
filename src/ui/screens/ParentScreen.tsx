@@ -12,6 +12,7 @@ import { daysSinceBackup, exportAnalysis, exportHousehold, importHousehold } fro
 import { BELONING_ICONS, BelongIcon, isBelongIcon, HERO_KINDS, HERO_LABEL, HeroImg } from '../components/Icon'
 import { KID_COLORS, nowISO, useStore } from '../store'
 import { weakMoments, type WeakReason } from '../../engine/retrain'
+import { useAppUpdate } from '../useAppUpdate'
 import { YEAR_ORDER } from '../../domain/curriculum'
 import { yearLabel } from '../../domain/guardians'
 
@@ -845,6 +846,26 @@ function RetrainTool({ child }: { child: ChildProfile }) {
   )
 }
 
+/* Uppdateringen (useAppUpdate): ett tryck i stället för att stänga appen
+   två gånger. Appen letar också själv var 30:e minut. */
+function AppUpdateRow() {
+  const u = useAppUpdate()
+  const btn = { fontSize: 12.5, fontWeight: 800, padding: '6px 12px', borderRadius: 8, fontFamily: 'inherit' } as const
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8, fontSize: 12.5, fontWeight: 700, color: '#8B8FA0' }}>
+      {u.phase === 'ready' ? (
+        <button style={{ ...btn, background: '#4A56C6', color: '#fff' }} onClick={() => void u.update()}>✨ Ny version finns — uppdatera</button>
+      ) : (
+        <button style={{ ...btn, background: '#EDEAE2', color: '#2A2F3A' }} disabled={u.phase === 'checking'} onClick={() => void u.check()}>
+          {u.phase === 'checking' ? 'Letar …' : 'Sök efter uppdatering'}
+        </button>
+      )}
+      {u.phase === 'latest' && <span>Du har senaste versionen.</span>}
+      {u.phase === 'error' && <span>Kunde inte leta just nu (offline?).</span>}
+    </div>
+  )
+}
+
 function NewChildForm({ onDone }: { onDone(): void }) {
   const store = useStore()
   const thisYear = new Date().getFullYear()
@@ -1197,9 +1218,8 @@ function AboutCard() {
         </p>
         <p style={{ margin: '10px 0 0', fontSize: 12.5, fontWeight: 700, color: '#8B8FA0' }}>
           Version {__APP_VERSION__} · byggd {__BUILD_TIME__} UTC
-          <br />
-          Ny version på plattan? Stäng appen helt och öppna igen — två gånger (PWA:er aktiverar uppdateringen vid andra starten).
         </p>
+        <AppUpdateRow />
       </div>
     </>
   )

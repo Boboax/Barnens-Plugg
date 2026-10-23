@@ -4,6 +4,7 @@ import { Icon, HeroImg } from '../components/Icon'
 import { SoundToggle } from '../components/SoundToggle'
 import { useStore } from '../store'
 import { isTestChild, testFamily } from '../testlage/testFamily'
+import { useAppUpdate } from '../useAppUpdate'
 
 /* Startskärmen: den målade valvbakgrunden (public/art/startbg.webp) med
    titel, Pi och spelarval på en mjuk mörkscrim så texten är läsbar mot
@@ -14,6 +15,7 @@ const logo = `${import.meta.env.BASE_URL}art/logo.webp`
 
 export function ProfileSelect() {
   const store = useStore()
+  const appUpdate = useAppUpdate()
   const { children } = store.household
   // Musiken styrs centralt i App (musikregissören) utifrån skärmen.
 
@@ -88,6 +90,14 @@ export function ProfileSelect() {
       )}
 
       <span style={{ position: 'fixed', left: 18, bottom: 'calc(16px + env(safe-area-inset-bottom))', zIndex: 2 }}><SoundToggle openUp /></span>
+      {/* Ny version nedladdad: ett tryck aktiverar den (useAppUpdate). Bara
+          här och i föräldraläget — aldrig mitt i ett pass. */}
+      {appUpdate.phase === 'ready' && (
+        <button className="btn btn-primary" onClick={() => void appUpdate.update()} style={{
+          position: 'fixed', bottom: 'calc(40px + env(safe-area-inset-bottom))', left: '50%', transform: 'translateX(-50%)', zIndex: 3,
+          whiteSpace: 'nowrap',
+        }}>✨ Ny version finns — uppdatera</button>
+      )}
       {/* Version + synkstatus på en egen mörk platta (kontrast mot den målade
           bakgrunden). Föräldern ska på VARJE platta kunna se om den synkar —
           annars syns inte varför en borttagen profil ligger kvar på en iPad. */}
