@@ -113,3 +113,26 @@ describe('dagstaket', () => {
     expect(messagesLeftToday(child, household, '2026-07-13')).toBe(MAX_MESSAGES_PER_DAY - 1)
   })
 })
+
+describe('Pi vet hur appen förklarar', () => {
+  it('får appens metod och bilden i ord, men aldrig talen att läsa upp', async () => {
+    const { momentMethod, describeVisual } = await import('./context')
+    const method = momentMethod('skala')!
+    expect(method).toContain('1:1000')
+    const prompt = buildSystemPrompt({ ...ctx, method, visualDescription: describeVisual({ kind: 'stapel', categories: [{ label: 'äpplen', value: 8 }] }) })
+    expect(prompt).toContain('SÅ HÄR FÖRKLARAR APPEN')
+    expect(prompt).toContain('äpplen 8')
+    expect(prompt).toContain('Säg ALDRIG talen')
+    expect(prompt).toContain('EGET exempel med ANDRA tal')
+    // Säkerhetsreglerna står kvar.
+    expect(prompt).toContain('ALDRIG svaret')
+  })
+
+  it('avslöjar inte svaret när bilden ÄR uppgiften (klocka, form, vinkel)', async () => {
+    const { describeVisual } = await import('./context')
+    expect(describeVisual({ kind: 'klocka', hours: 8, minutes: 45 })).not.toMatch(/8:45/)
+    expect(describeVisual({ kind: 'form', shape: 'femhorning' })).not.toMatch(/fem/i)
+    expect(describeVisual({ kind: 'vinkel', degrees: 90 })).not.toMatch(/90|rät/)
+    expect(describeVisual({ kind: 'ingen' })).toBeUndefined()
+  })
+})

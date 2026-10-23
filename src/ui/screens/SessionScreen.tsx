@@ -7,6 +7,7 @@ import { worldTheme } from '../worldThemes'
 import { composeSession, taskForPart } from '../../engine/session'
 import { useDocumentBackground } from '../useDocumentBackground'
 import { chatReadyFor } from '../../chat'
+import { describeVisual, momentMethod } from '../../chat/context'
 import type { ScratchPadHandle } from '../components/ScratchPad'
 import { sfx } from '../../sound'
 import { fireConfetti } from '../fx/confetti'
@@ -458,6 +459,8 @@ export function SessionScreen() {
             childAge: new Date().getFullYear() - child.birthYear,
             momentTitle: moment.title,
             currentTaskPrompt: task.prompt,
+            method: momentMethod(moment.id),
+            visualDescription: describeVisual(task.visual),
           }}
           messages={chatThreads[taskKey] ?? []}
           onMessagesChange={(msgs) => setChatThreads((t) => ({ ...t, [taskKey]: msgs }))}

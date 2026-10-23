@@ -61,3 +61,15 @@ Pi är instruerad att:
 Inga språkliga guardrails är 100 % vattentäta mot en envis användare. Därför är
 rangordningen medveten: lager 0 (arkitekturen) gör ett lyckat "jailbreak"
 ofarligt, lager 4 (loggen) gör det synligt. Lager 1–3 gör det osannolikt.
+
+## Pis kunskap om momentet (okt 2026)
+
+Pi får appens egen förklaring av momentet (begreppskortet + filmens
+scener, `chat/context.ts: momentMethod`) och bilden i uppgiften i ord
+(`describeVisual`), så att förklaringen följer samma metod som barnet sett.
+Två skydd: Pi får aldrig läsa upp talen ur bilden (barnet läser av själv),
+och där bilden ÄR svaret (klockslag, formens namn, vinkelsort, kroppens
+namn) beskrivs den bara neutralt. När barnet inte förstår förklarar Pi med
+ett EGET exempel med andra tal och låter barnet göra samma steg på sin
+uppgift — fortfarande aldrig facit. Inget av detta ger Pi någon förmåga
+över tid, framsteg, rättning eller belöningar (lager 0 orört).

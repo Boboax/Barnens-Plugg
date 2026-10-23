@@ -23,6 +23,11 @@ export interface ChatContext {
   momentTitle: string
   /** Uppgiften på skärmen, om någon. */
   currentTaskPrompt?: string
+  /** Appens egen förklaring av momentet (begreppskort + filmens scener) —
+      så att Pi förklarar med samma ord som barnet redan sett. */
+  method?: string
+  /** Bilden i uppgiften i ord (diagram, graf, klossar …). */
+  visualDescription?: string
 }
 
 export interface ChatReply {

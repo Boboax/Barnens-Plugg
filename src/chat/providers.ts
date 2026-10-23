@@ -98,11 +98,12 @@ export function pickChatModels(models: GeminiModelInfo[]): string[] {
 /** Rätt generationConfig per modellgeneration (API:t bröts mellan 2.5 → 3 → 3.5). */
 function geminiConfigFor(id: string): Record<string, unknown> {
   const v = Number(/gemini-(\d+(?:\.\d+)?)/.exec(id)?.[1] ?? 0)
-  // Kortare svarstak = snabbare svar. Pis repliker ska vara korta (≤40 ord),
+  // Kortare svarstak = snabbare svar. Pis repliker ska vara korta (≤40 ord,
+  // förklaringar med eget exempel ≤70 — därav 320),
   // och "tänkandet" hålls på minsta nivå så första ordet kommer snabbt.
-  if (v >= 3.5) return { maxOutputTokens: 220, thinkingConfig: { thinkingLevel: 'MINIMAL' } }
+  if (v >= 3.5) return { maxOutputTokens: 320, thinkingConfig: { thinkingLevel: 'MINIMAL' } }
   if (v >= 3) return { maxOutputTokens: 320, thinkingConfig: { thinkingLevel: 'LOW' } }
-  return { maxOutputTokens: 220, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } }
+  return { maxOutputTokens: 320, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } }
 }
 
 export const lastGeminiModelUsed = (): string | null => workingGeminiModel
@@ -307,7 +308,7 @@ async function geminiGenerate(apiKey: string, system: string | null, turns: { ro
 async function claudeGenerate(apiKey: string, system: string | null, turns: { role: 'user' | 'model'; text: string; imagePng?: string }[], opts: GenerateOpts = {}): Promise<string> {
   const body = {
     model: CLAUDE_MODEL,
-    max_tokens: opts.maxTokens ?? 200,
+    max_tokens: opts.maxTokens ?? 320,
     temperature: 0.6,
     ...(system ? { system } : {}),
     messages: turns.map((t) => ({

@@ -18,6 +18,9 @@ import { nowISO, todayISO, useStore } from '../store'
 const QUICK_CHIPS = [
   { label: 'Ge mig en ledtråd', text: 'Kan jag få en ledtråd?' },
   { label: 'Jag förstår inte', text: 'Jag förstår inte uppgiften. Kan du förklara vad den betyder?' },
+  // Förklaring med ETT EGET exempel (andra tal) — Pi visar vägen utan att
+  // lösa barnets uppgift (systemprompten, "När barnet inte förstår").
+  { label: 'Visa med ett exempel', text: 'Kan du visa hur man gör med ett eget exempel, steg för steg?' },
   { label: 'Visa min uträkning', text: 'Här är min uträkning — kan du titta på den?', withScratch: true },
 ] as const
 
