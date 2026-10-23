@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChatContext, ChatMessage } from '../../chat/adapter'
 import { getChatProvider } from '../../chat/adapter'
+import { plainMath } from '../../chat/prompts'
 import { messagesLeftToday } from '../../chat'
 import { sfx } from '../../sound'
 import { Pi } from './Pi'
@@ -119,7 +120,7 @@ export function ChatPanel({ context, messages, onMessagesChange, getScratch, onC
         ))}
         {waiting && (
           <div style={streamText ? bubbleAi : { ...bubbleAi, color: 'var(--muted)' }}>
-            {streamText || 'Pi funderar …'}
+            {streamText ? plainMath(streamText) : 'Pi funderar …'}
           </div>
         )}
       </div>

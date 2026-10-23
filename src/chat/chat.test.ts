@@ -136,3 +136,15 @@ describe('Pi vet hur appen förklarar', () => {
     expect(describeVisual({ kind: 'ingen' })).toBeUndefined()
   })
 })
+
+describe('Pi skriver vanlig text', () => {
+  it('städar bort formelsyntax ur svaret', async () => {
+    const { plainMath } = await import('./prompts')
+    expect(plainMath('Och vad blir $2 \\cdot 4$, som du sedan kan subtrahera?')).toBe('Och vad blir 2 × 4, som du sedan kan subtrahera?')
+    expect(plainMath('$\\frac{3}{5}$ och **bra**')).toBe('3/5 och bra')
+  })
+
+  it('räknar kommentarer om Pis svar som on-topic', () => {
+    expect(buildClassifyPrompt('Det blev konstig text')).toContain('konstig text')
+  })
+})

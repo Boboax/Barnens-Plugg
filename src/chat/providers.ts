@@ -1,7 +1,7 @@
 import type { ChatContext, ChatMessage, ChatProvider, ChatReply, ChatSendOptions } from './adapter'
 import {
   KEY_ERROR_LINE, OFFLINE_LINE, QUOTA_LINE, REFUSAL_LINE,
-  buildClassifyPrompt, buildSystemPrompt, parseClassification,
+  buildClassifyPrompt, buildSystemPrompt, parseClassification, plainMath,
 } from './prompts'
 
 /* ============================================================
@@ -395,7 +395,7 @@ function makeProvider(name: string, generate: Generate, apiKey: string): ChatPro
           return { text: REFUSAL_LINE, refusedOffTopic: true }
         }
         if (answer.ok) {
-          return { text: answer.v, refusedOffTopic: false }
+          return { text: plainMath(answer.v), refusedOffTopic: false }
         }
         throw answer.e
       } catch (err) {
