@@ -88,10 +88,14 @@ export function ProfileSelect() {
       )}
 
       <span style={{ position: 'fixed', left: 18, bottom: 'calc(16px + env(safe-area-inset-bottom))', zIndex: 2 }}><SoundToggle openUp /></span>
+      {/* Version + synkstatus på en egen mörk platta (kontrast mot den målade
+          bakgrunden). Föräldern ska på VARJE platta kunna se om den synkar —
+          annars syns inte varför en borttagen profil ligger kvar på en iPad. */}
       <span style={{
         position: 'fixed', bottom: 'calc(8px + env(safe-area-inset-bottom))', left: '50%', transform: 'translateX(-50%)', zIndex: 2,
-        fontSize: 11, fontWeight: 700, color: '#EAd9BE', opacity: 0.85, textShadow: '0 1px 2px rgba(0,0,0,.6)',
-      }}>v{__APP_VERSION__}</span>
+        fontSize: 11, fontWeight: 700, color: '#F3E6CC', background: 'rgba(28,22,26,.72)', borderRadius: 999, padding: '3px 10px',
+        whiteSpace: 'nowrap', maxWidth: 'calc(100vw - 220px)', overflow: 'hidden', textOverflow: 'ellipsis',
+      }}>v{__APP_VERSION__} · {store.household.sync ? `☁ ${store.syncStatus ?? 'synkar …'}` : 'synk av på den här plattan'}</span>
       <button
         className="chip"
         onClick={() => store.go('parent')}
