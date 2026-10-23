@@ -1262,6 +1262,431 @@ const MultDivStora: LessonVisual = ({ step }) => {
   )
 }
 
+/* ---------- Åk 3–4: gemensamma byggstenar ---------- */
+
+/** En siffra i en uppställning. */
+function Dig({ x, y, ch, color = INK, visible = true, size = 34, delay = 0 }: {
+  x: number; y: number; ch: string; color?: string; visible?: boolean; size?: number; delay?: number
+}) {
+  return <text className="ls" x={x} y={y} textAnchor="middle" fontSize={size} fontWeight={900} fill={color} style={fade(visible, delay)}>{ch}</text>
+}
+
+/** En båge mellan två punkter på en tallinje; t = hur långt den ritats (0–1). */
+function Arc({ x1, x2, y, h, color, t = 1, label, below = false, visible = true }: {
+  x1: number; x2: number; y: number; h: number; color: string; t?: number; label?: string; below?: boolean; visible?: boolean
+}) {
+  const cy = below ? y + h : y - h
+  return (
+    <g className="ls" style={fade(visible)}>
+      <path d={`M${x1} ${y} Q${(x1 + x2) / 2} ${cy} ${x2} ${y}`} fill="none" stroke={color} strokeWidth={4} strokeLinecap="round"
+        pathLength={1} strokeDasharray="1" strokeDashoffset={1 - t} />
+      {label && <text x={(x1 + x2) / 2} y={below ? cy + 2 : cy + 10} textAnchor="middle" fontSize={15} fontWeight={900} fill={color} opacity={t > 0.6 ? 1 : 0}>{label}</text>}
+    </g>
+  )
+}
+
+const COLS = [100, 145, 190]
+const COL_NAMES = ['hundratal', 'tiotal', 'ental']
+
+function ColumnFrame({ active }: { active: number }) {
+  return (
+    <g>
+      {COLS.map((x, i) => (
+        <g key={i}>
+          <rect className="ls" x={x - 20} y={34} width={40} height={150} rx={10} fill={SUN_SOFT} style={fade(active === i)} />
+          <text x={x} y={26} textAnchor="middle" fontSize={10} fontWeight={800} fill={MUTED}>{COL_NAMES[i]}</text>
+        </g>
+      ))}
+      <line x1={66} x2={212} y1={138} y2={138} stroke={INK} strokeWidth={3} />
+    </g>
+  )
+}
+
+/* ---------- Räkna till 1000: uppställning med minnessiffra ---------- */
+
+const AddSub1000: LessonVisual = ({ step }) => {
+  const active = step === 1 || step === 2 ? 2 : step === 3 ? 1 : step === 4 ? 0 : -1
+  return (
+    <g>
+      <ColumnFrame active={active} />
+      <Dig x={COLS[0]} y={82} ch="2" /><Dig x={COLS[1]} y={82} ch="4" /><Dig x={COLS[2]} y={82} ch="5" />
+      <Dig x={68} y={124} ch="+" />
+      <Dig x={COLS[0]} y={124} ch="1" /><Dig x={COLS[1]} y={124} ch="3" /><Dig x={COLS[2]} y={124} ch="8" />
+      <Dig x={COLS[1]} y={52} ch="1" size={18} color={CORAL} visible={step >= 2} />
+      <Dig x={COLS[2]} y={176} ch="3" color={PRIMARY} visible={step >= 2} />
+      <Dig x={COLS[1]} y={176} ch="8" color={PRIMARY} visible={step >= 3} />
+      <Dig x={COLS[0]} y={176} ch="3" color={PRIMARY} visible={step >= 4} />
+      <Caption x={268} y={100} size={16} visible={step === 1} color={PRIMARY}>5 + 8 = 13</Caption>
+      <Caption x={268} y={90} size={15} visible={step === 2} color={CORAL}>13 = 1 tiotal</Caption>
+      <Caption x={268} y={112} size={15} visible={step === 2} color={CORAL}>+ 3 ental</Caption>
+      <Caption x={268} y={100} size={15} visible={step === 3} color={PRIMARY}>4 + 3 + 1 = 8</Caption>
+      <Caption x={268} y={100} size={16} visible={step === 4} color={PRIMARY}>2 + 1 = 3</Caption>
+      <Caption x={268} y={90} size={14} visible={step >= 5} color={MINT}>minus:</Caption>
+      <Caption x={268} y={112} size={14} visible={step >= 5} color={MINT}>växla ett tiotal</Caption>
+    </g>
+  )
+}
+
+/* ---------- Stora tal: platsernas namn och värde ---------- */
+
+const PLACES = ['tiotusental', 'tusental', 'hundratal', 'tiotal', 'ental']
+const PLACE_X = [40, 100, 160, 220, 280]
+
+const StoraTal: LessonVisual = ({ step }) => {
+  const digits = ['1', '3', step >= 4 ? '5' : '4', '7', '9']
+  const lit = (i: number): boolean => (step === 1 && i >= 3) || ((step === 2 || step === 4) && i === 2)
+  return (
+    <g>
+      {PLACE_X.map((x, i) => (
+        <g key={i}>
+          <rect className="ls" x={x - 25} y={58} width={50} height={64} rx={10} fill={lit(i) ? SUN : PAPER} stroke={LINE} strokeWidth={2} />
+          <text x={x} y={48} textAnchor="middle" fontSize={9} fontWeight={800} fill={MUTED}>{PLACES[i]}</text>
+          <text x={x} y={104} textAnchor="middle" fontSize={34} fontWeight={900} fill={step >= 4 && i === 2 ? CORAL : PRIMARY}>{digits[i]}</text>
+        </g>
+      ))}
+      {[0, 1, 2, 3].map((i) => (
+        <text key={i} className="ls" x={PLACE_X[i] + 30} y={146} textAnchor="middle" fontSize={12} fontWeight={900} fill={MINT} style={fade(step === 3)}>← ×10</text>
+      ))}
+      <Caption x={160} y={152} size={20} visible={step === 2} color={INK}>4 hundratal = 400</Caption>
+      <Caption x={160} y={152} size={20} visible={step === 4} color={CORAL}>13 479 + 100 = 13 579</Caption>
+      <Caption x={160} y={152} size={18} visible={step >= 5} color={CORAL}>9 + 1 = 10 → växla åt vänster</Caption>
+    </g>
+  )
+}
+
+/* ---------- Alla tabeller: bygg en du glömt av en du kan ---------- */
+
+const TabellerAlla: LessonVisual = ({ step }) => {
+  const cell = 17
+  const x0 = 34
+  const y0 = 40
+  const grid = step <= 3
+  return (
+    <g>
+      <g className="ls" style={fade(grid)}>
+        <rect className="ls" x={x0 - 6} y={y0 - 6} width={7 * cell + 12} height={5 * cell + 6} rx={8} fill={PRIMARY_SOFT} style={fade(step >= 2)} />
+        {Array.from({ length: 6 }, (_, r) => Array.from({ length: 7 }, (_, c) => (
+          <circle key={`${r}-${c}`} cx={x0 + c * cell + cell / 2 - 6} cy={y0 + r * cell + cell / 2 - 6} r={6}
+            fill={r === 5 && step >= 3 ? CORAL : PRIMARY} />
+        )))}
+      </g>
+      <Caption x={250} y={92} size={22} visible={step === 1} color={INK}>6 × 7</Caption>
+      <Caption x={250} y={80} size={18} visible={step >= 2 && step <= 3} color={PRIMARY}>5 × 7 = 35</Caption>
+      <Caption x={250} y={112} size={18} visible={step === 3} color={CORAL}>35 + 7 = 42</Caption>
+      <Caption x={250} y={150} size={20} visible={step === 3} color={MINT}>6 × 7 = 42</Caption>
+      <Caption x={160} y={70} size={24} visible={step === 4} color={INK}>9 × 4</Caption>
+      <Caption x={160} y={110} size={20} visible={step === 4} color={PRIMARY}>= 10 × 4 − 4</Caption>
+      <Caption x={160} y={148} size={20} visible={step === 4} color={MINT}>= 40 − 4 = 36</Caption>
+      <Caption x={160} y={110} size={26} visible={step >= 5} color={MINT}>7 × 6 = 6 × 7</Caption>
+    </g>
+  )
+}
+
+/* ---------- Gånger och delat hör ihop: talfamiljen ---------- */
+
+const MultDivSamband: LessonVisual = ({ step }) => {
+  const eqs = ['6 × 7 = 42', '7 × 6 = 42', '42 / 7 = 6', '42 / 6 = 7']
+  return (
+    <g>
+      <path d="M86 42 L34 158 L138 158 Z" fill={SUN_SOFT} stroke={INK} strokeWidth={3} strokeLinejoin="round" />
+      <circle cx={86} cy={58} r={22} fill={PAPER} stroke={INK} strokeWidth={2.5} />
+      <text x={86} y={66} textAnchor="middle" fontSize={22} fontWeight={900} fill={CORAL}>42</text>
+      <circle cx={48} cy={146} r={20} fill={PAPER} stroke={INK} strokeWidth={2.5} />
+      <text x={48} y={154} textAnchor="middle" fontSize={22} fontWeight={900} fill={PRIMARY}>6</text>
+      <circle cx={124} cy={146} r={20} fill={PAPER} stroke={INK} strokeWidth={2.5} />
+      <text x={124} y={154} textAnchor="middle" fontSize={22} fontWeight={900} fill={PRIMARY}>7</text>
+      {eqs.map((e, i) => (
+        <Caption key={e} x={240} y={52 + i * 32} size={19} visible={step >= i + 1 && step < 5} color={i < 2 ? PRIMARY : CORAL}>{e}</Caption>
+      ))}
+      <Caption x={240} y={92} size={19} visible={step >= 5} color={CORAL}>42 / 7 = ?</Caption>
+      <Caption x={240} y={126} size={19} visible={step >= 5} color={MINT}>? × 7 = 42</Caption>
+    </g>
+  )
+}
+
+/* ---------- Uppställning gånger ---------- */
+
+const SkriftligMult: LessonVisual = ({ step }) => {
+  const active = step === 1 ? 2 : step === 2 || step === 3 ? 1 : -1
+  return (
+    <g>
+      <ColumnFrame active={active} />
+      <Dig x={COLS[1]} y={82} ch="4" /><Dig x={COLS[2]} y={82} ch="6" />
+      <Dig x={68} y={124} ch="×" /><Dig x={COLS[2]} y={124} ch="3" />
+      <Dig x={COLS[1]} y={52} ch="1" size={18} color={CORAL} visible={step >= 1} />
+      <Dig x={COLS[2]} y={176} ch="8" color={PRIMARY} visible={step >= 1} />
+      <Dig x={COLS[1]} y={176} ch="3" color={PRIMARY} visible={step >= 3} />
+      <Dig x={COLS[0]} y={176} ch="1" color={PRIMARY} visible={step >= 3} />
+      <Caption x={268} y={100} size={16} visible={step === 1} color={PRIMARY}>6 × 3 = 18</Caption>
+      <Caption x={268} y={88} size={15} visible={step === 2 || step === 3} color={PRIMARY}>4 × 3 = 12</Caption>
+      <Caption x={268} y={112} size={15} visible={step === 2 || step === 3} color={CORAL}>12 + 1 = 13</Caption>
+      <Caption x={268} y={88} size={15} visible={step >= 4} color={MINT}>46 ≈ 50</Caption>
+      <Caption x={268} y={112} size={15} visible={step >= 4} color={MINT}>50 × 3 = 150</Caption>
+    </g>
+  )
+}
+
+/* ---------- Kort division: dela tiotal och ental för sig ---------- */
+
+const GROUP_X = [50, 122, 194, 266]
+
+const KortDivision: LessonVisual = ({ step }) => {
+  const grouped = step >= 2
+  const cubes = step >= 3
+  return (
+    <g>
+      {GROUP_X.map((gx, g) => (
+        <g key={g} className="ls" style={fade(grouped)}>
+          <rect x={gx - 30} y={42} width={60} height={118} rx={10} fill={PRIMARY_SOFT} opacity={0.55} />
+          <text x={gx} y={180} textAnchor="middle" fontSize={16} fontWeight={900} fill={MINT} style={{ opacity: step >= 4 ? 1 : 0 }}>21</text>
+        </g>
+      ))}
+      {Array.from({ length: 8 }, (_, i) => {
+        const [x, y] = grouped ? [GROUP_X[Math.floor(i / 2)] - 14 + (i % 2) * 16, 50] : [26 + i * 17, 50]
+        return <rect key={i} className="ls ls--slow" x={0} y={0} width={12} height={64} rx={3} fill={PRIMARY} stroke={INK} strokeWidth={1.5}
+          style={{ transform: `translate(${x}px, ${y}px)` }} />
+      })}
+      {Array.from({ length: step >= 5 ? 5 : 4 }, (_, j) => {
+        // Före grupperingen ligger kuberna under grupperna, så de aldrig
+        // hamnar ovanpå en tiotalsgrupp.
+        const [x, y] = j === 4 ? [300, 128] : cubes ? [GROUP_X[j] - 7, 128] : [126 + j * 20, 168]
+        return <rect key={j} className="ls ls--slow" x={0} y={0} width={14} height={14} rx={2} fill={j === 4 ? CORAL : SUN} stroke={INK} strokeWidth={1.5}
+          style={{ transform: `translate(${x}px, ${y}px)` }} />
+      })}
+      <Caption x={160} y={26} size={18} visible={step === 0} color={INK}>84 / 4</Caption>
+      <Caption x={160} y={26} size={18} visible={step === 1} color={INK}>84 = 80 + 4</Caption>
+      <Caption x={160} y={26} size={18} visible={step === 2} color={PRIMARY}>80 / 4 = 20</Caption>
+      <Caption x={160} y={26} size={18} visible={step === 3} color={PRIMARY}>4 / 4 = 1</Caption>
+      <Caption x={160} y={26} size={18} visible={step === 4} color={MINT}>20 + 1 = 21</Caption>
+      <Caption x={160} y={26} size={18} visible={step >= 5} color={CORAL}>85 / 4 = 21, rest 1</Caption>
+    </g>
+  )
+}
+
+/* ---------- Öppna utsagor: räkna baklänges ---------- */
+
+const OU_X = (n: number): number => 22 + (n - 20) * 13.8
+
+const OppnaUtsagor: LessonVisual = ({ step }) => {
+  const t = useTween(step >= 2 ? 1 : 0, 1600)
+  const mult = step >= 4
+  return (
+    <g>
+      <g className="ls" style={fade(!mult)}>
+        <text x={142} y={62} textAnchor="end" fontSize={32} fontWeight={900} fill={INK}>36 −</text>
+        <text x={200} y={62} fontSize={32} fontWeight={900} fill={INK}>= 25</text>
+        <rect x={150} y={34} width={42} height={38} rx={8} fill={step >= 3 ? MINT : SUN_SOFT} stroke={INK} strokeWidth={2.5} />
+        <text x={171} y={63} textAnchor="middle" fontSize={26} fontWeight={900} fill={step >= 3 ? PAPER : CORAL}>{step >= 3 ? '11' : '?'}</text>
+        <line x1={OU_X(20)} x2={OU_X(40)} y1={156} y2={156} stroke={INK} strokeWidth={3} />
+        {Array.from({ length: 21 }, (_, i) => (
+          <g key={i}>
+            <line x1={OU_X(20 + i)} x2={OU_X(20 + i)} y1={150} y2={i % 5 === 0 ? 164 : 160} stroke={INK} strokeWidth={2} />
+            {i % 5 === 0 && <text x={OU_X(20 + i)} y={180} textAnchor="middle" fontSize={12} fontWeight={800} fill={MUTED}>{20 + i}</text>}
+          </g>
+        ))}
+        <circle className="ls" cx={OU_X(25)} cy={156} r={7} fill={PRIMARY} style={fade(step >= 1)} />
+        <circle className="ls" cx={OU_X(36)} cy={156} r={7} fill={CORAL} style={fade(step >= 1)} />
+        <Arc x1={OU_X(25)} x2={OU_X(36)} y={150} h={56} color={MINT} t={t} label="11 steg" visible={step >= 2} />
+      </g>
+      <g className="ls" style={fade(mult)}>
+        <text x={138} y={92} fontSize={34} fontWeight={900} fill={INK}>× 5 = 25</text>
+        <rect x={84} y={62} width={44} height={40} rx={8} fill={MINT} stroke={INK} strokeWidth={2.5} />
+        <text x={106} y={92} textAnchor="middle" fontSize={28} fontWeight={900} fill={PAPER}>5</text>
+        <Caption x={160} y={150} size={18} color={PRIMARY}>vad gånger 5 blir 25?</Caption>
+      </g>
+    </g>
+  )
+}
+
+/* ---------- Mönster med regler ---------- */
+
+const SEQ = [3, 7, 11, 15, 19, 23]
+const SEQ_X = (i: number): number => 24 + i * 48
+
+const MonsterRegler: LessonVisual = ({ step }) => (
+  <g>
+    {SEQ.map((n, i) => {
+      const shown = i < 4 || step >= 3
+      return (
+        <g key={i} className="ls" style={fade(shown, i >= 4 ? (i - 4) * 700 : 0)}>
+          <rect x={SEQ_X(i)} y={78} width={38} height={40} rx={8} fill={i === 5 && step >= 3 ? MINT : PAPER} stroke={LINE} strokeWidth={2} />
+          <text x={SEQ_X(i) + 19} y={105} textAnchor="middle" fontSize={20} fontWeight={900} fill={i === 5 && step >= 3 ? PAPER : PRIMARY}>{n}</text>
+          <text x={SEQ_X(i) + 19} y={136} textAnchor="middle" fontSize={10} fontWeight={800} fill={MUTED} style={{ opacity: step >= 3 ? 1 : 0 }}>plats {i + 1}</text>
+        </g>
+      )
+    })}
+    {SEQ.slice(1).map((_, i) => (
+      <Arc key={i} x1={SEQ_X(i) + 24} x2={SEQ_X(i + 1) + 14} y={76} h={24} color={CORAL} label="+4" visible={step >= 1 && (i < 3 || step >= 3)} />
+    ))}
+    <Caption x={160} y={176} size={17} visible={step === 2} color={PRIMARY}>börja på 3, lägg till 4</Caption>
+    <Caption x={160} y={176} size={17} visible={step >= 4} color={MINT}>3 + 5 × 4 = 3 + 20 = 23</Caption>
+  </g>
+)
+
+/* ---------- Symmetri: vik längs spegellinjen ---------- */
+
+const HEART_R = 'M80 72 C95 46 136 56 128 94 C122 122 96 136 80 154 Z'
+const HEART_L = 'M80 72 C65 46 24 56 32 94 C38 122 64 136 80 154 Z'
+
+const Symmetri: LessonVisual = ({ step }) => {
+  // Viks bara i scen 2 — sedan vecklas hjärtat ut igen.
+  const fold = useTween(step === 2 ? -1 : 1, 1500)
+  const rect = step >= 5
+  return (
+    <g>
+      <g className="ls" style={fade(!rect)}>
+        <path d={HEART_R} fill={CORAL} />
+        <path d={HEART_L} fill={CORAL_SOFT} stroke={CORAL} strokeWidth={2}
+          style={{ transform: `translate(80px, 0) scaleX(${fold}) translate(-80px, 0)` }} opacity={0.9} />
+        <line className="ls" x1={80} x2={80} y1={40} y2={168} stroke={INK} strokeWidth={2.5} strokeDasharray="6 5" style={fade(step >= 1)} />
+      </g>
+      <g className="ls" style={fade(rect)}>
+        <rect x={30} y={70} width={100} height={60} fill={PRIMARY_SOFT} stroke={INK} strokeWidth={2.5} />
+        <line x1={30} y1={70} x2={130} y2={130} stroke={CORAL} strokeWidth={3} strokeDasharray="6 5" />
+        <text x={80} y={160} textAnchor="middle" fontSize={22} fontWeight={900} fill={CORAL}>✗</text>
+      </g>
+      <g className="ls" style={fade(step >= 3)}>
+        <text x={210} y={128} textAnchor="middle" fontSize={78} fontWeight={900} fill={PRIMARY}>A</text>
+        <line x1={210} x2={210} y1={52} y2={140} stroke={INK} strokeWidth={2.5} strokeDasharray="6 5" />
+        <text x={210} y={164} textAnchor="middle" fontSize={20} fontWeight={900} fill={MINT}>✓</text>
+      </g>
+      <g className="ls" style={fade(step >= 4)}>
+        <text x={280} y={128} textAnchor="middle" fontSize={78} fontWeight={900} fill={PRIMARY}>P</text>
+        <line x1={280} x2={280} y1={52} y2={140} stroke={INK} strokeWidth={2.5} strokeDasharray="6 5" />
+        <text x={280} y={164} textAnchor="middle" fontSize={20} fontWeight={900} fill={CORAL}>✗</text>
+      </g>
+    </g>
+  )
+}
+
+/* ---------- Läsa diagram: temperaturen månad för månad ---------- */
+
+const TEMP = [{ m: 'jan', v: 2 }, { m: 'feb', v: 4 }, { m: 'mar', v: 8 }, { m: 'apr', v: 6 }, { m: 'maj', v: 10 }]
+
+const DiagramLasa: LessonVisual = ({ step }) => {
+  const ox = 52
+  const oy = 172
+  const X = (i: number): number => ox + 22 + i * 50
+  const Y = (v: number): number => oy - v * 12.5
+  const up = useTween(step >= 1 ? 8 : 0, 1400)
+  const left = useTween(step >= 2 ? 1 : 0, 1200)
+  return (
+    <g>
+      {[2, 4, 6, 8, 10, 12].map((v) => (
+        <g key={v}>
+          <line x1={ox} x2={X(4) + 22} y1={Y(v)} y2={Y(v)} stroke={LINE} strokeWidth={1} />
+          <text x={ox - 8} y={Y(v) + 4} textAnchor="end" fontSize={12} fontWeight={800} fill={MUTED}>{v}°</text>
+        </g>
+      ))}
+      <line x1={ox} x2={X(4) + 24} y1={oy} y2={oy} stroke={INK} strokeWidth={3} />
+      <line x1={ox} x2={ox} y1={oy} y2={Y(12.6)} stroke={INK} strokeWidth={3} />
+      {TEMP.map((p, i) => <text key={p.m} x={X(i)} y={oy + 17} textAnchor="middle" fontSize={12} fontWeight={800} fill={step >= 1 && i === 2 ? CORAL : MUTED}>{p.m}</text>)}
+      <polyline points={TEMP.map((p, i) => `${X(i)},${Y(p.v)}`).join(' ')} fill="none" stroke={PRIMARY} strokeWidth={4} strokeLinejoin="round" />
+      {TEMP.map((p, i) => <circle key={p.m} cx={X(i)} cy={Y(p.v)} r={5} fill={PRIMARY} />)}
+      <line x1={X(2)} x2={X(2)} y1={oy} y2={Y(up)} stroke={CORAL} strokeWidth={3} strokeDasharray="6 4" opacity={step >= 1 ? 1 : 0} />
+      <line x1={X(2)} x2={X(2) - (X(2) - ox) * left} y1={Y(8)} y2={Y(8)} stroke={CORAL} strokeWidth={3} strokeDasharray="6 4" opacity={step >= 2 ? 1 : 0} />
+      <line className="ls" x1={X(2)} y1={Y(8)} x2={X(3)} y2={Y(6)} stroke={CORAL} strokeWidth={7} strokeLinecap="round" style={fade(step >= 3)} />
+      <line className="ls" x1={ox} x2={X(3)} y1={Y(6)} y2={Y(6)} stroke={MINT} strokeWidth={3} strokeDasharray="6 4" style={fade(step >= 3)} />
+      <Caption x={X(2) + 4} y={Y(8) - 12} size={15} visible={step === 2} color={CORAL}>8°</Caption>
+      <Caption x={X(3) + 22} y={Y(6) + 16} size={15} visible={step >= 3} color={MINT}>6°</Caption>
+      <Caption x={250} y={30} size={16} visible={step >= 4} color={INK}>8 − 6 = 2 grader</Caption>
+    </g>
+  )
+}
+
+/* ---------- Proportionalitet: tre gånger så många, tre gånger så dyrt ---------- */
+
+const Proportionalitet: LessonVisual = ({ step }) => (
+  <g>
+    <text x={58} y={88} textAnchor="middle" fontSize={16} fontWeight={900} fill={MUTED}>bullar</text>
+    <text x={58} y={148} textAnchor="middle" fontSize={16} fontWeight={900} fill={MUTED}>kronor</text>
+    {[[150, '3'], [250, '9']].map(([x, v]) => (
+      <g key={String(x)}>
+        <rect x={Number(x) - 32} y={62} width={64} height={40} rx={10} fill={PAPER} stroke={LINE} strokeWidth={2} />
+        <text x={Number(x)} y={91} textAnchor="middle" fontSize={24} fontWeight={900} fill={PRIMARY}>{v}</text>
+      </g>
+    ))}
+    <rect x={118} y={122} width={64} height={40} rx={10} fill={PAPER} stroke={LINE} strokeWidth={2} />
+    <text x={150} y={151} textAnchor="middle" fontSize={24} fontWeight={900} fill={CORAL}>9</text>
+    <rect x={218} y={122} width={64} height={40} rx={10} fill={step >= 2 ? MINT : SUN_SOFT} stroke={LINE} strokeWidth={2} />
+    <text x={250} y={151} textAnchor="middle" fontSize={24} fontWeight={900} fill={step >= 2 ? PAPER : CORAL}>{step >= 2 ? '27' : '?'}</text>
+    <Arc x1={162} x2={238} y={60} h={30} color={PRIMARY} label="× 3" visible={step >= 1} />
+    <Arc x1={162} x2={238} y={164} h={30} color={CORAL} label="× 3" below visible={step >= 2} />
+    <Caption x={160} y={20} size={14} visible={step === 3} color={MINT}>1 bulle: 9 / 3 = 3 kr → 9 × 3 = 27 kr</Caption>
+    <Caption x={160} y={20} size={15} visible={step >= 4} color={MINT}>dubbelt så många → dubbelt så dyrt</Caption>
+  </g>
+)
+
+/* ---------- Kontrollera med motsatt räknesätt ---------- */
+
+const KM_X = (n: number): number => 20 + n * 4.6
+
+const KontrollMotsatt: LessonVisual = ({ step }) => {
+  const back = useTween(step >= 1 ? 1 : 0, 1500)
+  const div = step >= 4
+  return (
+    <g>
+      <g className="ls" style={fade(!div)}>
+        <line x1={KM_X(0)} x2={KM_X(60)} y1={130} y2={130} stroke={INK} strokeWidth={3} />
+        {[0, 10, 20, 30, 40, 50, 60].map((n) => (
+          <g key={n}>
+            <line x1={KM_X(n)} x2={KM_X(n)} y1={124} y2={136} stroke={INK} strokeWidth={2} />
+            <text x={KM_X(n)} y={152} textAnchor="middle" fontSize={12} fontWeight={800} fill={MUTED}>{n}</text>
+          </g>
+        ))}
+        <circle cx={KM_X(52)} cy={130} r={7} fill={INK} />
+        <circle cx={KM_X(34)} cy={130} r={7} fill={PRIMARY} />
+        <text x={KM_X(52)} y={112} textAnchor="middle" fontSize={13} fontWeight={900} fill={INK}>52</text>
+        <text x={KM_X(34)} y={112} textAnchor="middle" fontSize={13} fontWeight={900} fill={PRIMARY}>34</text>
+        <Arc x1={KM_X(52)} x2={KM_X(34)} y={122} h={58} color={CORAL} label="− 18" />
+        <Arc x1={KM_X(34)} x2={KM_X(52)} y={160} h={26} color={MINT} t={back} label="+ 18" below visible={step >= 1 && step < 3} />
+        <Caption x={KM_X(52) + 26} y={92} size={20} visible={step === 2} color={MINT}>✓</Caption>
+        <Arc x1={KM_X(36)} x2={KM_X(54)} y={160} h={26} color={MUTED} label="+ 18" below visible={step === 3} />
+        <circle className="ls" cx={KM_X(54)} cy={130} r={6} fill={CORAL} style={fade(step === 3)} />
+        <Caption x={250} y={40} size={16} visible={step === 3} color={CORAL}>36 + 18 = 54 ≠ 52</Caption>
+      </g>
+      <g className="ls" style={fade(div)}>
+        <Caption x={160} y={80} size={24} color={PRIMARY}>42 / 6 = 7</Caption>
+        <Caption x={160} y={124} size={24} color={MINT}>7 × 6 = 42 ✓</Caption>
+      </g>
+    </g>
+  )
+}
+
+/* ---------- Överslagsräkning: runda tal ---------- */
+
+const OS_X = (n: number): number => 22 + n * 0.4
+
+const Overslag: LessonVisual = ({ step }) => {
+  const a = useTween(step >= 1 ? 400 : 398, 1200)
+  const b = useTween(step >= 2 ? 200 : 205, 1200)
+  return (
+    <g>
+      <line x1={OS_X(0)} x2={OS_X(700)} y1={120} y2={120} stroke={INK} strokeWidth={3} />
+      {[0, 100, 200, 300, 400, 500, 600, 700].map((n) => (
+        <g key={n}>
+          <line x1={OS_X(n)} x2={OS_X(n)} y1={113} y2={127} stroke={INK} strokeWidth={2} />
+          <text x={OS_X(n)} y={144} textAnchor="middle" fontSize={11} fontWeight={800} fill={MUTED}>{n}</text>
+        </g>
+      ))}
+      <g className="ls" style={fade(step >= 1)}>
+        <circle cx={OS_X(a)} cy={120} r={7} fill={PRIMARY} />
+        <text x={OS_X(400)} y={98} textAnchor="middle" fontSize={14} fontWeight={900} fill={PRIMARY}>398 ≈ 400</text>
+      </g>
+      <g className="ls" style={fade(step >= 2)}>
+        <circle cx={OS_X(b)} cy={120} r={7} fill={CORAL} />
+        <text x={OS_X(200)} y={98} textAnchor="middle" fontSize={14} fontWeight={900} fill={CORAL}>205 ≈ 200</text>
+      </g>
+      <Caption x={160} y={40} size={22} visible={step >= 3} color={MINT}>400 + 200 = 600</Caption>
+      <g className="ls" style={fade(step >= 4)}>
+        <circle cx={OS_X(603)} cy={120} r={7} fill={MINT} />
+        <text x={OS_X(603)} y={172} textAnchor="middle" fontSize={14} fontWeight={900} fill={MINT}>exakt: 603</text>
+      </g>
+      <Caption x={160} y={40} size={18} visible={step === 0} color={INK}>räkna ungefär</Caption>
+    </g>
+  )
+}
+
 export const LESSON_VISUALS: Record<string, LessonVisual> = {
   'mult-intro': MultIntro,
   'div-intro': DivIntro,
@@ -1292,4 +1717,17 @@ export const LESSON_VISUALS: Record<string, LessonVisual> = {
   'grafer': Grafer,
   'decimal-rakna': DecimalRakna,
   'mult-div-stora': MultDivStora,
+  'add-sub-0-1000': AddSub1000,
+  'stora-tal': StoraTal,
+  'tabeller-alla': TabellerAlla,
+  'mult-div-samband': MultDivSamband,
+  'skriftlig-mult': SkriftligMult,
+  'kort-division': KortDivision,
+  'oppna-utsagor-100': OppnaUtsagor,
+  'monster-regler': MonsterRegler,
+  'symmetri': Symmetri,
+  'diagram-lasa': DiagramLasa,
+  'proportionalitet': Proportionalitet,
+  'kontroll-motsatt': KontrollMotsatt,
+  'overslagsrakning': Overslag,
 }

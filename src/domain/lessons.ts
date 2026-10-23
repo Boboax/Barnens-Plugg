@@ -326,6 +326,129 @@ export const LESSONS: Record<string, Lesson> = {
       { text: 'Lägg ihop delarna: 240 + 120 = 360.', say: 'Lägg ihop delarna. Tvåhundrafyrtio plus hundratjugo är trehundrasextio.' },
     ],
   },
+  'add-sub-0-1000': {
+    scenes: [
+      { text: 'Stora tal räknar vi i en uppställning: hundratal under hundratal, tiotal under tiotal, ental under ental.' },
+      { text: 'Vi räknar 245 + 138. Börja alltid med entalen: 5 + 8 = 13.', say: 'Vi räknar tvåhundrafyrtiofem plus hundratrettioåtta. Börja alltid med entalen. Fem plus åtta är tretton.' },
+      { text: '13 är 1 tiotal och 3 ental. Skriv 3, och lägg tiotalet som en minnessiffra ovanför tiotalen.', say: 'Tretton är ett tiotal och tre ental. Skriv tre, och lägg tiotalet som en minnessiffra ovanför tiotalen.' },
+      { text: 'Tiotalen: 4 + 3 + minnessiffran 1 = 8.', say: 'Tiotalen. Fyra plus tre plus minnessiffran ett är åtta.' },
+      { text: 'Hundratalen: 2 + 1 = 3. Svaret är 383.', say: 'Hundratalen. Två plus ett är tre. Svaret är trehundraåttiotre.' },
+      { text: 'Minus fungerar likadant — räcker inte entalen växlar du ett tiotal till tio ental.' },
+    ],
+  },
+  'stora-tal': {
+    scenes: [
+      { text: 'Varje plats i ett tal har ett namn: ental, tiotal, hundratal, tusental, tiotusental.' },
+      { text: 'I 13 479 står 9 på entalsplatsen och 7 på tiotalsplatsen.', say: 'I trettontusen fyrahundrasjuttionio står nio på entalsplatsen och sju på tiotalsplatsen.' },
+      { text: '4 står på hundratalsplatsen. Där är den värd 400.', say: 'Fyra står på hundratalsplatsen. Där är den värd fyrahundra.' },
+      { text: 'Varje steg åt vänster gör siffran tio gånger mer värd.' },
+      { text: 'Plus 100: bara hundratalssiffran ökar med ett. 13 479 + 100 = 13 579.', say: 'Plus hundra. Bara hundratalssiffran ökar med ett. Trettontusen fyrahundrasjuttionio plus hundra är trettontusen femhundrasjuttionio.' },
+      { text: 'Är siffran 9 blir den 10 — då växlar du till platsen till vänster, precis som över tian.' },
+    ],
+  },
+  'tabeller-alla': {
+    scenes: [
+      { text: 'Tabellerna är gånger du kan utantill. Glömmer du en kan du bygga den av en du kan.' },
+      { text: '6 × 7 är sex rader med sju prickar.', say: 'Sex gånger sju är sex rader med sju prickar.' },
+      { text: 'Fem rader känner du igen: 5 × 7 = 35.', say: 'Fem rader känner du igen. Fem gånger sju är trettiofem.' },
+      { text: 'Lägg till en rad till: 35 + 7 = 42. Alltså är 6 × 7 = 42.', say: 'Lägg till en rad till. Trettiofem plus sju är fyrtiotvå. Alltså är sex gånger sju fyrtiotvå.' },
+      { text: 'Gånger 9 är gånger 10 minus en gång: 9 × 4 = 40 − 4 = 36.', say: 'Gånger nio är gånger tio minus en gång. Nio gånger fyra är fyrtio minus fyra, trettiosex.' },
+      { text: 'Ordningen spelar ingen roll: 7 × 6 är samma som 6 × 7.', say: 'Ordningen spelar ingen roll. Sju gånger sex är samma som sex gånger sju.' },
+    ],
+  },
+  'mult-div-samband': {
+    scenes: [
+      { text: 'Gånger och delat hör ihop, som en familj med tre tal.' },
+      { text: 'Talen 6, 7 och 42 hör ihop: 6 × 7 = 42.', say: 'Talen sex, sju och fyrtiotvå hör ihop. Sex gånger sju är fyrtiotvå.' },
+      { text: 'Byt plats: 7 × 6 = 42.', say: 'Byt plats. Sju gånger sex är fyrtiotvå.' },
+      { text: 'Baklänges blir det delat: 42 / 7 = 6.', say: 'Baklänges blir det delat. Fyrtiotvå delat med sju är sex.' },
+      { text: 'Och 42 / 6 = 7.', say: 'Och fyrtiotvå delat med sex är sju.' },
+      { text: 'Ska du dela, fråga dig: vad gånger 7 blir 42?', say: 'Ska du dela, fråga dig: vad gånger sju blir fyrtiotvå?' },
+    ],
+  },
+  'skriftlig-mult': {
+    scenes: [
+      { text: 'Uppställning gånger: 46 × 3. Vi tar en siffra i taget, från entalen.', say: 'Uppställning gånger. Fyrtiosex gånger tre. Vi tar en siffra i taget, från entalen.' },
+      { text: 'Entalen: 6 × 3 = 18. Skriv 8 och spara 1 tiotal som minnessiffra.', say: 'Entalen. Sex gånger tre är arton. Skriv åtta och spara ett tiotal som minnessiffra.' },
+      { text: 'Tiotalen: 4 × 3 = 12, plus minnessiffran 1 = 13.', say: 'Tiotalen. Fyra gånger tre är tolv, plus minnessiffran ett är tretton.' },
+      { text: 'Skriv 13 längst fram. Svaret är 138.', say: 'Skriv tretton längst fram. Svaret är hundratrettioåtta.' },
+      { text: 'Kolla med överslag: 46 är nästan 50, och 50 × 3 = 150. 138 är rimligt!', say: 'Kolla med överslag. Fyrtiosex är nästan femtio, och femtio gånger tre är hundrafemtio. Hundratrettioåtta är rimligt!' },
+    ],
+  },
+  'kort-division': {
+    scenes: [
+      { text: 'Kort division: 84 / 4. Dela upp 84 i delar som är lätta att dela med 4.', say: 'Kort division. Åttiofyra delat med fyra. Dela upp åttiofyra i delar som är lätta att dela med fyra.' },
+      { text: '84 är 8 tiotal och 4 ental: 84 = 80 + 4.', say: 'Åttiofyra är åtta tiotal och fyra ental. Åttio plus fyra.' },
+      { text: 'Åtta tiotal i fyra lika grupper: två tiotal i varje. 80 / 4 = 20.', say: 'Åtta tiotal i fyra lika grupper. Två tiotal i varje. Åttio delat med fyra är tjugo.', minMs: 4000 },
+      { text: 'Fyra ental i fyra grupper: ett i varje. 4 / 4 = 1.', say: 'Fyra ental i fyra grupper. Ett i varje. Fyra delat med fyra är ett.', minMs: 3500 },
+      { text: 'Varje grupp har 20 + 1 = 21. Kolla: 21 × 4 = 84.', say: 'Varje grupp har tjugo plus ett, tjugoett. Kolla: tjugoett gånger fyra är åttiofyra.' },
+      { text: 'Går det inte jämnt blir det en rest: 85 / 4 = 21, rest 1.', say: 'Går det inte jämnt blir det en rest. Åttiofem delat med fyra är tjugoett, rest ett.' },
+    ],
+  },
+  'oppna-utsagor-100': {
+    scenes: [
+      { text: 'I en öppen utsaga gömmer sig ett tal: 36 − __ = 25.', say: 'I en öppen utsaga gömmer sig ett tal. Trettiosex minus vilket tal blir tjugofem?' },
+      { text: 'Fråga dig: vad tar jag bort från 36 för att få 25?', say: 'Fråga dig: vad tar jag bort från trettiosex för att få tjugofem?' },
+      { text: 'Räkna baklänges på tallinjen: från 25 upp till 36 är det 11 steg.', say: 'Räkna baklänges på tallinjen. Från tjugofem upp till trettiosex är det elva steg.', minMs: 4000 },
+      { text: 'Det gömda talet är 11. Kolla: 36 − 11 = 25.', say: 'Det gömda talet är elva. Kolla: trettiosex minus elva är tjugofem.' },
+      { text: 'Med gånger likadant: __ × 5 = 25. Vad gånger 5 blir 25? Jo, 5.', say: 'Med gånger likadant. Vilket tal gånger fem blir tjugofem? Jo, fem.' },
+    ],
+  },
+  'monster-regler': {
+    scenes: [
+      { text: 'Talföljden 3, 7, 11, 15 … Vad är regeln?', say: 'Talföljden tre, sju, elva, femton och så vidare. Vad är regeln?' },
+      { text: 'Titta på stegen mellan talen: plus 4, plus 4, plus 4.', say: 'Titta på stegen mellan talen. Plus fyra, plus fyra, plus fyra.' },
+      { text: 'Regeln är: börja på 3 och lägg till 4 varje gång.', say: 'Regeln är: börja på tre och lägg till fyra varje gång.' },
+      { text: 'Vilket tal står på plats 6? Fortsätt: 19 på plats 5, 23 på plats 6.', say: 'Vilket tal står på plats sex? Fortsätt. Nitton på plats fem, tjugotre på plats sex.' },
+      { text: 'Eller räkna: från plats 1 till plats 6 är 5 steg om 4. 3 + 20 = 23.', say: 'Eller räkna. Från plats ett till plats sex är fem steg om fyra. Tre plus tjugo är tjugotre.' },
+    ],
+  },
+  'symmetri': {
+    scenes: [
+      { text: 'En figur är symmetrisk om den kan vikas så att halvorna passar precis över varandra.' },
+      { text: 'Vecket kallas spegellinje. Hjärtat har en lodrät spegellinje.' },
+      { text: 'Vi viker: den vänstra halvan hamnar precis på den högra. Det stämmer!', minMs: 3500 },
+      { text: 'Bokstaven A har också en lodrät spegellinje.' },
+      { text: 'Men inte P: viker du den passar halvorna inte ihop.' },
+      { text: 'Rektangelns diagonal är ingen spegellinje — viker du där hamnar hörnen fel.' },
+    ],
+  },
+  'diagram-lasa': {
+    scenes: [
+      { text: 'Ett linjediagram visar hur något förändras, här temperaturen varje månad.' },
+      { text: 'Hitta månaden längs golvet och gå rakt upp till linjen.', minMs: 3500 },
+      { text: 'Sedan rakt åt vänster och läs av: i mars var det 8 grader.', say: 'Sedan rakt åt vänster och läs av. I mars var det åtta grader.', minMs: 3500 },
+      { text: 'Mellan mars och april går linjen nedåt: från 8 till 6.', say: 'Mellan mars och april går linjen nedåt. Från åtta till sex.' },
+      { text: 'Temperaturen minskade med 8 − 6 = 2 grader. Uppåt är mer, nedåt är mindre.', say: 'Temperaturen minskade med åtta minus sex, två grader. Uppåt är mer, nedåt är mindre.' },
+    ],
+  },
+  'proportionalitet': {
+    scenes: [
+      { text: '3 bullar kostar 9 kr. Vad kostar 9 bullar?', say: 'Tre bullar kostar nio kronor. Vad kostar nio bullar?' },
+      { text: '9 bullar är tre gånger så många som 3 bullar.', say: 'Nio bullar är tre gånger så många som tre bullar.' },
+      { text: 'Då kostar de också tre gånger så mycket: 9 × 3 = 27 kr.', say: 'Då kostar de också tre gånger så mycket. Nio gånger tre är tjugosju kronor.' },
+      { text: 'Ett annat sätt: en bulle kostar 9 / 3 = 3 kr. Nio bullar kostar 9 × 3 = 27 kr.', say: 'Ett annat sätt. En bulle kostar nio delat med tre, tre kronor. Nio bullar kostar nio gånger tre, tjugosju kronor.' },
+      { text: 'Blir det ena dubbelt eller tre gånger så stort, blir det andra det också.' },
+    ],
+  },
+  'kontroll-motsatt': {
+    scenes: [
+      { text: 'Du har räknat 52 − 18 = 34. Så här kollar du om det stämmer.', say: 'Du har räknat femtiotvå minus arton är trettiofyra. Så här kollar du om det stämmer.' },
+      { text: 'Minus och plus tar ut varandra. Gå tillbaka med plus: 34 + 18.', say: 'Minus och plus tar ut varandra. Gå tillbaka med plus. Trettiofyra plus arton.', minMs: 3500 },
+      { text: '34 + 18 = 52 — tillbaka vid starten. Svaret stämmer!', say: 'Trettiofyra plus arton är femtiotvå. Tillbaka vid starten. Svaret stämmer!' },
+      { text: 'Hade du fått 36 hade 36 + 18 blivit 54, inte 52. Då vet du att något blev fel.', say: 'Hade du fått trettiosex hade trettiosex plus arton blivit femtiofyra, inte femtiotvå. Då vet du att något blev fel.' },
+      { text: 'Delat kollar du med gånger: 42 / 6 = 7 stämmer om 7 × 6 = 42.', say: 'Delat kollar du med gånger. Fyrtiotvå delat med sex är sju stämmer om sju gånger sex är fyrtiotvå.' },
+    ],
+  },
+  'overslagsrakning': {
+    scenes: [
+      { text: 'Överslag är att räkna ungefär, med runda tal.' },
+      { text: 'Vi räknar 398 + 205. 398 ligger nära 400.', say: 'Vi räknar trehundranittioåtta plus tvåhundrafem. Trehundranittioåtta ligger nära fyrahundra.', minMs: 3500 },
+      { text: '205 ligger nära 200.', say: 'Tvåhundrafem ligger nära tvåhundra.', minMs: 3500 },
+      { text: '400 + 200 = 600. Svaret är ungefär 600.', say: 'Fyrahundra plus tvåhundra är sexhundra. Svaret är ungefär sexhundra.' },
+      { text: 'Det exakta svaret 603 ligger nära 600. Med överslag ser du om ett svar är rimligt.', say: 'Det exakta svaret sexhundratre ligger nära sexhundra. Med överslag ser du om ett svar är rimligt.' },
+    ],
+  },
 }
 
 export const lessonFor = (momentId: string): Lesson | undefined => LESSONS[momentId]
