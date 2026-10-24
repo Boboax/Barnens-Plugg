@@ -1687,6 +1687,547 @@ const Overslag: LessonVisual = ({ step }) => {
   )
 }
 
+/* ---------- Förskoleklass–åk 2: gemensamma byggstenar ---------- */
+
+/** En prick som kan flytta (CSS-övergång), tona och bära en etikett. */
+function Ball({ x, y, r = 11, fill, visible = true, delay = 0, label, ring = false, crossed = false }: {
+  x: number; y: number; r?: number; fill: string; visible?: boolean; delay?: number; label?: string | number; ring?: boolean; crossed?: boolean
+}) {
+  return (
+    <g className="ls ls--slow" style={{ transform: `translate(${x}px, ${y}px)`, opacity: visible ? (crossed ? 0.3 : 1) : 0, transitionDelay: visible ? `${delay}ms` : '0ms' }}>
+      {ring && <circle r={r + 5} fill="none" stroke={SUN} strokeWidth={4} />}
+      <circle r={r} fill={fill} stroke={INK} strokeWidth={2} />
+      {crossed && <line x1={-r} y1={-r} x2={r} y2={r} stroke={INK} strokeWidth={3} strokeLinecap="round" />}
+      {label !== undefined && <text y={-r - 6} textAnchor="middle" fontSize={14} fontWeight={900} fill={INK}>{label}</text>}
+    </g>
+  )
+}
+
+/** Tioramen: två rader om fem. cells = färg per ruta (undefined = tom). */
+function TenFrame({ x, y, cell = 34, cells, crossed = [] }: { x: number; y: number; cell?: number; cells: (string | undefined)[]; crossed?: number[] }) {
+  return (
+    <g>
+      {Array.from({ length: 10 }, (_, i) => {
+        const cx = x + (i % 5) * cell
+        const cy = y + Math.floor(i / 5) * cell
+        return (
+          <g key={i}>
+            <rect x={cx} y={cy} width={cell} height={cell} fill={PAPER} stroke={LINE} strokeWidth={2} />
+            <circle className="ls" cx={cx + cell / 2} cy={cy + cell / 2} r={cell * 0.34} fill={cells[i] ?? PAPER} stroke={cells[i] ? INK : 'none'} strokeWidth={2}
+              style={{ opacity: cells[i] ? (crossed.includes(i) ? 0.25 : 1) : 0 }} />
+          </g>
+        )
+      })}
+    </g>
+  )
+}
+
+const fill = (n: number, color: string, m = 0, color2 = CORAL): (string | undefined)[] =>
+  Array.from({ length: 10 }, (_, i) => (i < n ? color : i < n + m ? color2 : undefined))
+
+/** Tallinje med jämnt fördelade streck. */
+function NumLine({ min, max, x0 = 22, x1 = 298, y, every = 1, labelEvery = 1, fontSize = 11 }: {
+  min: number; max: number; x0?: number; x1?: number; y: number; every?: number; labelEvery?: number; fontSize?: number
+}) {
+  const X = (n: number): number => x0 + ((n - min) / (max - min)) * (x1 - x0)
+  const ticks: number[] = []
+  for (let n = min; n <= max; n += every) ticks.push(n)
+  return (
+    <g>
+      <line x1={x0} x2={x1} y1={y} y2={y} stroke={INK} strokeWidth={3} />
+      {ticks.map((n) => (
+        <g key={n}>
+          <line x1={X(n)} x2={X(n)} y1={y - 6} y2={y + 6} stroke={INK} strokeWidth={2} />
+          {(n - min) % labelEvery === 0 && <text x={X(n)} y={y + 22} textAnchor="middle" fontSize={fontSize} fontWeight={800} fill={MUTED}>{n}</text>}
+        </g>
+      ))}
+    </g>
+  )
+}
+const lineX = (min: number, max: number, x0 = 22, x1 = 298) => (n: number): number => x0 + ((n - min) / (max - min)) * (x1 - x0)
+
+/** Tiostavar och entalskuber. */
+function Base10({ x, y, tens, ones, tenColor = PRIMARY, oneColor = SUN, labelsFrom, delayStep = 0 }: {
+  x: number; y: number; tens: number; ones: number; tenColor?: string; oneColor?: string; labelsFrom?: number; delayStep?: number
+}) {
+  return (
+    <g>
+      {Array.from({ length: tens }, (_, i) => (
+        <g key={`t${i}`} className="ls" style={fade(true, i * delayStep)}>
+          <rect x={x + i * 16} y={y} width={12} height={70} rx={2} fill={tenColor} stroke={INK} strokeWidth={1.5} />
+          {Array.from({ length: 9 }, (_, k) => <line key={k} x1={x + i * 16} x2={x + i * 16 + 12} y1={y + 7 * (k + 1)} y2={y + 7 * (k + 1)} stroke={INK} strokeWidth={0.6} />)}
+        </g>
+      ))}
+      {Array.from({ length: ones }, (_, j) => (
+        <rect key={`o${j}`} className="ls" x={x + tens * 16 + 8 + (j % 5) * 15} y={y + 70 - 14 - Math.floor(j / 5) * 15} width={12} height={12} rx={2}
+          fill={oneColor} stroke={INK} strokeWidth={1.5} style={fade(true, (tens + j) * delayStep)} />
+      ))}
+      {labelsFrom !== undefined && null}
+    </g>
+  )
+}
+
+/* ---------- Räkna antal ---------- */
+
+const ANTAL_X = [70, 115, 160, 205, 250]
+
+const Antal: LessonVisual = ({ step }) => (
+  <g>
+    {ANTAL_X.map((x, i) => (
+      <g key={i}>
+        <ellipse cx={x} cy={110} rx={15} ry={20} fill="#9C6B3E" stroke={INK} strokeWidth={2} />
+        <path d={`M${x - 10} ${100} L${x + 10} ${100} M${x - 12} ${110} L${x + 12} ${110} M${x - 10} ${120} L${x + 10} ${120}`} stroke="#6E4524" strokeWidth={2} />
+        <circle className="ls" cx={x} cy={110} r={26} fill="none" stroke={SUN} strokeWidth={4} style={fade(step === 1 && i === 0)} />
+        <text className="ls" x={x} y={74} textAnchor="middle" fontSize={22} fontWeight={900} fill={PRIMARY} style={fade(step >= 2, step === 2 ? i * 900 : 0)}>{i + 1}</text>
+      </g>
+    ))}
+    <Caption x={160} y={176} size={26} visible={step === 3} color={MINT}>5 kottar</Caption>
+    <Caption x={160} y={176} size={18} visible={step >= 4} color={PRIMARY}>peka · säg · gå vidare</Caption>
+  </g>
+)
+
+/* ---------- Talraden 0–20 ---------- */
+
+// Filmen visar 0–10: alla exempel ligger där, och stegen blir stora nog
+// för de yngsta att se.
+const T20 = lineX(0, 10, 20, 300)
+
+const Talrad20: LessonVisual = ({ step }) => (
+  <g>
+    <NumLine min={0} max={10} y={130} x0={20} x1={300} fontSize={14} />
+    <circle className="ls" cx={T20(7)} cy={130} r={8} fill={PRIMARY} style={fade(step >= 1 && step <= 2)} />
+    <Arc x1={T20(7)} x2={T20(8)} y={124} h={40} color={MINT} label="+1" visible={step === 1} />
+    <Arc x1={T20(7)} x2={T20(6)} y={124} h={40} color={CORAL} label="−1" visible={step === 2} />
+    <circle className="ls" cx={T20(5)} cy={130} r={8} fill={PRIMARY} style={fade(step === 3)} />
+    <Arc x1={T20(5)} x2={T20(6)} y={124} h={40} color={MINT} label="1" visible={step === 3} />
+    <Arc x1={T20(6)} x2={T20(7)} y={124} h={40} color={MINT} label="2" visible={step === 3} />
+    <circle className="ls" cx={T20(4)} cy={130} r={8} fill={CORAL} style={fade(step >= 4)} />
+    <circle className="ls" cx={T20(9)} cy={130} r={10} fill={MINT} style={fade(step >= 4)} />
+    <Caption x={160} y={60} size={20} visible={step === 1} color={MINT}>efter 7 kommer 8</Caption>
+    <Caption x={160} y={60} size={20} visible={step === 2} color={CORAL}>före 7 kommer 6</Caption>
+    <Caption x={160} y={60} size={20} visible={step === 3} color={MINT}>5 + 2 = 7</Caption>
+    <Caption x={160} y={60} size={20} visible={step >= 4} color={MINT}>9 är störst — längst åt höger</Caption>
+    <Caption x={160} y={60} size={18} visible={step === 0} color={PRIMARY}>0, 1, 2, 3 …</Caption>
+  </g>
+)
+
+/* ---------- Dela upp tal ---------- */
+
+const DelaUpp: LessonVisual = ({ step }) => {
+  const left = [7, 5, 4, 3, 3][Math.min(step, 4)]
+  return (
+    <g>
+      {Array.from({ length: 7 }, (_, i) => {
+        const inLeft = i < left
+        const x = step === 0 ? 88 + i * 24 : inLeft ? 46 + i * 26 : 196 + (i - left) * 26
+        return <Ball key={i} x={x} y={112} fill={inLeft || step === 0 ? PRIMARY : CORAL}
+          label={step === 3 && !inLeft ? i + 1 : undefined} delay={step === 3 && !inLeft ? (i - left) * 700 : 0} />
+      })}
+      <Caption x={160} y={50} size={22} visible={step === 0} color={INK}>7</Caption>
+      <Caption x={160} y={50} size={22} visible={step === 1} color={INK}>5 + 2 = 7</Caption>
+      <Caption x={160} y={50} size={22} visible={step === 2} color={INK}>4 + 3 = 7</Caption>
+      <Caption x={160} y={50} size={22} visible={step === 3} color={INK}>3 + ? = 7</Caption>
+      <Caption x={160} y={176} size={20} visible={step === 3} color={MINT}>4</Caption>
+      <Caption x={160} y={50} size={18} visible={step >= 4} color={MINT}>5 + 2 · 4 + 3 · 3 + 4 — alla blir 7</Caption>
+    </g>
+  )
+}
+
+/* ---------- Mönster ---------- */
+
+const Star = ({ x, y, color = SUN }: { x: number; y: number; color?: string }) => (
+  <path transform={`translate(${x} ${y})`} d="M0 -16 L4.7 -5 L16 -5 L7 2 L10 14 L0 7 L-10 14 L-7 2 L-16 -5 L-4.7 -5 Z" fill={color} stroke={INK} strokeWidth={1.8} strokeLinejoin="round" />
+)
+const Moon = ({ x, y }: { x: number; y: number }) => (
+  <path transform={`translate(${x} ${y})`} d="M4 -15 A15 15 0 1 0 4 15 A11 11 0 1 1 4 -15 Z" fill={PRIMARY_SOFT} stroke={INK} strokeWidth={1.8} />
+)
+const SEQ1 = ['s', 'm', 's', 'm', 's', 'm']
+const SEQ2 = [CORAL, PRIMARY, SUN, CORAL, PRIMARY, SUN, CORAL]
+
+const MonsterEnkla: LessonVisual = ({ step }) => (
+  <g>
+    <g className="ls" style={fade(step <= 2)}>
+      {SEQ1.map((k, i) => {
+        const x = 40 + i * 48
+        const last = i === 4
+        if (i === 5) return null
+        return (
+          <g key={i}>
+            {last && step < 2 ? (
+              <text x={x} y={96} textAnchor="middle" fontSize={30} fontWeight={900} fill={MUTED}>?</text>
+            ) : k === 's' ? <Star x={x} y={86} /> : <Moon x={x} y={86} />}
+            {last && step >= 2 && <circle cx={x} cy={86} r={24} fill="none" stroke={MINT} strokeWidth={3} />}
+          </g>
+        )
+      })}
+      <path className="ls" d="M24 116 L24 124 L104 124 L104 116" fill="none" stroke={CORAL} strokeWidth={3} style={fade(step >= 1)} />
+      <Caption x={64} y={146} size={14} visible={step >= 1} color={CORAL}>biten</Caption>
+    </g>
+    <g className="ls" style={fade(step >= 3)}>
+      {SEQ2.map((c, i) => {
+        const x = 30 + i * 42
+        const last = i === 6
+        return last && step < 4
+          ? <text key={i} x={x + 14} y={110} textAnchor="middle" fontSize={30} fontWeight={900} fill={MUTED}>?</text>
+          : <rect key={i} x={x} y={80} width={28} height={28} rx={5} fill={c} stroke={last ? MINT : INK} strokeWidth={last ? 4 : 1.8} />
+      })}
+      <path className="ls" d="M28 120 L28 128 L144 128 L144 120" fill="none" stroke={CORAL} strokeWidth={3} style={fade(step >= 4)} />
+      <Caption x={86} y={150} size={14} visible={step >= 4} color={CORAL}>biten: röd, blå, gul</Caption>
+    </g>
+  </g>
+)
+
+/* ---------- Formerna ---------- */
+
+const Former2d: LessonVisual = ({ step }) => {
+  const lit = (i: number): number => (step === i + 1 ? 1 : step === 0 ? 1 : 0.35)
+  return (
+    <g>
+      <g style={{ opacity: lit(0) }} className="ls">
+        <path d="M50 70 L84 130 L16 130 Z" fill={CORAL_SOFT} stroke={INK} strokeWidth={3} strokeLinejoin="round" />
+        {[[50, 70], [84, 130], [16, 130]].map(([x, y], i) => (
+          <g key={i} className="ls" style={fade(step === 1, i * 700)}>
+            <circle cx={x} cy={y} r={6} fill={CORAL} /><text x={x + (i === 2 ? -10 : 10)} y={y - 8} fontSize={13} fontWeight={900} fill={CORAL} textAnchor="middle">{i + 1}</text>
+          </g>
+        ))}
+      </g>
+      <g style={{ opacity: lit(1) }} className="ls">
+        <rect x={102} y={74} width={56} height={56} fill={PRIMARY_SOFT} stroke={INK} strokeWidth={3} />
+        {[[102, 74], [158, 74], [158, 130], [102, 130]].map(([x, y], i) => <circle key={i} className="ls" cx={x} cy={y} r={6} fill={PRIMARY} style={fade(step === 2, i * 500)} />)}
+      </g>
+      <g style={{ opacity: lit(2) }} className="ls">
+        <rect x={176} y={86} width={78} height={44} fill={SUN_SOFT} stroke={INK} strokeWidth={3} />
+        <line className="ls" x1={176} x2={254} y1={86} y2={86} stroke={CORAL} strokeWidth={5} style={fade(step === 3)} />
+        <line className="ls" x1={176} x2={254} y1={130} y2={130} stroke={CORAL} strokeWidth={5} style={fade(step === 3)} />
+      </g>
+      <g style={{ opacity: lit(3) }} className="ls">
+        <circle cx={288} cy={102} r={26} fill={'#CFE8DA'} stroke={INK} strokeWidth={3} />
+      </g>
+      <Caption x={160} y={176} size={18} visible={step === 1} color={CORAL}>triangel: 3 hörn</Caption>
+      <Caption x={160} y={176} size={18} visible={step === 2} color={PRIMARY}>kvadrat: 4 hörn, lika sidor</Caption>
+      <Caption x={160} y={176} size={18} visible={step === 3} color={CORAL}>rektangel: 4 hörn, två långa sidor</Caption>
+      <Caption x={160} y={176} size={18} visible={step >= 4} color={MINT}>cirkel: inga hörn</Caption>
+    </g>
+  )
+}
+
+/* ---------- Tioramen: tiokamrater, plus och minus 0–10 ---------- */
+
+interface FrameStep { blue: number; coral?: number; crossed?: number[]; caption?: string; captionColor?: string }
+
+function FrameLesson({ step, steps }: { step: number; steps: FrameStep[] }) {
+  const s = steps[Math.min(step, steps.length - 1)]
+  return (
+    <g>
+      <TenFrame x={75} y={54} cells={fill(s.blue, PRIMARY, s.coral ?? 0)} crossed={s.crossed} />
+      <Caption x={160} y={168} size={22} visible={!!s.caption} color={s.captionColor ?? INK}>{s.caption ?? ''}</Caption>
+    </g>
+  )
+}
+
+const Talkamrater: LessonVisual = ({ step }) => <FrameLesson step={step} steps={[
+  { blue: 0, caption: '? + ? = 10' }, { blue: 7, caption: '7 och …?' }, { blue: 7, coral: 3, caption: '7 + 3 = 10', captionColor: MINT },
+  { blue: 6, coral: 4, caption: '6 + 4 = 10', captionColor: MINT }, { blue: 5, coral: 5, caption: '5+5 · 8+2 · 9+1', captionColor: MINT },
+]} />
+
+const Addition10: LessonVisual = ({ step }) => <FrameLesson step={step} steps={[
+  { blue: 0, caption: '4 + 3' }, { blue: 4, caption: '4 …' }, { blue: 4, coral: 3, caption: '5, 6, 7', captionColor: CORAL },
+  { blue: 4, coral: 3, caption: '4 + 3 = 7', captionColor: MINT }, { blue: 3, coral: 4, caption: '3 + 4 = 7', captionColor: MINT },
+]} />
+
+const Subtraktion10: LessonVisual = ({ step }) => <FrameLesson step={step} steps={[
+  { blue: 0, caption: '8 − 3' }, { blue: 8, caption: '8' }, { blue: 8, crossed: [5, 6, 7], caption: '7, 6, 5', captionColor: CORAL },
+  { blue: 8, crossed: [5, 6, 7], caption: '8 − 3 = 5', captionColor: MINT }, { blue: 5, coral: 3, caption: '5 + 3 = 8', captionColor: MINT },
+]} />
+
+const AddSub10: LessonVisual = ({ step }) => <FrameLesson step={step} steps={[
+  { blue: 6, coral: 4, caption: '6 · 4 · 10' }, { blue: 6, coral: 4, caption: '6 + 4 = 10', captionColor: MINT },
+  { blue: 6, coral: 4, crossed: [6, 7, 8, 9], caption: '10 − 4 = 6', captionColor: CORAL },
+  { blue: 6, coral: 4, caption: '+ eller − ?' }, { blue: 6, coral: 4, caption: '+ fler · − färre', captionColor: PRIMARY },
+]} />
+
+/* ---------- Två tioramar: plus och minus 0–20 ---------- */
+
+interface TwoStep { ones: number; coral?: number; crossed?: number[]; caption?: string; sub?: string; color?: string }
+
+function TwoFrameLesson({ step, steps }: { step: number; steps: TwoStep[] }) {
+  const s = steps[Math.min(step, steps.length - 1)]
+  return (
+    <g>
+      <TenFrame x={14} y={58} cell={28} cells={fill(10, PRIMARY)} />
+      <TenFrame x={166} y={58} cell={28} cells={fill(s.ones, SUN, s.coral ?? 0)} crossed={s.crossed} />
+      <text x={84} y={48} textAnchor="middle" fontSize={13} fontWeight={800} fill={MUTED}>en hel tia</text>
+      <Caption x={160} y={30} size={20} visible={!!s.caption} color={s.color ?? INK}>{s.caption ?? ''}</Caption>
+      <Caption x={160} y={150} size={18} visible={!!s.sub} color={MINT}>{s.sub ?? ''}</Caption>
+    </g>
+  )
+}
+
+const Addition20: LessonVisual = ({ step }) => <TwoFrameLesson step={step} steps={[
+  { ones: 3, caption: '13 + 4' }, { ones: 3, coral: 4, caption: '3 + 4 = 7', color: CORAL },
+  { ones: 3, coral: 4, caption: '13 + 4 = 17', color: MINT }, { ones: 3, coral: 4, caption: '3 + 4 = 7', sub: '13 + 4 = 17' },
+]} />
+
+const Subtraktion20: LessonVisual = ({ step }) => <TwoFrameLesson step={step} steps={[
+  { ones: 7, caption: '17 − 5' }, { ones: 7, crossed: [2, 3, 4, 5, 6], caption: '7 − 5 = 2', color: CORAL },
+  { ones: 7, crossed: [2, 3, 4, 5, 6], caption: '17 − 5 = 12', color: MINT }, { ones: 7, crossed: [2, 3, 4, 5, 6], caption: '7 − 5 = 2', sub: '17 − 5 = 12' },
+]} />
+
+const AddSub20: LessonVisual = ({ step }) => <TwoFrameLesson step={step} steps={[
+  { ones: 2, caption: '+ eller − ?' }, { ones: 2, coral: 5, caption: '12 + 5 = 17', color: MINT },
+  { ones: 7, crossed: [2, 3, 4, 5, 6], caption: '17 − 5 = 12', color: CORAL }, { ones: 2, coral: 5, caption: '12 + 5 = 17', sub: '17 − 5 = 12' },
+]} />
+
+/* ---------- Talföljder ---------- */
+
+const TF = lineX(0, 12)
+const TF2 = lineX(0, 50)
+
+const Talfoljder: LessonVisual = ({ step }) => (
+  <g>
+    <g className="ls" style={fade(step <= 2)}>
+      <NumLine min={0} max={12} y={130} />
+      {[2, 4, 6, 8].map((n) => <circle key={n} cx={TF(n)} cy={130} r={8} fill={PRIMARY} />)}
+      {[2, 4, 6].map((n) => <Arc key={n} x1={TF(n)} x2={TF(n + 2)} y={124} h={28} color={CORAL} label="+2" visible={step >= 1} />)}
+      <Arc x1={TF(8)} x2={TF(10)} y={124} h={28} color={MINT} label="+2" visible={step >= 2} />
+      <circle className="ls" cx={TF(10)} cy={130} r={9} fill={MINT} style={fade(step >= 2)} />
+      <Caption x={160} y={48} size={20} visible={step <= 2} color={INK}>2, 4, 6, 8, {step >= 2 ? '10' : '?'}</Caption>
+    </g>
+    <g className="ls" style={fade(step >= 3)}>
+      <NumLine min={0} max={50} y={130} every={10} labelEvery={10} />
+      {[3, 13, 23, 33].map((n) => <circle key={n} cx={TF2(n)} cy={130} r={7} fill={PRIMARY} />)}
+      {[3, 13, 23, 33].map((n) => <Arc key={n} x1={TF2(n)} x2={TF2(n + 10)} y={124} h={26} color={n === 33 ? MINT : CORAL} label="+10" />)}
+      <circle cx={TF2(43)} cy={130} r={8} fill={MINT} />
+      <Caption x={160} y={48} size={20} color={INK}>3, 13, 23, 33, 43</Caption>
+    </g>
+  </g>
+)
+
+/* ---------- Kroppar ---------- */
+
+const Former3d: LessonVisual = ({ step }) => {
+  const lit = (i: number): number => (step === 0 || step === i + 1 ? 1 : 0.3)
+  return (
+    <g>
+      <g className="ls" style={{ opacity: lit(0) }}>
+        <circle cx={48} cy={100} r={30} fill={CORAL} stroke={INK} strokeWidth={2.5} />
+        <ellipse cx={38} cy={88} rx={9} ry={6} fill="#FFFFFF" opacity={0.6} />
+      </g>
+      <g className="ls" style={{ opacity: lit(1) }}>
+        <path d="M100 82 L130 70 L160 82 L130 94 Z" fill={'#C9CDF2'} stroke={INK} strokeWidth={2.5} strokeLinejoin="round" />
+        <path d="M100 82 L130 94 L130 130 L100 118 Z" fill={PRIMARY_SOFT} stroke={INK} strokeWidth={2.5} strokeLinejoin="round" />
+        <path d="M160 82 L130 94 L130 130 L160 118 Z" fill={'#A9B0E8'} stroke={INK} strokeWidth={2.5} strokeLinejoin="round" />
+      </g>
+      <g className="ls" style={{ opacity: lit(2) }}>
+        <path d="M184 76 L184 124 A26 9 0 0 0 236 124 L236 76" fill={SUN_SOFT} stroke={INK} strokeWidth={2.5} />
+        <ellipse cx={210} cy={76} rx={26} ry={9} fill={SUN} stroke={INK} strokeWidth={2.5} />
+      </g>
+      <g className="ls" style={{ opacity: lit(3) }}>
+        <path d="M282 64 L258 124 A24 8 0 0 0 306 124 Z" fill={'#CFE8DA'} stroke={INK} strokeWidth={2.5} strokeLinejoin="round" />
+        <ellipse cx={282} cy={124} rx={24} ry={8} fill={'#B5DCC5'} stroke={INK} strokeWidth={2.5} />
+      </g>
+      {[['klot', 48], ['kub', 130], ['cylinder', 210], ['kon', 282]].map(([n, x], i) => (
+        <text key={String(n)} className="ls" x={Number(x)} y={160} textAnchor="middle" fontSize={15} fontWeight={900} fill={INK} style={fade(step === 0 || step === i + 1)}>{n}</text>
+      ))}
+      <Caption x={160} y={30} size={16} visible={step === 2} color={PRIMARY}>6 sidoytor</Caption>
+    </g>
+  )
+}
+
+/* ---------- Sortera och räkna ---------- */
+
+const ITEMS: { kind: 0 | 1 | 2; x: number; y: number }[] = [
+  { kind: 0, x: 40, y: 60 }, { kind: 1, x: 90, y: 110 }, { kind: 2, x: 140, y: 70 }, { kind: 0, x: 190, y: 120 }, { kind: 2, x: 240, y: 60 },
+  { kind: 0, x: 280, y: 110 }, { kind: 1, x: 60, y: 150 }, { kind: 2, x: 170, y: 160 }, { kind: 0, x: 230, y: 165 },
+]
+const KIND_COLOR = [CORAL, '#8BC34A', '#9C6B3E']
+const KIND_NAME = ['äpplen', 'päron', 'kottar']
+
+const Sortera: LessonVisual = ({ step }) => {
+  const sorted = step >= 1
+  const seen = [0, 0, 0]
+  return (
+    <g>
+      {ITEMS.map((it, i) => {
+        const k = seen[it.kind]++
+        const [x, y] = sorted ? [30 + k * 24, 54 + it.kind * 46] : [it.x, it.y]
+        return <Ball key={i} x={x} y={y} r={10} fill={KIND_COLOR[it.kind]} ring={step === 3 && it.kind === 0} />
+      })}
+      <g className="ls" style={fade(step >= 2)}>
+        {KIND_NAME.map((n, r) => (
+          <g key={n}>
+            <rect x={190} y={36 + r * 46} width={110} height={36} rx={8} fill={step === 3 && r === 0 ? SUN_SOFT : PAPER} stroke={LINE} strokeWidth={2} />
+            <text x={200} y={60 + r * 46} fontSize={15} fontWeight={800} fill={INK}>{n}</text>
+            <text x={288} y={60 + r * 46} textAnchor="end" fontSize={18} fontWeight={900} fill={PRIMARY}>{[4, 2, 3][r]}</text>
+          </g>
+        ))}
+      </g>
+      <Caption x={160} y={190} size={17} visible={step >= 4} color={MINT}>4 + 2 + 3 = 9 saker</Caption>
+    </g>
+  )
+}
+
+/* ---------- Tiotal och ental ---------- */
+
+const Positionssystem: LessonVisual = ({ step }) => {
+  const swap = step >= 4
+  return (
+    <g>
+      <g className="ls" style={fade(step >= 1)}>
+        <Base10 x={20} y={70} tens={swap ? 7 : 4} ones={step >= 2 ? (swap ? 4 : 7) : 0} delayStep={step === 1 || step === 2 ? 350 : 0} />
+      </g>
+      <text x={262} y={124} textAnchor="middle" fontSize={56} fontWeight={900}>
+        <tspan fill={PRIMARY}>{swap ? 7 : 4}</tspan><tspan fill={'#C9922A'}>{swap ? 4 : 7}</tspan>
+      </text>
+      <Caption x={244} y={150} size={13} visible={step >= 3} color={PRIMARY}>tiotal</Caption>
+      <Caption x={284} y={150} size={13} visible={step >= 3} color={'#C9922A'}>ental</Caption>
+      <Caption x={160} y={36} size={16} visible={step === 1} color={PRIMARY}>10, 20, 30, 40</Caption>
+      <Caption x={160} y={36} size={16} visible={step === 2} color={'#C9922A'}>41, 42 … 47</Caption>
+      <Caption x={160} y={36} size={16} visible={swap} color={CORAL}>74 = 7 tiotal och 4 ental</Caption>
+    </g>
+  )
+}
+
+/* ---------- Plus och minus 0–100 ---------- */
+
+const AddSub100: LessonVisual = ({ step }) => (
+  <g>
+    <rect className="ls" x={24} y={46} width={110} height={84} rx={8} fill={SUN_SOFT} style={fade(step === 1)} />
+    <Base10 x={34} y={54} tens={3} ones={0} />
+    <g transform="translate(84 0)"><Base10 x={0} y={54} tens={0} ones={4} /></g>
+    <Base10 x={186} y={54} tens={2} ones={5} tenColor={CORAL} />
+    <text x={160} y={100} textAnchor="middle" fontSize={26} fontWeight={900} fill={INK}>+</text>
+    <Caption x={160} y={160} size={18} visible={step === 0} color={INK}>34 + 25</Caption>
+    <Caption x={160} y={160} size={18} visible={step === 1} color={PRIMARY}>30 + 20 = 50</Caption>
+    <Caption x={160} y={160} size={18} visible={step === 2} color={'#C9922A'}>4 + 5 = 9</Caption>
+    <Caption x={160} y={160} size={20} visible={step === 3} color={MINT}>50 + 9 = 59</Caption>
+    <Caption x={160} y={160} size={18} visible={step >= 4} color={CORAL}>59 − 25 = 34</Caption>
+  </g>
+)
+
+/* ---------- Mäta längd ---------- */
+
+const CMX = (cm: number): number => 30 + cm * 26
+
+const MatningLangd: LessonVisual = ({ step }) => {
+  const shift = useTween(step >= 1 ? 0 : -18, 1200)
+  const meter = step >= 3
+  return (
+    <g>
+      <g className="ls" style={fade(!meter)}>
+        <rect x={CMX(0) - 8} y={120} width={10 * 26 + 16} height={36} rx={4} fill={SUN_SOFT} stroke={INK} strokeWidth={2} />
+        {Array.from({ length: 11 }, (_, i) => (
+          <g key={i}>
+            <line x1={CMX(i)} x2={CMX(i)} y1={120} y2={132} stroke={INK} strokeWidth={2} />
+            <text x={CMX(i)} y={148} textAnchor="middle" fontSize={11} fontWeight={800} fill={INK}>{i}</text>
+          </g>
+        ))}
+        <g style={{ transform: `translate(${shift}px, 0)` }}>
+          <rect x={CMX(0)} y={92} width={8 * 26 - 14} height={16} fill={PRIMARY} stroke={INK} strokeWidth={2} />
+          <path d={`M${CMX(8) - 14} 92 L${CMX(8)} 100 L${CMX(8) - 14} 108 Z`} fill={SUN} stroke={INK} strokeWidth={2} strokeLinejoin="round" />
+        </g>
+        <circle className="ls" cx={CMX(0)} cy={100} r={12} fill="none" stroke={MINT} strokeWidth={3} style={fade(step === 1)} />
+        <line className="ls" x1={CMX(8)} x2={CMX(8)} y1={86} y2={128} stroke={MINT} strokeWidth={3} strokeDasharray="5 4" style={fade(step === 2)} />
+        <Caption x={CMX(8)} y={76} size={18} visible={step === 2} color={MINT}>8 cm</Caption>
+        <Caption x={160} y={50} size={16} visible={step === 1} color={MINT}>börja vid nollan</Caption>
+      </g>
+      <g className="ls" style={fade(meter)}>
+        {[0, 1, 2].map((i) => (
+          <g key={i} className="ls" style={fade(step >= 4 || i === 0, step >= 4 ? i * 500 : 0)}>
+            <rect x={20 + i * 96} y={100} width={92} height={20} rx={4} fill={i % 2 ? CORAL : PRIMARY} stroke={INK} strokeWidth={2} />
+            <text x={66 + i * 96} y={140} textAnchor="middle" fontSize={13} fontWeight={900} fill={INK}>1 m</text>
+          </g>
+        ))}
+        <Caption x={160} y={60} size={18} visible={step === 3} color={PRIMARY}>1 m = 100 cm</Caption>
+        <Caption x={160} y={60} size={18} visible={step >= 4} color={MINT}>3 m = 300 cm</Caption>
+      </g>
+    </g>
+  )
+}
+
+/* ---------- Stapeldiagram ---------- */
+
+const VOTES = [{ n: 'katt', v: 6, c: CORAL }, { n: 'hund', v: 4, c: PRIMARY }, { n: 'häst', v: 3, c: SUN }]
+
+const Stapeldiagram: LessonVisual = ({ step }) => {
+  const oy = 168
+  const Y = (v: number): number => oy - v * 16
+  const bx = (i: number): number => 90 + i * 70
+  return (
+    <g>
+      {[2, 4, 6, 8].map((v) => (
+        <g key={v}>
+          <line x1={52} x2={300} y1={Y(v)} y2={Y(v)} stroke={LINE} strokeWidth={1} />
+          <text x={44} y={Y(v) + 4} textAnchor="end" fontSize={12} fontWeight={800} fill={MUTED}>{v}</text>
+        </g>
+      ))}
+      <line x1={52} x2={300} y1={oy} y2={oy} stroke={INK} strokeWidth={3} />
+      <line x1={52} x2={52} y1={oy} y2={Y(8.6)} stroke={INK} strokeWidth={3} />
+      {VOTES.map((b, i) => (
+        <g key={b.n}>
+          <rect x={bx(i) - 20} y={Y(b.v)} width={40} height={b.v * 16} fill={b.c} stroke={INK} strokeWidth={2} opacity={step === 3 && i === 2 ? 0.4 : 1} />
+          <text x={bx(i)} y={oy + 17} textAnchor="middle" fontSize={13} fontWeight={800} fill={INK}>{b.n}</text>
+        </g>
+      ))}
+      <line className="ls" x1={52} x2={bx(0) - 20} y1={Y(6)} y2={Y(6)} stroke={CORAL} strokeWidth={3} strokeDasharray="6 4" style={fade(step >= 2)} />
+      <line className="ls" x1={52} x2={bx(1) - 20} y1={Y(4)} y2={Y(4)} stroke={PRIMARY} strokeWidth={3} strokeDasharray="6 4" style={fade(step === 3)} />
+      <line className="ls" x1={bx(1) + 26} x2={bx(1) + 26} y1={Y(6)} y2={Y(4)} stroke={MINT} strokeWidth={4} style={fade(step === 3)} />
+      <Caption x={250} y={32} size={16} visible={step === 2} color={CORAL}>katt: 6</Caption>
+      <Caption x={250} y={32} size={16} visible={step === 3} color={MINT}>6 − 4 = 2 fler</Caption>
+      <Caption x={250} y={32} size={16} visible={step >= 4} color={MINT}>6 + 4 + 3 = 13</Caption>
+    </g>
+  )
+}
+
+/* ---------- Dubbelt och hälften ---------- */
+
+const Dubbelt: LessonVisual = ({ step }) => {
+  const split = step >= 2 && step <= 3
+  const tens = step >= 4
+  return (
+    <g>
+      <g className="ls" style={fade(!tens)}>
+        {Array.from({ length: 8 }, (_, i) => {
+          const left = i < 4
+          const x = split ? (left ? 50 + i * 26 : 190 + (i - 4) * 26) : 70 + i * 26
+          return <Ball key={i} x={x} y={100} fill={left ? PRIMARY : CORAL} visible={step >= 1 || left} delay={step === 1 && !left ? (i - 4) * 300 : 0} />
+        })}
+      </g>
+      <g className="ls" style={fade(tens)}>
+        <Base10 x={40} y={64} tens={4} ones={0} />
+        <Base10 x={200} y={64} tens={4} ones={0} tenColor={CORAL} />
+      </g>
+      <Caption x={160} y={40} size={20} visible={step === 0} color={INK}>4</Caption>
+      <Caption x={160} y={40} size={20} visible={step === 1} color={MINT}>dubbelt så mycket som 4 är 8</Caption>
+      <Caption x={160} y={40} size={20} visible={step === 2} color={INK}>8 i två lika delar</Caption>
+      <Caption x={160} y={40} size={20} visible={step === 3} color={MINT}>hälften av 8 är 4</Caption>
+      <Caption x={160} y={40} size={20} visible={tens} color={MINT}>hälften av 80 är 40</Caption>
+    </g>
+  )
+}
+
+/* ---------- Är det rimligt? ---------- */
+
+const RL = lineX(0, 100)
+
+const Rimlighet: LessonVisual = ({ step }) => {
+  const a = useTween(step >= 1 ? 50 : 47, 1000)
+  return (
+    <g>
+      <NumLine min={0} max={100} y={130} every={10} labelEvery={10} />
+      <circle className="ls" cx={RL(a)} cy={130} r={8} fill={PRIMARY} style={fade(step >= 1)} />
+      <Caption x={RL(38)} y={110} size={14} visible={step >= 1 && step < 4} color={PRIMARY}>47 ≈ 50</Caption>
+      <Arc x1={RL(50)} x2={RL(75)} y={124} h={52} color={MINT} label="+25" visible={step >= 2 && step < 4} />
+      <circle className="ls" cx={RL(75)} cy={130} r={8} fill={MINT} style={fade(step >= 2)} />
+      <Caption x={160} y={40} size={18} visible={step === 0} color={INK}>47 + 25 ≈ ?</Caption>
+      <Caption x={160} y={40} size={18} visible={step === 2} color={MINT}>runt 70–75</Caption>
+      <Caption x={160} y={40} size={22} visible={step === 3} color={CORAL}>612? ✗ alldeles för stort</Caption>
+      <circle className="ls" cx={RL(72)} cy={130} r={9} fill={MINT} stroke={INK} strokeWidth={2} style={fade(step >= 4)} />
+      <Caption x={160} y={40} size={20} visible={step >= 4} color={MINT}>72 ✓ nära gissningen</Caption>
+    </g>
+  )
+}
+
 export const LESSON_VISUALS: Record<string, LessonVisual> = {
   'mult-intro': MultIntro,
   'div-intro': DivIntro,
@@ -1730,4 +2271,25 @@ export const LESSON_VISUALS: Record<string, LessonVisual> = {
   'proportionalitet': Proportionalitet,
   'kontroll-motsatt': KontrollMotsatt,
   'overslagsrakning': Overslag,
+  'antal-0-10': Antal,
+  'talrad-0-20': Talrad20,
+  'dela-upp-tal': DelaUpp,
+  'monster-enkla': MonsterEnkla,
+  'former-2d': Former2d,
+  'talkamrater-10': Talkamrater,
+  'addition-0-10': Addition10,
+  'subtraktion-0-10': Subtraktion10,
+  'add-sub-0-10': AddSub10,
+  'addition-0-20': Addition20,
+  'subtraktion-0-20': Subtraktion20,
+  'add-sub-0-20': AddSub20,
+  'talfoljder-1': Talfoljder,
+  'former-3d': Former3d,
+  'sortera-tabeller': Sortera,
+  'positionssystem-100': Positionssystem,
+  'add-sub-0-100': AddSub100,
+  'matning-langd': MatningLangd,
+  'stapeldiagram': Stapeldiagram,
+  'dubbelt-halften': Dubbelt,
+  'rimlighet': Rimlighet,
 }

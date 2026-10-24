@@ -449,6 +449,194 @@ export const LESSONS: Record<string, Lesson> = {
       { text: 'Det exakta svaret 603 ligger nära 600. Med överslag ser du om ett svar är rimligt.', say: 'Det exakta svaret sexhundratre ligger nära sexhundra. Med överslag ser du om ett svar är rimligt.' },
     ],
   },
+  // ---------- Förskoleklass: kort, lugnt, ett nytt ord i taget ----------
+  'antal-0-10': {
+    scenes: [
+      { text: 'Hur många kottar är det? Vi räknar tillsammans.' },
+      { text: 'Peka på en kotte i taget. Säg ett tal för varje.', minMs: 3000 },
+      { text: 'Ett, två, tre, fyra, fem.', minMs: 5000 },
+      { text: 'Det sista talet vi sa var fem. Det är fem kottar!' },
+      { text: 'Räkna aldrig samma kotte två gånger. Peka, säg, och gå vidare.' },
+    ],
+  },
+  'talrad-0-20': {
+    scenes: [
+      { text: 'Talen står i rad, som pärlor på ett snöre.' },
+      { text: 'Ett steg åt höger är ett mer. Efter 7 kommer 8.', say: 'Ett steg åt höger är ett mer. Efter sju kommer åtta.', minMs: 3500 },
+      { text: 'Ett steg åt vänster är ett mindre. Före 7 kommer 6.', say: 'Ett steg åt vänster är ett mindre. Före sju kommer sex.', minMs: 3500 },
+      { text: 'Två mer än 5? Hoppa två steg åt höger: 7.', say: 'Två mer än fem? Hoppa två steg åt höger. Sju.', minMs: 4000 },
+      { text: 'Vilket är störst, 4 eller 9? Det som står längst åt höger: 9.', say: 'Vilket är störst, fyra eller nio? Det som står längst åt höger. Nio.' },
+    ],
+  },
+  'dela-upp-tal': {
+    scenes: [
+      { text: 'Här är sju kulor.' },
+      { text: 'Vi delar dem i två högar: fem och två. Det är fortfarande sju.', say: 'Vi delar dem i två högar. Fem och två. Det är fortfarande sju.' },
+      { text: 'Vi flyttar en kula: fyra och tre. Fortfarande sju!', say: 'Vi flyttar en kula. Fyra och tre. Fortfarande sju!' },
+      { text: 'Om 3 av 7 ligger här — hur många ligger där? Räkna vidare från 3 till 7: fyra.', say: 'Om tre av sju ligger här, hur många ligger där? Räkna vidare från tre till sju. Fyra.', minMs: 4500 },
+      { text: 'Ett tal kan delas på många sätt. Alla delarna blir tillsammans hela talet.' },
+    ],
+  },
+  'monster-enkla': {
+    scenes: [
+      { text: 'Ett mönster är något som upprepas om och om igen.' },
+      { text: 'Stjärna, måne, stjärna, måne … Vilken bit upprepas?' },
+      { text: 'Stjärna och måne, om och om igen. Då kommer stjärna sen!' },
+      { text: 'Ett längre mönster: röd, blå, gul, röd, blå, gul …' },
+      { text: 'Biten är röd, blå, gul. Efter gul kommer röd igen.' },
+    ],
+  },
+  'former-2d': {
+    scenes: [
+      { text: 'Formerna känns igen på sina sidor och hörn.' },
+      { text: 'En triangel har tre hörn. Räkna: ett, två, tre.', minMs: 3500 },
+      { text: 'En kvadrat har fyra hörn och fyra lika långa sidor.', minMs: 3500 },
+      { text: 'En rektangel har också fyra hörn — men två sidor är längre.' },
+      { text: 'En cirkel är rund. Den har inga hörn alls!' },
+    ],
+  },
+  // ---------- Åk 1 ----------
+  'talkamrater-10': {
+    scenes: [
+      { text: 'Tiokamrater är två tal som tillsammans blir tio.' },
+      { text: 'Tioramen har tio rutor. Sju är fyllda.' },
+      { text: 'Hur många rutor är tomma? Tre. 7 och 3 är tiokamrater.', say: 'Hur många rutor är tomma? Tre. Sju och tre är tiokamrater.' },
+      { text: '6 och 4 blir också tio.', say: 'Sex och fyra blir också tio.' },
+      { text: '5 och 5, 8 och 2, 9 och 1 — lär dig dem utantill!', say: 'Fem och fem, åtta och två, nio och ett. Lär dig dem utantill!' },
+    ],
+  },
+  'addition-0-10': {
+    scenes: [
+      { text: 'Plus betyder att vi lägger till. Vi räknar 4 + 3.', say: 'Plus betyder att vi lägger till. Vi räknar fyra plus tre.' },
+      { text: 'Börja med det största talet: fyra prickar.' },
+      { text: 'Räkna vidare tre steg: fem, sex, sju.', minMs: 4000 },
+      { text: '4 + 3 = 7. Du behöver inte räkna från början!', say: 'Fyra plus tre är sju. Du behöver inte räkna från början!' },
+      { text: 'Ordningen spelar ingen roll: 3 + 4 är också 7.', say: 'Ordningen spelar ingen roll. Tre plus fyra är också sju.' },
+    ],
+  },
+  'subtraktion-0-10': {
+    scenes: [
+      { text: 'Minus betyder att vi tar bort. Vi räknar 8 − 3.', say: 'Minus betyder att vi tar bort. Vi räknar åtta minus tre.' },
+      { text: 'Här är åtta prickar.' },
+      { text: 'Ta bort tre: sju, sex, fem.', say: 'Ta bort tre. Sju, sex, fem.', minMs: 4000 },
+      { text: 'Fem är kvar. 8 − 3 = 5.', say: 'Fem är kvar. Åtta minus tre är fem.' },
+      { text: 'Kolla med plus: 5 + 3 = 8. Det stämmer!', say: 'Kolla med plus. Fem plus tre är åtta. Det stämmer!' },
+    ],
+  },
+  'add-sub-0-10': {
+    scenes: [
+      { text: 'Plus och minus hör ihop. Talen 6, 4 och 10 är en familj.', say: 'Plus och minus hör ihop. Talen sex, fyra och tio är en familj.' },
+      { text: '6 + 4 = 10.', say: 'Sex plus fyra är tio.' },
+      { text: 'Ta bort de fyra igen: 10 − 4 = 6.', say: 'Ta bort de fyra igen. Tio minus fyra är sex.' },
+      { text: 'Läs noga om det står plus eller minus — det bestämmer vad du gör.' },
+      { text: 'Plus: fler. Minus: färre.' },
+    ],
+  },
+  'addition-0-20': {
+    scenes: [
+      { text: 'Vi räknar 13 + 4. Tretton är en hel tia och tre till.', say: 'Vi räknar tretton plus fyra. Tretton är en hel tia och tre till.' },
+      { text: 'Tian står kvar. Vi lägger ihop entalen: 3 + 4 = 7.', say: 'Tian står kvar. Vi lägger ihop entalen. Tre plus fyra är sju.' },
+      { text: 'Tio och sju är sjutton. 13 + 4 = 17.', say: 'Tio och sju är sjutton. Tretton plus fyra är sjutton.' },
+      { text: 'Det är som 3 + 4 — fast med en tia framför.', say: 'Det är som tre plus fyra, fast med en tia framför.' },
+    ],
+  },
+  'subtraktion-0-20': {
+    scenes: [
+      { text: 'Vi räknar 17 − 5. Sjutton är en tia och sju till.', say: 'Vi räknar sjutton minus fem. Sjutton är en tia och sju till.' },
+      { text: 'Ta bort fem av de sju lösa: två är kvar.', minMs: 3500 },
+      { text: 'Tian och två är tolv. 17 − 5 = 12.', say: 'Tian och två är tolv. Sjutton minus fem är tolv.' },
+      { text: 'Det är som 7 − 5 — fast med en tia framför.', say: 'Det är som sju minus fem, fast med en tia framför.' },
+    ],
+  },
+  'add-sub-0-20': {
+    scenes: [
+      { text: 'Plus och minus upp till 20. Titta på tecknet först!', say: 'Plus och minus upp till tjugo. Titta på tecknet först!' },
+      { text: '12 + 5: lägg till. Tian står kvar, 2 + 5 = 7. Svaret är 17.', say: 'Tolv plus fem. Lägg till. Tian står kvar, två plus fem är sju. Svaret är sjutton.' },
+      { text: '17 − 5: ta bort. Tian står kvar, 7 − 5 = 2. Svaret är 12.', say: 'Sjutton minus fem. Ta bort. Tian står kvar, sju minus fem är två. Svaret är tolv.' },
+      { text: 'Ser du? 12 + 5 = 17 och 17 − 5 = 12 hör ihop.', say: 'Ser du? Tolv plus fem är sjutton och sjutton minus fem är tolv. De hör ihop.' },
+    ],
+  },
+  'talfoljder-1': {
+    scenes: [
+      { text: 'I en talföljd hoppar talen lika långt varje gång: 2, 4, 6, 8 …', say: 'I en talföljd hoppar talen lika långt varje gång. Två, fyra, sex, åtta.' },
+      { text: 'Hur långt är hoppet? Från 2 till 4 är det två steg.', say: 'Hur långt är hoppet? Från två till fyra är det två steg.', minMs: 3500 },
+      { text: 'Hoppa två steg till efter 8: 10.', say: 'Hoppa två steg till efter åtta. Tio.', minMs: 3500 },
+      { text: 'Tiohopp: 3, 13, 23, 33 … Bara tiotalet växer. Nästa är 43.', say: 'Tiohopp. Tre, tretton, tjugotre, trettiotre. Bara tiotalet växer. Nästa är fyrtiotre.' },
+    ],
+  },
+  'former-3d': {
+    scenes: [
+      { text: 'Kroppar är former som går att hålla i.' },
+      { text: 'En boll är ett klot. Den är rund åt alla håll.' },
+      { text: 'En tärning är en kub. Den har sex lika sidoytor.' },
+      { text: 'En burk är en cylinder: två runda ytor och en rund sida.' },
+      { text: 'En glasstrut är en kon: rund botten och en spets.' },
+    ],
+  },
+  'sortera-tabeller': {
+    scenes: [
+      { text: 'När vi sorterar lägger vi lika saker tillsammans.' },
+      { text: 'Äpplen här, päron där, kottar där.', minMs: 4000 },
+      { text: 'Räkna varje sort och skriv i en tabell.' },
+      { text: 'Äpplen 4, päron 2, kottar 3. Mest finns det av äpplen.', say: 'Äpplen fyra, päron två, kottar tre. Mest finns det av äpplen.' },
+      { text: 'Sammanlagt: 4 + 2 + 3 = 9 saker.', say: 'Sammanlagt. Fyra plus två plus tre är nio saker.' },
+    ],
+  },
+  // ---------- Åk 2 ----------
+  'positionssystem-100': {
+    scenes: [
+      { text: 'Talet 47 består av tiotal och ental.', say: 'Talet fyrtiosju består av tiotal och ental.' },
+      { text: 'Fyra tiostavar: 10, 20, 30, 40.', say: 'Fyra tiostavar. Tio, tjugo, trettio, fyrtio.', minMs: 4000 },
+      { text: 'Sju entalskuber: 41, 42 … 47.', say: 'Sju entalskuber. Fyrtioett, fyrtiotvå, upp till fyrtiosju.', minMs: 4000 },
+      { text: 'Siffran till vänster säger tiotalen, siffran till höger entalen.' },
+      { text: '74 är något helt annat: sju tiotal och fyra ental.', say: 'Sjuttiofyra är något helt annat. Sju tiotal och fyra ental.' },
+    ],
+  },
+  'add-sub-0-100': {
+    scenes: [
+      { text: 'Vi räknar 34 + 25. Tiotal för sig och ental för sig.', say: 'Vi räknar trettiofyra plus tjugofem. Tiotal för sig och ental för sig.' },
+      { text: 'Tiotalen: 30 + 20 = 50.', say: 'Tiotalen. Trettio plus tjugo är femtio.' },
+      { text: 'Entalen: 4 + 5 = 9.', say: 'Entalen. Fyra plus fem är nio.' },
+      { text: 'Tillsammans: 50 + 9 = 59.', say: 'Tillsammans. Femtio plus nio är femtionio.' },
+      { text: 'Minus går likadant: 59 − 25 = 34. Tiotal för sig, ental för sig.', say: 'Minus går likadant. Femtionio minus tjugofem är trettiofyra. Tiotal för sig, ental för sig.' },
+    ],
+  },
+  'matning-langd': {
+    scenes: [
+      { text: 'Vi mäter längd med en linjal. Den visar centimeter.' },
+      { text: 'Lägg pennans ena ände vid nollan — inte vid kanten.', minMs: 3500 },
+      { text: 'Läs av där pennan slutar: 8 cm.', say: 'Läs av där pennan slutar. Åtta centimeter.' },
+      { text: 'Hundra centimeter är en meter — ungefär ett stort kliv.', minMs: 3500 },
+      { text: '3 meter är alltså 300 centimeter.', say: 'Tre meter är alltså trehundra centimeter.' },
+    ],
+  },
+  'stapeldiagram': {
+    scenes: [
+      { text: 'Barnen röstade på sitt favoritdjur. Stapeldiagrammet visar rösterna.' },
+      { text: 'Varje stapel är ett djur. Ju högre stapel, desto fler röster.' },
+      { text: 'Läs av: gå från stapelns topp rakt åt vänster. Katt fick 6.', say: 'Läs av. Gå från stapelns topp rakt åt vänster. Katt fick sex.', minMs: 3500 },
+      { text: 'Hund fick 4. Hur många fler röstade på katt? 6 − 4 = 2.', say: 'Hund fick fyra. Hur många fler röstade på katt? Sex minus fyra är två.' },
+      { text: 'Alla röster: 6 + 4 + 3 = 13.', say: 'Alla röster. Sex plus fyra plus tre är tretton.' },
+    ],
+  },
+  'dubbelt-halften': {
+    scenes: [
+      { text: 'Dubbelt betyder två lika stora delar ihop.' },
+      { text: 'Fyra kulor och fyra kulor till: dubbelt så mycket som 4 är 8.', say: 'Fyra kulor och fyra kulor till. Dubbelt så mycket som fyra är åtta.', minMs: 3500 },
+      { text: 'Hälften är tvärtom: dela 8 i två lika delar.', say: 'Hälften är tvärtom. Dela åtta i två lika delar.', minMs: 3500 },
+      { text: 'Varje del är 4. Hälften av 8 är 4.', say: 'Varje del är fyra. Hälften av åtta är fyra.' },
+      { text: 'Hälften av 80: hälften av 8 tiotal är 4 tiotal — 40.', say: 'Hälften av åttio. Hälften av åtta tiotal är fyra tiotal. Fyrtio.' },
+    ],
+  },
+  'rimlighet': {
+    scenes: [
+      { text: 'Innan du räknar: gissa ungefär vad svaret blir.' },
+      { text: '47 + 25: 47 är nästan 50.', say: 'Fyrtiosju plus tjugofem. Fyrtiosju är nästan femtio.', minMs: 3500 },
+      { text: '50 + 25 = 75. Svaret blir runt 70.', say: 'Femtio plus tjugofem är sjuttiofem. Svaret blir runt sjuttio.' },
+      { text: 'Räknar du och får 612? Då vet du direkt att något blev fel!', say: 'Räknar du och får sexhundratolv? Då vet du direkt att något blev fel!' },
+      { text: 'Rätt svar är 72 — nära gissningen. Rimligt!', say: 'Rätt svar är sjuttiotvå. Nära gissningen. Rimligt!' },
+    ],
+  },
 }
 
 export const lessonFor = (momentId: string): Lesson | undefined => LESSONS[momentId]
